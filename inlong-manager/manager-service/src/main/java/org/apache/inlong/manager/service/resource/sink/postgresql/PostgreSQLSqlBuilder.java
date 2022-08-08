@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sink.postgresql;
 
-import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.pojo.sink.postgresql.PostgreSQLColumnInfo;
 import org.apache.inlong.manager.pojo.sink.postgresql.PostgreSQLTableInfo;
@@ -130,7 +129,7 @@ public class PostgreSQLSqlBuilder {
      * @return the create table SQL String
      */
     public static List<String> buildCreateTableSql(final PostgreSQLTableInfo table) {
-        final List<String> sqls = Lists.newArrayList();
+        final List<String> sqls = new ArrayList<>();
         final StringBuilder createSql = new StringBuilder()
                 .append("CREATE TABLE ").append(table.getSchemaName())
                 .append(".\"")
@@ -205,7 +204,7 @@ public class PostgreSQLSqlBuilder {
      */
     public static List<String> buildAddColumnsSql(final String schemaName, final String tableName,
             List<PostgreSQLColumnInfo> columnList) {
-        final List<String> resultList = Lists.newArrayList();
+        final List<String> resultList = new ArrayList<>();
         final StringBuilder sqlBuilder = new StringBuilder();
 
         columnList.forEach(columnInfo -> {

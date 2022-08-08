@@ -786,5 +786,21 @@ CREATE TABLE IF NOT EXISTS `stream_heartbeat`
   DEFAULT CHARSET = utf8 COMMENT ='Inlong stream heartbeat';
 
 -- ----------------------------
+-- Table structure for bg_info
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `bg_info`
+(
+    `id`                     int(11)      NOT NULL AUTO_INCREMENT COMMENT 'Primary key ID - align the ID of the HR system BG',
+    `name`                   varchar(256) NOT NULL COMMENT 'BG full name',
+    `abbrev_name`            varchar(64)       DEFAULT '' COMMENT 'BG abbreviation: such as TEG',
+    `us_bg_id`               int(11)      NOT NULL COMMENT 'BG ID mapping of us system',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `bg_info_name_uindex` (`name`),
+    UNIQUE KEY `bg_info_abbrev_name_uindex` (`abbrev_name`)
+
+    ) ENGINE = InnoDB
+    DEFAULT CHARSET = utf8mb4 COMMENT ='BG info table';
+
+-- ----------------------------
 
 SET FOREIGN_KEY_CHECKS = 1;

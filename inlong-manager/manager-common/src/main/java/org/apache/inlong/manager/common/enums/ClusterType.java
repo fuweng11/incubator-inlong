@@ -33,6 +33,12 @@ public class ClusterType {
     public static final String DATAPROXY = "DATAPROXY";
     public static final String KAFKA = "KAFKA";
 
+    // --------------------------------------------------------------------------------------------
+    // Inner parameters
+    // --------------------------------------------------------------------------------------------
+    public static final String ZOOKEEPER = "ZOOKEEPER";
+
+
     private static final Set<String> TYPE_SET = new HashSet<String>() {
         {
             add(ClusterType.AGENT);

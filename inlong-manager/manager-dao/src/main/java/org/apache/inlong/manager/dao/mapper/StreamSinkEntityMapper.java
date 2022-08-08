@@ -160,4 +160,12 @@ public interface StreamSinkEntityMapper {
      */
     int deleteByInlongGroupIds(@Param("groupIdList") List<String> groupIdList);
 
+    // --------------------------------------------------------------------------------------------
+    // inner method
+    // --------------------------------------------------------------------------------------------
+    /**
+     * query the deleted thive configuration according to the business and data flow identifier for reusing US tasks
+     */
+    StreamSinkEntity selectDeletedThive(@Param("groupId") String groupId, @Param("streamId") String streamId);
+
 }

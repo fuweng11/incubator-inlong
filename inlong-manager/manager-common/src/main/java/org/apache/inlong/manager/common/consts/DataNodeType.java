@@ -29,4 +29,10 @@ public class DataNodeType {
     public static final String ELASTICSEARCH = "ELASTICSEARCH";
     public static final String MYSQL = "MYSQL";
 
+    // --------------------------------------------------------------------------------------------
+    // Inner parameters
+    // --------------------------------------------------------------------------------------------
+    public static final String INNER_HIVE = "INNER_HIVE";
+    public static final String INNER_CLICKHOUSE = "INNER_CLICKHOUSE";
+
 }

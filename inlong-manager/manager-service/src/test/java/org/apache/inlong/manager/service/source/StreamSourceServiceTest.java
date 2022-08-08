@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.service.source;
 
-import org.apache.curator.shaded.com.google.common.collect.Maps;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.pojo.source.StreamSource;
@@ -29,6 +28,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -53,7 +53,7 @@ public class StreamSourceServiceTest extends ServiceBaseTest {
         String sourceName = "stream_source_service_test";
         sourceInfo.setSourceName(sourceName);
         sourceInfo.setSourceType(SourceType.MYSQL_BINLOG);
-        Map<String, Object> properties = Maps.newLinkedHashMap();
+        Map<String, Object> properties = new HashMap<>();
         properties.put("append-mode", "true");
         sourceInfo.setProperties(properties);
         return sourceService.save(sourceInfo, GLOBAL_OPERATOR);

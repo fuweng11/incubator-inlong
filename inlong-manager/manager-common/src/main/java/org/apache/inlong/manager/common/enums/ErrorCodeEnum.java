@@ -134,6 +134,11 @@ public enum ErrorCodeEnum {
     CONSUME_SAVE_FAILED(3004, "Failed to save/update inlong consume"),
     CONSUME_PERMISSION_DENIED(3005, "No permission to access this inlong consume"),
 
+    // --------------------------------------------------------------------------------------------
+    // Inner parameters
+    // --------------------------------------------------------------------------------------------
+    SC_AUTHENTICATE_FAILED(3000, "Security center task exception"),
+
     ;
 
     private final int code;
