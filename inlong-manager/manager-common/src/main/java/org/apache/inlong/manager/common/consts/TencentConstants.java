@@ -34,9 +34,13 @@ public class TencentConstants {
     // Partition closing strategy: agent data volume verification passed
     public static final String PART_COUNT_VERIFIED = "AGENT_COUNT_VERIFIED";
 
-    public static final String TUBE_DEFAULT = "/inlong_tube";
+    public static final String STRATEGY_BALANVE = "BALANCE";
 
-    public static final String PULSAR_DEFAULT = "/inlong_pulsar";
+    public static final String STRATEGY_RANDOM = "RANDOM";
+
+    public static final String TUBEMQ_ROOT_DEFAULT = "/inlong_tube";
+
+    public static final String PULSAR_ROOT_DEFAULT = "/inlong_pulsar";
 
     public static final String DATA_TYPE_TEXT = "TEXT";
 

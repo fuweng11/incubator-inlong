@@ -29,12 +29,15 @@ import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
+import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSinkDTO;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.node.DataNodeOperator;
 import org.apache.inlong.manager.service.node.DataNodeOperatorFactory;
+import org.apache.inlong.manager.service.resource.sort.tencent.ck.SortCkConfigService;
 import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
+import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +58,11 @@ public class InnerSortConfigOperator implements SortConfigOperator {
     @Autowired
     SortHiveConfigService sortHiveConfigService;
     @Autowired
+    SortCkConfigService sortCkConfigService;
+    @Autowired
     private StreamSinkEntityMapper sinkMapper;
+    @Autowired
+    private StreamSinkService streamSinkService;
     @Autowired
     private DataNodeEntityMapper dataNodeEntityMapper;
     @Autowired
@@ -78,6 +85,7 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                 .collect(Collectors.toList());
         List<SinkInfo> configList = sinkMapper.selectAllConfig(groupId, streamIds);
         List<InnerHiveFullInfo> hiveInfos = new ArrayList<>();
+        List<InnerClickHouseSink> clickHouseSinkList = new ArrayList<>();
         for (SinkInfo sinkInfo : configList) {
             switch (sinkInfo.getSinkType()) {
                 case DataNodeType.INNER_HIVE:
@@ -89,12 +97,16 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                             dataNodeInfo);
                     hiveInfos.add(hiveFullInfo);
                     break;
-                case DataNodeType.INNER_CLICKHOUSE:
+                case DataNodeType.INNER_CK:
+                    InnerClickHouseSink clickHouseSink = (InnerClickHouseSink) streamSinkService.get(sinkInfo.getId());
+                    clickHouseSinkList.add(clickHouseSink);
+                    break;
                 default:
                     LOGGER.warn("skip to push sort config for sink id={}, as no sort config info", sinkInfo.getId());
             }
         }
         sortHiveConfigService.buildHiveConfig(groupInfo, hiveInfos);
+        sortCkConfigService.buildCkConfig(groupInfo, clickHouseSinkList);
     }
 
     private DataNodeInfo getDataNodeInfo(String dataNodeName, String dataNodeType) {

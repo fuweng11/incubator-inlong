@@ -47,7 +47,6 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMap
 import org.apache.inlong.manager.common.consts.MQType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
-import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
@@ -66,6 +65,7 @@ import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamExtInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
+import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +76,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -88,7 +87,7 @@ import static org.apache.inlong.manager.common.consts.TencentConstants.PART_COUN
  * Inner Sort config operator, used to create a Sort config for the InlongGroup with ZK enabled.
  */
 @Service
-public class SortHiveConfigService {
+public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
     public static final String STORAGE_HIVE = "HIVE";
     public static final String STORAGE_THIVE = "THIVE";
@@ -177,29 +176,6 @@ public class SortHiveConfigService {
         }
     }
 
-    public String getZkRoot(String mqType, ZkClusterDTO zkClusterDTO) {
-        Preconditions.checkNotNull(mqType, "mq type cannot be null");
-        Preconditions.checkNotNull(zkClusterDTO, "zookeeper cluster cannot be null");
-
-        LOGGER.info("begin to get zk root for my type={}", mqType);
-
-        String zkRoot;
-        mqType = mqType.toUpperCase(Locale.ROOT);
-        switch (mqType) {
-            case MQType.TUBEMQ:
-                zkRoot = getZkRootForTube(zkClusterDTO);
-                break;
-            case MQType.PULSAR:
-                zkRoot = getZkRootForPulsar(zkClusterDTO);
-                break;
-            default:
-                throw new BusinessException(ErrorCodeEnum.MQ_TYPE_NOT_SUPPORTED);
-        }
-
-        LOGGER.info("success, zk root={} from cluster={}", zkRoot, zkClusterDTO);
-        return zkRoot;
-    }
-
     /**
      * Get DataFlowInfo for Sort
      */
@@ -223,10 +199,7 @@ public class SortHiveConfigService {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("source.tdbank.bid", groupInfo.getInlongGroupId());
 
-        String flowId = STORAGE_HIVE + "_" + hiveFullInfo.getId();
-        if (hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE) {
-            flowId = STORAGE_THIVE + "_" + hiveFullInfo.getSinkId();
-        }
+        String flowId = hiveFullInfo.getSinkId().toString();
         DataFlowInfo flowInfo = new DataFlowInfo(flowId, sourceInfo, sinkInfo, properties);
         LOGGER.info("hive data flow info: " + OBJECT_MAPPER.writeValueAsString(flowInfo));
 
@@ -575,22 +548,6 @@ public class SortHiveConfigService {
             throw new IllegalArgumentException("can not support sink data type:" + dataType);
         }
         return deserializationInfo;
-    }
-
-    private String getZkRootForPulsar(ZkClusterDTO zkClusterDTO) {
-        String zkRoot = zkClusterDTO.getPulsarRoot();
-        if (StringUtils.isBlank(zkRoot)) {
-            zkRoot = TencentConstants.PULSAR_DEFAULT;
-        }
-        return zkRoot;
-    }
-
-    private String getZkRootForTube(ZkClusterDTO zkClusterDTO) {
-        String zkRoot = zkClusterDTO.getTubeRoot();
-        if (StringUtils.isBlank(zkRoot)) {
-            zkRoot = TencentConstants.TUBE_DEFAULT;
-        }
-        return zkRoot;
     }
 
     public String getConsumerGroup(String bid, String tid, String topic, String topoName, String mqType) {

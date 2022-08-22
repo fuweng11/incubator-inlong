@@ -15,24 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.common.consts;
+package org.apache.inlong.manager.pojo.node.tencent.ck;
+
+import io.swagger.annotations.ApiModel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.apache.inlong.manager.common.consts.DataNodeType;
+import org.apache.inlong.manager.common.util.JsonTypeDefine;
+import org.apache.inlong.manager.pojo.node.DataNodeRequest;
 
 /**
- * Constants of data node.
+ * Data node request for inner click house
  */
-public class DataNodeType {
-
-    public static final String HIVE = "HIVE";
-    public static final String KAFKA = "KAFKA";
-    public static final String ICEBERG = "ICEBERG";
-    public static final String CLICKHOUSE = "CLICKHOUSE";
-    public static final String ELASTICSEARCH = "ELASTICSEARCH";
-    public static final String MYSQL = "MYSQL";
-
-    // --------------------------------------------------------------------------------------------
-    // Inner parameters
-    // --------------------------------------------------------------------------------------------
-    public static final String INNER_HIVE = "INNER_HIVE";
-    public static final String INNER_CK = "INNER_CK";
+@Data
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@JsonTypeDefine(value = DataNodeType.INNER_CK)
+@ApiModel("Data node request for inner click house")
+public class InnerClickHouseDataNodeRequest extends DataNodeRequest {
 
 }
