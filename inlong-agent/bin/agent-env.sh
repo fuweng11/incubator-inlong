@@ -24,12 +24,6 @@ BASE_DIR=$(cd "$(dirname "$0")"/../;pwd)
 AS_USER=`whoami`
 export LOG_DIR="$BASE_DIR/logs"
 
-# zhiyan
-export zhiyan.appMark=app1
-export zhiyan.metricGroup=groupB
-export zhiyan.env=prod
-export zhiyan.instanceMark=127.0.0.1
-
 mkdir -p $LOG_DIR
 chown -R $AS_USER $LOG_DIR
 

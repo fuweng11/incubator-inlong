@@ -20,6 +20,7 @@ package org.apache.inlong.agent.metrics;
 import com.google.gson.Gson;
 import com.tencent.teg.monitor.sdk.CurveReporter;
 import com.tencent.teg.monitor.sdk.TegMonitor;
+import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.common.metric.MetricItemValue;
 import org.apache.inlong.common.metric.MetricListener;
 import org.apache.inlong.common.metric.MetricValue;
@@ -59,17 +60,28 @@ public class AgentZhiyanMetricListener implements MetricListener {
     private String env;
     private String instanceMark;
 
+    public static final String ZHIYAN_APPMARK = "zhiyan.appMark";
+    public static final String DEFAULT_ZHIYAN_APPMARK = "app1";
+
+    public static final String ZHIYAN_METRICGROUP = "zhiyan.metricGroup";
+    public static final String DEFAULT_ZHIYAN_METRICGROUP = "groupB";
+
+    public static final String ZHIYAN_ENV = "zhiyan.env";
+    public static final String DEFAULT_ZHIYAN_ENV = "prod";
+
+    public static final String ZHIYAN_INSTANCEMARK = "zhiyan.instanceMark";
+    public static final String DEFAULT_ZHIYAN_INSTANCEMARK = "127.0.0.1";
+
     /**
      * Constructor
      */
     public AgentZhiyanMetricListener() {
         try {
             TegMonitor.init();
-            Map<String, String> envMap = System.getenv();
-            this.appMark = envMap.getOrDefault("zhiyan.appMark", "app1");
-            this.metricGroup = envMap.getOrDefault("zhiyan.metricGroup", "groupB");
-            this.env = envMap.getOrDefault("zhiyan.env", "prod");
-            this.instanceMark = envMap.getOrDefault("zhiyan.instanceMark", "127.0.0.1");
+            this.appMark = AgentConfiguration.getAgentConf().get(ZHIYAN_APPMARK, DEFAULT_ZHIYAN_APPMARK);
+            this.metricGroup = AgentConfiguration.getAgentConf().get(ZHIYAN_METRICGROUP, DEFAULT_ZHIYAN_METRICGROUP);
+            this.env = AgentConfiguration.getAgentConf().get(ZHIYAN_ENV, DEFAULT_ZHIYAN_ENV);
+            this.instanceMark = AgentConfiguration.getAgentConf().get(ZHIYAN_INSTANCEMARK, DEFAULT_ZHIYAN_INSTANCEMARK);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

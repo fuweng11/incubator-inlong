@@ -24,6 +24,7 @@ import com.tencent.teg.monitor.sdk.TegMonitor;
 import org.apache.inlong.common.metric.MetricItemValue;
 import org.apache.inlong.common.metric.MetricListener;
 import org.apache.inlong.common.metric.MetricValue;
+import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.metrics.DataProxyMetricItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,17 +53,27 @@ public class ZhiyanMetricListener implements MetricListener {
     private String env;
     private String instanceMark;
 
+    public static final String ZHIYAN_APPMARK = "zhiyan.appMark";
+    public static final String DEFAULT_ZHIYAN_APPMARK = "app1";
+    public static final String ZHIYAN_METRICGROUP = "zhiyan.metricGroup";
+    public static final String DEFAULT_ZHIYAN_METRICGROUP = "groupB";
+    public static final String ZHIYAN_ENV = "zhiyan.env";
+    public static final String DEFAULT_ZHIYAN_ENV = "prod";
+    public static final String ZHIYAN_INSTANCEMARK = "zhiyan.instanceMark";
+    public static final String DEFAULT_ZHIYAN_INSTANCEMARK = "127.0.0.1";
+
     /**
      * Constructor
      */
     public ZhiyanMetricListener() {
         try {
             TegMonitor.init();
-            Map<String, String> envMap = System.getenv();
-            this.appMark = envMap.getOrDefault("zhiyan.appMark", "app1");
-            this.metricGroup = envMap.getOrDefault("zhiyan.metricGroup", "groupB");
-            this.env = envMap.getOrDefault("zhiyan.env", "prod");
-            this.instanceMark = envMap.getOrDefault("zhiyan.instanceMark", "127.0.0.1");
+            ConfigManager configManager = ConfigManager.getInstance();
+            Map<String, String> commonProperties = configManager.getCommonProperties();
+            this.appMark = commonProperties.getOrDefault(ZHIYAN_APPMARK, DEFAULT_ZHIYAN_APPMARK);
+            this.metricGroup = commonProperties.getOrDefault(ZHIYAN_METRICGROUP, DEFAULT_ZHIYAN_METRICGROUP);
+            this.env = commonProperties.getOrDefault(ZHIYAN_ENV, DEFAULT_ZHIYAN_ENV);
+            this.instanceMark = commonProperties.getOrDefault(ZHIYAN_INSTANCEMARK, DEFAULT_ZHIYAN_INSTANCEMARK);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }

@@ -30,6 +30,10 @@ sed -i "s/localhost.*$/${local_ip}/g" "${mq_conf_file}"
 sed -i "s/proxy.cluster.tag=.*$/proxy.cluster.tag=${CLUSTER_TAG}/g" "${common_conf_file}"
 sed -i "s/proxy.cluster.name=.*$/proxy.cluster.name=${CLUSTER_NAME}/g" "${common_conf_file}"
 sed -i "s/proxy.cluster.inCharges=.*$/proxy.cluster.inCharges=${CLUSTER_IN_CHARGES}/g" "${common_conf_file}"
+sed -i "s/zhiyan.appMark=.*$/zhiyan.appMark=${ZHIYAN_APPMARK}/g" "${common_conf_file}"
+sed -i "s/zhiyan.metricGroup=.*$/zhiyan.metricGroup=${ZHIYAN_METRICGROUP}/g" "${common_conf_file}"
+sed -i "s/zhiyan.env=.*$/zhiyan.env=${ZHIYAN_ENV}/g" "${common_conf_file}"
+sed -i "s/zhiyan.instanceMark=.*$/zhiyan.instanceMark=${ZHIYAN_INSTANCEMARK}/g" "${common_conf_file}"
 
 # start
 if [ "${MQ_TYPE}" = "pulsar" ]; then

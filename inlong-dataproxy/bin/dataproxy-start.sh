@@ -41,12 +41,6 @@ done
 
 cd .. || exit
 
-# zhiyan
-export zhiyan.appMark=app1
-export zhiyan.metricGroup=groupB
-export zhiyan.env=prod
-export zhiyan.instanceMark=127.0.0.1
-
 MQ_TYPE=pulsar
 if [ -n "$1" ]; then
   MQ_TYPE=$1
