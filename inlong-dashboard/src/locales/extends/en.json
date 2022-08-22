@@ -1,2 +1,7 @@
 {
+  "components.ProductSelect.Create": "Create Product",
+  "meta.Group.Bg": "BG",
+  "meta.Group.Product": "Product",
+  "meta.Group.AppGroupName": "AppGroupName",
+  "meta.Group.EnableZookeeper": "EnableZookeeper"
 }

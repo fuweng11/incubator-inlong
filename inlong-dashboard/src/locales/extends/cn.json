@@ -1,2 +1,7 @@
 {
+  "components.ProductSelect.Create": "新建产品",
+  "meta.Group.Bg": "所属BG",
+  "meta.Group.Product": "产品",
+  "meta.Group.AppGroupName": "应用组",
+  "meta.Group.EnableZookeeper": "开启 Zookeeper"
 }
