@@ -43,7 +43,7 @@ import java.util.List;
  * Security center related services
  */
 @RestController
-@RequestMapping("/sc")
+@RequestMapping("/api")
 @Api(tags = "Security center interface - product and Application Group")
 public class SecurityCenterController {
 
@@ -53,7 +53,7 @@ public class SecurityCenterController {
     @Autowired
     private SmartGateService smartGateService;
 
-    @GetMapping("/staff/list")
+    @GetMapping("/sc/staff/list")
     @ApiOperation(value = "Employee list - name fuzzy query")
     @ApiImplicitParam(name = "name", value = "Employee name:", dataTypeClass = String.class, required = true)
     public Response<List<Staff>> listStaff(@RequestParam String name) {
@@ -61,20 +61,20 @@ public class SecurityCenterController {
         return Response.success(staffList);
     }
 
-    @GetMapping("/staff/{name}")
+    @GetMapping("/sc/staff/{name}")
     @ApiOperation(value = "Employee information - by name")
     @ApiImplicitParam(name = "name", value = "Employee name:", dataTypeClass = String.class, required = true)
     public Response<StaffBaseInfo> getStaffByName(@PathVariable String name) {
         return Response.success(smartGateService.getStaffByEnName(name));
     }
 
-    @GetMapping("/product/{id}")
+    @GetMapping("/sc/product/{id}")
     @ApiOperation(value = "Product details - ID query")
     public Response<Product> getProduct(@PathVariable Integer id) {
         return Response.success(securityService.getProduct(id));
     }
 
-    @GetMapping("/product/list")
+    @GetMapping("/sc/product/list")
     @ApiOperation(value = "Product list - current user (only fuzzy name is supported temporarily)")
     @ApiImplicitParam(name = "productName", value = "Product Name:", dataTypeClass = String.class, required = false)
     public Response<List<Product>> listProduct(@RequestParam(required = false) String productName) {
@@ -83,12 +83,12 @@ public class SecurityCenterController {
     }
 
     @ApiOperation(value = "Application group details - ID query")
-    @GetMapping("/appgroup/{id}")
+    @GetMapping("/sc/appgroup/{id}")
     public Response<AppGroup> getAppGroup(@PathVariable Integer id) {
         return Response.success(securityService.getAppGroup(id));
     }
 
-    @GetMapping("/appgroup/detail")
+    @GetMapping("/sc/appgroup/detail")
     @ApiOperation(value = "Application group details - name query")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "clusterId", value = "Cluster ID", dataTypeClass = Integer.class, required = true),
@@ -98,7 +98,7 @@ public class SecurityCenterController {
         return Response.success(securityService.getAppGroup(clusterId, name));
     }
 
-    @GetMapping("/appgroup/my")
+    @GetMapping("/sc/appgroup/my")
     @ApiOperation(value = "Application group list - list under current user and specified product ID")
     @ApiImplicitParam(name = "productId", value = "Product ID", dataTypeClass = Integer.class, required = true)
     public Response<List<String>> listMyAppGroup(@RequestParam Integer productId) {
@@ -107,7 +107,7 @@ public class SecurityCenterController {
     }
 
     @ApiOperation(value = "Application group list - list of all application groups")
-    @GetMapping("/appgroup/list")
+    @GetMapping("/sc/appgroup/list")
     @ApiImplicitParam(name = "name", value = "Application group name", dataTypeClass = String.class, required = false)
     public Response<List<AppGroup>> listAppGroup(@RequestParam(required = false) String name) {
         return Response.success(securityService.listAllAppGroup(name));
