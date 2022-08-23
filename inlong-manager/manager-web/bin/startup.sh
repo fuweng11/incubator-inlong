@@ -84,6 +84,9 @@ JAVA_OPT="${JAVA_OPT} $1"
 # GC options
 JAVA_OPT="${JAVA_OPT} -XX:+IgnoreUnrecognizedVMOptions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:${LOG_DIR}/gc.log"
 
+# Disable the permission check for tdw security
+JAVA_OPT="${JAVA_OPT} -Dtdw.security.validate.key.exclusive.permission=false -Dtdw.security.validate.key.owner=false"
+
 # JMX metrics
 #JAVA_OPT="${JAVA_OPT} -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8011 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
 
