@@ -29,7 +29,7 @@ import { sourceFields } from './common/sourceFields';
 import TextSwitch from '@/components/TextSwitch';
 import request from '@/utils/request';
 
-const thiveFieldTypes = [
+const innerHiveFieldTypes = [
   'string',
   'varchar',
   'char',
@@ -57,7 +57,7 @@ const getForm: GetStorageFormFieldsType = (
   const fileds = [
     {
       type: 'select',
-      label: i18n.t('meta.Sinks.THive.AppGroupName'),
+      label: i18n.t('meta.Sinks.InnerHive.AppGroupName'),
       name: 'appGroupName',
       rules: [{ required: true }],
       props: {
@@ -85,7 +85,7 @@ const getForm: GetStorageFormFieldsType = (
     },
     {
       type: 'select',
-      label: i18n.t('meta.Sinks.THive.DataNodeName'),
+      label: i18n.t('meta.Sinks.InnerHive.DataNodeName'),
       name: 'dataNodeName',
       rules: [{ required: true }],
       props: values => ({
@@ -116,7 +116,7 @@ const getForm: GetStorageFormFieldsType = (
     },
     {
       type: 'input',
-      label: i18n.t('meta.Sinks.THive.DbName'),
+      label: i18n.t('meta.Sinks.InnerHive.DbName'),
       name: 'dbName',
       rules: [{ required: true }],
       props: {
@@ -126,7 +126,7 @@ const getForm: GetStorageFormFieldsType = (
     },
     {
       type: 'input',
-      label: i18n.t('meta.Sinks.THive.TableName'),
+      label: i18n.t('meta.Sinks.InnerHive.TableName'),
       name: 'tableName',
       rules: [{ required: true }],
       props: {
@@ -136,7 +136,7 @@ const getForm: GetStorageFormFieldsType = (
     },
     {
       type: 'input',
-      label: i18n.t('meta.Sinks.THive.PartitionType'),
+      label: i18n.t('meta.Sinks.InnerHive.PartitionType'),
       name: 'partitionType',
       rules: [{ required: true }],
       props: {
@@ -152,11 +152,11 @@ const getForm: GetStorageFormFieldsType = (
           disabled: isEdit && [110, 130].includes(currentValues?.status),
           options: [
             {
-              label: i18n.t('meta.Sinks.THive.Day'),
+              label: i18n.t('meta.Sinks.InnerHive.Day'),
               value: 'D',
             },
             {
-              label: i18n.t('meta.Sinks.THive.Hour'),
+              label: i18n.t('meta.Sinks.InnerHive.Hour'),
               value: 'H',
             },
           ],
@@ -166,7 +166,7 @@ const getForm: GetStorageFormFieldsType = (
     },
     {
       type: 'input',
-      label: i18n.t('meta.Sinks.THive.PrimaryPartition'),
+      label: i18n.t('meta.Sinks.InnerHive.PrimaryPartition'),
       name: 'primaryPartition',
       rules: [{ required: true }],
       props: {
@@ -176,7 +176,7 @@ const getForm: GetStorageFormFieldsType = (
     },
     {
       type: 'select',
-      label: i18n.t('meta.Sinks.THive.PartitionCreationStrategy'),
+      label: i18n.t('meta.Sinks.InnerHive.PartitionCreationStrategy'),
       name: 'partitionCreationStrategy',
       initialValue: 'ARRIVED',
       rules: [{ required: true }],
@@ -184,19 +184,19 @@ const getForm: GetStorageFormFieldsType = (
         disabled: isEdit && [110, 130].includes(currentValues?.status),
         options: [
           {
-            label: i18n.t('meta.Sinks.THive.DataArrives'),
+            label: i18n.t('meta.Sinks.InnerHive.DataArrives'),
             value: 'ARRIVED',
           },
           {
-            label: i18n.t('meta.Sinks.THive.DataComplete'),
+            label: i18n.t('meta.Sinks.InnerHive.DataComplete'),
             value: 'COMPLETED',
           },
           {
-            label: i18n.t('meta.Sinks.THive.DataVerified'),
+            label: i18n.t('meta.Sinks.InnerHive.DataVerified'),
             value: 'AGENT_COUNT_VERIFIED',
           },
           {
-            label: i18n.t('meta.Sinks.THive.DataDistinct'),
+            label: i18n.t('meta.Sinks.InnerHive.DataDistinct'),
             value: 'DATA_DISTINCT_VERIFIED',
           },
         ],
@@ -205,7 +205,7 @@ const getForm: GetStorageFormFieldsType = (
     },
     {
       type: 'radio',
-      label: i18n.t('meta.Sinks.THive.FieldFormat'),
+      label: i18n.t('meta.Sinks.InnerHive.FieldFormat'),
       name: 'fileFormat',
       initialValue: 'TextFile',
       rules: [{ required: true }],
@@ -231,7 +231,7 @@ const getForm: GetStorageFormFieldsType = (
     {
       name: 'dataEncoding',
       type: 'radio',
-      label: i18n.t('meta.Sinks.THive.DataEncoding'),
+      label: i18n.t('meta.Sinks.InnerHive.DataEncoding'),
       initialValue: 'UTF-8',
       props: {
         disabled: isEdit && [110, 130].includes(currentValues?.status),
@@ -251,7 +251,7 @@ const getForm: GetStorageFormFieldsType = (
     {
       name: 'dataSeparator',
       type: 'select',
-      label: i18n.t('meta.Sinks.THive.DataSeparator'),
+      label: i18n.t('meta.Sinks.InnerHive.DataSeparator'),
       initialValue: '124',
       props: {
         disabled: isEdit && [110, 130].includes(currentValues?.status),
@@ -306,7 +306,7 @@ const getForm: GetStorageFormFieldsType = (
     { name: '_showHigher', type: <TextSwitch />, initialValue: false },
     {
       type: 'input',
-      label: i18n.t('meta.Sinks.THive.SecondaryPartition'),
+      label: i18n.t('meta.Sinks.InnerHive.SecondaryPartition'),
       name: 'secondaryPartition',
       props: {
         disabled: isEdit && [110, 130].includes(currentValues?.status),
@@ -315,7 +315,7 @@ const getForm: GetStorageFormFieldsType = (
     },
     {
       type: 'select',
-      label: i18n.t('meta.Sinks.THive.DataConsistency'),
+      label: i18n.t('meta.Sinks.InnerHive.DataConsistency'),
       name: 'dataConsistency',
       initialValue: 'EXACTLY_ONCE',
       props: {
@@ -335,21 +335,21 @@ const getForm: GetStorageFormFieldsType = (
     },
     {
       type: 'input',
-      label: i18n.t('meta.Sinks.THive.CheckAbsolute'),
+      label: i18n.t('meta.Sinks.InnerHive.CheckAbsolute'),
       name: 'checkAbsolute',
       props: {
         disabled: isEdit && [110, 130].includes(currentValues?.status),
-        placeholder: i18n.t('meta.Sinks.THive.CheckHint'),
+        placeholder: i18n.t('meta.Sinks.InnerHive.CheckHint'),
       },
       hidden: !currentValues?._showHigher,
     },
     {
       type: 'input',
-      label: i18n.t('meta.Sinks.THive.CheckRelative'),
+      label: i18n.t('meta.Sinks.InnerHive.CheckRelative'),
       name: 'checkRelative',
       props: {
         disabled: isEdit && [110, 130].includes(currentValues?.status),
-        placeholder: i18n.t('meta.Sinks.THive.CheckHint'),
+        placeholder: i18n.t('meta.Sinks.InnerHive.CheckHint'),
       },
       hidden: !currentValues?._showHigher,
     },
@@ -374,14 +374,14 @@ const getFieldListColumns: GetStorageColumnsType = (dataType, currentValues) => 
   return [
     ...sourceFields,
     {
-      title: `THIVE${i18n.t('meta.Sinks.THive.FieldName')}`,
+      title: `HIVE${i18n.t('meta.Sinks.InnerHive.FieldName')}`,
       dataIndex: 'fieldName',
       initialValue: '',
       rules: [
         { required: true },
         {
           pattern: /^[a-z][0-9a-z_]*$/,
-          message: i18n.t('meta.Sinks.THive.FieldNameRule'),
+          message: i18n.t('meta.Sinks.InnerHive.FieldNameRule'),
         },
       ],
       props: (text, record, idx, isNew) => ({
@@ -389,18 +389,18 @@ const getFieldListColumns: GetStorageColumnsType = (dataType, currentValues) => 
       }),
     },
     {
-      title: `THIVE${i18n.t('meta.Sinks.THive.FieldType')}`,
+      title: `HIVE${i18n.t('meta.Sinks.InnerHive.FieldType')}`,
       dataIndex: 'fieldType',
-      initialValue: thiveFieldTypes[0].value,
+      initialValue: innerHiveFieldTypes[0].value,
       type: 'select',
       props: (text, record, idx, isNew) => ({
-        options: thiveFieldTypes,
+        options: innerHiveFieldTypes,
         disabled: [110, 130].includes(currentValues?.status as number) && !isNew,
       }),
       rules: [{ required: true }],
     },
     {
-      title: i18n.t('meta.Sinks.THive.FieldDescription'),
+      title: i18n.t('meta.Sinks.InnerHive.FieldDescription'),
       dataIndex: 'fieldComment',
       initialValue: '',
     },
@@ -409,7 +409,7 @@ const getFieldListColumns: GetStorageColumnsType = (dataType, currentValues) => 
 
 const tableColumns = getForm('col') as ColumnsType;
 
-export const thive = {
+export const innerHive = {
   getForm,
   getFieldListColumns,
   tableColumns,
