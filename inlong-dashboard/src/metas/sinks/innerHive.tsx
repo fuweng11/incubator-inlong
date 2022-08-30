@@ -27,7 +27,7 @@ import i18n from '@/i18n';
 import { excludeObject } from '@/utils';
 import { sourceFields } from './common/sourceFields';
 import TextSwitch from '@/components/TextSwitch';
-import request from '@/utils/request';
+import ProductSelect from '@/components/ProductSelect';
 
 const innerHiveFieldTypes = [
   'string',
@@ -56,21 +56,32 @@ const getForm: GetStorageFormFieldsType = (
 ) => {
   const fileds = [
     {
+      type: ProductSelect,
+      label: i18n.t('meta.Group.Product'),
+      name: 'productId',
+      extraNames: ['productName'],
+      rules: [{ required: true }],
+      props: values => ({
+        asyncValueLabel: values.productName,
+        onChange: (value, record) => ({
+          appGroupName: undefined,
+          productName: record.name,
+        }),
+      }),
+    },
+    {
       type: 'select',
-      label: i18n.t('meta.Sinks.InnerHive.AppGroupName'),
+      label: i18n.t('meta.Group.AppGroupName'),
       name: 'appGroupName',
       rules: [{ required: true }],
-      props: {
+      props: values => ({
+        allowClear: true,
         options: {
-          requestService: async () => {
-            const groupData = await request(`/group/get/${inlongGroupId}`);
-            const appGroupData = await request({
-              url: '/sc/appgroup/my',
-              params: {
-                productId: groupData.productId,
-              },
-            });
-            return appGroupData;
+          requestService: {
+            url: '/sc/appgroup/my',
+            params: {
+              productId: values.productId,
+            },
           },
           requestParams: {
             formatResult: result =>
@@ -80,39 +91,34 @@ const getForm: GetStorageFormFieldsType = (
               })),
           },
         },
-      },
-      _inTable: true,
+      }),
     },
     {
       type: 'select',
       label: i18n.t('meta.Sinks.InnerHive.DataNodeName'),
       name: 'dataNodeName',
       rules: [{ required: true }],
-      props: values => ({
+      props: {
         showSearch: true,
         options: {
-          requestService: async () => {
-            const nodeData = await request({
-              url: '/node/list',
-              method: 'POST',
-              data: {
-                name: values.dataNodeName,
-                pageNum: 1,
-                pageSize: 20,
-              },
-            });
-            return nodeData.list;
+          requestService: {
+            url: '/node/list',
+            method: 'POST',
+            data: {
+              type: 'INNER_HIVE',
+              pageNum: 1,
+              pageSize: 20,
+            },
           },
           requestParams: {
             formatResult: result =>
-              result?.map(item => ({
+              result?.list?.map(item => ({
                 label: item.name,
                 value: item.name,
               })),
           },
         },
-      }),
-      _inTable: true,
+      },
     },
     {
       type: 'input',
@@ -142,7 +148,6 @@ const getForm: GetStorageFormFieldsType = (
       props: {
         disabled: isEdit && [110, 130].includes(currentValues?.status),
       },
-      _inTable: true,
       suffix: {
         type: 'select',
         name: 'partitionUnit',

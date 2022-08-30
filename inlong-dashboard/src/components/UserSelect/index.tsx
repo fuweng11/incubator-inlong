@@ -113,16 +113,16 @@ const UserSelect: React.FC<UserSelectProps> = ({
         ...rest.options,
         requestTrigger: ['onSearch'],
         requestService: name => ({
-          url: '/user/listAll',
-          method: 'POST',
-          data: {
+          url: '/sc/staff/list',
+          method: 'GET',
+          params: {
             name,
           },
         }),
         requestParams: {
           initialData: getCache(),
           formatResult: result =>
-            result?.list?.map(item => ({
+            result?.map(item => ({
               ...item,
               label: item.name,
               value: item.name,
