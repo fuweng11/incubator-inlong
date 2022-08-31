@@ -15,46 +15,33 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.node.tencent;
+package org.apache.inlong.manager.pojo.cluster.tencent.sort.thive;
 
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.inlong.manager.common.consts.DataNodeType;
+import org.apache.inlong.manager.common.enums.ClusterType;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.node.DataNodeRequest;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterInfo;
 
 /**
- * Data node request for inner hive
+ * Inlong sort cluster for thive task
  */
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@JsonTypeDefine(value = DataNodeType.INNER_HIVE)
-@ApiModel("Data node request for inner hive")
-public class InnerHiveDataNodeRequest extends DataNodeRequest {
+@JsonTypeDefine(value = ClusterType.SORT_THIVE)
+@ApiModel("Inlong sort cluster for thive task")
+public class SortThiveClusterInfo extends BaseSortClusterInfo {
 
-    @ApiModelProperty(value = "hive address")
-    private String hiveAddress;
+    public SortThiveClusterInfo() {
+        this.setType(ClusterType.SORT_THIVE);
+    }
 
-    @ApiModelProperty(value = "warehouse dir")
-    private String warehouseDir;
-
-    @ApiModelProperty(value = "hdfs default fs")
-    private String hdfsDefaultFs;
-
-    @ApiModelProperty(value = "hdfs ugi")
-    private String hdfsUgi;
-
-    @ApiModelProperty(value = "cluster tag")
-    private String clusterTag;
-
-    @ApiModelProperty(value = "zone id")
-    private String zoneId;
-
-    @ApiModelProperty(value = "product id")
-    private String productId;
-
+    @Override
+    public SortThiveClusterRequest genRequest() {
+        return CommonBeanUtils.copyProperties(this, SortThiveClusterRequest::new);
+    }
 }

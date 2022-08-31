@@ -21,10 +21,11 @@ import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
-import org.apache.inlong.manager.pojo.node.tencent.InnerHiveDataNodeRequest;
+import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeRequest;
 import org.apache.inlong.manager.pojo.sink.SinkField;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
-import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSink;
+import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSink;
+import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSinkRequest;
 import org.apache.inlong.manager.pojo.tencent.us.USConfiguration;
 import org.apache.inlong.manager.service.ServiceBaseTest;
@@ -81,7 +82,6 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
     public Integer saveSink(Integer dataNodeId) {
         streamServiceTest.saveInlongStream(globalGroupId, globalStreamId, globalOperator);
         InnerHiveSinkRequest sinkInfo = new InnerHiveSinkRequest();
-        sinkInfo.setIsThive(0);
         sinkInfo.setInlongGroupId(globalGroupId);
         sinkInfo.setInlongStreamId(globalStreamId);
         sinkInfo.setSinkType(SinkType.INNER_HIVE);
@@ -130,7 +130,7 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
         String url = "127.0.0.1:8080";
         String username = "admin";
         String password = "123";
-        InnerHiveDataNodeRequest request = new InnerHiveDataNodeRequest();
+        InnerBaseHiveDataNodeRequest request = new InnerBaseHiveDataNodeRequest();
         request.setName(nodeName);
         request.setType(type);
         request.setUrl(url);
@@ -163,12 +163,11 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
         Integer dataNodeId = this.saveDataNode();
         Integer sinkId = this.saveSink(dataNodeId);
         StreamSink streamSink = sinkService.get(sinkId);
-        System.out.println();
         Assertions.assertEquals(globalGroupId, streamSink.getInlongGroupId());
 
-        InnerHiveSink sink = (InnerHiveSink) streamSink;
+        InnerBaseHiveSink sink = (InnerBaseHiveSink) streamSink;
         sink.setEnableCreateResource(InlongConstants.DISABLE_CREATE_RESOURCE);
-        InnerHiveSinkRequest request = CommonBeanUtils.copyProperties(sink, InnerHiveSinkRequest::new);
+        InnerBaseHiveSinkRequest request = CommonBeanUtils.copyProperties(sink, InnerBaseHiveSinkRequest::new);
         boolean result = sinkService.update(request, globalOperator);
         Assertions.assertTrue(result);
 

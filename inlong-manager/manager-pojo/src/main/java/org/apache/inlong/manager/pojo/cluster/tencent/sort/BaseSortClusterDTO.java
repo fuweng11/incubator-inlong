@@ -15,79 +15,45 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.node.tencent;
+package org.apache.inlong.manager.pojo.cluster.tencent.sort;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 
 import javax.validation.constraints.NotNull;
 
 /**
- * Inner hive data node info
+ * Base sort cluster DTO
  */
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@ApiModel("Inner hive data node info")
-public class InnerHiveDataNodeDTO {
+@ApiModel("Base sort cluster info")
+public class BaseSortClusterDTO {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(); // thread safe
-
-    @ApiModelProperty(value = "hive address")
-    private String hiveAddress;
-
-    @ApiModelProperty(value = "warehouse dir")
-    private String warehouseDir;
-
-    @ApiModelProperty(value = "hdfs default fs")
-    private String hdfsDefaultFs;
-
-    @ApiModelProperty(value = "hdfs ugi")
-    private String hdfsUgi;
-
-    @ApiModelProperty(value = "cluster tag")
-    private String clusterTag;
-
-    @ApiModelProperty(value = "zone id")
-    private String zoneId;
-
-    @ApiModelProperty(value = "product id")
-    private String productId;
 
     /**
      * Get the dto instance from the request
      */
-    public static InnerHiveDataNodeDTO getFromRequest(InnerHiveDataNodeRequest request) throws Exception {
-        return InnerHiveDataNodeDTO.builder()
-                .hiveAddress(request.getHiveAddress())
-                .warehouseDir(request.getWarehouseDir())
-                .hdfsDefaultFs(request.getHdfsDefaultFs())
-                .hdfsUgi(request.getHdfsUgi())
-                .clusterTag(request.getClusterTag())
-                .zoneId(request.getZoneId())
-                .productId(request.getProductId())
+    public static BaseSortClusterDTO getFromRequest(BaseSortClusterRequest request) throws Exception {
+        return BaseSortClusterDTO.builder()
                 .build();
     }
 
     /**
      * Get the dto instance from the JSON string.
      */
-    public static InnerHiveDataNodeDTO getFromJson(@NotNull String extParams) {
+    public static BaseSortClusterDTO getFromJson(@NotNull String extParams) {
         try {
             OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return OBJECT_MAPPER.readValue(extParams, InnerHiveDataNodeDTO.class);
+            return OBJECT_MAPPER.readValue(extParams, BaseSortClusterDTO.class);
         } catch (Exception e) {
             throw new BusinessException(ErrorCodeEnum.GROUP_INFO_INCORRECT.getMessage());
         }
     }
-
 }

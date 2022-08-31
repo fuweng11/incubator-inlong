@@ -31,11 +31,13 @@ import com.tencent.oceanus.etl.protocol.source.SourceInfo;
 import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.MQType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
@@ -53,7 +55,6 @@ import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -70,11 +71,8 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     private static final Gson GSON = new GsonBuilder().create(); // thread safe
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper(); // thread safe
 
-    @Value("${cluster.clickhouse.topo:oceanus_etl_ck_test_cluster}")
-    private String clusterClickHouseTopo;
-
     @Autowired
-    private InlongClusterEntityMapper inlongClusterEntityMapper;
+    private InlongClusterEntityMapper clusterMapper;
     @Autowired
     private InlongStreamService inlongStreamService;
     @Autowired
@@ -85,7 +83,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     public void buildCkConfig(InlongGroupInfo groupInfo, List<InnerClickHouseSink> clickHouseSinkList)
             throws Exception {
         // Use new protocol for all
-        List<InlongClusterEntity> zkClusters = inlongClusterEntityMapper.selectByKey(groupInfo.getInlongClusterTag(),
+        List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
                 null, ClusterType.ZOOKEEPER);
         if (CollectionUtils.isEmpty(zkClusters)) {
             String errMsg = String.format("zk cluster is null for cluster tag=%s", groupInfo.getInlongClusterTag());
@@ -97,7 +95,12 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
 
         String zkUrl = zkCluster.getUrl();
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
-        String topoName = clusterClickHouseTopo;
+        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
+                groupInfo.getInlongClusterTag(), null, ClusterType.SORT_CK);
+        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
+            throw new WorkflowListenerException("sort cluster not found for groupId=" + groupInfo.getInlongGroupId());
+        }
+        String topoName = sortClusters.get(0).getName();
         for (InnerClickHouseSink clickHouseSink : clickHouseSinkList) {
             log.info("begin to push sort ck config to zkUrl={}, ckTopo={}", zkUrl, topoName);
 
@@ -144,7 +147,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
             throw new Exception("click house only support TUBE as source");
         }
 
-        InlongClusterEntity cluster = inlongClusterEntityMapper.selectByKey(
+        InlongClusterEntity cluster = clusterMapper.selectByKey(
                 groupInfo.getInlongClusterTag(), null, MQType.TUBEMQ).get(0);
         Preconditions.checkNotNull(cluster, "tube cluster not found for groupId=" + groupId);
         String masterAddress = cluster.getUrl();

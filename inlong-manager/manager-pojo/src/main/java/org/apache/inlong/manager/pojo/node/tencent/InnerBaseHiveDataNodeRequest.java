@@ -15,34 +15,37 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.sink.tencent.hive;
+package org.apache.inlong.manager.pojo.node.tencent;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import org.apache.inlong.manager.common.consts.SinkType;
-import org.apache.inlong.manager.common.util.CommonBeanUtils;
-import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.sink.SinkRequest;
-import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSink;
+import org.apache.inlong.manager.pojo.node.DataNodeRequest;
 
+/**
+ * Base data node request for inner Hive
+ */
 @Data
-@SuperBuilder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@ApiModel(value = "Inner hive sink info")
-@JsonTypeDefine(value = SinkType.INNER_HIVE)
-public class InnerHiveSink extends InnerBaseHiveSink {
+@ApiModel("Base data node request for inner Hive")
+public class InnerBaseHiveDataNodeRequest extends DataNodeRequest {
 
-    public InnerHiveSink() {
-        this.setSinkType(SinkType.INNER_HIVE);
-    }
+    @ApiModelProperty(value = "hive address")
+    private String hiveAddress;
 
-    @Override
-    public SinkRequest genSinkRequest() {
-        return CommonBeanUtils.copyProperties(this, InnerHiveSinkRequest::new);
-    }
+    @ApiModelProperty(value = "warehouse dir")
+    private String warehouseDir;
+
+    @ApiModelProperty(value = "hdfs default fs")
+    private String hdfsDefaultFs;
+
+    @ApiModelProperty(value = "hdfs ugi")
+    private String hdfsUgi;
+
+    @ApiModelProperty(value = "cluster tag")
+    private String clusterTag;
 
 }

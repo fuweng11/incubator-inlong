@@ -27,11 +27,11 @@ import org.apache.inlong.manager.dao.mapper.DataNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
-import org.apache.inlong.manager.pojo.node.tencent.InnerHiveDataNodeInfo;
+import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
-import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSinkDTO;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.node.DataNodeOperator;
 import org.apache.inlong.manager.service.node.DataNodeOperatorFactory;
@@ -89,11 +89,13 @@ public class InnerSortConfigOperator implements SortConfigOperator {
         for (SinkInfo sinkInfo : configList) {
             switch (sinkInfo.getSinkType()) {
                 case DataNodeType.INNER_HIVE:
-                    InnerHiveSinkDTO hiveInfo = InnerHiveSinkDTO.getFromJson(sinkInfo.getExtParams());
+                case DataNodeType.INNER_THIVE:
+                    InnerBaseHiveSinkDTO hiveInfo = InnerBaseHiveSinkDTO.getFromJson(sinkInfo.getExtParams());
                     StreamSinkEntity sink = sinkMapper.selectByPrimaryKey(sinkInfo.getId());
-                    InnerHiveDataNodeInfo dataNodeInfo = (InnerHiveDataNodeInfo) getDataNodeInfo(sink.getDataNodeName(),
-                            DataNodeType.INNER_HIVE);
-                    InnerHiveFullInfo hiveFullInfo = InnerHiveSinkDTO.getInnerHiveTableInfo(hiveInfo, sinkInfo,
+                    InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) getDataNodeInfo(
+                            sink.getDataNodeName(),
+                            sink.getSinkType());
+                    InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getHiveFullInfo(hiveInfo, sinkInfo,
                             dataNodeInfo);
                     hiveInfos.add(hiveFullInfo);
                     break;

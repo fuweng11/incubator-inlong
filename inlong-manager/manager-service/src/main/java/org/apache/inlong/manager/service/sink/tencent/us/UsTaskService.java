@@ -25,16 +25,16 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
-import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
-import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSinkDTO;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.tencent.us.CreateUsTaskRequest;
 import org.apache.inlong.manager.pojo.tencent.us.CreateUsTaskRequest.TaskExt;
 import org.apache.inlong.manager.pojo.tencent.us.USConfiguration;
@@ -57,7 +57,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 /**
  * operate US tasks
@@ -231,8 +231,8 @@ public class UsTaskService {
         StreamSinkEntity thiveEntity = sinkEntityMapper.selectDeletedThive(inlongGroupId, inlongStreamId);
 
         if (thiveEntity != null) {
-            InnerHiveSinkDTO thiveDTO = InnerHiveSinkDTO.getFromJson(thiveEntity.getExtParams());
-            boolean isThive = thiveDTO.getIsThive() == 1;
+            InnerBaseHiveSinkDTO thiveDTO = InnerBaseHiveSinkDTO.getFromJson(thiveEntity.getExtParams());
+            boolean isThive = Objects.equals(thiveEntity.getSinkType(), SinkType.INNER_THIVE);
             // the partition creation strategy must be the same,
             // otherwise the parent-child relationship of the task will be disordered
             boolean needReuse = isThive && StringUtils.isNotBlank(thiveDTO.getUsTaskId())
@@ -240,7 +240,7 @@ public class UsTaskService {
             if (needReuse) {
                 try {
                     StreamSinkEntity entity = sinkEntityMapper.selectByPrimaryKey(tableInfo.getSinkId());
-                    InnerHiveSinkDTO dto = InnerHiveSinkDTO.getFromJson(entity.getExtParams());
+                    InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(entity.getExtParams());
                     if (StringUtils.isBlank(thiveDTO.getUsTaskId())) {
                         tableInfo.setUsTaskId(thiveDTO.getUsTaskId());
                         dto.setUsTaskId(thiveDTO.getUsTaskId());
@@ -335,7 +335,7 @@ public class UsTaskService {
             if (StringUtils.isNotBlank(taskId)) {
                 StreamSinkEntity sinkEntity = sinkEntityMapper.selectByPrimaryKey(tableInfo.getSinkId());
                 try {
-                    InnerHiveSinkDTO dto = InnerHiveSinkDTO.getFromJson(sinkEntity.getExtParams());
+                    InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(sinkEntity.getExtParams());
                     dto.setVerifiedTaskId(taskId);
                     sinkEntity.setExtParams(objectMapper.writeValueAsString(dto));
                     sinkEntityMapper.updateByPrimaryKeySelective(sinkEntity);
@@ -349,7 +349,8 @@ public class UsTaskService {
             // the modifier must be in the [US person in charge before modification],
             // otherwise there is no permission to operate - if the task is frozen, unfreeze it first
             this.unfreezeUsTask(taskId, inCharges.split(";")[0]);
-            UpdateUsTaskRequest updateRequest = getUpdateTaskRequest(taskId, inlongGroupInfo, inCharges, extList);
+            UpdateUsTaskRequest updateRequest = getUpdateTaskRequest(taskId, inlongGroupInfo, tableInfo, inCharges,
+                    extList);
             this.updateUsTask(updateRequest);
         }
     }
@@ -414,7 +415,7 @@ public class UsTaskService {
             if (StringUtils.isNotBlank(usTaskId)) {
                 StreamSinkEntity sinkEntity = sinkEntityMapper.selectByPrimaryKey(tableInfo.getSinkId());
                 try {
-                    InnerHiveSinkDTO dto = InnerHiveSinkDTO.getFromJson(sinkEntity.getExtParams());
+                    InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(sinkEntity.getExtParams());
                     dto.setUsTaskId(usTaskId);
                     sinkEntity.setExtParams(objectMapper.writeValueAsString(dto));
                     sinkEntityMapper.updateByPrimaryKeySelective(sinkEntity);
@@ -427,29 +428,20 @@ public class UsTaskService {
             // If the task ID exists, update the existing task,
             // and the [close partition] task does not need to be unfrozen
             // this.unfreezeUsTask(usTaskId, inCharges.split(";")[0]);
-            UpdateUsTaskRequest updateRequest = getUpdateTaskRequest(usTaskId, inlongGroupInfo, inCharges, extList);
+            UpdateUsTaskRequest updateRequest = getUpdateTaskRequest(usTaskId, inlongGroupInfo, tableInfo, inCharges,
+                    extList);
             this.updateUsTask(updateRequest);
         }
 
         return usTaskId;
     }
 
-    private UpdateUsTaskRequest getUpdateTaskRequest(String taskId, InlongGroupInfo inlongGroupInfo, String inCharges,
-            List<TaskExt> taskExtList) {
-        int bgId;
-        int productId;
-        List<InlongGroupExtInfo> extInfos = inlongGroupInfo.getExtList();
-        Map<String, String> extInfosMap = extInfos.stream()
-                .collect(Collectors.toMap(InlongGroupExtInfo::getKeyName, InlongGroupExtInfo::getKeyValue));
-        if (extInfosMap.get("bgId") == null || extInfosMap.get("productId") == null) {
+    private UpdateUsTaskRequest getUpdateTaskRequest(String taskId, InlongGroupInfo inlongGroupInfo,
+            InnerHiveFullInfo tableInfo, String inCharges, List<TaskExt> taskExtList) {
+        Integer bgId = tableInfo.getBgId();
+        Integer productId = tableInfo.getProductId();
+        if (bgId == null || productId == null) {
             String errMsg = "bgId or productId for inlong group can not null when create us task";
-            throw new WorkflowListenerException(errMsg);
-        }
-        try {
-            bgId = Integer.parseInt(extInfosMap.get("bgId"));
-            productId = Integer.parseInt(extInfosMap.get("productId"));
-        } catch (Exception e) {
-            String errMsg = "bgId or productId for inlong group is error when create us task";
             throw new WorkflowListenerException(errMsg);
         }
         return UpdateUsTaskRequest.builder()
@@ -462,7 +454,7 @@ public class UsTaskService {
                 .bgId(bgInfoService.get(bgId).getUsBgId())
                 .inCharge(inCharges)
                 .productId(String.valueOf(productId))
-                .tdwAppGroup(extInfosMap.get("appGroupName"))
+                .tdwAppGroup(tableInfo.getAppGroupName())
                 .taskExt(GSON.toJson(taskExtList))
                 .build();
     }
@@ -473,20 +465,10 @@ public class UsTaskService {
         String cycleUnit = tableInfo.getPartitionUnit();
         String startDate = getStartDate(new Date(), cycleUnit);
 
-        int bgId;
-        int productId;
-        List<InlongGroupExtInfo> extInfos = inlongGroupInfo.getExtList();
-        Map<String, String> extInfosMap = extInfos.stream()
-                .collect(Collectors.toMap(InlongGroupExtInfo::getKeyName, InlongGroupExtInfo::getKeyValue));
-        if (extInfosMap.get("bgId") == null || extInfosMap.get("productId") == null) {
+        Integer bgId = tableInfo.getBgId();
+        Integer productId = tableInfo.getProductId();
+        if (bgId == null || productId == null) {
             String errMsg = "bgId or productId for inlong group can not null when create us task";
-            throw new WorkflowListenerException(errMsg);
-        }
-        try {
-            bgId = Integer.parseInt(extInfosMap.get("bgId"));
-            productId = Integer.parseInt(extInfosMap.get("productId"));
-        } catch (Exception e) {
-            String errMsg = "bgId or productId for inlong group is error when create us task";
             throw new WorkflowListenerException(errMsg);
         }
         return CreateUsTaskRequest.builder()
@@ -501,7 +483,7 @@ public class UsTaskService {
                 .inCharge(inCharges)
                 .bgId(bgInfoService.get(bgId).getUsBgId())
                 .productId(String.valueOf(productId))
-                .tdwAppGroup(extInfosMap.get("appGroupName"))
+                .tdwAppGroup(tableInfo.getAppGroupName())
                 .taskExt(GSON.toJson(taskExtList))
                 .build();
     }

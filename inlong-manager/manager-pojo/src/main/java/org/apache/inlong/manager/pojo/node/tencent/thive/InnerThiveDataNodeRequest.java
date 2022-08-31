@@ -15,51 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.node.tencent;
+package org.apache.inlong.manager.pojo.node.tencent.thive;
 
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.apache.inlong.manager.common.consts.DataNodeType;
-import org.apache.inlong.manager.pojo.node.DataNodeInfo;
-import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
-
+import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeRequest;
 
 /**
- * Data node info for inner hive
+ * Data node request for inner hive
  */
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@JsonTypeDefine(value = DataNodeType.INNER_HIVE)
-@ApiModel("Data node info for inner hive")
-public class InnerHiveDataNodeInfo extends DataNodeInfo {
-
-    @ApiModelProperty(value = "hive address")
-    private String hiveAddress;
-
-    @ApiModelProperty(value = "warehouse dir")
-    private String warehouseDir;
-
-    @ApiModelProperty(value = "hdfs default fs")
-    private String hdfsDefaultFs;
-
-    @ApiModelProperty(value = "hdfs ugi")
-    private String hdfsUgi;
-
-    @ApiModelProperty(value = "cluster tag")
-    private String clusterTag;
-
-    public InnerHiveDataNodeInfo() {
-        this.setType(DataNodeType.INNER_HIVE);
-    }
-
-    @Override
-    public InnerHiveDataNodeRequest genRequest() {
-        return CommonBeanUtils.copyProperties(this, InnerHiveDataNodeRequest::new);
-    }
+@JsonTypeDefine(value = DataNodeType.INNER_THIVE)
+@ApiModel("Data node request for inner hive")
+public class InnerThiveDataNodeRequest extends InnerBaseHiveDataNodeRequest {
 
 }

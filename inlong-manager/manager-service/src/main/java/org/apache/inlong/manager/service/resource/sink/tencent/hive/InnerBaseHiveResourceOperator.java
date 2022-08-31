@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
@@ -37,11 +36,12 @@ import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
-import org.apache.inlong.manager.pojo.node.tencent.InnerHiveDataNodeInfo;
+import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.hive.HiveColumnInfo;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
-import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSinkDTO;
+import org.apache.inlong.manager.pojo.tencent.sc.AppGroup;
 import org.apache.inlong.manager.pojo.tencent.sc.ResourceGrantRequest;
 import org.apache.inlong.manager.pojo.tencent.sc.ResourceGrantRequest.DataAccessType;
 import org.apache.inlong.manager.pojo.tencent.sc.ScHiveResource;
@@ -76,9 +76,9 @@ import java.util.Map;
 import java.util.Objects;
 
 @Service
-public class InnerHiveResourceOperator implements SinkResourceOperator {
+public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(InnerHiveResourceOperator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(InnerBaseHiveResourceOperator.class);
 
     private static final Gson GSON = new GsonBuilder().create();
 
@@ -131,7 +131,7 @@ public class InnerHiveResourceOperator implements SinkResourceOperator {
 
     @Override
     public Boolean accept(String sinkType) {
-        return Objects.equals(SinkType.INNER_HIVE, sinkType);
+        return Objects.equals(SinkType.INNER_HIVE, sinkType) || Objects.equals(SinkType.INNER_THIVE, sinkType);
     }
 
     /**
@@ -196,11 +196,18 @@ public class InnerHiveResourceOperator implements SinkResourceOperator {
         String groupId = sinkInfo.getInlongGroupId();
         String streamId = sinkInfo.getInlongStreamId();
         try {
-            InnerHiveSinkDTO hiveInfo = InnerHiveSinkDTO.getFromJson(sinkInfo.getExtParams());
+            InnerBaseHiveSinkDTO hiveInfo = InnerBaseHiveSinkDTO.getFromJson(sinkInfo.getExtParams());
             StreamSinkEntity sink = sinkEntityMapper.selectByPrimaryKey(sinkInfo.getId());
-            InnerHiveDataNodeInfo dataNodeInfo = (InnerHiveDataNodeInfo) getDataNodeInfo(sink.getDataNodeName(),
-                    DataNodeType.INNER_HIVE);
-            InnerHiveFullInfo hiveFullInfo = InnerHiveSinkDTO.getInnerHiveTableInfo(hiveInfo, sinkInfo, dataNodeInfo);
+            InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) getDataNodeInfo(sink.getDataNodeName(),
+                    sink.getSinkType());
+
+            // get bg id
+            Integer clusterId = scService.getClusterIdByIdentifier(dataNodeInfo.getClusterTag());
+            AppGroup appGroup = scService.getAppGroup(clusterId, hiveInfo.getAppGroupName());
+            hiveInfo.setBgId(appGroup.getBgId());
+
+            InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getHiveFullInfo(hiveInfo, sinkInfo,
+                    dataNodeInfo);
             String dbName = hiveFullInfo.getDbName();
             String tbName = hiveFullInfo.getTableName();
             TableInfoBean existTable = upsOperator.queryTableInfo(hiveFullInfo.getIsThive(),

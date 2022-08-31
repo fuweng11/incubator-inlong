@@ -15,24 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.sink.tencent.hive;
+package org.apache.inlong.manager.service.resource.sink.tencent.ck;
 
-import io.swagger.annotations.ApiModel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.apache.inlong.manager.common.consts.SinkType;
-import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
+import org.apache.inlong.manager.pojo.sink.SinkInfo;
+import org.apache.inlong.manager.service.resource.sink.SinkResourceOperator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
-/**
- * Inner hive sink request.
- */
-@Data
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
-@ApiModel(value = "Inner hive sink request")
-@JsonTypeDefine(value = SinkType.INNER_HIVE)
-public class InnerHiveSinkRequest extends InnerBaseHiveSinkRequest {
+@Service
+public class InnerClickHouseResourceOperator implements SinkResourceOperator {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(InnerClickHouseResourceOperator.class);
+
+    @Override
+    public Boolean accept(String sinkType) {
+        return SinkType.INNER_CK.equals(sinkType);
+    }
+
+    @Override
+    public void createSinkResource(SinkInfo sinkInfo) {
+        LOGGER.info("inner click house not need create resource, skip to create");
+    }
 }

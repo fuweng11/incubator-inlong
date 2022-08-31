@@ -15,77 +15,111 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.sink.tencent.hive;
+package org.apache.inlong.manager.pojo.sink.tencent;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
 
-/**
- * Hive full configuration information of (used by us and sort)
- */
 @Data
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class InnerHiveFullInfo {
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@ApiModel(value = "Base hive sink info")
+public class InnerBaseHiveSink extends StreamSink {
 
-    private Integer sinkId;
-    private Integer bgId;
+    @ApiModelProperty("product id")
     private Integer productId;
+
+    @ApiModelProperty("product name")
     private String productName;
 
-    // hive configuration
-    private Integer id;
-    private String inlongGroupId;
-    private String inlongStreamId;
-    private Integer isThive;
+    @ApiModelProperty("us task id")
     private String usTaskId;
+
+    @ApiModelProperty("verified task id")
     private String verifiedTaskId; // the US task of verifying data is a sub task of the above task
+
+    @ApiModelProperty("app group name")
     private String appGroupName;
+
+    @ApiModelProperty("default selectors")
     private String defaultSelectors;
 
+    @ApiModelProperty("database name")
     private String dbName;
+
+    @ApiModelProperty("table name")
     private String tableName;
+
+    @ApiModelProperty("partition type")
     private String partitionType;
+
+    @ApiModelProperty("partition interval")
     private Integer partitionInterval;
+
+    @ApiModelProperty("partition unit")
     private String partitionUnit;
 
+    @ApiModelProperty("primary partition")
     private String primaryPartition;
+
+    @ApiModelProperty("secondary partition")
     private String secondaryPartition;
+
+    @ApiModelProperty("partition creation strategy")
     private String partitionCreationStrategy;
 
+    @ApiModelProperty("file format")
     private String fileFormat;
+
+    @ApiModelProperty("data encoding")
     private String dataEncoding;
-    // target separator configured in data store
+
+    @ApiModelProperty("target separator")
     private String targetSeparator;
-    private Integer status;
-    private String creator;
 
     // Hive advanced options
+    @ApiModelProperty("virtual user")
     private String virtualUser; // the responsible person of the library table is the designated virtual user
+
+    @ApiModelProperty("data consistency")
     private String dataConsistency;
+
+    @ApiModelProperty("check absolute")
     private String checkAbsolute; // absolute error
+
+    @ApiModelProperty("checkout relative")
     private String checkRelative; // relative error
 
-    // configuration in data flow
-    private String mqResourceObj;
-    private String dataSourceType;
-    private String dataType;
-    private String description;
-    private String sourceSeparator; // source separator in data flow
-    private String kvSeparator; // KV separator
-    private String lineSeparator; // line separator
-    private String dataEscapeChar; // data escape char
-
     // Hive cluster configuration
+    @ApiModelProperty("hive address")
     private String hiveAddress;
+
+    @ApiModelProperty("username")
     private String username;
+
+    @ApiModelProperty("password")
     private String password;
+
+    @ApiModelProperty("warehouse dir")
     private String warehouseDir;
+
+    @ApiModelProperty("hdfs default fs")
     private String hdfsDefaultFs;
+
+    @ApiModelProperty("hdfs ugi")
     private String hdfsUgi;
+
+    @ApiModelProperty("cluster tag")
     private String clusterTag;
 
 }

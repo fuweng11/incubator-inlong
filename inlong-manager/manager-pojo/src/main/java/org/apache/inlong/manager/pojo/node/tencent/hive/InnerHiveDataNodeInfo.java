@@ -15,34 +15,35 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.sink.tencent.hive;
+package org.apache.inlong.manager.pojo.node.tencent.hive;
 
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import org.apache.inlong.manager.common.consts.SinkType;
+import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.sink.SinkRequest;
-import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSink;
+import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 
+
+/**
+ * Data node info for inner hive
+ */
 @Data
-@SuperBuilder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@ApiModel(value = "Inner hive sink info")
-@JsonTypeDefine(value = SinkType.INNER_HIVE)
-public class InnerHiveSink extends InnerBaseHiveSink {
+@JsonTypeDefine(value = DataNodeType.INNER_HIVE)
+@ApiModel("Data node info for inner hive")
+public class InnerHiveDataNodeInfo extends InnerBaseHiveDataNodeInfo {
 
-    public InnerHiveSink() {
-        this.setSinkType(SinkType.INNER_HIVE);
+    public InnerHiveDataNodeInfo() {
+        this.setType(DataNodeType.INNER_HIVE);
     }
 
     @Override
-    public SinkRequest genSinkRequest() {
-        return CommonBeanUtils.copyProperties(this, InnerHiveSinkRequest::new);
+    public InnerHiveDataNodeRequest genRequest() {
+        return CommonBeanUtils.copyProperties(this, InnerHiveDataNodeRequest::new);
     }
 
 }

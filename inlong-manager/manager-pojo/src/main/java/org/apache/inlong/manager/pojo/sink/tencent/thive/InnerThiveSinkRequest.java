@@ -15,34 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.sink.tencent.hive;
+package org.apache.inlong.manager.pojo.sink.tencent.thive;
 
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
 import org.apache.inlong.manager.common.consts.SinkType;
-import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.sink.SinkRequest;
-import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSink;
+import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
 
+/**
+ * Inner thive sink request.
+ */
 @Data
-@SuperBuilder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@ApiModel(value = "Inner hive sink info")
-@JsonTypeDefine(value = SinkType.INNER_HIVE)
-public class InnerHiveSink extends InnerBaseHiveSink {
-
-    public InnerHiveSink() {
-        this.setSinkType(SinkType.INNER_HIVE);
-    }
-
-    @Override
-    public SinkRequest genSinkRequest() {
-        return CommonBeanUtils.copyProperties(this, InnerHiveSinkRequest::new);
-    }
+@ApiModel(value = "Inner thive sink request")
+@JsonTypeDefine(value = SinkType.INNER_THIVE)
+public class InnerThiveSinkRequest extends InnerBaseHiveSinkRequest {
 
 }

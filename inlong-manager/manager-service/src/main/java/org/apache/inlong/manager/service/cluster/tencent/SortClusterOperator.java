@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.service.cluster;
+package org.apache.inlong.manager.service.cluster.tencent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
@@ -26,44 +25,42 @@ import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
-import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
-import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterInfo;
-import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterRequest;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterInfo;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterRequest;
+import org.apache.inlong.manager.service.cluster.AbstractClusterOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/**
- * Zk cluster operator.
- */
-@Slf4j
 @Service
-public class ZkClusterOperator extends AbstractClusterOperator {
+public class SortClusterOperator extends AbstractClusterOperator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZkClusterOperator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SortClusterOperator.class);
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Override
     public Boolean accept(String clusterType) {
-        return getClusterType().equals(clusterType);
+        return getClusterType().equals(clusterType) || ClusterType.SORT_THIVE.equals(clusterType)
+                || ClusterType.SORT_CK.equals(clusterType);
     }
 
     @Override
     public String getClusterType() {
-        return ClusterType.ZOOKEEPER;
+        return ClusterType.SORT_HIVE;
     }
 
     @Override
     protected void setTargetEntity(ClusterRequest request, InlongClusterEntity targetEntity) {
-        ZkClusterRequest zkClusterRequest = (ZkClusterRequest) request;
-        CommonBeanUtils.copyProperties(zkClusterRequest, targetEntity, true);
+        BaseSortClusterRequest baseSortClusterRequest = (BaseSortClusterRequest) request;
+        CommonBeanUtils.copyProperties(baseSortClusterRequest, targetEntity, true);
         try {
-            ZkClusterDTO dto = ZkClusterDTO.getFromRequest(zkClusterRequest);
+            BaseSortClusterDTO dto = BaseSortClusterDTO.getFromRequest(baseSortClusterRequest);
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
-            LOGGER.info("success to set entity for zk cluster");
+            LOGGER.info("success to set entity for sort cluster");
         } catch (Exception e) {
             throw new BusinessException(ErrorCodeEnum.SOURCE_INFO_INCORRECT.getMessage() + ": " + e.getMessage());
         }
@@ -71,13 +68,9 @@ public class ZkClusterOperator extends AbstractClusterOperator {
 
     @Override
     public ClusterInfo getFromEntity(InlongClusterEntity entity) {
-        ZkClusterInfo clusterInfo = new ZkClusterInfo();
         if (entity == null) {
             throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND);
         }
-        ZkClusterDTO dto = ZkClusterDTO.getFromJson(entity.getExtParams());
-        CommonBeanUtils.copyProperties(entity, clusterInfo, true);
-        CommonBeanUtils.copyProperties(dto, clusterInfo, true);
-        return clusterInfo;
+        return CommonBeanUtils.copyProperties(entity, BaseSortClusterInfo::new);
     }
 }

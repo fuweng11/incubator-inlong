@@ -24,11 +24,11 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
-import org.apache.inlong.manager.pojo.node.tencent.InnerHiveDataNodeDTO;
-import org.apache.inlong.manager.pojo.node.tencent.InnerHiveDataNodeInfo;
+import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
+import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeRequest;
+import org.apache.inlong.manager.pojo.node.tencent.hive.InnerBaseHiveDataNodeDTO;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
-import org.apache.inlong.manager.pojo.node.tencent.InnerHiveDataNodeRequest;
 import org.apache.inlong.manager.service.node.AbstractDataNodeOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,16 +36,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class InnerHiveDataNodeOperator extends AbstractDataNodeOperator {
+public class InnerBaseHiveDataNodeOperator extends AbstractDataNodeOperator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(InnerHiveDataNodeOperator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(InnerBaseHiveDataNodeOperator.class);
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Override
     public Boolean accept(String dataNodeType) {
-        return getDataNodeType().equals(dataNodeType);
+        return getDataNodeType().equals(dataNodeType) || DataNodeType.INNER_THIVE.equals(dataNodeType);
     }
 
     @Override
@@ -59,23 +59,23 @@ public class InnerHiveDataNodeOperator extends AbstractDataNodeOperator {
             throw new BusinessException(ErrorCodeEnum.DATA_NODE_NOT_FOUND);
         }
 
-        InnerHiveDataNodeInfo innerHiveDataNodeInfo = new InnerHiveDataNodeInfo();
-        CommonBeanUtils.copyProperties(entity, innerHiveDataNodeInfo);
+        InnerBaseHiveDataNodeInfo innerBaseHiveDataNodeInfo = new InnerBaseHiveDataNodeInfo();
+        CommonBeanUtils.copyProperties(entity, innerBaseHiveDataNodeInfo);
         if (StringUtils.isNotBlank(entity.getExtParams())) {
-            InnerHiveDataNodeDTO dto = InnerHiveDataNodeDTO.getFromJson(entity.getExtParams());
-            CommonBeanUtils.copyProperties(dto, innerHiveDataNodeInfo);
+            InnerBaseHiveDataNodeDTO dto = InnerBaseHiveDataNodeDTO.getFromJson(entity.getExtParams());
+            CommonBeanUtils.copyProperties(dto, innerBaseHiveDataNodeInfo);
         }
 
         LOGGER.info("success to get data node info from entity");
-        return innerHiveDataNodeInfo;
+        return innerBaseHiveDataNodeInfo;
     }
 
     @Override
     protected void setTargetEntity(DataNodeRequest request, DataNodeEntity targetEntity) {
-        InnerHiveDataNodeRequest innerHiveDataNodeRequest = (InnerHiveDataNodeRequest) request;
-        CommonBeanUtils.copyProperties(innerHiveDataNodeRequest, targetEntity, true);
+        InnerBaseHiveDataNodeRequest innerBaseHiveDataNodeRequest = (InnerBaseHiveDataNodeRequest) request;
+        CommonBeanUtils.copyProperties(innerBaseHiveDataNodeRequest, targetEntity, true);
         try {
-            InnerHiveDataNodeDTO dto = InnerHiveDataNodeDTO.getFromRequest(innerHiveDataNodeRequest);
+            InnerBaseHiveDataNodeDTO dto = InnerBaseHiveDataNodeDTO.getFromRequest(innerBaseHiveDataNodeRequest);
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
             LOGGER.info("success to set entity for hive data node");
         } catch (Exception e) {

@@ -45,6 +45,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.inlong.manager.common.consts.MQType;
+import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
@@ -52,9 +53,11 @@ import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.ConsumptionEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
+import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.ConsumptionEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
@@ -77,6 +80,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -137,7 +141,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     private StreamSinkFieldEntityMapper sinkFieldMapper;
 
     @Autowired
-    private InlongClusterEntityMapper inlongClusterEntityMapper;
+    private InlongClusterEntityMapper clusterMapper;
 
     @Autowired
     private ConsumptionEntityMapper consumptionEntityMapper;
@@ -145,12 +149,15 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     @Autowired
     private InlongStreamService inlongStreamService;
 
+    @Autowired
+    private StreamSinkEntityMapper sinkMapper;
+
     public void buildHiveConfig(InlongGroupInfo groupInfo, List<InnerHiveFullInfo> hiveFullInfos)
             throws Exception {
         String groupId = groupInfo.getInlongGroupId();
         LOGGER.info("hive sort info: " + OBJECT_MAPPER.writeValueAsString(hiveFullInfos));
 
-        List<InlongClusterEntity> zkClusters = inlongClusterEntityMapper.selectByKey(groupInfo.getInlongClusterTag(),
+        List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
                 null, ClusterType.ZOOKEEPER);
         if (CollectionUtils.isEmpty(zkClusters) || StringUtils.isBlank(zkClusters.get(0).getUrl())) {
             throw new WorkflowListenerException("sort zk cluster not found for groupId=" + groupId);
@@ -160,11 +167,17 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
         String zkUrl = zkCluster.getUrl();
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
-        String topoName = clusterHiveTopo;
-        if (topoName == null || StringUtils.isBlank(topoName)) {
-            throw new WorkflowListenerException("hive topo cluster not found for groupId=" + groupId);
-        }
         for (InnerHiveFullInfo hiveFullInfo : hiveFullInfos) {
+            String topoType = hiveFullInfo.getIsThive() == 1 ? ClusterType.SORT_THIVE : ClusterType.SORT_HIVE;
+            List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
+                    groupInfo.getInlongClusterTag(), null, topoType);
+            if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
+                throw new WorkflowListenerException("sort cluster not found for groupId=" + groupId);
+            }
+            String topoName = sortClusters.get(0).getName();
+            if (topoName == null || StringUtils.isBlank(topoName)) {
+                throw new WorkflowListenerException("hive topo cluster not found for groupId=" + groupId);
+            }
             LOGGER.info("begin to push hive sort config to zkUrl={}, hiveTopo={}", zkUrl, topoName);
             DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, hiveFullInfo, topoName);
             // Update / add data under dataflow on ZK
@@ -427,7 +440,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         String groupId = groupInfo.getInlongGroupId();
         String mqType = groupInfo.getMqType();
         if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
-            InlongClusterEntity cluster = inlongClusterEntityMapper.selectByKey(groupInfo.getInlongClusterTag(), null,
+            InlongClusterEntity cluster = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(), null,
                     MQType.TUBEMQ).get(0);
             Preconditions.checkNotNull(cluster, "tube cluster not found for bid=" + groupId);
             Integer tubeId = cluster.getId();
@@ -447,7 +460,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             // Full path of topic in pulsar
             String fullTopic = "persistent://" + tenant + "/" + namespace + "/" + topic;
             try {
-                InlongClusterEntity cluster = inlongClusterEntityMapper.selectByKey(
+                InlongClusterEntity cluster = clusterMapper.selectByKey(
                         groupInfo.getInlongClusterTag(), null, MQType.PULSAR).get(0);
                 // Multiple adminurls should be configured for pulsar,
                 // otherwise all requests will be sent to the same broker
@@ -577,14 +590,22 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             return;
         }
 
-        List<InlongClusterEntity> zkClusters = inlongClusterEntityMapper.selectByKey(groupInfo.getInlongClusterTag(),
+        List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
                 null, ClusterType.ZOOKEEPER);
         if (CollectionUtils.isEmpty(zkClusters) || StringUtils.isBlank(zkClusters.get(0).getUrl())) {
             throw new WorkflowListenerException("sort zk cluster not found for groupId=" + groupId);
         }
         InlongClusterEntity zkCluster = zkClusters.get(0);
         ZkClusterDTO zkClusterDTO = ZkClusterDTO.getFromJson(zkCluster.getExtParams());
-        String topoName = clusterHiveTopo;
+        StreamSinkEntity entity = sinkMapper.selectByPrimaryKey(sinkId);
+        String topoType = Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE) ? ClusterType.SORT_THIVE
+                : ClusterType.SORT_HIVE;
+        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
+                groupInfo.getInlongClusterTag(), null, topoType);
+        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
+            throw new WorkflowListenerException("sort cluster not found for groupId=" + groupId);
+        }
+        String topoName = sortClusters.get(0).getName();
         if (topoName == null || StringUtils.isBlank(topoName)) {
             throw new WorkflowListenerException("hive topo cluster not found for groupId=" + groupId);
         }
@@ -593,8 +614,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
         LOGGER.info("try to delete hive sort config from {}, idList={}", zkUrl, sinkId);
         // It could be hive or thive
-        ZkTools.removeDataFlowFromCluster(topoName, STORAGE_HIVE + "_" + sinkId, zkUrl, zkRoot);
-        ZkTools.removeDataFlowFromCluster(topoName, STORAGE_THIVE + "_" + sinkId, zkUrl, zkRoot);
+        ZkTools.removeDataFlowFromCluster(topoName, sinkId.toString(), zkUrl, zkRoot);
         LOGGER.info("success to delete hive sort config from {}, idList={}", zkUrl, sinkId);
     }
 

@@ -20,7 +20,6 @@ package org.apache.inlong.manager.service.sink.tencent.hive;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.InlongConstants;
-import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
@@ -32,11 +31,10 @@ import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.pojo.sink.SinkField;
 import org.apache.inlong.manager.pojo.sink.SinkRequest;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
-import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSink;
-import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSinkDTO;
-import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSinkRequest;
+import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSink;
+import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.service.sink.AbstractSinkOperator;
-
 import org.apache.inlong.manager.service.sink.tencent.us.UsTaskService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,9 +46,9 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-public class InnerHiveSinkOperator extends AbstractSinkOperator {
+public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(InnerHiveSinkOperator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(InnerBaseHiveSinkOperator.class);
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -63,7 +61,7 @@ public class InnerHiveSinkOperator extends AbstractSinkOperator {
 
     @Override
     public Boolean accept(String sinkType) {
-        return SinkType.INNER_HIVE.equals(sinkType);
+        return SinkType.INNER_HIVE.equals(sinkType) || SinkType.INNER_THIVE.equals(sinkType);
     }
 
     @Override
@@ -73,14 +71,15 @@ public class InnerHiveSinkOperator extends AbstractSinkOperator {
 
     @Override
     protected void setTargetEntity(SinkRequest request, StreamSinkEntity targetEntity) {
-        Preconditions.checkTrue(this.getSinkType().equals(request.getSinkType()),
+        String sinkType = request.getSinkType();
+        Preconditions.checkTrue(this.getSinkType().equals(sinkType) || SinkType.INNER_THIVE.equals(sinkType),
                 ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT.getMessage() + ": " + getSinkType());
-        InnerHiveSinkRequest sinkRequest = (InnerHiveSinkRequest) request;
-        if (Objects.equals(sinkRequest.getIsThive(), TencentConstants.THIVE_TYPE)) {
+        InnerBaseHiveSinkRequest sinkRequest = (InnerBaseHiveSinkRequest) request;
+        if (Objects.equals(SinkType.INNER_THIVE, request.getSinkType())) {
             this.setThiveParam(sinkRequest);
         }
         try {
-            InnerHiveSinkDTO dto = InnerHiveSinkDTO.getFromRequest(sinkRequest);
+            InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromRequest(sinkRequest);
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
         } catch (Exception e) {
             LOGGER.error("parsing json string to sink info failed", e);
@@ -90,12 +89,12 @@ public class InnerHiveSinkOperator extends AbstractSinkOperator {
 
     @Override
     public StreamSink getFromEntity(StreamSinkEntity entity) {
-        InnerHiveSink sink = new InnerHiveSink();
+        InnerBaseHiveSink sink = new InnerBaseHiveSink();
         if (entity == null) {
             return sink;
         }
 
-        InnerHiveSinkDTO dto = InnerHiveSinkDTO.getFromJson(entity.getExtParams());
+        InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(entity.getExtParams());
         CommonBeanUtils.copyProperties(entity, sink, true);
         CommonBeanUtils.copyProperties(dto, sink, true);
         List<SinkField> sinkFields = super.getSinkFields(entity.getId());
@@ -103,7 +102,7 @@ public class InnerHiveSinkOperator extends AbstractSinkOperator {
         return sink;
     }
 
-    private void setThiveParam(InnerHiveSinkRequest sinkRequest) {
+    private void setThiveParam(InnerBaseHiveSinkRequest sinkRequest) {
         sinkRequest.setPrimaryPartition("tdbank_imp_date");
         String groupId = sinkRequest.getInlongGroupId();
         String streamId = sinkRequest.getInlongStreamId();
@@ -127,16 +126,16 @@ public class InnerHiveSinkOperator extends AbstractSinkOperator {
             throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
         }
         // If the type is inner hive, the US task needs to be frozen
-        InnerHiveSinkDTO dto = InnerHiveSinkDTO.getFromJson(entity.getExtParams());
-        if (dto.getIsThive() == TencentConstants.THIVE_TYPE) {
-            freezeUsTaskForThive(dto, entity.getId(), operator);
+        if (Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE)) {
+            freezeUsTaskForThive(entity, entity.getId(), operator);
         }
         sinkFieldMapper.logicDeleteAll(entity.getId());
     }
 
-    private void freezeUsTaskForThive(InnerHiveSinkDTO dto, Integer id, String operator) {
-        Preconditions.checkTrue(dto != null && dto.getIsThive() == 1,
+    private void freezeUsTaskForThive(StreamSinkEntity entity, Integer id, String operator) {
+        Preconditions.checkTrue(entity != null && Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE),
                 "not found thive storage with id " + id);
+        InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(entity.getExtParams());
         String verifiedTaskId = dto.getVerifiedTaskId();
         if (StringUtils.isNotBlank(verifiedTaskId)) {
             usTaskService.freezeUsTask(verifiedTaskId, operator);

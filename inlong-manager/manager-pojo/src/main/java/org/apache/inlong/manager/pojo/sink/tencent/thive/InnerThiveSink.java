@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.sink.tencent.hive;
+package org.apache.inlong.manager.pojo.sink.tencent.thive;
 
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
@@ -32,17 +32,16 @@ import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSink;
 @SuperBuilder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@ApiModel(value = "Inner hive sink info")
-@JsonTypeDefine(value = SinkType.INNER_HIVE)
-public class InnerHiveSink extends InnerBaseHiveSink {
+@ApiModel(value = "Thive sink info")
+@JsonTypeDefine(value = SinkType.INNER_THIVE)
+public class InnerThiveSink extends InnerBaseHiveSink {
 
-    public InnerHiveSink() {
-        this.setSinkType(SinkType.INNER_HIVE);
+    public InnerThiveSink() {
+        this.setSinkType(SinkType.INNER_THIVE);
     }
 
     @Override
     public SinkRequest genSinkRequest() {
-        return CommonBeanUtils.copyProperties(this, InnerHiveSinkRequest::new);
+        return CommonBeanUtils.copyProperties(this, InnerThiveSinkRequest::new);
     }
-
 }

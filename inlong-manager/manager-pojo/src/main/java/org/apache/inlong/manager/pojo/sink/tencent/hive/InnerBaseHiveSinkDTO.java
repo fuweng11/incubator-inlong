@@ -25,28 +25,37 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
-import org.apache.inlong.manager.pojo.node.tencent.InnerHiveDataNodeInfo;
 import org.apache.inlong.manager.common.util.AESUtils;
+import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
+import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
 
 import javax.validation.constraints.NotNull;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
- * Thive sink info
+ * Base sink info for inner Hive or THive.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InnerHiveSinkDTO {
+public class InnerBaseHiveSinkDTO {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(); // thread safe
 
-    @ApiModelProperty("is thive")
-    private Integer isThive;
+    @ApiModelProperty("bg id")
+    private Integer bgId;
+
+    @ApiModelProperty("product id")
+    private Integer productId;
+
+    @ApiModelProperty("product name")
+    private String productName;
 
     @ApiModelProperty("us task id")
     private String usTaskId;
@@ -102,6 +111,7 @@ public class InnerHiveSinkDTO {
     // Hive advanced options
     @ApiModelProperty("virtual user")
     private String virtualUser; // the responsible person of the library table is the designated virtual user
+
     @ApiModelProperty("data consistency")
     private String dataConsistency;
 
@@ -112,8 +122,6 @@ public class InnerHiveSinkDTO {
     private String checkRelative; // relative error
 
     // configuration in data flow
-    @ApiModelProperty("mq resource obj")
-    private String mqResourceObj;
 
     @ApiModelProperty("data source type")
     private String dataSourceType;
@@ -164,10 +172,11 @@ public class InnerHiveSinkDTO {
     /**
      * Get the dto instance from the request
      */
-    public static InnerHiveSinkDTO getFromRequest(InnerHiveSinkRequest request) throws Exception {
+    public static InnerBaseHiveSinkDTO getFromRequest(InnerBaseHiveSinkRequest request) throws Exception {
         Integer encryptVersion = AESUtils.getCurrentVersion(null);
-        return InnerHiveSinkDTO.builder()
-                .isThive(request.getIsThive())
+        return InnerBaseHiveSinkDTO.builder()
+                .productId(request.getProductId())
+                .productName(request.getProductName())
                 .dbName(request.getDbName())
                 .tableName(request.getTableName())
                 .appGroupName(request.getAppGroupName())
@@ -188,10 +197,10 @@ public class InnerHiveSinkDTO {
     /**
      * Get Hive sink info from JSON string
      */
-    public static InnerHiveSinkDTO getFromJson(@NotNull String extParams) {
+    public static InnerBaseHiveSinkDTO getFromJson(@NotNull String extParams) {
         try {
             OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return OBJECT_MAPPER.readValue(extParams, InnerHiveSinkDTO.class);
+            return OBJECT_MAPPER.readValue(extParams, InnerBaseHiveSinkDTO.class);
         } catch (Exception e) {
             System.out.println(e);
             throw new BusinessException(ErrorCodeEnum.SINK_INFO_INCORRECT.getMessage());
@@ -201,13 +210,18 @@ public class InnerHiveSinkDTO {
     /**
      * Get Hive table info
      */
-    public static InnerHiveFullInfo getInnerHiveTableInfo(InnerHiveSinkDTO innerHiveInfo, SinkInfo sinkInfo,
-            InnerHiveDataNodeInfo innerHiveDataNodeInfo) {
+    public static InnerHiveFullInfo getHiveFullInfo(InnerBaseHiveSinkDTO innerHiveInfo, SinkInfo sinkInfo,
+            InnerBaseHiveDataNodeInfo innerHiveDataNodeInfo) {
+        Integer isThive = Objects.equals(sinkInfo.getSinkType(), SinkType.INNER_THIVE) ? 1 : 0;
         return InnerHiveFullInfo.builder()
                 .sinkId(sinkInfo.getId())
+                .bgId(innerHiveInfo.getBgId())
+                .productId(innerHiveInfo.getProductId())
+                .productName(innerHiveInfo.getProductName())
+                .appGroupName(innerHiveInfo.getAppGroupName())
                 .inlongGroupId(sinkInfo.getInlongGroupId())
                 .inlongStreamId(sinkInfo.getInlongStreamId())
-                .isThive(innerHiveInfo.getIsThive())
+                .isThive(isThive)
                 .usTaskId(innerHiveInfo.getUsTaskId())
                 .verifiedTaskId(innerHiveInfo.getVerifiedTaskId())
                 .appGroupName(innerHiveInfo.getAppGroupName())
@@ -231,6 +245,7 @@ public class InnerHiveSinkDTO {
                 .mqResourceObj(sinkInfo.getMqResource())
                 .dataType(sinkInfo.getDataType())
                 .sourceSeparator(sinkInfo.getSourceSeparator())
+                .dataEscapeChar(sinkInfo.getDataEscapeChar())
                 .hiveAddress(innerHiveDataNodeInfo.getHiveAddress())
                 .username(innerHiveDataNodeInfo.getUsername())
                 .password(innerHiveDataNodeInfo.getToken())
@@ -241,7 +256,7 @@ public class InnerHiveSinkDTO {
                 .build();
     }
 
-    private InnerHiveSinkDTO decryptPassword() throws Exception {
+    private InnerBaseHiveSinkDTO decryptPassword() throws Exception {
         if (StringUtils.isNotEmpty(this.password)) {
             byte[] passwordBytes = AESUtils.decryptAsString(this.password, this.encryptVersion);
             this.password = new String(passwordBytes, StandardCharsets.UTF_8);
