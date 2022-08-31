@@ -226,64 +226,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-exec</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.calcite</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.calcite.avatica</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.curator</groupId>
-                    <artifactId>apache-curator</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-yarn-registry</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hive</groupId>
-                    <artifactId>hive-llap-tez</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hive</groupId>
-                    <artifactId>hive-vector-code-gen</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.ivy</groupId>
-                    <artifactId>ivy</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.codehaus.groovy</groupId>
-                    <artifactId>groovy-all</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.antlr</groupId>
-                    <artifactId>ST4</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>stax</groupId>
-                    <artifactId>stax-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
@@ -422,7 +364,6 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
-            <version>${tq-hadoop.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>servlet-api</artifactId>
@@ -437,7 +378,6 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-            <version>${tq-hadoop.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.servlet</groupId>
@@ -466,7 +406,6 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-mapreduce-client-core</artifactId>
-            <version>${tq-hadoop.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
@@ -561,6 +500,116 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-core</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Tencent inner dependencies -->
+        <dependency>
+            <groupId>com.tencent.tdw</groupId>
+            <artifactId>tdw-api-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.tencent.oceanus</groupId>
+            <artifactId>oceanus-etl</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-formats-bon</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>curator-framework</artifactId>
+                    <groupId>org.apache.curator</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>curator-recipes</artifactId>
+                    <groupId>org.apache.curator</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jackson-databind</artifactId>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>junit</artifactId>
+                    <groupId>junit</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>log4j</artifactId>
+                    <groupId>log4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>tdbank-commons</artifactId>
+                    <groupId>com.tencent.tdbank</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>elasticsearch-rest-client-sniffer</artifactId>
+                    <groupId>org.elasticsearch.client</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>guava</artifactId>
+                    <groupId>com.google.guava</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>log4j-to-slf4j</artifactId>
+                    <groupId>org.apache.logging.log4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>joda-time</artifactId>
+                    <groupId>joda-time</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>force-shading</artifactId>
+                    <groupId>org.apache.flink</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>log4j-1.2-api</artifactId>
+                    <groupId>org.apache.logging.log4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>log4j-api</artifactId>
+                    <groupId>org.apache.logging.log4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>TDBusSDK</artifactId>
+                    <groupId>com.tencent.tdbank</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.tencent.oceanus.etl</groupId>
+            <artifactId>oceanus-etl-api</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>curator-framework</artifactId>
+                    <groupId>org.apache.curator</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jsr305</artifactId>
+                    <groupId>com.google.code.findbugs</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>log4j-1.2-api</artifactId>
+                    <groupId>org.apache.logging.log4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>oceanus-etl-shaded</artifactId>
+                    <groupId>com.tencent.oceanus.etl</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>
