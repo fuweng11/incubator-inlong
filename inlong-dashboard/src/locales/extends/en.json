@@ -12,7 +12,7 @@
   "meta.Sinks.THive.DataSeparator": "Data Separator",
   "meta.Sinks.THive.DataConsistency": "Data Consistency",
   "meta.Sinks.THive.PartitionType": "Partition Type",
-  "meta.Sinks.THive.PrimaryPartition": "Primary Partition",
+  "meta.Sinks.THive.PartitionInterval": "Partition Interval",
   "meta.Sinks.THive.PartitionCreationStrategy": "Partition Creation Strategy",
   "meta.Sinks.THive.FieldName": "FieldName",
   "meta.Sinks.THive.FieldType": "FieldType",

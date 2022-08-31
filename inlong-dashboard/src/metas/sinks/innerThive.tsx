@@ -141,9 +141,29 @@ const getForm: GetStorageFormFieldsType = (
       _inTable: true,
     },
     {
-      type: 'input',
-      label: i18n.t('meta.Sinks.THive.PartitionType'),
       name: 'partitionType',
+      type: 'radio',
+      label: i18n.t('meta.Sinks.THive.PartitionType'),
+      initialValue: 'LIST',
+      rules: [{ required: true }],
+      props: {
+        disabled: isEdit && [110, 130].includes(currentValues?.status),
+        options: [
+          {
+            label: 'LIST',
+            value: 'LIST',
+          },
+          {
+            label: 'RANGE',
+            value: 'RANGE',
+          },
+        ],
+      },
+    },
+    {
+      type: 'input',
+      label: i18n.t('meta.Sinks.THive.PartitionInterval'),
+      name: 'partitionInterval',
       rules: [{ required: true }],
       props: {
         disabled: isEdit && [110, 130].includes(currentValues?.status),
@@ -169,16 +189,6 @@ const getForm: GetStorageFormFieldsType = (
         },
         _inTable: true,
       },
-    },
-    {
-      type: 'input',
-      label: i18n.t('meta.Sinks.THive.PrimaryPartition'),
-      name: 'primaryPartition',
-      rules: [{ required: true }],
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-      },
-      _inTable: true,
     },
     {
       type: 'select',

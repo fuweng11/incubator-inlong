@@ -12,7 +12,7 @@
   "meta.Sinks.THive.DataSeparator": "目标字段分隔符",
   "meta.Sinks.THive.DataConsistency": "数据一致性",
   "meta.Sinks.THive.PartitionType": "分区类型",
-  "meta.Sinks.THive.PrimaryPartition": "一级分区",
+  "meta.Sinks.THive.PartitionInterval": "分区策略",
   "meta.Sinks.THive.PartitionCreationStrategy": "分区创建策略",
   "meta.Sinks.THive.FieldName": "字段名",
   "meta.Sinks.THive.FieldType": "字段类型",
