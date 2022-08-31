@@ -23,6 +23,30 @@ import type { FieldItemType } from '@/metas/common';
 export const innerThive: FieldItemType[] = [
   {
     type: 'input',
+    label: 'hiveAddress',
+    name: 'hiveAddress',
+    rules: [{ required: true }],
+  },
+  {
+    type: 'input',
+    label: 'username',
+    name: 'username',
+    rules: [{ required: true }],
+  },
+  {
+    type: 'input',
+    label: 'token',
+    name: 'token',
+    rules: [{ required: true }],
+  },
+  {
+    type: 'input',
+    label: 'clusterTag',
+    name: 'clusterTag',
+    rules: [{ required: true }],
+  },
+  {
+    type: 'input',
     label: 'warehouseDir',
     name: 'warehouseDir',
     rules: [{ required: true }],

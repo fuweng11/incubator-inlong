@@ -20,4 +20,23 @@
 // import i18n from '@/i18n';
 import type { FieldItemType } from '@/metas/common';
 
-export const innerClickhouse: FieldItemType[] = [];
+export const innerClickhouse: FieldItemType[] = [
+  {
+    type: 'input',
+    label: 'url',
+    name: 'url',
+    rules: [{ required: true }],
+  },
+  {
+    type: 'input',
+    label: 'username',
+    name: 'username',
+    rules: [{ required: true }],
+  },
+  {
+    type: 'input',
+    label: 'token',
+    name: 'token',
+    rules: [{ required: true }],
+  },
+];

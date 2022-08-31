@@ -22,16 +22,19 @@ import type { ClsConfigItemType } from './common/types';
 export const Zk: ClsConfigItemType[] = [
   {
     type: 'input',
+    label: 'URL',
+    name: 'url',
+    rules: [{ required: true }],
+    initialValue: '127.0.0.1:9092',
+  },
+  {
+    type: 'input',
     label: 'tubeRoot',
     name: 'tubeRoot',
-    rules: [{ required: true }],
-    initialValue: '/inlong_tube',
   },
   {
     type: 'input',
     label: 'pulsarRoot',
     name: 'pulsarRoot',
-    rules: [{ required: true }],
-    initialValue: '/inlong_pulsar',
   },
 ];
