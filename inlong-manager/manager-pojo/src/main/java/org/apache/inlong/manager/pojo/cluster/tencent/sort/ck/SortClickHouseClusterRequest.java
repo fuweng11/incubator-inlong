@@ -23,7 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterRequest;
+import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
 
 /**
  * Inlong sort cluster request for click house task
@@ -33,7 +33,7 @@ import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterReques
 @EqualsAndHashCode(callSuper = true)
 @JsonTypeDefine(value = ClusterType.SORT_CK)
 @ApiModel("Inlong sort cluster request for click house task")
-public class SortClickHouseClusterRequest extends BaseSortClusterRequest {
+public class SortClickHouseClusterRequest extends ClusterRequest {
 
     public SortClickHouseClusterRequest() {
         this.setType(ClusterType.SORT_CK);

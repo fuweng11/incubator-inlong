@@ -33,7 +33,7 @@ import javax.validation.constraints.NotNull;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @ApiModel(value = "Inner base hive sink request")
-public class InnerBaseHiveSinkRequest extends SinkRequest {
+public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
 
     @ApiModelProperty("product id")
     private Integer productId;

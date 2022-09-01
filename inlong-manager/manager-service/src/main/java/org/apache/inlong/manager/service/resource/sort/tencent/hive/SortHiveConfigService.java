@@ -154,6 +154,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
     public void buildHiveConfig(InlongGroupInfo groupInfo, List<InnerHiveFullInfo> hiveFullInfos)
             throws Exception {
+        if (CollectionUtils.isEmpty(hiveFullInfos)) {
+            return;
+        }
         String groupId = groupInfo.getInlongGroupId();
         LOGGER.info("hive sort info: " + OBJECT_MAPPER.writeValueAsString(hiveFullInfos));
 
@@ -454,7 +457,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             sourceInfo = new TubeSourceInfo(topic, masterAddress, consumerGroup,
                     deserializationInfo, sourceFields.toArray(new FieldInfo[0]));
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
-            String tenant = "tenant_" + extInfosMap.get("appGroupName");
+            String tenant = "tenant_" + hiveFullInfo.getAppGroupName();
             String namespace = groupInfo.getMqResource();
             String topic = hiveFullInfo.getMqResourceObj();
             // Full path of topic in pulsar

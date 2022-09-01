@@ -18,16 +18,19 @@
 package org.apache.inlong.manager.service.cluster.tencent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
+import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
-import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterInfo;
-import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterRequest;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.ck.SortClickHouseClusterInfo;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.hive.SortHiveClusterInfo;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.thive.SortThiveClusterInfo;
 import org.apache.inlong.manager.service.cluster.AbstractClusterOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,10 +58,10 @@ public class SortClusterOperator extends AbstractClusterOperator {
 
     @Override
     protected void setTargetEntity(ClusterRequest request, InlongClusterEntity targetEntity) {
-        BaseSortClusterRequest baseSortClusterRequest = (BaseSortClusterRequest) request;
-        CommonBeanUtils.copyProperties(baseSortClusterRequest, targetEntity, true);
+        ClusterRequest clusterRequest = request;
+        CommonBeanUtils.copyProperties(clusterRequest, targetEntity, true);
         try {
-            BaseSortClusterDTO dto = BaseSortClusterDTO.getFromRequest(baseSortClusterRequest);
+            BaseSortClusterDTO dto = BaseSortClusterDTO.getFromRequest(clusterRequest);
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
             LOGGER.info("success to set entity for sort cluster");
         } catch (Exception e) {
@@ -68,9 +71,28 @@ public class SortClusterOperator extends AbstractClusterOperator {
 
     @Override
     public ClusterInfo getFromEntity(InlongClusterEntity entity) {
-        if (entity == null) {
-            throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND);
+        Preconditions.checkNotNull(entity, ErrorCodeEnum.CLUSTER_NOT_FOUND.getMessage());
+
+        ClusterInfo sortClusterInfo;
+        switch (entity.getType()) {
+            case ClusterType.SORT_HIVE:
+                sortClusterInfo = new SortHiveClusterInfo();
+                break;
+            case ClusterType.SORT_THIVE:
+                sortClusterInfo = new SortThiveClusterInfo();
+                break;
+            case ClusterType.SORT_CK:
+                sortClusterInfo = new SortClickHouseClusterInfo();
+                break;
+            default:
+                throw new BusinessException("unsupported cluster type " + entity.getType());
         }
-        return CommonBeanUtils.copyProperties(entity, BaseSortClusterInfo::new);
+
+        CommonBeanUtils.copyProperties(entity, sortClusterInfo);
+        if (StringUtils.isNotBlank(entity.getExtParams())) {
+            BaseSortClusterDTO dto = BaseSortClusterDTO.getFromJson(entity.getExtParams());
+            CommonBeanUtils.copyProperties(dto, sortClusterInfo);
+        }
+        return sortClusterInfo;
     }
 }

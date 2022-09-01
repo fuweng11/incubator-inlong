@@ -22,13 +22,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
+import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
-import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeRequest;
 import org.apache.inlong.manager.pojo.node.tencent.hive.InnerBaseHiveDataNodeDTO;
-import org.apache.inlong.manager.common.util.CommonBeanUtils;
-import org.apache.inlong.manager.dao.entity.DataNodeEntity;
+import org.apache.inlong.manager.pojo.node.tencent.hive.InnerHiveDataNodeInfo;
+import org.apache.inlong.manager.pojo.node.tencent.thive.InnerThiveDataNodeInfo;
 import org.apache.inlong.manager.service.node.AbstractDataNodeOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,19 +57,26 @@ public class InnerBaseHiveDataNodeOperator extends AbstractDataNodeOperator {
 
     @Override
     public DataNodeInfo getFromEntity(DataNodeEntity entity) {
-        if (entity == null) {
-            throw new BusinessException(ErrorCodeEnum.DATA_NODE_NOT_FOUND);
+        Preconditions.checkNotNull(entity, ErrorCodeEnum.DATA_NODE_NOT_FOUND.getMessage());
+        DataNodeInfo dataNodeInfo;
+        switch (entity.getType()) {
+            case DataNodeType.INNER_HIVE:
+                dataNodeInfo = new InnerHiveDataNodeInfo();
+                break;
+            case DataNodeType.INNER_THIVE:
+                dataNodeInfo = new InnerThiveDataNodeInfo();
+                break;
+            default:
+                throw new BusinessException("unsupported data node type " + entity.getType());
         }
-
-        InnerBaseHiveDataNodeInfo innerBaseHiveDataNodeInfo = new InnerBaseHiveDataNodeInfo();
-        CommonBeanUtils.copyProperties(entity, innerBaseHiveDataNodeInfo);
+        CommonBeanUtils.copyProperties(entity, dataNodeInfo);
         if (StringUtils.isNotBlank(entity.getExtParams())) {
             InnerBaseHiveDataNodeDTO dto = InnerBaseHiveDataNodeDTO.getFromJson(entity.getExtParams());
-            CommonBeanUtils.copyProperties(dto, innerBaseHiveDataNodeInfo);
+            CommonBeanUtils.copyProperties(dto, dataNodeInfo);
         }
 
         LOGGER.info("success to get data node info from entity");
-        return innerBaseHiveDataNodeInfo;
+        return dataNodeInfo;
     }
 
     @Override

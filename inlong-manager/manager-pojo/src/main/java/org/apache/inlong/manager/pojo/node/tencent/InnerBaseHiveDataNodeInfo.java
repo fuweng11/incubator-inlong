@@ -22,7 +22,6 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 
 /**
@@ -32,7 +31,7 @@ import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @ApiModel("Base data node info for inner hive")
-public class InnerBaseHiveDataNodeInfo extends DataNodeInfo {
+public abstract class InnerBaseHiveDataNodeInfo extends DataNodeInfo {
 
     @ApiModelProperty(value = "hive address")
     private String hiveAddress;
@@ -49,8 +48,4 @@ public class InnerBaseHiveDataNodeInfo extends DataNodeInfo {
     @ApiModelProperty(value = "cluster tag")
     private String clusterTag;
 
-    @Override
-    public InnerBaseHiveDataNodeRequest genRequest() {
-        return CommonBeanUtils.copyProperties(this, InnerBaseHiveDataNodeRequest::new);
-    }
 }

@@ -34,6 +34,8 @@ import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSink;
 import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSink;
+import org.apache.inlong.manager.pojo.sink.tencent.thive.InnerThiveSink;
 import org.apache.inlong.manager.service.sink.AbstractSinkOperator;
 import org.apache.inlong.manager.service.sink.tencent.us.UsTaskService;
 import org.slf4j.Logger;
@@ -89,11 +91,18 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
 
     @Override
     public StreamSink getFromEntity(StreamSinkEntity entity) {
-        InnerBaseHiveSink sink = new InnerBaseHiveSink();
-        if (entity == null) {
-            return sink;
+        Preconditions.checkNotNull(entity, ErrorCodeEnum.SINK_INFO_NOT_FOUND.getMessage());
+        InnerBaseHiveSink sink;
+        switch (entity.getSinkType()) {
+            case SinkType.INNER_HIVE:
+                sink = new InnerHiveSink();
+                break;
+            case SinkType.INNER_THIVE:
+                sink = new InnerThiveSink();
+                break;
+            default:
+                throw new BusinessException("unsupported sink type " + entity.getSinkType());
         }
-
         InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(entity.getExtParams());
         CommonBeanUtils.copyProperties(entity, sink, true);
         CommonBeanUtils.copyProperties(dto, sink, true);

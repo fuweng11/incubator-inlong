@@ -21,11 +21,10 @@ import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
-import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeRequest;
+import org.apache.inlong.manager.pojo.node.tencent.hive.InnerHiveDataNodeRequest;
 import org.apache.inlong.manager.pojo.sink.SinkField;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
-import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSink;
-import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSink;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSinkRequest;
 import org.apache.inlong.manager.pojo.tencent.us.USConfiguration;
 import org.apache.inlong.manager.service.ServiceBaseTest;
@@ -130,7 +129,7 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
         String url = "127.0.0.1:8080";
         String username = "admin";
         String password = "123";
-        InnerBaseHiveDataNodeRequest request = new InnerBaseHiveDataNodeRequest();
+        InnerHiveDataNodeRequest request = new InnerHiveDataNodeRequest();
         request.setName(nodeName);
         request.setType(type);
         request.setUrl(url);
@@ -165,9 +164,9 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
         StreamSink streamSink = sinkService.get(sinkId);
         Assertions.assertEquals(globalGroupId, streamSink.getInlongGroupId());
 
-        InnerBaseHiveSink sink = (InnerBaseHiveSink) streamSink;
+        InnerHiveSink sink = (InnerHiveSink) streamSink;
         sink.setEnableCreateResource(InlongConstants.DISABLE_CREATE_RESOURCE);
-        InnerBaseHiveSinkRequest request = CommonBeanUtils.copyProperties(sink, InnerBaseHiveSinkRequest::new);
+        InnerHiveSinkRequest request = CommonBeanUtils.copyProperties(sink, InnerHiveSinkRequest::new);
         boolean result = sinkService.update(request, globalOperator);
         Assertions.assertTrue(result);
 

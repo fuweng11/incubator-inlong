@@ -82,6 +82,9 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
 
     public void buildCkConfig(InlongGroupInfo groupInfo, List<InnerClickHouseSink> clickHouseSinkList)
             throws Exception {
+        if (CollectionUtils.isEmpty(clickHouseSinkList)) {
+            return;
+        }
         // Use new protocol for all
         List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
                 null, ClusterType.ZOOKEEPER);

@@ -24,6 +24,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
 
 import javax.validation.constraints.NotNull;
 
@@ -40,7 +41,7 @@ public class BaseSortClusterDTO {
     /**
      * Get the dto instance from the request
      */
-    public static BaseSortClusterDTO getFromRequest(BaseSortClusterRequest request) throws Exception {
+    public static BaseSortClusterDTO getFromRequest(ClusterRequest request) throws Exception {
         return BaseSortClusterDTO.builder()
                 .build();
     }

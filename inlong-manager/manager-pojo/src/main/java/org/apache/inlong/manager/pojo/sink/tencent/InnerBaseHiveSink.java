@@ -34,7 +34,7 @@ import org.apache.inlong.manager.pojo.sink.StreamSink;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @ApiModel(value = "Base hive sink info")
-public class InnerBaseHiveSink extends StreamSink {
+public abstract class InnerBaseHiveSink extends StreamSink {
 
     @ApiModelProperty("product id")
     private Integer productId;

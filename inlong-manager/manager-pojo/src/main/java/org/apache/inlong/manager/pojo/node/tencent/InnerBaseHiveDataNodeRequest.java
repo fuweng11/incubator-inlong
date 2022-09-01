@@ -31,7 +31,7 @@ import org.apache.inlong.manager.pojo.node.DataNodeRequest;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @ApiModel("Base data node request for inner Hive")
-public class InnerBaseHiveDataNodeRequest extends DataNodeRequest {
+public abstract class InnerBaseHiveDataNodeRequest extends DataNodeRequest {
 
     @ApiModelProperty(value = "hive address")
     private String hiveAddress;

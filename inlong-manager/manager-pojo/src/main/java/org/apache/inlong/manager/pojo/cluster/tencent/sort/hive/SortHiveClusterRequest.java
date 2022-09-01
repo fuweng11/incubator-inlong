@@ -23,7 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterRequest;
+import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
 
 /**
  * Inlong sort cluster request for hive task
@@ -33,7 +33,7 @@ import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterReques
 @EqualsAndHashCode(callSuper = true)
 @JsonTypeDefine(value = ClusterType.SORT_HIVE)
 @ApiModel("Inlong sort cluster request for hive task")
-public class SortHiveClusterRequest extends BaseSortClusterRequest {
+public class SortHiveClusterRequest extends ClusterRequest {
 
     public SortHiveClusterRequest() {
         this.setType(ClusterType.SORT_HIVE);
