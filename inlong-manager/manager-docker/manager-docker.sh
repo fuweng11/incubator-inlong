@@ -53,6 +53,20 @@ sed -i "s/metrics.audit.proxy.hosts=.*$/metrics.audit.proxy.hosts=${AUDIT_PROXY_
 # for db sql
 sed -i "s/apache_inlong_manager/${MANAGER_DBNAME}/g" "${sql_file}"
 
+if [[ "${DEV_ARGS}" ]]; then
+  IFS=';' read -r -a array <<< "$DEV_ARGS"
+  for item in "${array[@]}"
+  do
+    item=`echo "$item" | awk '$1=$1'`
+    key=${item%%=*}
+    if [[ `grep -c "$key" "${file_path}"/conf/application-dev.properties` -ne '0' ]]; then
+      sed -i "s/$key=.*$/$item/g" "${file_path}"/conf/application-dev.properties
+    else
+      echo "$item" | awk '$1=$1' >> "${file_path}"/conf/application-dev.properties
+    fi
+  done
+fi
+
 # startup the application
 JAVA_OPTS="-Dspring.profiles.active=${ACTIVE_PROFILE}"
 
