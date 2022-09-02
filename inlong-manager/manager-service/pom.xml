@@ -506,6 +506,12 @@
         <dependency>
             <groupId>com.tencent.tdw</groupId>
             <artifactId>tdw-api-client</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>security-common</artifactId>
+                    <groupId>com.tencent.tdw</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.tencent.oceanus</groupId>

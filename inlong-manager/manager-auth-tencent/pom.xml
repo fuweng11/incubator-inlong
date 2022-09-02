@@ -45,10 +45,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.tencent.tdw</groupId>
-            <artifactId>security-common</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
