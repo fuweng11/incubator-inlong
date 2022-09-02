@@ -44,6 +44,7 @@ import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.MQType;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
@@ -457,19 +458,24 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             sourceInfo = new TubeSourceInfo(topic, masterAddress, consumerGroup,
                     deserializationInfo, sourceFields.toArray(new FieldInfo[0]));
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
-            String tenant = "tenant_" + hiveFullInfo.getAppGroupName();
+            List<InlongClusterEntity> pulsarClusters = clusterMapper.selectByKey(
+                    groupInfo.getInlongClusterTag(), null, MQType.PULSAR);
+            if (CollectionUtils.isEmpty(pulsarClusters)) {
+                throw new WorkflowListenerException("pulsar cluster not found for groupId=" + groupId);
+            }
+            InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
+            // Multiple adminurls should be configured for pulsar,
+            // otherwise all requests will be sent to the same broker
+            PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
+            String adminUrl = pulsarClusterDTO.getAdminUrl();
+            String masterAddress = pulsarCluster.getUrl();
+            String tenant = pulsarClusterDTO.getTenant() == null ? InlongConstants.DEFAULT_PULSAR_TENANT
+                    : pulsarClusterDTO.getTenant();
             String namespace = groupInfo.getMqResource();
             String topic = hiveFullInfo.getMqResourceObj();
             // Full path of topic in pulsar
             String fullTopic = "persistent://" + tenant + "/" + namespace + "/" + topic;
             try {
-                InlongClusterEntity cluster = clusterMapper.selectByKey(
-                        groupInfo.getInlongClusterTag(), null, MQType.PULSAR).get(0);
-                // Multiple adminurls should be configured for pulsar,
-                // otherwise all requests will be sent to the same broker
-                PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(cluster.getExtParams());
-                String adminUrl = pulsarClusterDTO.getAdminUrl();
-                String masterAddress = cluster.getUrl();
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
                 String subscription = getConsumerGroup(groupId, streamId, topic, topoName, MQType.PULSAR);
