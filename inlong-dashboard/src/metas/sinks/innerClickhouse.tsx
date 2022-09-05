@@ -133,7 +133,7 @@ const getForm: GetStorageFormFieldsType = (
       suffix: i18n.t('meta.Sinks.InnerClickhouse.RetryTimesUnit'),
     },
     {
-      name: 'isDistributed',
+      name: 'isDistribute',
       type: 'radio',
       label: i18n.t('meta.Sinks.InnerClickhouse.IsDistributed'),
       initialValue: 0,
