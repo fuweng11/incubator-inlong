@@ -26,7 +26,10 @@ public enum DataTypeEnum {
     JSON("json"),
     CANAL("canal"),
     DEBEZIUM_JSON("debezium_json"),
-    RAW("raw");
+    RAW("raw"),
+    KV("kv"),
+    INLONG_CSV("inlong_csv"),
+    INLONG_KV("inlong_kv");
 
     @Getter
     private final String name;

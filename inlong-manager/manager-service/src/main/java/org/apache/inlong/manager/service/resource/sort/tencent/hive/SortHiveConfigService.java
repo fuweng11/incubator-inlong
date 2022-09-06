@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent.hive;
 
-import com.google.gson.Gson;
 import com.tencent.flink.formats.common.FormatInfo;
 import com.tencent.flink.formats.common.TimestampFormatInfo;
 import com.tencent.oceanus.etl.ZkTools;
@@ -25,11 +24,8 @@ import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo;
 import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo.BuiltInField;
 import com.tencent.oceanus.etl.protocol.DataFlowInfo;
 import com.tencent.oceanus.etl.protocol.FieldInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.TDMsgDBSyncDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.ConsistencyGuarantee;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.HiveFileFormatInfo;
@@ -52,21 +48,17 @@ import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
-import org.apache.inlong.manager.dao.entity.ConsumptionEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
-import org.apache.inlong.manager.dao.mapper.ConsumptionEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tubemq.TubeClusterDTO;
-import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
-import org.apache.inlong.manager.pojo.stream.InlongStreamExtInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
@@ -74,7 +66,6 @@ import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -83,7 +74,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.apache.inlong.manager.common.consts.TencentConstants.PART_ARRIVED;
 import static org.apache.inlong.manager.common.consts.TencentConstants.PART_COUNT_VERIFIED;
@@ -94,10 +84,7 @@ import static org.apache.inlong.manager.common.consts.TencentConstants.PART_COUN
 @Service
 public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
-    public static final String STORAGE_HIVE = "HIVE";
-    public static final String STORAGE_THIVE = "THIVE";
     private static final Logger LOGGER = LoggerFactory.getLogger(SortHiveConfigService.class);
-    private static final Gson GSON = new Gson();
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String AT_LEAST_ONCE = "AT_LEAST_ONCE";
 
@@ -135,17 +122,11 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         BUILT_IN_FIELD_MAP.put("dt", BuiltInField.DATA_TIME);
     }
 
-    @Value("${cluster.hive.topo:etl_2_for_test}")
-    private String clusterHiveTopo;
-
     @Autowired
     private StreamSinkFieldEntityMapper sinkFieldMapper;
 
     @Autowired
     private InlongClusterEntityMapper clusterMapper;
-
-    @Autowired
-    private ConsumptionEntityMapper consumptionEntityMapper;
 
     @Autowired
     private InlongStreamService inlongStreamService;
@@ -421,11 +402,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
      */
     private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, InnerHiveFullInfo hiveFullInfo,
             List<StreamSinkFieldEntity> fieldList, String topoName) {
-        List<InlongGroupExtInfo> extInfos = groupInfo.getExtList();
-        Map<String, String> extInfosMap = extInfos.stream()
-                .collect(Collectors.toMap(InlongGroupExtInfo::getKeyName, InlongGroupExtInfo::getKeyValue));
         String streamId = hiveFullInfo.getInlongStreamId();
-
+        InlongStreamInfo stream = inlongStreamService.get(groupInfo.getInlongGroupId(), streamId);
         // First determine the data source type. Tddmsgdbsync is temporarily used for DB
         DeserializationInfo deserializationInfo = null;
         boolean isDbType = "DB".equals(hiveFullInfo.getDataSourceType());
@@ -433,7 +411,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             deserializationInfo = new TDMsgDBSyncDeserializationInfo(streamId);
         } else {
             // File and self pushed source. The data format is text or key-value, or CSV. Tdmsgcsv is temporarily used
-            deserializationInfo = getDeserializationInfo(hiveFullInfo);
+            deserializationInfo = getDeserializationInfo(stream);
         }
         // Source fields are to be obtained from the source fields saved in the data store:
         // the number and order of source fields must be the same as the target fields
@@ -444,17 +422,21 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         String groupId = groupInfo.getInlongGroupId();
         String mqType = groupInfo.getMqType();
         if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
-            InlongClusterEntity cluster = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(), null,
-                    MQType.TUBEMQ).get(0);
-            Preconditions.checkNotNull(cluster, "tube cluster not found for bid=" + groupId);
-            Integer tubeId = cluster.getId();
-            TubeClusterDTO tubeClusterDTO = TubeClusterDTO.getFromJson(cluster.getExtParams());
+            List<InlongClusterEntity> tubeClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(), null,
+                    MQType.TUBEMQ);
+            if (CollectionUtils.isEmpty(tubeClusters)) {
+                throw new WorkflowListenerException("tube cluster not found for groupId=" + groupId);
+            }
+            InlongClusterEntity tubeCluster = tubeClusters.get(0);
+            Preconditions.checkNotNull(tubeCluster, "tube cluster not found for bid=" + groupId);
+            Integer tubeId = tubeCluster.getId();
+            TubeClusterDTO tubeClusterDTO = TubeClusterDTO.getFromJson(tubeCluster.getExtParams());
             String masterAddress = tubeClusterDTO.getMasterWebUrl();
             Preconditions.checkNotNull(masterAddress, "tube cluster [" + tubeId + "] not contains masterAddress");
 
             String topic = groupInfo.getMqResource();
             String consumerGroup = getConsumerGroup(groupId, null, topic, topoName,
-                    MQType.PULSAR);
+                    MQType.TUBEMQ);
             sourceInfo = new TubeSourceInfo(topic, masterAddress, consumerGroup,
                     deserializationInfo, sourceFields.toArray(new FieldInfo[0]));
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
@@ -527,66 +509,6 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         }
 
         return fieldInfoList;
-    }
-
-    /**
-     * Get deserializationinfo object information
-     */
-    private DeserializationInfo getDeserializationInfo(InnerHiveFullInfo hiveFullInfo) {
-        String dataType = hiveFullInfo.getDataType();
-        Character escape = null;
-        DeserializationInfo deserializationInfo;
-        if (hiveFullInfo.getDataEscapeChar() != null) {
-            escape = hiveFullInfo.getDataEscapeChar().charAt(0);
-        }
-        // Must be a field separator in the data stream
-        char separator = (char) Integer.parseInt(hiveFullInfo.getSourceSeparator());
-        if (TencentConstants.DATA_TYPE_TEXT.equalsIgnoreCase(dataType)) {
-            // Do you want to delete the first separator? The default is false
-            deserializationInfo = new TDMsgCsvDeserializationInfo(hiveFullInfo.getInlongStreamId(), separator, escape,
-                    false);
-        } else if (TencentConstants.DATA_TYPE_KEY_VALUE.equalsIgnoreCase(dataType)) {
-            // KV pair separator, which must be the field separator in the data flow
-            char kvSeparator = '&';
-            InlongStreamInfo streamInfo = inlongStreamService.get(hiveFullInfo.getInlongGroupId(),
-                    hiveFullInfo.getInlongStreamId());
-            List<InlongStreamExtInfo> extInfos = streamInfo.getExtList();
-            Map<String, String> extInfosMap = extInfos.stream()
-                    .collect(Collectors.toMap(InlongStreamExtInfo::getKeyName, InlongStreamExtInfo::getKeyValue));
-            if (extInfosMap.get("kvSeparator") != null) {
-                kvSeparator = (char) Integer.parseInt(extInfosMap.get("kvSeparator"));
-            }
-            // Row separator, which must be a field separator in the data flow
-            Character lineSeparator = null;
-            if (hiveFullInfo.getLineSeparator() != null) {
-                lineSeparator = (char) Integer.parseInt(hiveFullInfo.getLineSeparator());
-            }
-            deserializationInfo = new TDMsgKvDeserializationInfo(hiveFullInfo.getInlongStreamId(), separator,
-                    kvSeparator,
-                    escape, lineSeparator);
-        } else if (TencentConstants.DATA_TYPE_CSV.equalsIgnoreCase(dataType)) {
-            deserializationInfo = new CsvDeserializationInfo(separator, escape);
-        } else {
-            throw new IllegalArgumentException("can not support sink data type:" + dataType);
-        }
-        return deserializationInfo;
-    }
-
-    public String getConsumerGroup(String bid, String tid, String topic, String topoName, String mqType) {
-        String consumerGroup;
-        if (MQType.TUBEMQ.equals(mqType)) {
-            consumerGroup = String.format(TencentConstants.SORT_TUBE_GROUP, topoName, bid);
-        } else {
-            consumerGroup = String.format(TencentConstants.OLD_SORT_PULSAR_GROUP, topoName, tid);
-            ConsumptionEntity exists = consumptionEntityMapper.selectConsumptionExists(bid, topic, consumerGroup);
-            if (exists == null) {
-                consumerGroup = String.format(TencentConstants.SORT_PULSAR_GROUP, topoName, bid, tid);
-            }
-        }
-
-        LOGGER.debug("success to get consumerGroup={} for bid={} tid={} topic={} topoName={}",
-                consumerGroup, bid, tid, topic, topoName);
-        return consumerGroup;
     }
 
     /**

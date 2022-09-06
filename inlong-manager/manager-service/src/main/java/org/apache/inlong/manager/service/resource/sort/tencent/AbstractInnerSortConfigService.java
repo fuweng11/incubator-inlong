@@ -17,15 +17,24 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent;
 
+import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.MQType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.entity.ConsumptionEntity;
+import org.apache.inlong.manager.dao.mapper.ConsumptionEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
+import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Locale;
 
@@ -35,6 +44,9 @@ import java.util.Locale;
 public class AbstractInnerSortConfigService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractInnerSortConfigService.class);
+
+    @Autowired
+    private ConsumptionEntityMapper consumptionEntityMapper;
 
     public String getZkRoot(String mqType, ZkClusterDTO zkClusterDTO) {
         Preconditions.checkNotNull(mqType, "mq type cannot be null");
@@ -72,4 +84,57 @@ public class AbstractInnerSortConfigService {
         }
         return zkRoot;
     }
+
+    public String getConsumerGroup(String bid, String tid, String topic, String topoName, String mqType) {
+        String consumerGroup;
+        if (MQType.TUBEMQ.equals(mqType)) {
+            consumerGroup = String.format(TencentConstants.SORT_TUBE_GROUP, topoName, bid);
+        } else {
+            consumerGroup = String.format(TencentConstants.OLD_SORT_PULSAR_GROUP, topoName, tid);
+            ConsumptionEntity exists = consumptionEntityMapper.selectConsumptionExists(bid, topic, consumerGroup);
+            if (exists == null) {
+                consumerGroup = String.format(TencentConstants.SORT_PULSAR_GROUP, topoName, bid, tid);
+            }
+        }
+
+        LOGGER.debug("success to get consumerGroup={} for bid={} tid={} topic={} topoName={}",
+                consumerGroup, bid, tid, topic, topoName);
+        return consumerGroup;
+    }
+
+    /**
+     * Get deserializationinfo object information
+     */
+    public DeserializationInfo getDeserializationInfo(InlongStreamInfo streamInfo) {
+        String dataType = streamInfo.getDataType();
+        Character escape = null;
+        DeserializationInfo deserializationInfo;
+        if (streamInfo.getDataEscapeChar() != null) {
+            escape = streamInfo.getDataEscapeChar().charAt(0);
+        }
+        // Must be a field separator in the data stream
+        char separator = (char) Integer.parseInt(streamInfo.getDataSeparator());
+        if (TencentConstants.DATA_TYPE_INLONG_CSV.equalsIgnoreCase(dataType)) {
+            // Do you want to delete the first separator? The default is false
+            deserializationInfo = new TDMsgCsvDeserializationInfo(streamInfo.getInlongStreamId(), separator, escape,
+                    false);
+        } else if (TencentConstants.DATA_TYPE_INLONG_KV.equalsIgnoreCase(dataType)) {
+            // KV pair separator, which must be the field separator in the data flow
+            // TODO User configuration shall prevail
+            char kvSeparator = '&';
+            // Row separator, which must be a field separator in the data flow
+            Character lineSeparator = null;
+            deserializationInfo = new TDMsgKvDeserializationInfo(streamInfo.getInlongStreamId(), separator,
+                    kvSeparator,
+                    escape, lineSeparator);
+        } else if (TencentConstants.DATA_TYPE_CSV.equalsIgnoreCase(dataType)) {
+            deserializationInfo = new CsvDeserializationInfo(separator, escape);
+        } else if (TencentConstants.DATA_TYPE_KV.equalsIgnoreCase(dataType)) {
+            deserializationInfo = new KvDeserializationInfo(separator, escape);
+        } else {
+            throw new IllegalArgumentException("can not support sink data type:" + dataType);
+        }
+        return deserializationInfo;
+    }
+
 }

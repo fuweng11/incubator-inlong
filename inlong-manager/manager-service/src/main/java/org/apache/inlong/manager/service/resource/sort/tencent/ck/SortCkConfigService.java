@@ -18,24 +18,24 @@
 package org.apache.inlong.manager.service.resource.sort.tencent.ck;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.tencent.flink.formats.common.FormatInfo;
 import com.tencent.oceanus.etl.ZkTools;
 import com.tencent.oceanus.etl.protocol.DataFlowInfo;
 import com.tencent.oceanus.etl.protocol.FieldInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.sink.ClickHouseSinkInfo;
+import com.tencent.oceanus.etl.protocol.source.PulsarSourceInfo;
 import com.tencent.oceanus.etl.protocol.source.SourceInfo;
 import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.DataNodeType;
+import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.MQType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
+import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
@@ -45,12 +45,14 @@ import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.DataNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
+import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
+import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +70,6 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SortCkConfigService.class);
 
-    private static final Gson GSON = new GsonBuilder().create(); // thread safe
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper(); // thread safe
 
     @Autowired
@@ -79,6 +80,8 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     private StreamSinkFieldEntityMapper sinkFieldMapper;
     @Autowired
     private DataNodeEntityMapper dataNodeEntityMapper;
+    @Autowired
+    private StreamSinkService sinkService;
 
     public void buildCkConfig(InlongGroupInfo groupInfo, List<InnerClickHouseSink> clickHouseSinkList)
             throws Exception {
@@ -106,14 +109,21 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
         String topoName = sortClusters.get(0).getName();
         for (InnerClickHouseSink clickHouseSink : clickHouseSinkList) {
             log.info("begin to push sort ck config to zkUrl={}, ckTopo={}", zkUrl, topoName);
-
-            DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, clickHouseSink);
-            // Update / add data under dataflow on ZK
-            ZkTools.updateDataFlowInfo(flowInfo, topoName, flowInfo.getId(), zkUrl, zkRoot);
-            // Add data under clusters on ZK
-            ZkTools.addDataFlowToCluster(topoName, flowInfo.getId(), zkUrl, zkRoot);
-
-            log.info("success to push ck sort config {}", JSON_MAPPER.writeValueAsString(flowInfo));
+            try {
+                DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, clickHouseSink);
+                // Update / add data under dataflow on ZK
+                ZkTools.updateDataFlowInfo(flowInfo, topoName, flowInfo.getId(), zkUrl, zkRoot);
+                // Add data under clusters on ZK
+                ZkTools.addDataFlowToCluster(topoName, flowInfo.getId(), zkUrl, zkRoot);
+                String info = "success to push clickhouse sort config";
+                sinkService.updateStatus(clickHouseSink.getId(), SinkStatus.CONFIG_SUCCESSFUL.getCode(), info);
+                log.info("success to push ck sort config {}", JSON_MAPPER.writeValueAsString(flowInfo));
+            } catch (Exception e) {
+                String errMsg = "failed to push clickhouse sort config: " + e.getMessage();
+                LOGGER.error(errMsg, e);
+                sinkService.updateStatus(clickHouseSink.getId(), SinkStatus.CONFIG_FAILED.getCode(), errMsg);
+                throw new BusinessException(errMsg);
+            }
         }
     }
 
@@ -139,36 +149,74 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
         String groupId = clickHouseSink.getInlongGroupId();
         String streamId = clickHouseSink.getInlongStreamId();
         InlongStreamInfo stream = inlongStreamService.get(groupId, streamId);
-        if (!TencentConstants.DATA_TYPE_CSV.equalsIgnoreCase(stream.getDataType())) {
-            log.error("click house only support CSV as message");
-            throw new Exception("click house only support CSV as message");
+        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
+                groupInfo.getInlongClusterTag(), null, ClusterType.SORT_CK);
+        String topoName = sortClusters.get(0).getName();
+        if (topoName == null || StringUtils.isBlank(topoName)) {
+            throw new WorkflowListenerException("click house topo cluster not found for groupId=" + groupId);
         }
-
         String mqType = groupInfo.getMqType();
-        if (!MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
-            log.error("click house only support TUBE as source");
-            throw new Exception("click house only support TUBE as source");
-        }
+        SourceInfo sourceInfo = null;
+        if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
+            List<InlongClusterEntity> tubeClusters = clusterMapper.selectByKey(
+                    groupInfo.getInlongClusterTag(), null, MQType.TUBEMQ);
+            if (CollectionUtils.isEmpty(tubeClusters)) {
+                throw new WorkflowListenerException("tube cluster not found for groupId=" + groupId);
+            }
+            InlongClusterEntity tubeCluster = tubeClusters.get(0);
+            Preconditions.checkNotNull(tubeCluster, "tube cluster not found for groupId=" + groupId);
+            String masterAddress = tubeCluster.getUrl();
+            Preconditions.checkNotNull(masterAddress,
+                    "tube cluster [" + tubeCluster.getId() + "] not contains masterAddress");
+            DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
 
-        InlongClusterEntity cluster = clusterMapper.selectByKey(
-                groupInfo.getInlongClusterTag(), null, MQType.TUBEMQ).get(0);
-        Preconditions.checkNotNull(cluster, "tube cluster not found for groupId=" + groupId);
-        String masterAddress = cluster.getUrl();
-        Preconditions.checkNotNull(masterAddress, "tube cluster [" + cluster.getId() + "] not contains masterAddress");
-        char c = (char) Integer.parseInt(stream.getDataSeparator());
-        DeserializationInfo deserializationInfo = new TDMsgCsvDeserializationInfo(streamId, c);
-
-        List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(clickHouseSink.getId());
-        // The consumer group name is pushed to null, which is constructed by the sort side
-        return new TubeSourceInfo(
-                groupInfo.getMqResource(),
-                masterAddress,
-                null,
-                deserializationInfo,
-                fieldList.stream().map(f -> {
+            List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(clickHouseSink.getId());
+            // The consumer group name is pushed to null, which is constructed by the sort side
+            return new TubeSourceInfo(
+                    groupInfo.getMqResource(),
+                    masterAddress,
+                    null,
+                    deserializationInfo,
+                    fieldList.stream().map(f -> {
+                        FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
+                                f.getSourceFieldType().toLowerCase());
+                        return new FieldInfo(f.getSourceFieldType(), formatInfo);
+                    }).toArray(FieldInfo[]::new));
+        } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
+            List<InlongClusterEntity> pulsarClusters = clusterMapper.selectByKey(
+                    groupInfo.getInlongClusterTag(), null, MQType.PULSAR);
+            if (CollectionUtils.isEmpty(pulsarClusters)) {
+                throw new WorkflowListenerException("pulsar cluster not found for groupId=" + groupId);
+            }
+            InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
+            // Multiple adminurls should be configured for pulsar,
+            // otherwise all requests will be sent to the same broker
+            PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
+            String adminUrl = pulsarClusterDTO.getAdminUrl();
+            String masterAddress = pulsarCluster.getUrl();
+            String tenant = pulsarClusterDTO.getTenant() == null ? InlongConstants.DEFAULT_PULSAR_TENANT
+                    : pulsarClusterDTO.getTenant();
+            String namespace = groupInfo.getMqResource();
+            String topic = stream.getMqResource();
+            // Full path of topic in pulsar
+            String fullTopic = "persistent://" + tenant + "/" + namespace + "/" + topic;
+            List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(clickHouseSink.getId());
+            try {
+                DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
+                // Ensure compatibility of old data: if the old subscription exists, use the old one;
+                // otherwise, create the subscription according to the new rule
+                String subscription = getConsumerGroup(groupId, streamId, topic, topoName, MQType.PULSAR);
+                sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
+                        deserializationInfo, fieldList.stream().map(f -> {
                     FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());
                     return new FieldInfo(f.getFieldName(), formatInfo);
                 }).toArray(FieldInfo[]::new));
+            } catch (Exception e) {
+                LOGGER.error("get pulsar information failed", e);
+                throw new WorkflowListenerException("get pulsar admin failed, reason: " + e.getMessage());
+            }
+        }
+        return sourceInfo;
     }
 
     /**

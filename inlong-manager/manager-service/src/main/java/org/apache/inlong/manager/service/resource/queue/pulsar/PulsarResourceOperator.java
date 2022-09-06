@@ -23,10 +23,13 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.MQType;
+import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.GroupStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
+import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
@@ -68,6 +71,8 @@ public class PulsarResourceOperator implements QueueResourceOperator {
     private InlongConsumeService consumeService;
     @Autowired
     private PulsarOperator pulsarOperator;
+    @Autowired
+    private InlongClusterEntityMapper clusterMapper;
 
     @Override
     public boolean accept(String mqType) {
@@ -248,7 +253,7 @@ public class PulsarResourceOperator implements QueueResourceOperator {
             // subscription naming rules: clusterTag_topicName_sinkId_consumer_group
             String clusterTag = pulsarInfo.getInlongClusterTag();
             for (StreamSink sink : streamSinks) {
-                String subs = String.format(PULSAR_SUBSCRIPTION, clusterTag, topicName, sink.getId());
+                String subs = getPulsarSubscription(clusterTag, sink, topicName);
                 pulsarOperator.createSubscription(pulsarAdmin, fullTopicName, pulsarInfo.getQueueModule(), subs);
                 log.info("success to create subs={} for groupId={}, topic={}", subs, groupId, fullTopicName);
 
@@ -279,6 +284,30 @@ public class PulsarResourceOperator implements QueueResourceOperator {
                     .build();
             pulsarOperator.forceDeleteTopic(pulsarAdmin, topicInfo);
         }
+    }
+
+    private String getPulsarSubscription(String clusterTag, StreamSink sink, String topicName) {
+        String topoType;
+        switch (sink.getSinkType()) {
+            case SinkType.INNER_THIVE:
+                topoType = ClusterType.SORT_THIVE;
+                break;
+            case SinkType.INNER_HIVE:
+                topoType = ClusterType.SORT_HIVE;
+                break;
+            case SinkType.INNER_CK:
+                topoType = ClusterType.SORT_CK;
+                break;
+            default:
+                return String.format(PULSAR_SUBSCRIPTION, clusterTag, topicName, sink.getId());
+        }
+        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
+                clusterTag, null, topoType);
+        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
+            throw new WorkflowListenerException("sort cluster not found for groupId=" + sink.getInlongGroupId());
+        }
+        String topoName = sortClusters.get(0).getName();
+        return String.format(PULSAR_SUBSCRIPTION, topoName, sink.getInlongGroupId(), sink.getInlongStreamId());
     }
 
 }
