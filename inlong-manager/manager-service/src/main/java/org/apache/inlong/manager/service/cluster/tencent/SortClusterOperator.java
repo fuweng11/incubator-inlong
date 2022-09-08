@@ -28,6 +28,7 @@ import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterRequest;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.ck.SortClickHouseClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.hive.SortHiveClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.thive.SortThiveClusterInfo;
@@ -58,7 +59,7 @@ public class SortClusterOperator extends AbstractClusterOperator {
 
     @Override
     protected void setTargetEntity(ClusterRequest request, InlongClusterEntity targetEntity) {
-        ClusterRequest clusterRequest = request;
+        BaseSortClusterRequest clusterRequest = (BaseSortClusterRequest) request;
         CommonBeanUtils.copyProperties(clusterRequest, targetEntity, true);
         try {
             BaseSortClusterDTO dto = BaseSortClusterDTO.getFromRequest(clusterRequest);

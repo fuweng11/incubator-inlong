@@ -237,6 +237,14 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             InlongGroupInfo inlongGroupInfo = inlongGroupService.get(sinkInfo.getInlongGroupId());
             DealResult grantResult = grantPrivilege(inlongGroupInfo.getInCharges().trim(), hiveFullInfo, "select");
             LOGGER.info("grant hive privilege finished: {}", grantResult.getMessage());
+
+            // give the responsible person query permission for default selectors
+            String defaultSelectors = hiveFullInfo.getDefaultSelectors();
+            if (StringUtils.isNotEmpty(defaultSelectors)) {
+                DealResult grantDefaultResult = grantPrivilege(defaultSelectors.trim(), hiveFullInfo, "select");
+                String reason = dealMessage + " and " + grantDefaultResult.getMessage();
+                LOGGER.info("grant hive privilege finished for default result: {}", reason);
+            }
             LOGGER.info("success to deal tdw hive table for group id={}, stream id={}", groupId, streamId);
             // modify sink status
             if (dealMessage.length() > 1000) {

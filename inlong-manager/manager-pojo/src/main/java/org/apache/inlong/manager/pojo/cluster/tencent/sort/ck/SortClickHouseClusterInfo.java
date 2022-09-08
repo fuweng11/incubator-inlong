@@ -24,7 +24,7 @@ import lombok.ToString;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterInfo;
 
 /**
  * Inlong sort cluster for click house task
@@ -34,7 +34,7 @@ import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 @EqualsAndHashCode(callSuper = true)
 @JsonTypeDefine(value = ClusterType.SORT_CK)
 @ApiModel("Inlong sort cluster info for click house task")
-public class SortClickHouseClusterInfo extends ClusterInfo {
+public class SortClickHouseClusterInfo extends BaseSortClusterInfo {
 
     public SortClickHouseClusterInfo() {
         this.setType(ClusterType.SORT_CK);

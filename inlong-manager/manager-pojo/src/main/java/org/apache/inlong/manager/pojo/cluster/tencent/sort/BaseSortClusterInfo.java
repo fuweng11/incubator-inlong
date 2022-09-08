@@ -15,33 +15,33 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.cluster.tencent.sort.thive;
+package org.apache.inlong.manager.pojo.cluster.tencent.sort;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
-import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterInfo;
+import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 
 /**
- * Inlong sort cluster for thive task
+ * Inlong base sort cluster info
  */
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@JsonTypeDefine(value = ClusterType.SORT_THIVE)
-@ApiModel("Inlong sort cluster for thive task")
-public class SortThiveClusterInfo extends BaseSortClusterInfo {
+@ApiModel("Inlong base sort cluster info")
+public class BaseSortClusterInfo extends ClusterInfo {
 
-    public SortThiveClusterInfo() {
-        this.setType(ClusterType.SORT_THIVE);
-    }
+    @ApiModelProperty("backup data path")
+    private String backupDataPath;
+
+    @ApiModelProperty("backup hadoop proxy user")
+    private String backupHadoopProxyUser;
 
     @Override
-    public SortThiveClusterRequest genRequest() {
-        return CommonBeanUtils.copyProperties(this, SortThiveClusterRequest::new);
+    public BaseSortClusterRequest genRequest() {
+        return CommonBeanUtils.copyProperties(this, BaseSortClusterRequest::new);
     }
 }

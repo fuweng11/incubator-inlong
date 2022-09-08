@@ -29,6 +29,7 @@ import com.tencent.oceanus.etl.protocol.deserialization.TDMsgDBSyncDeserializati
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.ConsistencyGuarantee;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.HiveFileFormatInfo;
+import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.HivePartitionInfo;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.HiveTimePartitionInfo;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.PartitionCreationStrategy;
 import com.tencent.oceanus.etl.protocol.sink.THiveSinkInfo;
@@ -55,10 +56,12 @@ import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tubemq.TubeClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
+import org.apache.inlong.manager.service.sink.tencent.sort.SortExtConfig;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
@@ -159,12 +162,20 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
                 throw new WorkflowListenerException("sort cluster not found for groupId=" + groupId);
             }
-            String topoName = sortClusters.get(0).getName();
+            InlongClusterEntity sortCluster = sortClusters.get(0);
+            String topoName = sortCluster.getName();
+
+            // Backup configuration
+            BaseSortClusterDTO sortClusterDTO = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
+            SortExtConfig sortExtConfig = new SortExtConfig();
+            sortExtConfig.setBackupDataPath(sortClusterDTO.getBackupDataPath());
+            sortExtConfig.setBackupHadoopProxyUser(sortClusterDTO.getBackupHadoopProxyUser());
+
             if (topoName == null || StringUtils.isBlank(topoName)) {
                 throw new WorkflowListenerException("hive topo cluster not found for groupId=" + groupId);
             }
             LOGGER.info("begin to push hive sort config to zkUrl={}, hiveTopo={}", zkUrl, topoName);
-            DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, hiveFullInfo, topoName);
+            DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, hiveFullInfo, topoName, sortExtConfig);
             // Update / add data under dataflow on ZK
             ZkTools.updateDataFlowInfo(flowInfo, topoName, flowInfo.getId(), zkUrl, zkRoot);
             // Add data under clusters on ZK
@@ -177,8 +188,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     /**
      * Get DataFlowInfo for Sort
      */
-    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerHiveFullInfo hiveFullInfo, String topoName)
-            throws Exception {
+    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerHiveFullInfo hiveFullInfo, String topoName,
+            SortExtConfig sortExtConfig) throws Exception {
         // Get fields from the source fields saved in the data store:
         // the number and order of the source fields must be the same as the target fields
         String groupId = hiveFullInfo.getInlongGroupId();
@@ -190,12 +201,13 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         }
 
         SourceInfo sourceInfo = getSourceInfo(groupInfo, hiveFullInfo, fieldList, topoName);
-        com.tencent.oceanus.etl.protocol.sink.SinkInfo sinkInfo = getSinkInfo(hiveFullInfo, fieldList);
+        com.tencent.oceanus.etl.protocol.sink.SinkInfo sinkInfo = getSinkInfo(hiveFullInfo, fieldList, sortExtConfig);
 
         // Dynamic configuration information,
         // which can be used to specify optional parameter information of source or sink
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("source.tdbank.bid", groupInfo.getInlongGroupId());
+        properties.put("source.tdbank.tid", hiveFullInfo.getInlongStreamId());
 
         String flowId = hiveFullInfo.getSinkId().toString();
         DataFlowInfo flowInfo = new DataFlowInfo(flowId, sourceInfo, sinkInfo, properties);
@@ -211,7 +223,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
      *         The extra partition fields and dbsync meta fields should be placed last
      */
     private com.tencent.oceanus.etl.protocol.sink.SinkInfo getSinkInfo(InnerHiveFullInfo hiveFullInfo,
-            List<StreamSinkFieldEntity> fieldList) {
+            List<StreamSinkFieldEntity> fieldList, SortExtConfig sortExtConfig) {
         if (hiveFullInfo.getHiveAddress() == null) {
             throw new BusinessException("hive server url cannot be empty");
         }
@@ -230,6 +242,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         } else {
             fileFormat = new HiveSinkInfo.TextFileFormatInfo(separator);
         }
+        sortExtConfig.setFormatInfo(fileFormat);
 
         String createStrategy = hiveFullInfo.getPartitionCreationStrategy();
         PartitionCreationStrategy creationStrategy = PartitionCreationStrategy.COMPLETED;
@@ -244,6 +257,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             It is only used to create us tasks. Sort is still completed for partitions
             creationStrategy = PartitionCreationStrategy.COMPLETED;
         }*/
+        sortExtConfig.setCreationStrategy(creationStrategy);
 
         // dataPath = hdfsUrl + / + warehouseDir + / + dbName + .db/ + tableName
         String dataPath = hiveFullInfo.getHdfsDefaultFs() + hiveFullInfo.getWarehouseDir() + "/"
@@ -255,6 +269,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         if (AT_LEAST_ONCE.equals(consistencyStr)) {
             consistency = ConsistencyGuarantee.AT_LEAST_ONCE;
         }
+        sortExtConfig.setConsistency(consistency);
 
         // Get the sink field. If there is no partition field in the source field, add the partition field to the last
         List<FieldInfo> fieldInfoList = getSinkFields(fieldList, hiveFullInfo.getPrimaryPartition());
@@ -265,11 +280,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 throw new BusinessException(String.format("us task id cannot be empty for bid=%s, tid=%s",
                         hiveFullInfo.getInlongGroupId(), hiveFullInfo.getInlongStreamId()));
             }
-            sinkInfo = getTHiveSinkInfo(hiveFullInfo, fileFormat, creationStrategy, dataPath, fieldInfoList,
-                    consistency);
+            sinkInfo = getTHiveSinkInfo(hiveFullInfo, dataPath, fieldInfoList, sortExtConfig);
         } else {
-            sinkInfo = getHiveSinkInfo(hiveFullInfo, fileFormat, creationStrategy, dataPath, fieldInfoList,
-                    consistency);
+            sinkInfo = getHiveSinkInfo(hiveFullInfo, dataPath, fieldInfoList, sortExtConfig);
         }
         return sinkInfo;
     }
@@ -278,8 +291,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
      * Get hive sink information
      */
     private com.tencent.oceanus.etl.protocol.sink.SinkInfo getHiveSinkInfo(InnerHiveFullInfo hiveFullInfo,
-            HiveFileFormatInfo fileFormat, PartitionCreationStrategy creationStrategy, String dataPath,
-            List<FieldInfo> fieldInfoList, ConsistencyGuarantee consistency) {
+            String dataPath, List<FieldInfo> fieldInfoList, SortExtConfig sortExtConfig) {
 
         List<HiveSinkInfo.HivePartitionInfo> partitionList = new ArrayList<>();
 
@@ -314,11 +326,24 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         if (StringUtils.isBlank(user)) {
             user = hiveFullInfo.getCreator();
         }
-        return new HiveSinkInfo(fieldInfoList.toArray(new FieldInfo[0]), hiveServerUrl, hiveFullInfo.getDbName(),
-                hiveFullInfo.getTableName(), hiveFullInfo.getUsername(), hiveFullInfo.getPassword(),
-                dataPath, user, creationStrategy,
-                partitionList.toArray(new HiveSinkInfo.HivePartitionInfo[0]),
-                fileFormat, consistency);
+
+        if (StringUtils.isBlank(sortExtConfig.getBackupDataPath())) {
+            sortExtConfig.setBackupDataPath(dataPath);
+        }
+        if (StringUtils.isBlank(sortExtConfig.getBackupHadoopProxyUser())) {
+            sortExtConfig.setBackupHadoopProxyUser(user);
+        }
+        return new HiveSinkInfo(fieldInfoList.toArray(new FieldInfo[0]),
+                hiveServerUrl,
+                hiveFullInfo.getDbName(), hiveFullInfo.getTableName(),
+                hiveFullInfo.getUsername(), hiveFullInfo.getPassword(),
+                dataPath, sortExtConfig.getBackupDataPath(),
+                user, sortExtConfig.getBackupHadoopProxyUser(),
+                sortExtConfig.getCreationStrategy(),
+                partitionList.toArray(new HivePartitionInfo[0]),
+                sortExtConfig.getFormatInfo(),
+                sortExtConfig.getConsistency()
+        );
     }
 
     /**
@@ -327,8 +352,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
      * @apiNote Thive does not support secondary partition at present
      */
     private com.tencent.oceanus.etl.protocol.sink.SinkInfo getTHiveSinkInfo(InnerHiveFullInfo hiveFullInfo,
-            HiveFileFormatInfo fileFormat, PartitionCreationStrategy creationStrategy, String dataPath,
-            List<FieldInfo> fieldInfoList, ConsistencyGuarantee consistency) {
+            String dataPath, List<FieldInfo> fieldInfoList, SortExtConfig sortExtConfig) {
 
         // Only thive has partition types, such as range / list
         String partType = hiveFullInfo.getPartitionType().toUpperCase();
@@ -358,14 +382,26 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         // info.getUsername(); // Create partitions through the thive JDBC server link
         // info.getCreator() - tdwUsername // Go to TDW to query whether the partition exists
         String hadoopProxyUser = "tdwadmin"; // Sort write HDFS use
+        if (StringUtils.isBlank(sortExtConfig.getBackupDataPath())) {
+            sortExtConfig.setBackupDataPath(dataPath);
+        }
+        if (StringUtils.isBlank(sortExtConfig.getBackupHadoopProxyUser())) {
+            sortExtConfig.setBackupHadoopProxyUser(hadoopProxyUser);
+        }
+
         return new THiveSinkInfo(fieldInfoList.toArray(new FieldInfo[0]), hiveServerUrl,
                 hiveFullInfo.getDbName(), hiveFullInfo.getTableName(),
                 hiveFullInfo.getUsername(), hiveFullInfo.getPassword(),
                 dataPath, hadoopProxyUser,
-                creationStrategy, partitionInfos.toArray(new THiveSinkInfo.THivePartitionInfo[0]),
-                fileFormat, hiveFullInfo.getAppGroupName(),
-                hiveFullInfo.getCreator(), consistency,
-                hiveFullInfo.getUsTaskId());
+                sortExtConfig.getCreationStrategy(),
+                partitionInfos.toArray(new THiveSinkInfo.THivePartitionInfo[0]),
+                sortExtConfig.getFormatInfo(),
+                hiveFullInfo.getAppGroupName(),
+                hiveFullInfo.getCreator(),
+                sortExtConfig.getConsistency(),
+                hiveFullInfo.getUsTaskId(),
+                sortExtConfig.getBackupDataPath(),
+                sortExtConfig.getBackupHadoopProxyUser());
     }
 
     /**

@@ -20,11 +20,13 @@ package org.apache.inlong.manager.pojo.cluster.tencent.sort;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
-import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
 
 import javax.validation.constraints.NotNull;
 
@@ -33,16 +35,24 @@ import javax.validation.constraints.NotNull;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @ApiModel("Base sort cluster info")
 public class BaseSortClusterDTO {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(); // thread safe
+    @ApiModelProperty("backup data path")
+    private String backupDataPath;
+    @ApiModelProperty("backup hadoop proxy user")
+    private String backupHadoopProxyUser;
 
     /**
      * Get the dto instance from the request
      */
-    public static BaseSortClusterDTO getFromRequest(ClusterRequest request) throws Exception {
+    public static BaseSortClusterDTO getFromRequest(BaseSortClusterRequest request) throws Exception {
         return BaseSortClusterDTO.builder()
+                .backupDataPath(request.getBackupDataPath())
+                .backupHadoopProxyUser(request.getBackupHadoopProxyUser())
                 .build();
     }
 
