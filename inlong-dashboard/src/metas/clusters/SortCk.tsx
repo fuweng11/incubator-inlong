@@ -17,6 +17,23 @@
  * under the License.
  */
 
-import type { ClsConfigItemType } from './common/types';
+import type { FieldItemType } from '@/metas/common';
+import i18n from '@/i18n';
+import UserSelect from '@/components/UserSelect';
+import React from 'react';
 
-export const SortCk: ClsConfigItemType[] = [];
+export const sortHive: FieldItemType[] = [
+  {
+    type: 'input',
+    label: i18n.t('meta.Clusters.Sort.BackupDataPath'),
+    name: 'backupDataPath',
+    props: {
+      placeholder: 'hdfs://xx-xxx-xx/xxx/xxx',
+    },
+  },
+  {
+    type: <UserSelect mode="multiple" />,
+    label: i18n.t('meta.Clusters.Sort.BackupHadoopProxyUser'),
+    name: 'backupHadoopProxyUser',
+  },
+];

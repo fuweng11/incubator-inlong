@@ -71,5 +71,7 @@
   "meta.Sinks.InnerClickhouse.FieldNameRule": "At the beginning of English letters, only English letters, numbers, and underscores",
   "meta.Sinks.InnerClickhouse.FieldType": "FieldType",
   "meta.Sinks.InnerClickhouse.FieldDescription": "FieldDescription",
-  "meta.Sinks.InnerClickhouse.DataConsistency": "Data Consistency"
+  "meta.Sinks.InnerClickhouse.DataConsistency": "Data Consistency",
+  "meta.Clusters.Sort.BackupDataPath": "Backup Address",
+  "meta.Clusters.Sort.BackupHadoopProxyUser": "BackupProxyUser"
 }

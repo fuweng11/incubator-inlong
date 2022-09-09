@@ -71,5 +71,7 @@
   "meta.Sinks.InnerClickhouse.FieldType": "字段类型",
   "meta.Sinks.InnerClickhouse.FieldDescription": "字段描述",
   "meta.Sinks.InnerClickhouse.DataConsistency": "数据一致性",
-  "meta.Sinks.InnerClickhouse.PartitionStrategy": "分区策略"
+  "meta.Sinks.InnerClickhouse.PartitionStrategy": "分区策略",
+  "meta.Clusters.Sort.BackupDataPath": "备份地址",
+  "meta.Clusters.Sort.BackupHadoopProxyUser": "备份代理用户"
 }
