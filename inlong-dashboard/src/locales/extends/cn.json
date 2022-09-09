@@ -29,6 +29,8 @@
   "meta.Sinks.THive.DataVerified": "数据量校验通过",
   "meta.Sinks.THive.DataDistinct": "数据去重校验通过",
   "meta.Sinks.THive.DataNodeName": "数据节点",
+  "meta.Sinks.THive.DefaultSelectors": "默认权限用户",
+  "meta.Sinks.InnerHive.DefaultSelectors": "默认权限用户",
   "meta.Sinks.InnerHive.DbName": "目标库",
   "meta.Sinks.InnerHive.TableName": "目标表",
   "meta.Sinks.InnerHive.FieldNameRule": "以小写英文字母开头，只能包含小写英文字母、数字、下划线",

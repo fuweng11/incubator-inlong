@@ -28,6 +28,7 @@ import { excludeObject } from '@/utils';
 import { sourceFields } from './common/sourceFields';
 import TextSwitch from '@/components/TextSwitch';
 import ProductSelect from '@/components/ProductSelect';
+import UserSelect from '@/components/UserSelect';
 
 const innerHiveFieldTypes = [
   'string',
@@ -308,9 +309,14 @@ const getForm: GetStorageFormFieldsType = (
         } as any,
       ],
     },
-    { name: '_showHigher', type: <TextSwitch />, initialValue: false },
     {
       type: 'input',
+      label: i18n.t('"meta.Sinks.InnerHive.DefaultSelectors'),
+      name: 'defaultSelectors',
+    },
+    { name: '_showHigher', type: <TextSwitch />, initialValue: false },
+    {
+      type: <UserSelect mode="multiple" currentUserClosable={false} />,
       label: i18n.t('meta.Sinks.InnerHive.SecondaryPartition'),
       name: 'secondaryPartition',
       props: {

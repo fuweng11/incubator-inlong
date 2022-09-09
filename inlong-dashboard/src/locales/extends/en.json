@@ -29,6 +29,8 @@
   "meta.Sinks.THive.DataVerified": "Agent count verified",
   "meta.Sinks.THive.DataDistinct": "Data deduplication verified",
   "meta.Sinks.THive.DataNodeName": "Data Node",
+  "meta.Sinks.THive.DefaultSelectors": "Permission User",
+  "meta.Sinks.InnerHive.DefaultSelectors": "Permission User",
   "meta.Sinks.InnerHive.DbName": "DbName",
   "meta.Sinks.InnerHive.TableName": "TableName",
   "meta.Sinks.InnerHive.FieldNameRule": "At the beginning of lowercase letters, only lowercase letters, numbers, and underscores",

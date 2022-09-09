@@ -319,6 +319,11 @@ const getForm: GetStorageFormFieldsType = (
         } as any,
       ],
     },
+    {
+      type: 'input',
+      label: i18n.t('"meta.Sinks.THive.DefaultSelectors'),
+      name: 'defaultSelectors',
+    },
     { name: '_showHigher', type: <TextSwitch />, initialValue: false },
     {
       type: 'input',
