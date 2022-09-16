@@ -56,6 +56,7 @@
   "meta.Sinks.InnerHive.DataVerified": "Agent count verified",
   "meta.Sinks.InnerHive.DataDistinct": "Data deduplication verified",
   "meta.Sinks.InnerHive.DataNodeName": "Data Node",
+  "meta.Sinks.InnerHive.Responsible": "virtualUser",
   "meta.Sinks.InnerClickhouse.DbName": "DbName",
   "meta.Sinks.InnerClickhouse.TableName": "TableName",
   "meta.Sinks.InnerClickhouse.DataNodeName": "Data Node",

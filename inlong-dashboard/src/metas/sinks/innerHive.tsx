@@ -310,13 +310,18 @@ const getForm: GetStorageFormFieldsType = (
       ],
     },
     {
-      type: 'input',
+      type: <UserSelect mode="multiple" currentUserClosable={false} />,
       label: i18n.t('"meta.Sinks.InnerHive.DefaultSelectors'),
       name: 'defaultSelectors',
     },
-    { name: '_showHigher', type: <TextSwitch />, initialValue: false },
     {
       type: <UserSelect mode="multiple" currentUserClosable={false} />,
+      label: i18n.t('"meta.Sinks.InnerHive.Responsible'),
+      name: 'virtualUser',
+    },
+    { name: '_showHigher', type: <TextSwitch />, initialValue: false },
+    {
+      type: 'input',
       label: i18n.t('meta.Sinks.InnerHive.SecondaryPartition'),
       name: 'secondaryPartition',
       props: {

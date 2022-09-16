@@ -28,6 +28,7 @@ import { excludeObject } from '@/utils';
 import { sourceFields } from './common/sourceFields';
 import TextSwitch from '@/components/TextSwitch';
 import ProductSelect from '@/components/ProductSelect';
+import UserSelect from '@/components/UserSelect';
 
 const thiveFieldTypes = [
   'string',
@@ -320,7 +321,7 @@ const getForm: GetStorageFormFieldsType = (
       ],
     },
     {
-      type: 'input',
+      type: <UserSelect mode="multiple" currentUserClosable={false} />,
       label: i18n.t('"meta.Sinks.THive.DefaultSelectors'),
       name: 'defaultSelectors',
     },
