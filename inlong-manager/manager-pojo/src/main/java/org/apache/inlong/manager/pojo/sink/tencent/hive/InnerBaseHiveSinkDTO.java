@@ -180,6 +180,7 @@ public class InnerBaseHiveSinkDTO {
                 .defaultSelectors(request.getDefaultSelectors())
                 .dbName(request.getDbName())
                 .tableName(request.getTableName())
+                .virtualUser(request.getVirtualUser())
                 .appGroupName(request.getAppGroupName())
                 .dataConsistency(request.getDataConsistency())
                 .dataEncoding(request.getDataEncoding())
