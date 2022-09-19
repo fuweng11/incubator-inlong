@@ -36,6 +36,7 @@ import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveSink;
 import org.apache.inlong.manager.pojo.sink.tencent.thive.InnerThiveSink;
+import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.sink.AbstractSinkOperator;
 import org.apache.inlong.manager.service.sink.tencent.us.UsTaskService;
 import org.slf4j.Logger;
@@ -60,6 +61,9 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
 
     @Autowired
     private UsTaskService usTaskService;
+
+    @Autowired
+    private SortHiveConfigService sortHiveConfigService;
 
     @Override
     public Boolean accept(String sinkType) {
@@ -137,6 +141,13 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
         // If the type is inner hive, the US task needs to be frozen
         if (Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE)) {
             freezeUsTaskForThive(entity, entity.getId(), operator);
+        }
+        try {
+            sortHiveConfigService.deleteSortConfig(entity);
+        } catch (Exception e) {
+            String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
+                    entity.getSinkName());
+            LOGGER.error(errMsg);
         }
         sinkFieldMapper.logicDeleteAll(entity.getId());
     }

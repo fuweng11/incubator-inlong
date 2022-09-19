@@ -41,19 +41,19 @@ import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.DataNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
-import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
-import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +75,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     @Autowired
     private InlongClusterEntityMapper clusterMapper;
     @Autowired
-    private InlongStreamService inlongStreamService;
+    private InlongStreamEntityMapper streamEntityMapper;
     @Autowired
     private StreamSinkFieldEntityMapper sinkFieldMapper;
     @Autowired
@@ -148,7 +148,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink) throws Exception {
         String groupId = clickHouseSink.getInlongGroupId();
         String streamId = clickHouseSink.getInlongStreamId();
-        InlongStreamInfo stream = inlongStreamService.get(groupId, streamId);
+        InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
         List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
                 groupInfo.getInlongClusterTag(), null, ClusterType.SORT_CK);
         String topoName = sortClusters.get(0).getName();

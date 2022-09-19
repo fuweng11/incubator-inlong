@@ -17,26 +17,38 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent;
 
+import com.tencent.oceanus.etl.ZkTools;
 import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.MQType;
+import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
+import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
+import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.ConsumptionEntity;
+import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
+import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
+import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.mapper.ConsumptionEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
-import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * Default operation of inner sort config.
@@ -47,6 +59,10 @@ public class AbstractInnerSortConfigService {
 
     @Autowired
     private ConsumptionEntityMapper consumptionEntityMapper;
+    @Autowired
+    private InlongGroupEntityMapper groupService;
+    @Autowired
+    private InlongClusterEntityMapper clusterMapper;
 
     public String getZkRoot(String mqType, ZkClusterDTO zkClusterDTO) {
         Preconditions.checkNotNull(mqType, "mq type cannot be null");
@@ -105,7 +121,7 @@ public class AbstractInnerSortConfigService {
     /**
      * Get deserializationinfo object information
      */
-    public DeserializationInfo getDeserializationInfo(InlongStreamInfo streamInfo) {
+    public DeserializationInfo getDeserializationInfo(InlongStreamEntity streamInfo) {
         String dataType = streamInfo.getDataType();
         Character escape = null;
         DeserializationInfo deserializationInfo;
@@ -135,6 +151,54 @@ public class AbstractInnerSortConfigService {
             throw new IllegalArgumentException("can not support sink data type:" + dataType);
         }
         return deserializationInfo;
+    }
+
+    public void deleteSortConfig(StreamSinkEntity sink) throws Exception {
+        if (!Objects.equals(sink.getStatus(), SinkStatus.CONFIG_SUCCESSFUL.getCode())) {
+            return;
+        }
+        InlongGroupEntity groupInfo = groupService.selectByGroupId(sink.getInlongGroupId());
+        String groupId = sink.getInlongGroupId();
+        List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
+                null, ClusterType.ZOOKEEPER);
+        if (CollectionUtils.isEmpty(zkClusters) || StringUtils.isBlank(zkClusters.get(0).getUrl())) {
+            LOGGER.warn("no matching zk cluster information for groupId=" + groupId);
+            return;
+        }
+        String topoType;
+        switch (sink.getSinkType()) {
+            case SinkType.INNER_HIVE:
+                topoType = ClusterType.SORT_HIVE;
+                break;
+            case SinkType.INNER_THIVE:
+                topoType = ClusterType.SORT_THIVE;
+                break;
+            case SinkType.INNER_CK:
+                topoType = ClusterType.SORT_CK;
+                break;
+            default:
+                throw new BusinessException(ErrorCodeEnum.MQ_TYPE_NOT_SUPPORTED);
+        }
+        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
+                groupInfo.getInlongClusterTag(), null, topoType);
+        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
+            LOGGER.warn("no matching sort cluster information for groupId=" + groupId);
+            return;
+        }
+        String topoName = sortClusters.get(0).getName();
+        if (topoName == null || StringUtils.isBlank(topoName)) {
+            LOGGER.warn("no matching topo name for groupId=" + groupId);
+            return;
+        }
+        InlongClusterEntity zkCluster = zkClusters.get(0);
+        ZkClusterDTO zkClusterDTO = ZkClusterDTO.getFromJson(zkCluster.getExtParams());
+        String zkUrl = zkCluster.getUrl();
+        String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
+        Integer sinkId = sink.getId();
+        LOGGER.info("try to delete sort config from {}, idList={}", zkUrl, sinkId);
+        // It could be hive or thive
+        ZkTools.removeDataFlowFromCluster(topoName, sinkId.toString(), zkUrl, zkRoot);
+        LOGGER.info("success to delete sort config from {}, idList={}", zkUrl, sinkId);
     }
 
 }

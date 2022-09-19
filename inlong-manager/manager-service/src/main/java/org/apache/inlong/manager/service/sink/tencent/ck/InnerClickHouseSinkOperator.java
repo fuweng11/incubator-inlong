@@ -18,6 +18,7 @@
 package org.apache.inlong.manager.service.sink.tencent.ck;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
@@ -30,6 +31,7 @@ import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
 import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSinkRequest;
+import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.sink.AbstractSinkOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +47,8 @@ public class InnerClickHouseSinkOperator extends AbstractSinkOperator {
 
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private SortHiveConfigService sortCkConfigService;
 
     @Override
     public Boolean accept(String sinkType) {
@@ -83,5 +87,27 @@ public class InnerClickHouseSinkOperator extends AbstractSinkOperator {
         List<SinkField> sinkFields = super.getSinkFields(entity.getId());
         sink.setSinkFieldList(sinkFields);
         return sink;
+    }
+
+    @Override
+    public void deleteOpt(StreamSinkEntity entity, String operator) {
+        entity.setPreviousStatus(entity.getStatus());
+        entity.setStatus(InlongConstants.DELETED_STATUS);
+        entity.setIsDeleted(entity.getId());
+        entity.setModifier(operator);
+        int rowCount = sinkMapper.updateByPrimaryKeySelective(entity);
+        if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
+            LOGGER.error("sink has already updated with groupId={}, streamId={}, name={}, curVersion={}",
+                    entity.getInlongGroupId(), entity.getInlongStreamId(), entity.getSinkName(), entity.getVersion());
+            throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
+        }
+        try {
+            sortCkConfigService.deleteSortConfig(entity);
+        } catch (Exception e) {
+            String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
+                    entity.getSinkName());
+            LOGGER.error(errMsg);
+        }
+        sinkFieldMapper.logicDeleteAll(entity.getId());
     }
 }

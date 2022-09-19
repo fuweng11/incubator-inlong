@@ -43,17 +43,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.MQType;
-import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
-import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
-import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
@@ -61,11 +60,9 @@ import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tubemq.TubeClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
-import org.apache.inlong.manager.service.sink.tencent.sort.SortExtConfig;
-import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
-import org.apache.inlong.manager.service.stream.InlongStreamService;
+import org.apache.inlong.manager.service.sink.tencent.sort.SortExtConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +72,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.inlong.manager.common.consts.TencentConstants.PART_ARRIVED;
@@ -132,10 +128,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     private InlongClusterEntityMapper clusterMapper;
 
     @Autowired
-    private InlongStreamService inlongStreamService;
-
-    @Autowired
-    private StreamSinkEntityMapper sinkMapper;
+    private InlongStreamEntityMapper streamEntityMapper;
 
     public void buildHiveConfig(InlongGroupInfo groupInfo, List<InnerHiveFullInfo> hiveFullInfos)
             throws Exception {
@@ -439,7 +432,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, InnerHiveFullInfo hiveFullInfo,
             List<StreamSinkFieldEntity> fieldList, String topoName) {
         String streamId = hiveFullInfo.getInlongStreamId();
-        InlongStreamInfo stream = inlongStreamService.get(groupInfo.getInlongGroupId(), streamId);
+        InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupInfo.getInlongGroupId(), streamId);
         // First determine the data source type. Tddmsgdbsync is temporarily used for DB
         DeserializationInfo deserializationInfo = null;
         boolean isDbType = "DB".equals(hiveFullInfo.getDataSourceType());
@@ -545,44 +538,6 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         }
 
         return fieldInfoList;
-    }
-
-    /**
-     * Remove hive sort configuration on zookeeper
-     */
-    public void deleteHiveConfig(InlongGroupInfo groupInfo, Integer sinkId) throws Exception {
-        String groupId = groupInfo.getInlongGroupId();
-        if (sinkId == null) {
-            LOGGER.warn("no need to delete hive config for bid={}, as no hive storage exists", groupId);
-            return;
-        }
-
-        List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
-                null, ClusterType.ZOOKEEPER);
-        if (CollectionUtils.isEmpty(zkClusters) || StringUtils.isBlank(zkClusters.get(0).getUrl())) {
-            throw new WorkflowListenerException("sort zk cluster not found for groupId=" + groupId);
-        }
-        InlongClusterEntity zkCluster = zkClusters.get(0);
-        ZkClusterDTO zkClusterDTO = ZkClusterDTO.getFromJson(zkCluster.getExtParams());
-        StreamSinkEntity entity = sinkMapper.selectByPrimaryKey(sinkId);
-        String topoType = Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE) ? ClusterType.SORT_THIVE
-                : ClusterType.SORT_HIVE;
-        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                groupInfo.getInlongClusterTag(), null, topoType);
-        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
-            throw new WorkflowListenerException("sort cluster not found for groupId=" + groupId);
-        }
-        String topoName = sortClusters.get(0).getName();
-        if (topoName == null || StringUtils.isBlank(topoName)) {
-            throw new WorkflowListenerException("hive topo cluster not found for groupId=" + groupId);
-        }
-
-        String zkUrl = zkCluster.getUrl();
-        String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
-        LOGGER.info("try to delete hive sort config from {}, idList={}", zkUrl, sinkId);
-        // It could be hive or thive
-        ZkTools.removeDataFlowFromCluster(topoName, sinkId.toString(), zkUrl, zkRoot);
-        LOGGER.info("success to delete hive sort config from {}, idList={}", zkUrl, sinkId);
     }
 
 }
