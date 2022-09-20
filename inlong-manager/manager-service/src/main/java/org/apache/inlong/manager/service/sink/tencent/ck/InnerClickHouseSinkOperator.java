@@ -91,6 +91,13 @@ public class InnerClickHouseSinkOperator extends AbstractSinkOperator {
 
     @Override
     public void deleteOpt(StreamSinkEntity entity, String operator) {
+        try {
+            sortCkConfigService.deleteSortConfig(entity);
+        } catch (Exception e) {
+            String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
+                    entity.getSinkName());
+            LOGGER.error(errMsg, e);
+        }
         entity.setPreviousStatus(entity.getStatus());
         entity.setStatus(InlongConstants.DELETED_STATUS);
         entity.setIsDeleted(entity.getId());
@@ -100,13 +107,6 @@ public class InnerClickHouseSinkOperator extends AbstractSinkOperator {
             LOGGER.error("sink has already updated with groupId={}, streamId={}, name={}, curVersion={}",
                     entity.getInlongGroupId(), entity.getInlongStreamId(), entity.getSinkName(), entity.getVersion());
             throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
-        }
-        try {
-            sortCkConfigService.deleteSortConfig(entity);
-        } catch (Exception e) {
-            String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
-                    entity.getSinkName());
-            LOGGER.error(errMsg);
         }
         sinkFieldMapper.logicDeleteAll(entity.getId());
     }

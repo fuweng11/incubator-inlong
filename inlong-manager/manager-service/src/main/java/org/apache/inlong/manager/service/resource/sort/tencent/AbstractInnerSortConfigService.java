@@ -155,6 +155,7 @@ public class AbstractInnerSortConfigService {
 
     public void deleteSortConfig(StreamSinkEntity sink) throws Exception {
         if (!Objects.equals(sink.getStatus(), SinkStatus.CONFIG_SUCCESSFUL.getCode())) {
+            LOGGER.warn("sink is not configured successfully, do not need to delete config in zk");
             return;
         }
         InlongGroupEntity groupInfo = groupService.selectByGroupId(sink.getInlongGroupId());

@@ -127,6 +127,17 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
 
     @Override
     public void deleteOpt(StreamSinkEntity entity, String operator) {
+        try {
+            sortHiveConfigService.deleteSortConfig(entity);
+        } catch (Exception e) {
+            String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
+                    entity.getSinkName());
+            LOGGER.error(errMsg, e);
+        }
+        // If the type is inner hive, the US task needs to be frozen
+        if (Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE)) {
+            freezeUsTaskForThive(entity, entity.getId(), operator);
+        }
         entity.setPreviousStatus(entity.getStatus());
         entity.setStatus(InlongConstants.DELETED_STATUS);
         entity.setIsDeleted(entity.getId());
@@ -137,17 +148,6 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
             LOGGER.error("sink has already updated with groupId={}, streamId={}, name={}, curVersion={}",
                     entity.getInlongGroupId(), entity.getInlongStreamId(), entity.getSinkName(), entity.getVersion());
             throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
-        }
-        // If the type is inner hive, the US task needs to be frozen
-        if (Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE)) {
-            freezeUsTaskForThive(entity, entity.getId(), operator);
-        }
-        try {
-            sortHiveConfigService.deleteSortConfig(entity);
-        } catch (Exception e) {
-            String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
-                    entity.getSinkName());
-            LOGGER.error(errMsg);
         }
         sinkFieldMapper.logicDeleteAll(entity.getId());
     }
