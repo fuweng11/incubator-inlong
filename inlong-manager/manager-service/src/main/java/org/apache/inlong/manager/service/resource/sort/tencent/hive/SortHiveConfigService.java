@@ -410,7 +410,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 duplicate = true;
             }
 
-            FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(field.getFieldType().toLowerCase());
+            FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(field.getFieldType().toLowerCase(),
+                    field.getFieldFormat());
             FieldInfo fieldInfo = new FieldInfo(fieldName, formatInfo);
             fieldInfoList.add(fieldInfo);
         }

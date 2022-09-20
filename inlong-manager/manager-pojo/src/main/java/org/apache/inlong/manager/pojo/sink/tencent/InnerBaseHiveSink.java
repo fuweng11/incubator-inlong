@@ -84,8 +84,8 @@ public abstract class InnerBaseHiveSink extends StreamSink {
     @ApiModelProperty("data encoding")
     private String dataEncoding;
 
-    @ApiModelProperty("target separator")
-    private String targetSeparator;
+    @ApiModelProperty("data separator")
+    private String dataSeparator;
 
     // Hive advanced options
     @ApiModelProperty("virtual user")

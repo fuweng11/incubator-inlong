@@ -18,6 +18,8 @@
 package org.apache.inlong.manager.service.resource.sort.tencent;
 
 import com.tencent.oceanus.etl.ZkTools;
+import com.tencent.oceanus.etl.configuration.Constants;
+import com.tencent.oceanus.etl.protocol.deserialization.AttaVersion1DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializationInfo;
@@ -146,6 +148,9 @@ public class AbstractInnerSortConfigService {
             deserializationInfo = new CsvDeserializationInfo(separator, escape);
         } else if (TencentConstants.DATA_TYPE_KV.equalsIgnoreCase(dataType)) {
             deserializationInfo = new KvDeserializationInfo(separator, escape);
+        } else if (TencentConstants.DATA_TYPE_INLONG_MSG_V1.equalsIgnoreCase(dataType)) {
+            DeserializationInfo inner = new CsvDeserializationInfo(separator, escape);
+            deserializationInfo = new AttaVersion1DeserializationInfo(Constants.CompressionType.GZIP, inner);
         } else {
             throw new IllegalArgumentException("can not support sink data type:" + dataType);
         }

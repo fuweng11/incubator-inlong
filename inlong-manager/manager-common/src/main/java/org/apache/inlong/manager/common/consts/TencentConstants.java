@@ -46,6 +46,7 @@ public class TencentConstants {
     public static final String DATA_TYPE_INLONG_CSV = "INLONG_CSV";
     public static final String DATA_TYPE_KV = "KV";
     public static final String DATA_TYPE_INLONG_KV = "INLONG_KV";
+    public static final String DATA_TYPE_INLONG_MSG_V1 = "INLONG_MSG_V1";
 
     public static final String FILE_FORMAT_ORC = "OrcFile";
 

@@ -93,4 +93,54 @@ public class SortFieldFormatUtils {
         return formatInfo;
     }
 
+    public static FormatInfo convertFieldFormat(String type, String format) {
+        FormatInfo formatInfo;
+        switch (type) {
+            case "boolean":
+                formatInfo = new BooleanFormatInfo();
+                break;
+            case "tinyint":
+            case "byte":
+                formatInfo = new ByteFormatInfo();
+                break;
+            case "smallint":
+            case "short":
+                formatInfo = new ShortFormatInfo();
+                break;
+            case "int":
+                formatInfo = new IntFormatInfo();
+                break;
+            case "bigint":
+            case "long":
+                formatInfo = new LongFormatInfo();
+                break;
+            case "float":
+                formatInfo = new FloatFormatInfo();
+                break;
+            case "double":
+                formatInfo = new DoubleFormatInfo();
+                break;
+            case "decimal":
+                formatInfo = new DecimalFormatInfo();
+                break;
+            case "date":
+                formatInfo = new DateFormatInfo(format);
+                break;
+            case "time":
+                formatInfo = new TimeFormatInfo(format);
+                break;
+            case "timestamp":
+                formatInfo = new TimestampFormatInfo(format);
+                break;
+            case "binary":
+            case "fixed":
+                formatInfo = new ArrayFormatInfo(ByteTypeInfo::new);
+                break;
+            default: // The default is string
+                formatInfo = new StringFormatInfo();
+        }
+
+        return formatInfo;
+    }
+
 }
