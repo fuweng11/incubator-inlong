@@ -20,9 +20,8 @@ package org.apache.inlong.manager.service.resource.sort.tencent;
 import com.tencent.oceanus.etl.ZkTools;
 import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.MQType;
@@ -132,17 +131,17 @@ public class AbstractInnerSortConfigService {
         char separator = (char) Integer.parseInt(streamInfo.getDataSeparator());
         if (TencentConstants.DATA_TYPE_INLONG_CSV.equalsIgnoreCase(dataType)) {
             // Do you want to delete the first separator? The default is false
-            deserializationInfo = new TDMsgCsvDeserializationInfo(streamInfo.getInlongStreamId(), separator, escape,
-                    false);
-        } else if (TencentConstants.DATA_TYPE_INLONG_KV.equalsIgnoreCase(dataType)) {
+            deserializationInfo = new InlongMsgCsvDeserializationInfo(streamInfo.getInlongStreamId(), separator,
+                    escape, false);
+        /* } else if (TencentConstants.DATA_TYPE_INLONG_KV.equalsIgnoreCase(dataType)) {
             // KV pair separator, which must be the field separator in the data flow
             // TODO User configuration shall prevail
             char kvSeparator = '&';
             // Row separator, which must be a field separator in the data flow
             Character lineSeparator = null;
+            // TODO Need sort to provide inlong kv
             deserializationInfo = new TDMsgKvDeserializationInfo(streamInfo.getInlongStreamId(), separator,
-                    kvSeparator,
-                    escape, lineSeparator);
+                    kvSeparator, escape, lineSeparator);*/
         } else if (TencentConstants.DATA_TYPE_CSV.equalsIgnoreCase(dataType)) {
             deserializationInfo = new CsvDeserializationInfo(separator, escape);
         } else if (TencentConstants.DATA_TYPE_KV.equalsIgnoreCase(dataType)) {
