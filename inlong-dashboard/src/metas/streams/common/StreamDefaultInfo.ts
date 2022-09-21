@@ -92,12 +92,12 @@ export class StreamDefaultInfo extends DataWithBackend {
     props: {
       options: [
         {
-          label: 'CSV',
-          value: 'CSV',
+          label: 'INLONG_CSV',
+          value: 'INLONG_CSV',
         },
         {
-          label: 'KEY-VALUE',
-          value: 'KEY-VALUE',
+          label: 'CSV',
+          value: 'CSV',
         },
         {
           label: 'JSON',
