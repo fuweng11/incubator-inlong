@@ -516,7 +516,7 @@
         <dependency>
             <groupId>com.tencent.oceanus.etl</groupId>
             <artifactId>oceanus-etl-common</artifactId>
-            <version>2.1.0.2-SNAPSHOT</version>
+            <version>2.1.0.3-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.flink</groupId>

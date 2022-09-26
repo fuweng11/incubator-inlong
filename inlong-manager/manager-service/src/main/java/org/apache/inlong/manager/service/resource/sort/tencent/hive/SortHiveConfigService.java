@@ -24,6 +24,7 @@ import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo;
 import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo.BuiltInField;
 import com.tencent.oceanus.etl.protocol.DataFlowInfo;
 import com.tencent.oceanus.etl.protocol.FieldInfo;
+import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.TDMsgDBSyncDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo;
@@ -475,12 +476,21 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             if (CollectionUtils.isEmpty(pulsarClusters)) {
                 throw new WorkflowListenerException("pulsar cluster not found for groupId=" + groupId);
             }
+
+            List<PulsarClusterInfo> pulsarClusterInfos = new ArrayList<>();
+            pulsarClusters.forEach(pulsarCluster -> {
+                // Multiple adminurls should be configured for pulsar,
+                // otherwise all requests will be sent to the same broker
+                PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
+                String adminUrl = pulsarClusterDTO.getAdminUrl();
+                String serviceUrl = pulsarCluster.getUrl();
+                pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, null, null));
+            });
             InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
             // Multiple adminurls should be configured for pulsar,
             // otherwise all requests will be sent to the same broker
             PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
-            String adminUrl = pulsarClusterDTO.getAdminUrl();
-            String masterAddress = pulsarCluster.getUrl();
+
             String tenant = pulsarClusterDTO.getTenant() == null ? InlongConstants.DEFAULT_PULSAR_TENANT
                     : pulsarClusterDTO.getTenant();
             String namespace = groupInfo.getMqResource();
@@ -491,8 +501,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
                 String subscription = getConsumerGroup(groupId, streamId, topic, topoName, MQType.PULSAR);
-                sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
-                        deserializationInfo, sourceFields.toArray(new FieldInfo[0]));
+                sourceInfo = new PulsarSourceInfo(null, null, fullTopic, subscription,
+                        deserializationInfo, sourceFields.toArray(new FieldInfo[0]),
+                        pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null);
             } catch (Exception e) {
                 LOGGER.error("get pulsar information failed", e);
                 throw new WorkflowListenerException("get pulsar admin failed, reason: " + e.getMessage());
