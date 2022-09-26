@@ -20,6 +20,7 @@ package org.apache.inlong.agent.metrics;
 import com.google.gson.Gson;
 import com.tencent.teg.monitor.sdk.CurveReporter;
 import com.tencent.teg.monitor.sdk.TegMonitor;
+import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.common.metric.MetricItemValue;
 import org.apache.inlong.common.metric.MetricListener;
@@ -34,6 +35,7 @@ import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_COMPONENT_NAME
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_GROUP_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_STREAM_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_PLUGIN_ID;
+import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_STATISTICS_TYPE;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.M_JOB_FATAL_COUNT;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.M_JOB_RUNNING_COUNT;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.M_PLUGIN_READ_COUNT;
@@ -99,7 +101,13 @@ public class AgentZhiyanMetricListener implements MetricListener {
                         .instanceMark(this.instanceMark);
                 Map<String, String> dimensionMap = itemValue.getDimensions();
                 // dimension
-                reporter.tag(KEY_PLUGIN_ID, dimensionMap.getOrDefault(KEY_PLUGIN_ID, "-"));
+                String pluginId = dimensionMap.getOrDefault(KEY_PLUGIN_ID, "-");
+                if (!StringUtils.equals(pluginId, "MemoryChannel")) {
+                    reporter.tag(KEY_STATISTICS_TYPE, "entire");
+                } else {
+                    reporter.tag(KEY_STATISTICS_TYPE, "plugins");
+                }
+                reporter.tag(KEY_PLUGIN_ID, pluginId);
                 reporter.tag(KEY_INLONG_GROUP_ID, dimensionMap.getOrDefault(KEY_INLONG_GROUP_ID, "-"));
                 reporter.tag(KEY_INLONG_STREAM_ID, dimensionMap.getOrDefault(KEY_INLONG_STREAM_ID, "-"));
                 reporter.tag(KEY_COMPONENT_NAME, dimensionMap.getOrDefault(KEY_COMPONENT_NAME, "-"));
