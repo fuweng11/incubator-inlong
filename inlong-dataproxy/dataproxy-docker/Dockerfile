@@ -18,7 +18,7 @@
 #
 FROM konajdk/konajdk:8-tlinux
 RUN yum -y update \
-    && yum install -y net-tools vim wget
+    && yum install -y net-tools vim wget procps iputils
 # add tarball from target output
 ARG DATAPROXY_TARBALL
 ADD ${DATAPROXY_TARBALL} /opt/inlong-dataproxy

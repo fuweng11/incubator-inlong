@@ -18,7 +18,7 @@
 #
 FROM konajdk/konajdk:8-tlinux
 RUN yum -y update \
-    && yum install -y net-tools vim default-mysql-client wget mysql
+    && yum install -y net-tools vim default-mysql-client wget mysql procps iputils
 EXPOSE 8083
 # profile and env virables
 ENV ACTIVE_PROFILE=prod
