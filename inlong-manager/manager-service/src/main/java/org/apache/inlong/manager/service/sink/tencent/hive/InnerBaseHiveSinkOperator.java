@@ -143,7 +143,7 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
         entity.setIsDeleted(entity.getId());
         entity.setModifier(operator);
         entity.setModifyTime(new Date());
-        int rowCount = sinkMapper.updateByPrimaryKeySelective(entity);
+        int rowCount = sinkMapper.updateByIdSelective(entity);
         if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
             LOGGER.error("sink has already updated with groupId={}, streamId={}, name={}, curVersion={}",
                     entity.getInlongGroupId(), entity.getInlongStreamId(), entity.getSinkName(), entity.getVersion());

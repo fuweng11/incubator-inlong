@@ -254,7 +254,7 @@ public class UsTaskService {
                     // it must be judged to prevent modification failure caused by empty parameters
                     if (StringUtils.isNotBlank(dto.getUsTaskId())) {
                         entity.setExtParams(objectMapper.writeValueAsString(dto));
-                        sinkEntityMapper.updateByPrimaryKeySelective(entity);
+                        sinkEntityMapper.updateByIdSelective(entity);
                         log.info("found frozen us tasks, reuse them for gourp id={}, stream id={}",
                                 inlongGroupId, inlongStreamId);
                     }
@@ -338,7 +338,7 @@ public class UsTaskService {
                     InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(sinkEntity.getExtParams());
                     dto.setVerifiedTaskId(taskId);
                     sinkEntity.setExtParams(objectMapper.writeValueAsString(dto));
-                    sinkEntityMapper.updateByPrimaryKeySelective(sinkEntity);
+                    sinkEntityMapper.updateByIdSelective(sinkEntity);
                 } catch (Exception e) {
                     log.error("parsing json string to sink info failed", e);
                     throw new WorkflowListenerException(ErrorCodeEnum.SINK_SAVE_FAILED.getMessage());
@@ -418,7 +418,7 @@ public class UsTaskService {
                     InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(sinkEntity.getExtParams());
                     dto.setUsTaskId(usTaskId);
                     sinkEntity.setExtParams(objectMapper.writeValueAsString(dto));
-                    sinkEntityMapper.updateByPrimaryKeySelective(sinkEntity);
+                    sinkEntityMapper.updateByIdSelective(sinkEntity);
                 } catch (Exception e) {
                     log.error("parsing json string to sink info failed", e);
                     throw new WorkflowListenerException(ErrorCodeEnum.SINK_SAVE_FAILED.getMessage());
