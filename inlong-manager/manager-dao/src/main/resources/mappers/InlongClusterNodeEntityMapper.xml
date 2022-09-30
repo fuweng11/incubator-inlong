@@ -43,7 +43,7 @@
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id"
-            parameterType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">
+        parameterType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">
         insert into inlong_cluster_node (id, parent_id, type,
                                          ip, port, protocol_type,
                                          ext_params, description, status,
@@ -55,7 +55,7 @@
     </insert>
 
     <insert id="insertOnDuplicateKeyUpdate" useGeneratedKeys="true" keyProperty="id"
-            parameterType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">
+        parameterType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">
         insert into inlong_cluster_node (id, parent_id, type,
                                          ip, port, protocol_type,
                                          ext_params, status, creator,
@@ -76,12 +76,11 @@
         where id = #{id,jdbcType=INTEGER}
     </select>
     <select id="selectByUniqueKey" parameterType="org.apache.inlong.manager.pojo.cluster.ClusterRequest"
-            resultType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">
+        resultType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">
         select
         <include refid="Base_Column_List"/>
         from inlong_cluster_node
-        where
-        is_deleted = 0
+        where is_deleted = 0
         and parent_id = #{parentId,jdbcType=INTEGER}
         and type = #{type, jdbcType=VARCHAR}
         and ip = #{ip, jdbcType=VARCHAR}
@@ -91,8 +90,8 @@
         </if>
     </select>
     <select id="selectByCondition"
-            parameterType="org.apache.inlong.manager.pojo.cluster.ClusterPageRequest"
-            resultType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">
+        parameterType="org.apache.inlong.manager.pojo.cluster.ClusterPageRequest"
+        resultType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">
         select
         <include refid="Base_Column_List"/>
         from inlong_cluster_node
@@ -127,6 +126,14 @@
                 and protocol_type = #{protocolType, jdbcType=VARCHAR}
             </if>
         </where>
+    </select>
+    <select id="selectByParentIdAndIp" resultType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from inlong_cluster_node
+        where is_deleted = 0
+        and parent_id = #{parentId, jdbcType=INTEGER}
+        and ip = #{ip, jdbcType=VARCHAR}
     </select>
 
     <update id="updateById" parameterType="org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity">

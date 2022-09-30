@@ -296,6 +296,21 @@ public class InlongClusterServiceImpl implements InlongClusterService {
     }
 
     @Override
+    public ClusterInfo get(Integer id) {
+        Preconditions.checkNotNull(id, "inlong cluster id cannot be empty");
+        InlongClusterEntity entity = clusterMapper.selectById(id);
+        if (entity == null) {
+            LOGGER.error("inlong cluster not found by id={}", id);
+            throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND);
+        }
+
+        InlongClusterOperator instance = clusterOperatorFactory.getInstance(entity.getType());
+        ClusterInfo clusterInfo = instance.getFromEntity(entity);
+        LOGGER.debug("success to get inlong cluster info by id={}", id);
+        return clusterInfo;
+    }
+
+    @Override
     public ClusterInfo get(Integer id, String currentUser) {
         Preconditions.checkNotNull(id, "inlong cluster id cannot be empty");
         InlongClusterEntity entity = clusterMapper.selectById(id);

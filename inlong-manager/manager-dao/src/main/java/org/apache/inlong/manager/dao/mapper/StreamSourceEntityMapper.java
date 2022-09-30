@@ -20,6 +20,7 @@ package org.apache.inlong.manager.dao.mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
 import org.apache.inlong.manager.pojo.source.SourcePageRequest;
+import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -103,6 +104,39 @@ public interface StreamSourceEntityMapper {
      */
     List<String> selectSourceType(@Param("groupId") String groupId, @Param("streamId") String streamId);
 
+    /**
+     * Query the data node names in the non-failed/frozen status based on the associated clusterName and sourceType.
+     * The data with is_deleted != 0 also needs to be returned, because it may be deleted, but the status is still
+     * [ToBeIssuedDelete](204) / [BeenIssuedDelete](304), and it has not changed to [Disabled](99).
+     */
+    List<String> selectNodeNames(@Param("clusterName") String clusterName, @Param("sourceType") String sourceType);
+
+    /**
+     * Query the task IDs corresponding to clusterName and nodeNames, filter tasks of 99/102/103/200
+     * (unavailable/stop/failed/unapproved),
+     *
+     * The data with is_deleted != 0 also needs to be returned, because it may be deleted, but the status is still
+     * [ToBeIssuedDelete](204) / [BeenIssuedDelete](304), and it has not changed to [Disabled](99).
+     *
+     * @param clusterName cluster name
+     * @param sourceType source type
+     * @param nodeNames db node names
+     * @return task IDs
+     */
+    List<Integer> selectValidIds(@Param("sourceType") String sourceType,
+            @Param("clusterName") String clusterName,
+            @Param("nodeNames") List<String> nodeNames);
+
+    /**
+     * Query task info according to ID list.
+     */
+    List<StreamSourceEntity> selectTaskByIdList(@Param("idList") List<Integer> idList);
+
+    /**
+     * Query the source status via the specified type
+     */
+    List<DbSyncTaskStatus> selectTaskStatus(@Param("sourceType") String sourceType);
+
     int updateByPrimaryKeySelective(StreamSourceEntity record);
 
     int updateByPrimaryKey(StreamSourceEntity record);
@@ -111,7 +145,7 @@ public interface StreamSourceEntityMapper {
      * Update the status to `nextStatus` by the given id.
      */
     int updateStatus(@Param("id") Integer id, @Param("nextStatus") Integer nextStatus,
-            @Param("changeTime") Boolean changeModifyTime);
+            @Param("message") String message, @Param("changeTime") Boolean changeModifyTime);
 
     /**
      * Update the status to `nextStatus` by the given group id and stream id.

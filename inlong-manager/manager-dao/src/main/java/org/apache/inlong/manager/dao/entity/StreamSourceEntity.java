@@ -18,11 +18,11 @@
 package org.apache.inlong.manager.dao.entity;
 
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.common.util.MaskDataUtils;
 
 import java.io.Serializable;
 import java.util.Date;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.inlong.common.util.MaskDataUtils;
 
 /**
  * Stream source entity, including source type, source name, etc.
@@ -44,6 +44,7 @@ public class StreamSourceEntity implements Serializable {
     private String inlongClusterName;
     private String serializationType;
     private String snapshot;
+    private String startPosition;
     private Date reportTime;
 
     // extParams saved filePath, fileRollingType, dbName, tableName, etc.

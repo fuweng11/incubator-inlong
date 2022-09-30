@@ -22,10 +22,10 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.inlong.manager.common.enums.DataFormat;
 import org.apache.inlong.manager.common.consts.SourceType;
-import org.apache.inlong.manager.pojo.source.SourceRequest;
+import org.apache.inlong.manager.common.enums.DataFormat;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
+import org.apache.inlong.manager.pojo.source.SourceRequest;
 
 /**
  * MySQL binlog source request
@@ -112,6 +112,9 @@ public class MySQLBinlogSourceRequest extends SourceRequest {
 
     @ApiModelProperty("Directly read binlog from the specified offset position")
     private Integer specificOffsetPos;
+
+    @ApiModelProperty(value = "Whether to skip the deletion event. Default: 1, skip")
+    private Integer skipDelete;
 
     public MySQLBinlogSourceRequest() {
         this.setSourceType(SourceType.MYSQL_BINLOG);

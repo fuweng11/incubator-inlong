@@ -148,7 +148,7 @@ public class SourceSnapshotOperator implements AutoCloseable {
                 Integer status = idStatusMap.get(id);
                 if (SourceStatus.TEMP_TO_NORMAL.contains(status)) {
                     isInvalid = true;
-                    sourceMapper.updateStatus(id, SourceStatus.SOURCE_NORMAL.getCode(), false);
+                    sourceMapper.updateStatus(id, SourceStatus.SOURCE_NORMAL.getCode(), null, false);
                 }
             }
 

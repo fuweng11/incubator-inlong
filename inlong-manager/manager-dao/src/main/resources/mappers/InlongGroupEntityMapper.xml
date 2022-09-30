@@ -62,7 +62,7 @@
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id"
-            parameterType="org.apache.inlong.manager.dao.entity.InlongGroupEntity">
+        parameterType="org.apache.inlong.manager.dao.entity.InlongGroupEntity">
         insert into inlong_group (id, inlong_group_id,
                                   name, description,
                                   mq_type, mq_resource,

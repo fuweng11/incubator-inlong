@@ -95,6 +95,14 @@ public interface InlongClusterService {
      * Get cluster info by id.
      *
      * @param id cluster id
+     * @return cluster info
+     */
+    ClusterInfo get(Integer id);
+
+    /**
+     * Get cluster info by id.
+     *
+     * @param id cluster id
      * @param currentUser current operator
      * @return cluster info
      */

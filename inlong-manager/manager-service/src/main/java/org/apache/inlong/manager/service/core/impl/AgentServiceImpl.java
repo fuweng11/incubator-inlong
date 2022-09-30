@@ -66,7 +66,9 @@ import java.util.stream.Collectors;
 public class AgentServiceImpl implements AgentService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AgentServiceImpl.class);
+    // The value of the modulo 100 in the waiting status
     private static final int UNISSUED_STATUS = 2;
+    // The value of the modulo 100 in the issued status
     private static final int ISSUED_STATUS = 3;
     private static final int MODULUS_100 = 100;
     private static final int TASK_FETCH_SIZE = 2;
@@ -86,7 +88,8 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    @Transactional(rollbackFor = Throwable.class, isolation = Isolation.READ_COMMITTED,
+    @Transactional(rollbackFor = Throwable.class,
+            isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRES_NEW)
     public void report(TaskRequest request) {
         if (LOGGER.isDebugEnabled()) {
@@ -144,13 +147,14 @@ public class AgentServiceImpl implements AgentService {
         }
 
         if (nextStatus != previousStatus) {
-            sourceMapper.updateStatus(taskId, nextStatus, false);
+            sourceMapper.updateStatus(taskId, nextStatus, null, false);
             LOGGER.info("task result=[{}], update source status to [{}] for id [{}]", result, nextStatus, taskId);
         }
     }
 
     @Override
-    @Transactional(rollbackFor = Throwable.class, isolation = Isolation.READ_COMMITTED,
+    @Transactional(rollbackFor = Throwable.class,
+            isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRES_NEW)
     public TaskResult getTaskResult(TaskRequest request) {
         if (request == null || StringUtils.isBlank(request.getAgentIp())) {

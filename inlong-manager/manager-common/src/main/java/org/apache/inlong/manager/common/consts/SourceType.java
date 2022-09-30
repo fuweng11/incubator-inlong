@@ -41,6 +41,12 @@ public class SourceType {
     public static final String MONGODB = "MONGODB";
     public static final String REDIS = "REDIS";
 
+    // --------------------------------------------------------------------------------------------
+    // inner method
+    // --------------------------------------------------------------------------------------------
+    // For inner HA binlog.
+    public static final String HA_BINLOG = "HA_BINLOG";
+
     public static final Map<String, TaskTypeEnum> SOURCE_TASK_MAP = new HashMap<String, TaskTypeEnum>() {
         {
             put(AUTO_PUSH, null);
@@ -56,6 +62,11 @@ public class SourceType {
             put(SQLSERVER, TaskTypeEnum.SQLSERVER);
             put(MONGODB, TaskTypeEnum.MONGODB);
             put(REDIS,TaskTypeEnum.REDIS);
+
+            // --------------------------------------------------------------------------------------------
+            // inner method
+            // --------------------------------------------------------------------------------------------
+            put(HA_BINLOG, TaskTypeEnum.HA_BINLOG);
 
         }
     };

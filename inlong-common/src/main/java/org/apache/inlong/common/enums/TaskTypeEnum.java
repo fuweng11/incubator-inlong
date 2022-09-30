@@ -33,6 +33,8 @@ public enum TaskTypeEnum {
     REDIS(11),
     MQTT(12),
 
+    HA_BINLOG(101),
+
     ;
 
     private final int type;

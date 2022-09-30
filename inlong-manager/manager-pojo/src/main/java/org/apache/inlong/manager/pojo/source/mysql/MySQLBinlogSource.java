@@ -102,6 +102,9 @@ public class MySQLBinlogSource extends StreamSource {
     @ApiModelProperty("Directly read binlog from the specified offset position")
     private Integer specificOffsetPos;
 
+    @ApiModelProperty(value = "Whether to skip the deletion event. Default: 1, skip")
+    private Integer skipDelete;
+
     public MySQLBinlogSource() {
         this.setSourceType(SourceType.MYSQL_BINLOG);
     }

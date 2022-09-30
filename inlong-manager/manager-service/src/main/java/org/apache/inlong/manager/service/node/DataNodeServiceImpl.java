@@ -90,6 +90,20 @@ public class DataNodeServiceImpl implements DataNodeService {
     }
 
     @Override
+    public DataNodeInfo get(String name, String type) {
+        DataNodeEntity entity = dataNodeMapper.selectByNameAndType(name, type);
+        if (entity == null) {
+            throw new BusinessException(String.format("data node not found by name=%s, type=%s", name, type));
+        }
+
+        String dataNodeType = entity.getType();
+        DataNodeOperator dataNodeOperator = operatorFactory.getInstance(dataNodeType);
+        DataNodeInfo dataNodeInfo = dataNodeOperator.getFromEntity(entity);
+        LOGGER.debug("success to get data node by name={} type={}", name, type);
+        return dataNodeInfo;
+    }
+
+    @Override
     public PageResult<DataNodeInfo> list(DataNodePageRequest request) {
         PageHelper.startPage(request.getPageNum(), request.getPageSize());
         Page<DataNodeEntity> entityPage = (Page<DataNodeEntity>) dataNodeMapper.selectByCondition(request);

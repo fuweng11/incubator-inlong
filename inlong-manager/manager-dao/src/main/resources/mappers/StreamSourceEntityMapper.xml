@@ -33,6 +33,7 @@
         <result column="inlong_cluster_name" jdbcType="VARCHAR" property="inlongClusterName"/>
         <result column="serialization_type" jdbcType="VARCHAR" property="serializationType"/>
         <result column="snapshot" jdbcType="LONGVARCHAR" property="snapshot"/>
+        <result column="start_position" jdbcType="VARCHAR" property="startPosition"/>
         <result column="report_time" jdbcType="TIMESTAMP" property="reportTime"/>
         <result column="ext_params" jdbcType="LONGVARCHAR" property="extParams"/>
         <result column="version" jdbcType="INTEGER" property="version"/>
@@ -46,23 +47,24 @@
     </resultMap>
     <sql id="Base_Column_List">
         id, inlong_group_id, inlong_stream_id, source_type, source_name, template_id, agent_ip, uuid,
-        data_node_name, inlong_cluster_name, serialization_type, snapshot, report_time, ext_params,
-        version, status, previous_status, is_deleted, creator, modifier, create_time, modify_time
+        data_node_name, inlong_cluster_name, serialization_type, snapshot, start_position, report_time,
+        ext_params, version, status, previous_status, is_deleted, creator, modifier, create_time, modify_time
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id"
-            parameterType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
+        parameterType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
         insert into stream_source (inlong_group_id, inlong_stream_id,
-                                   source_type, source_name, template_id, agent_ip,
-                                   uuid, data_node_name, inlong_cluster_name,
-                                   serialization_type, snapshot,
+                                   source_type, source_name, template_id,
+                                   agent_ip, uuid, data_node_name,
+                                   inlong_cluster_name, serialization_type,
+                                   snapshot, start_position,
                                    report_time, ext_params, status,
                                    previous_status, creator, modifier)
         values (#{inlongGroupId,jdbcType=VARCHAR}, #{inlongStreamId,jdbcType=VARCHAR},
                 #{sourceType,jdbcType=VARCHAR}, #{sourceName,jdbcType=VARCHAR}, #{templateId,jdbcType=INTEGER},
-                #{agentIp,jdbcType=VARCHAR},#{uuid,jdbcType=VARCHAR},
-                #{dataNodeName,jdbcType=VARCHAR}, #{inlongClusterName,jdbcType=VARCHAR},
-                #{serializationType,jdbcType=VARCHAR}, #{snapshot,jdbcType=LONGVARCHAR},
+                #{agentIp,jdbcType=VARCHAR}, #{uuid,jdbcType=VARCHAR}, #{dataNodeName,jdbcType=VARCHAR},
+                #{inlongClusterName,jdbcType=VARCHAR}, #{serializationType,jdbcType=VARCHAR},
+                #{snapshot,jdbcType=LONGVARCHAR}, #{startPosition,jdbcType=VARCHAR},
                 #{modifyTime,jdbcType=TIMESTAMP}, #{extParams,jdbcType=LONGVARCHAR}, #{status,jdbcType=INTEGER},
                 #{previousStatus,jdbcType=INTEGER}, #{creator,jdbcType=VARCHAR}, #{modifier,jdbcType=VARCHAR})
     </insert>
@@ -110,8 +112,8 @@
         </where>
     </select>
     <select id="selectByCondition"
-            parameterType="org.apache.inlong.manager.pojo.source.SourcePageRequest"
-            resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
+        parameterType="org.apache.inlong.manager.pojo.source.SourcePageRequest"
+        resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
         select
         <include refid="Base_Column_List"/>
         from stream_source
@@ -137,7 +139,8 @@
             and template_id is NULL
         </where>
         <choose>
-            <when test="request.orderField != null and request.orderField != '' and request.orderType != null and request.orderType != ''">
+            <when test="request.orderField != null and request.orderField != ''
+                        and request.orderType != null and request.orderType != ''">
                 order by ${request.orderField} ${request.orderType}
             </when>
             <otherwise>
@@ -271,6 +274,43 @@
         </where>
     </select>
 
+    <select id="selectNodeNames" resultType="java.lang.String">
+        select distinct(data_node_name)
+        from stream_source
+        where status not in (99, 102, 103, 200)
+          and source_type = #{sourceType, jdbcType=VARCHAR}
+          and inlong_cluster_name = #{clusterName, jdbcType=VARCHAR}
+    </select>
+    <select id="selectValidIds" resultType="java.lang.Integer">
+        select distinct id
+        from stream_source
+        where status not in (99, 102, 103, 200)
+        and source_type = #{sourceType, jdbcType=VARCHAR}
+        and inlong_cluster_name = #{clusterName, jdbcType=VARCHAR}
+        <if test="nodeNames != null and nodeNames.size() > 0">
+            and data_node_name in
+            <foreach collection="nodeNames" item="name" index="index" open="(" close=")" separator=",">
+                #{name}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectTaskByIdList" resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from stream_source
+        where id in
+        <foreach collection="idList" item="id" index="index" open="(" close=")"
+            separator=",">
+            #{id}
+        </foreach>
+    </select>
+    <select id="selectTaskStatus" resultType="org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus">
+        select id, status
+        from stream_source
+        where source_type = #{sourceType, jdbcType=VARCHAR}
+          and status in (201, 202, 203, 204, 205, 301, 302, 303, 304, 305)
+    </select>
+
     <update id="updateByPrimaryKeySelective" parameterType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
         update stream_source
         <set>
@@ -303,6 +343,9 @@
             </if>
             <if test="snapshot != null">
                 snapshot = #{snapshot,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="startPosition != null">
+                start_position = #{startPosition,jdbcType=VARCHAR},
             </if>
             <if test="reportTime != null">
                 report_time = #{reportTime,jdbcType=TIMESTAMP},
@@ -342,6 +385,7 @@
             inlong_cluster_name = #{inlongClusterName,jdbcType=VARCHAR},
             serialization_type  = #{serializationType,jdbcType=VARCHAR},
             snapshot            = #{snapshot,jdbcType=LONGVARCHAR},
+            start_position      = #{startPosition,jdbcType=VARCHAR},
             report_time         = #{reportTime,jdbcType=TIMESTAMP},
             ext_params          = #{extParams,jdbcType=LONGVARCHAR},
             version             = #{version,jdbcType=INTEGER} + 1,
@@ -351,12 +395,13 @@
             creator             = #{creator,jdbcType=VARCHAR},
             modifier            = #{modifier,jdbcType=VARCHAR}
         where id = #{id,jdbcType=INTEGER}
-        and version = #{version,jdbcType=INTEGER}
+          and version = #{version,jdbcType=INTEGER}
     </update>
     <update id="updateStatus">
         update stream_source
         set previous_status = status,
-        status = #{nextStatus, jdbcType=INTEGER}
+        status = #{nextStatus, jdbcType=INTEGER},
+        message = #{message, jdbcType=VARCHAR},
         <if test="changeTime == false">
             , modify_time = modify_time
         </if>
