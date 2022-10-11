@@ -232,7 +232,7 @@ public abstract class AbstractSourceOperator implements StreamSourceOperator {
         }
     }
 
-    private void updateFieldOpt(StreamSourceEntity entity, List<StreamField> fieldInfos) {
+    protected void updateFieldOpt(StreamSourceEntity entity, List<StreamField> fieldInfos) {
         Integer sourceId = entity.getId();
         if (CollectionUtils.isEmpty(fieldInfos)) {
             return;
@@ -246,7 +246,7 @@ public abstract class AbstractSourceOperator implements StreamSourceOperator {
         LOGGER.info("success to update source fields");
     }
 
-    private void saveFieldOpt(StreamSourceEntity entity, List<StreamField> fieldInfos) {
+    protected void saveFieldOpt(StreamSourceEntity entity, List<StreamField> fieldInfos) {
         LOGGER.info("begin to save source fields={}", fieldInfos);
         if (CollectionUtils.isEmpty(fieldInfos)) {
             return;
@@ -274,5 +274,33 @@ public abstract class AbstractSourceOperator implements StreamSourceOperator {
 
         sourceFieldMapper.insertAll(entityList);
         LOGGER.info("success to save source fields");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    public void deleteOpt(StreamSourceEntity entity, String operator) {
+        boolean isTemplateSource = CollectionUtils.isNotEmpty(sourceMapper.selectByTemplateId(entity.getId()));
+        SourceStatus curStatus = SourceStatus.forCode(entity.getStatus());
+        SourceStatus nextStatus = SourceStatus.TO_BE_ISSUED_DELETE;
+        // if source is frozen|failed|new, or if it is a template source or auto push source, delete directly
+        if (curStatus == SourceStatus.SOURCE_FROZEN || curStatus == SourceStatus.SOURCE_FAILED
+                || curStatus == SourceStatus.SOURCE_NEW || isTemplateSource
+                || SourceType.AUTO_PUSH.equals(entity.getSourceType())) {
+            nextStatus = SourceStatus.SOURCE_DISABLE;
+        }
+        if (!SourceStatus.isAllowedTransition(curStatus, nextStatus)) {
+            throw new BusinessException(String.format("Source=%s is not allowed to delete", entity));
+        }
+
+        entity.setPreviousStatus(curStatus.getCode());
+        entity.setStatus(nextStatus.getCode());
+        entity.setIsDeleted(entity.getId());
+        int rowCount = sourceMapper.updateByPrimaryKeySelective(entity);
+        if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
+            LOGGER.error("source has already updated with groupId={}, streamId={}, name={}, curVersion={}",
+                    entity.getInlongGroupId(), entity.getInlongStreamId(), entity.getSourceName(), entity.getVersion());
+            throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
+        }
+        sourceFieldMapper.deleteAll(entity.getId());
     }
 }

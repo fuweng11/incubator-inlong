@@ -92,6 +92,9 @@ public abstract class StreamSource extends StreamNode {
     @ApiModelProperty("Previous status")
     private Integer previousStatus;
 
+    @ApiModelProperty(value = "Background operate log")
+    private String operateLog;
+
     @ApiModelProperty("Creator")
     private String creator;
 

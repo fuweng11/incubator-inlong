@@ -36,6 +36,7 @@
         <result column="start_position" jdbcType="VARCHAR" property="startPosition"/>
         <result column="report_time" jdbcType="TIMESTAMP" property="reportTime"/>
         <result column="ext_params" jdbcType="LONGVARCHAR" property="extParams"/>
+        <result column="operate_log" jdbcType="LONGVARCHAR" property="operateLog"/>
         <result column="version" jdbcType="INTEGER" property="version"/>
         <result column="status" jdbcType="INTEGER" property="status"/>
         <result column="previous_status" jdbcType="INTEGER" property="previousStatus"/>
@@ -47,8 +48,8 @@
     </resultMap>
     <sql id="Base_Column_List">
         id, inlong_group_id, inlong_stream_id, source_type, source_name, template_id, agent_ip, uuid,
-        data_node_name, inlong_cluster_name, serialization_type, snapshot, start_position, report_time,
-        ext_params, version, status, previous_status, is_deleted, creator, modifier, create_time, modify_time
+        data_node_name, inlong_cluster_name, serialization_type, snapshot, start_position, report_time,ext_params,
+        operate_log, version, status, previous_status, is_deleted, creator, modifier, create_time, modify_time
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id"
@@ -57,15 +58,16 @@
                                    source_type, source_name, template_id,
                                    agent_ip, uuid, data_node_name,
                                    inlong_cluster_name, serialization_type,
-                                   snapshot, start_position,
-                                   report_time, ext_params, status,
+                                   snapshot, start_position, report_time,
+                                   ext_params, operate_log, status,
                                    previous_status, creator, modifier)
         values (#{inlongGroupId,jdbcType=VARCHAR}, #{inlongStreamId,jdbcType=VARCHAR},
                 #{sourceType,jdbcType=VARCHAR}, #{sourceName,jdbcType=VARCHAR}, #{templateId,jdbcType=INTEGER},
                 #{agentIp,jdbcType=VARCHAR}, #{uuid,jdbcType=VARCHAR}, #{dataNodeName,jdbcType=VARCHAR},
                 #{inlongClusterName,jdbcType=VARCHAR}, #{serializationType,jdbcType=VARCHAR},
                 #{snapshot,jdbcType=LONGVARCHAR}, #{startPosition,jdbcType=VARCHAR},
-                #{modifyTime,jdbcType=TIMESTAMP}, #{extParams,jdbcType=LONGVARCHAR}, #{status,jdbcType=INTEGER},
+                #{modifyTime,jdbcType=TIMESTAMP}, #{extParams,jdbcType=LONGVARCHAR},
+                #{operateLog,jdbcType=LONGVARCHAR}, #{status,jdbcType=INTEGER},
                 #{previousStatus,jdbcType=INTEGER}, #{creator,jdbcType=VARCHAR}, #{modifier,jdbcType=VARCHAR})
     </insert>
 
@@ -310,6 +312,24 @@
         where source_type = #{sourceType, jdbcType=VARCHAR}
           and status in (201, 202, 203, 204, 205, 301, 302, 303, 304, 305)
     </select>
+    <select id="selectByClusterAndDataNode" resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from stream_source
+        <where>
+            is_deleted = 0
+            and status not in (99, 200)
+            <if test="clusterName != null">
+                and inlong_cluster_name = #{clusterName, jdbcType=VARCHAR}
+            </if>
+            <if test="nodeName != null">
+                and data_node_name = #{nodeName, jdbcType=VARCHAR}
+            </if>
+            <if test="sourceType != null">
+                and source_type = #{sourceType,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
 
     <update id="updateByPrimaryKeySelective" parameterType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
         update stream_source
@@ -353,6 +373,9 @@
             <if test="extParams != null">
                 ext_params = #{extParams,jdbcType=LONGVARCHAR},
             </if>
+            <if test="operateLog != null">
+                operate_log = #{operateLog,jdbcType=LONGVARCHAR},
+            </if>
             <if test="status != null">
                 status = #{status,jdbcType=INTEGER},
             </if>
@@ -388,6 +411,7 @@
             start_position      = #{startPosition,jdbcType=VARCHAR},
             report_time         = #{reportTime,jdbcType=TIMESTAMP},
             ext_params          = #{extParams,jdbcType=LONGVARCHAR},
+            operate_log         = #{operateLog,jdbcType=LONGVARCHAR},
             version             = #{version,jdbcType=INTEGER} + 1,
             status              = #{status,jdbcType=INTEGER},
             previous_status     = #{previousStatus,jdbcType=INTEGER},

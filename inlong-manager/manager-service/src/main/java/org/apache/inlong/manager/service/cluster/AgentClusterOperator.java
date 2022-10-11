@@ -20,6 +20,7 @@ package org.apache.inlong.manager.service.cluster;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
@@ -77,6 +78,7 @@ public class AgentClusterOperator extends AbstractClusterOperator {
     @Override
     protected void setTargetEntity(ClusterRequest request, InlongClusterEntity targetEntity) {
         AgentClusterRequest agentRequest = (AgentClusterRequest) request;
+        agentRequest.setServerVersion(InlongConstants.INITIAL_VERSION);
         CommonBeanUtils.copyProperties(agentRequest, targetEntity, true);
         try {
             AgentClusterDTO dto = AgentClusterDTO.getFromRequest(agentRequest);

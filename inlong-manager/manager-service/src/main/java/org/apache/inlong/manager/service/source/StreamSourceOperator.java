@@ -114,4 +114,11 @@ public interface StreamSourceOperator {
      */
     void restartOpt(SourceRequest request, String operator);
 
+    /**
+     * Delete the source info.
+     *
+     * @param entity source info needs to delete
+     * @param operator name of the operator
+     */
+    void deleteOpt(StreamSourceEntity entity, String operator);
 }

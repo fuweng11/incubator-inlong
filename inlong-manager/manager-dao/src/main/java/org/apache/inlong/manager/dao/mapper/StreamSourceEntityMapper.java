@@ -175,4 +175,9 @@ public interface StreamSourceEntityMapper {
      */
     int deleteByInlongGroupIds(@Param("groupIdList") List<String> groupIdList);
 
+    /**
+     * Query whether the configuration is valid according to the dataNodeName , clusterName, sourceType
+     */
+    List<StreamSourceEntity> selectByClusterAndDataNode(@Param("clusterName") String clusterName,
+            @Param("nodeName") String nodeName, @Param("sourceType") String sourceType);
 }

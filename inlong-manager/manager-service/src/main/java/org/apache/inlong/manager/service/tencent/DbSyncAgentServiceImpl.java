@@ -43,10 +43,12 @@ import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.SourceStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity;
 import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
 import org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity;
+import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSourceEntityMapper;
@@ -150,6 +152,8 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     private InlongGroupEntityMapper groupMapper;
     @Autowired
     private StreamSourceEntityMapper sourceMapper;
+    @Autowired
+    private InlongClusterEntityMapper clusterMapper;
     @Autowired
     private InlongClusterNodeEntityMapper clusterNodeMapper;
     @Autowired
@@ -557,8 +561,10 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         }
 
         // get all cluster node IPs
-        taskInfo.setParentId(taskInfo.getParentId());
-        List<InlongClusterNodeEntity> clusterNodes = clusterNodeMapper.selectByParentId(taskInfo.getId());
+        InlongClusterEntity clusterEntity = clusterMapper.selectByNameAndType(sourceEntity.getInlongClusterName(),
+                ClusterType.AGENT);
+        taskInfo.setParentId(clusterEntity.getId());
+        List<InlongClusterNodeEntity> clusterNodes = clusterNodeMapper.selectByParentId(taskInfo.getParentId(), null);
         if (CollectionUtils.isEmpty(clusterNodes)) {
             throw new BusinessException("no dbsync cluster node exists for parentId=[" + taskInfo.getParentId() + "]");
         }
@@ -600,7 +606,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
          */
         List<DbSyncTaskStatus> taskStatusList = sourceMapper.selectTaskStatus(SourceType.HA_BINLOG);
         for (DbSyncTaskStatus taskStatus : taskStatusList) {
-            List<InlongClusterNodeEntity> clusterNodes = clusterNodeMapper.selectByParentId(taskStatus.getId());
+            List<InlongClusterNodeEntity> clusterNodes = clusterNodeMapper.selectByParentId(taskStatus.getId(), null);
             if (CollectionUtils.isEmpty(clusterNodes)) {
                 continue;
             }
