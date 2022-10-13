@@ -15,20 +15,12 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import {
-  getColsFromFields,
-  GetStorageColumnsType,
-  GetStorageFormFieldsType,
-} from '@/utils/metaData';
-import { ColumnsType } from 'antd/es/table';
-import EditableTable, { ColumnsItemProps } from '@/components/EditableTable';
 import i18n from '@/i18n';
-import { excludeObject } from '@/utils';
-import { sourceFields } from './common/sourceFields';
-import TextSwitch from '@/components/TextSwitch';
+import type { FieldItemType } from '@/metas/common';
+import EditableTable from '@/components/EditableTable';
 import ProductSelect from '@/components/ProductSelect';
 import UserSelect from '@/components/UserSelect';
+import { sourceFields } from './common/sourceFields';
 
 const thiveFieldTypes = [
   'string',
@@ -51,348 +43,339 @@ const thiveFieldTypes = [
   value: item,
 }));
 
-const getForm: GetStorageFormFieldsType = (
-  type,
-  { currentValues, inlongGroupId, isEdit, dataType, form } = {} as any,
-) => {
-  const fileds = [
-    {
-      type: ProductSelect,
-      label: i18n.t('meta.Group.Product'),
-      name: 'productId',
-      extraNames: ['productName'],
-      rules: [{ required: true }],
-      props: values => ({
-        asyncValueLabel: values.productName,
-        onChange: (value, record) => ({
-          appGroupName: undefined,
-          productName: record.name,
-        }),
+export const innerThive: FieldItemType[] = [
+  {
+    type: ProductSelect,
+    label: i18n.t('meta.Group.Product'),
+    name: 'productId',
+    extraNames: ['productName'],
+    rules: [{ required: true }],
+    props: values => ({
+      asyncValueLabel: values.productName,
+      disabled: [110, 130].includes(values?.status),
+      onChange: (value, record) => ({
+        appGroupName: undefined,
+        productName: record.name,
       }),
-    },
-    {
-      type: 'select',
-      label: i18n.t('meta.Group.AppGroupName'),
-      name: 'appGroupName',
-      rules: [{ required: true }],
-      props: values => ({
-        allowClear: true,
-        options: {
-          requestService: {
-            url: '/sc/appgroup/my',
-            params: {
-              productId: values.productId,
-            },
-          },
-          requestParams: {
-            formatResult: result =>
-              result?.map(item => ({
-                label: item,
-                value: item,
-              })),
+    }),
+  },
+  {
+    type: 'select',
+    label: i18n.t('meta.Group.AppGroupName'),
+    name: 'appGroupName',
+    rules: [{ required: true }],
+    props: values => ({
+      allowClear: true,
+      disabled: [110, 130].includes(values?.status),
+      options: {
+        requestService: {
+          url: '/sc/appgroup/my',
+          params: {
+            productId: values.productId,
           },
         },
-      }),
-    },
-    {
-      type: 'select',
-      label: i18n.t('meta.Sinks.InnerHive.DataNodeName'),
-      name: 'dataNodeName',
-      rules: [{ required: true }],
-      props: {
-        showSearch: true,
-        options: {
-          requestService: {
-            url: '/node/list',
-            method: 'POST',
-            data: {
-              type: 'INNER_THIVE',
-              pageNum: 1,
-              pageSize: 20,
-            },
-          },
-          requestParams: {
-            formatResult: result =>
-              result?.list?.map(item => ({
-                label: item.name,
-                value: item.name,
-              })),
-          },
+        requestParams: {
+          formatResult: result =>
+            result?.map(item => ({
+              label: item,
+              value: item,
+            })),
         },
       },
-    },
-    {
-      type: 'input',
-      label: i18n.t('meta.Sinks.THive.DbName'),
-      name: 'dbName',
-      rules: [{ required: true }],
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-      },
-      _inTable: true,
-    },
-    {
-      type: 'input',
-      label: i18n.t('meta.Sinks.THive.TableName'),
-      name: 'tableName',
-      rules: [{ required: true }],
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-      },
-      _inTable: true,
-    },
-    {
-      name: 'partitionType',
-      type: 'radio',
-      label: i18n.t('meta.Sinks.THive.PartitionType'),
-      initialValue: 'LIST',
-      rules: [{ required: true }],
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-        options: [
-          {
-            label: 'LIST',
-            value: 'LIST',
+    }),
+  },
+  {
+    type: 'select',
+    label: i18n.t('meta.Sinks.InnerHive.DataNodeName'),
+    name: 'dataNodeName',
+    rules: [{ required: true }],
+    props: values => ({
+      showSearch: true,
+      disabled: [110, 130].includes(values?.status),
+      options: {
+        requestService: {
+          url: '/node/list',
+          method: 'POST',
+          data: {
+            type: 'INNER_THIVE',
+            pageNum: 1,
+            pageSize: 20,
           },
-          {
-            label: 'RANGE',
-            value: 'RANGE',
-          },
-        ],
-      },
-    },
-    {
-      type: 'input',
-      label: i18n.t('meta.Sinks.THive.PartitionInterval'),
-      name: 'partitionInterval',
-      rules: [{ required: true }],
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-      },
-      _inTable: true,
-      suffix: {
-        type: 'select',
-        name: 'partitionUnit',
-        initialValue: 'D',
-        rules: [{ required: true }],
-        props: {
-          disabled: isEdit && [110, 130].includes(currentValues?.status),
-          options: [
-            {
-              label: i18n.t('meta.Sinks.THive.Day'),
-              value: 'D',
-            },
-            {
-              label: i18n.t('meta.Sinks.THive.Hour'),
-              value: 'H',
-            },
-          ],
         },
-        _inTable: true,
-      },
-    },
-    {
-      type: 'select',
-      label: i18n.t('meta.Sinks.THive.PartitionCreationStrategy'),
-      name: 'partitionCreationStrategy',
-      initialValue: 'ARRIVED',
-      rules: [{ required: true }],
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-        options: [
-          {
-            label: i18n.t('meta.Sinks.THive.DataArrives'),
-            value: 'ARRIVED',
-          },
-          {
-            label: i18n.t('meta.Sinks.THive.DataComplete'),
-            value: 'COMPLETED',
-          },
-          {
-            label: i18n.t('meta.Sinks.THive.DataVerified'),
-            value: 'AGENT_COUNT_VERIFIED',
-          },
-          {
-            label: i18n.t('meta.Sinks.THive.DataDistinct'),
-            value: 'DATA_DISTINCT_VERIFIED',
-          },
-        ],
-      },
-      _inTable: true,
-    },
-    {
-      type: 'radio',
-      label: i18n.t('meta.Sinks.THive.FieldFormat'),
-      name: 'fileFormat',
-      initialValue: 'TextFile',
-      rules: [{ required: true }],
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-        options: [
-          {
-            label: 'TextFile',
-            value: 'TextFile',
-          },
-          {
-            label: 'OrcFile',
-            value: 'OrcFile',
-          },
-          {
-            label: 'Parquet',
-            value: 'Parquet',
-          },
-        ],
-      },
-      _inTable: true,
-    },
-    {
-      name: 'dataEncoding',
-      type: 'radio',
-      label: i18n.t('meta.Sinks.THive.DataEncoding'),
-      initialValue: 'UTF-8',
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-        options: [
-          {
-            label: 'UTF-8',
-            value: 'UTF-8',
-          },
-          {
-            label: 'GBK',
-            value: 'GBK',
-          },
-        ],
-      },
-      rules: [{ required: true }],
-    },
-    {
-      name: 'dataSeparator',
-      type: 'select',
-      label: i18n.t('meta.Sinks.THive.DataSeparator'),
-      initialValue: '124',
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-        dropdownMatchSelectWidth: false,
-        options: [
-          {
-            label: i18n.t('meta.Stream.VerticalLine'),
-            value: '124',
-          },
-          {
-            label: i18n.t('meta.Stream.Asterisk'),
-            value: '42',
-          },
-          {
-            label: i18n.t('meta.Stream.Comma'),
-            value: '44',
-          },
-          {
-            label: i18n.t('meta.Stream.Semicolon'),
-            value: '59',
-          },
-          {
-            label: i18n.t('meta.Stream.DoubleQuotes'),
-            value: '34',
-          },
-          {
-            label: i18n.t('meta.Stream.Space'),
-            value: '32',
-          },
-          {
-            label: i18n.t('meta.Stream.Tab'),
-            value: '9',
-          },
-        ],
-        useInput: true,
-        useInputProps: {
-          placeholder: 'ASCII',
-          disabled: isEdit && [110, 130].includes(currentValues?.status),
+        requestParams: {
+          formatResult: result =>
+            result?.list?.map(item => ({
+              label: item.name,
+              value: item.name,
+            })),
         },
-        style: { width: 100 },
       },
-      rules: [
+    }),
+  },
+  {
+    type: 'input',
+    label: i18n.t('meta.Sinks.THive.DbName'),
+    name: 'dbName',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
+    _renderTable: true,
+  },
+  {
+    type: 'input',
+    label: i18n.t('meta.Sinks.THive.TableName'),
+    name: 'tableName',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
+    _renderTable: true,
+  },
+  {
+    name: 'partitionType',
+    type: 'radio',
+    label: i18n.t('meta.Sinks.THive.PartitionType'),
+    initialValue: 'LIST',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      options: [
         {
-          required: true,
-          type: 'number',
-          transform: val => +val,
-          min: 0,
-          max: 127,
-        } as any,
+          label: 'LIST',
+          value: 'LIST',
+        },
+        {
+          label: 'RANGE',
+          value: 'RANGE',
+        },
       ],
-    },
-    {
-      type: <UserSelect mode="multiple" currentUserClosable={false} />,
-      label: i18n.t('"meta.Sinks.THive.DefaultSelectors'),
-      name: 'defaultSelectors',
-    },
-    { name: '_showHigher', type: <TextSwitch />, initialValue: false },
-    {
-      type: 'input',
-      label: i18n.t('meta.Sinks.THive.SecondaryPartition'),
-      name: 'secondaryPartition',
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-      },
-      hidden: !currentValues?._showHigher,
-    },
-    {
+    }),
+  },
+  {
+    type: 'input',
+    label: i18n.t('meta.Sinks.THive.PartitionInterval'),
+    name: 'partitionInterval',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
+    _renderTable: true,
+    suffix: {
       type: 'select',
-      label: i18n.t('meta.Sinks.THive.DataConsistency'),
-      name: 'dataConsistency',
-      initialValue: 'EXACTLY_ONCE',
+      name: 'partitionUnit',
+      initialValue: 'D',
+      rules: [{ required: true }],
       props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
         options: [
           {
-            label: 'EXACTLY_ONCE',
-            value: 'EXACTLY_ONCE',
+            label: i18n.t('meta.Sinks.THive.Day'),
+            value: 'D',
           },
           {
-            label: 'AT_LEAST_ONCE',
-            value: 'AT_LEAST_ONCE',
+            label: i18n.t('meta.Sinks.THive.Hour'),
+            value: 'H',
           },
         ],
       },
-      hidden: !currentValues?._showHigher,
+      _renderTable: true,
     },
-    {
-      type: 'input',
-      label: i18n.t('meta.Sinks.THive.CheckAbsolute'),
-      name: 'checkAbsolute',
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-        placeholder: i18n.t('meta.Sinks.THive.CheckHint'),
+  },
+  {
+    type: 'select',
+    label: i18n.t('meta.Sinks.THive.PartitionCreationStrategy'),
+    name: 'partitionCreationStrategy',
+    initialValue: 'ARRIVED',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      options: [
+        {
+          label: i18n.t('meta.Sinks.THive.DataArrives'),
+          value: 'ARRIVED',
+        },
+        {
+          label: i18n.t('meta.Sinks.THive.DataComplete'),
+          value: 'COMPLETED',
+        },
+        {
+          label: i18n.t('meta.Sinks.THive.DataVerified'),
+          value: 'AGENT_COUNT_VERIFIED',
+        },
+        {
+          label: i18n.t('meta.Sinks.THive.DataDistinct'),
+          value: 'DATA_DISTINCT_VERIFIED',
+        },
+      ],
+    }),
+    _renderTable: true,
+  },
+  {
+    type: 'radio',
+    label: i18n.t('meta.Sinks.THive.FieldFormat'),
+    name: 'fileFormat',
+    initialValue: 'TextFile',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      options: [
+        {
+          label: 'TextFile',
+          value: 'TextFile',
+        },
+        {
+          label: 'OrcFile',
+          value: 'OrcFile',
+        },
+        {
+          label: 'Parquet',
+          value: 'Parquet',
+        },
+      ],
+    }),
+    _renderTable: true,
+  },
+  {
+    name: 'dataEncoding',
+    type: 'radio',
+    label: i18n.t('meta.Sinks.THive.DataEncoding'),
+    initialValue: 'UTF-8',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      options: [
+        {
+          label: 'UTF-8',
+          value: 'UTF-8',
+        },
+        {
+          label: 'GBK',
+          value: 'GBK',
+        },
+      ],
+    }),
+    rules: [{ required: true }],
+  },
+  {
+    name: 'dataSeparator',
+    type: 'select',
+    label: i18n.t('meta.Sinks.THive.DataSeparator'),
+    initialValue: '124',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      dropdownMatchSelectWidth: false,
+      options: [
+        {
+          label: i18n.t('meta.Sinks.Hive.DataSeparator.VerticalLine'),
+          value: '124',
+        },
+        {
+          label: i18n.t('meta.Sinks.Hive.DataSeparator.Comma'),
+          value: '44',
+        },
+        {
+          label: i18n.t('meta.Sinks.Hive.DataSeparator.DoubleQuotes'),
+          value: '34',
+        },
+        {
+          label: i18n.t('meta.Sinks.Hive.DataSeparator.Asterisk'),
+          value: '42',
+        },
+        {
+          label: i18n.t('meta.Sinks.Hive.DataSeparator.Space'),
+          value: '32',
+        },
+        {
+          label: i18n.t('meta.Sinks.Hive.DataSeparator.Semicolon'),
+          value: '59',
+        },
+      ],
+      useInput: true,
+      useInputProps: {
+        placeholder: 'ASCII',
+        disabled: [110, 130].includes(values?.status),
       },
-      hidden: !currentValues?._showHigher,
+      style: { width: 100 },
+    }),
+    rules: [
+      {
+        required: true,
+        type: 'number',
+        transform: val => +val,
+        min: 0,
+        max: 127,
+      } as any,
+    ],
+  },
+  {
+    type: UserSelect,
+    label: i18n.t('meta.Sinks.THive.DefaultSelectors'),
+    name: 'defaultSelectors',
+    props: {
+      mode: 'multiple',
+      currentUserClosable: false,
     },
-    {
-      type: 'input',
-      label: i18n.t('meta.Sinks.THive.CheckRelative'),
-      name: 'checkRelative',
-      props: {
-        disabled: isEdit && [110, 130].includes(currentValues?.status),
-        placeholder: i18n.t('meta.Sinks.THive.CheckHint'),
-      },
-      hidden: !currentValues?._showHigher,
-    },
-    {
-      type: (
-        <EditableTable
-          size="small"
-          columns={getFieldListColumns(dataType, currentValues)}
-          canDelete={(record, idx, isNew) => !isEdit || isNew}
-        />
-      ),
-      name: 'sinkFieldList',
-    },
-  ];
+  },
+  {
+    type: 'input',
+    label: i18n.t('meta.Sinks.THive.SecondaryPartition'),
+    name: 'secondaryPartition',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
+    isPro: true,
+  },
+  {
+    type: 'select',
+    label: i18n.t('meta.Sinks.THive.DataConsistency'),
+    name: 'dataConsistency',
+    initialValue: 'EXACTLY_ONCE',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      options: [
+        {
+          label: 'EXACTLY_ONCE',
+          value: 'EXACTLY_ONCE',
+        },
+        {
+          label: 'AT_LEAST_ONCE',
+          value: 'AT_LEAST_ONCE',
+        },
+      ],
+    }),
+    isPro: true,
+  },
+  {
+    type: 'input',
+    label: i18n.t('meta.Sinks.THive.CheckAbsolute'),
+    name: 'checkAbsolute',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      placeholder: i18n.t('meta.Sinks.THive.CheckHint'),
+    }),
+    isPro: true,
+  },
+  {
+    type: 'input',
+    label: i18n.t('meta.Sinks.THive.CheckRelative'),
+    name: 'checkRelative',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      placeholder: i18n.t('meta.Sinks.THive.CheckHint'),
+    }),
+    isPro: true,
+  },
+  {
+    name: 'sinkFieldList',
+    type: EditableTable,
+    props: values => ({
+      size: 'small',
+      columns: getFieldListColumns(values),
+      canDelete: ![110, 130].includes(values?.status),
+    }),
+  },
+];
 
-  return type === 'col'
-    ? getColsFromFields(fileds)
-    : fileds.map(item => excludeObject(['_inTable'], item));
-};
-
-const getFieldListColumns: GetStorageColumnsType = (dataType, currentValues) => {
+const getFieldListColumns = sinkValues => {
   return [
     ...sourceFields,
     {
@@ -407,7 +390,7 @@ const getFieldListColumns: GetStorageColumnsType = (dataType, currentValues) => 
         },
       ],
       props: (text, record, idx, isNew) => ({
-        disabled: [110, 130].includes(currentValues?.status as number) && !isNew,
+        disabled: [110, 130].includes(sinkValues?.status as number) && !isNew,
       }),
     },
     {
@@ -417,7 +400,7 @@ const getFieldListColumns: GetStorageColumnsType = (dataType, currentValues) => 
       type: 'select',
       props: (text, record, idx, isNew) => ({
         options: thiveFieldTypes,
-        disabled: [110, 130].includes(currentValues?.status as number) && !isNew,
+        disabled: [110, 130].includes(sinkValues?.status as number) && !isNew,
       }),
       rules: [{ required: true }],
     },
@@ -426,13 +409,5 @@ const getFieldListColumns: GetStorageColumnsType = (dataType, currentValues) => 
       dataIndex: 'fieldComment',
       initialValue: '',
     },
-  ] as ColumnsItemProps[];
-};
-
-const tableColumns = getForm('col') as ColumnsType;
-
-export const innerThive = {
-  getForm,
-  getFieldListColumns,
-  tableColumns,
+  ];
 };

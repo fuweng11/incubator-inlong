@@ -18,22 +18,23 @@
  */
 
 import type { FieldItemType } from '@/metas/common';
-import i18n from '@/i18n';
-import UserSelect from '@/components/UserSelect';
-import React from 'react';
 
-export const sortHive: FieldItemType[] = [
+export const zk: FieldItemType[] = [
   {
     type: 'input',
-    label: i18n.t('meta.Clusters.Sort.BackupDataPath'),
-    name: 'backupDataPath',
-    props: {
-      placeholder: 'hdfs://xx-xxx-xx/xxx/xxx',
-    },
+    label: 'URL',
+    name: 'url',
+    rules: [{ required: true }],
+    initialValue: '127.0.0.1:9092',
   },
   {
-    type: <UserSelect mode="multiple" />,
-    label: i18n.t('meta.Clusters.Sort.BackupHadoopProxyUser'),
-    name: 'backupHadoopProxyUser',
+    type: 'input',
+    label: 'tubeRoot',
+    name: 'tubeRoot',
+  },
+  {
+    type: 'input',
+    label: 'pulsarRoot',
+    name: 'pulsarRoot',
   },
 ];

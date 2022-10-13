@@ -22,7 +22,7 @@ import i18n from '@/i18n';
 import UserSelect from '@/components/UserSelect';
 import React from 'react';
 
-export const sortThive: FieldItemType[] = [
+export const sortCk: FieldItemType[] = [
   {
     type: 'input',
     label: i18n.t('meta.Clusters.Sort.BackupDataPath'),
@@ -32,7 +32,7 @@ export const sortThive: FieldItemType[] = [
     },
   },
   {
-    type: <UserSelect mode="multiple" />,
+    type: <UserSelect />,
     label: i18n.t('meta.Clusters.Sort.BackupHadoopProxyUser'),
     name: 'backupHadoopProxyUser',
   },
