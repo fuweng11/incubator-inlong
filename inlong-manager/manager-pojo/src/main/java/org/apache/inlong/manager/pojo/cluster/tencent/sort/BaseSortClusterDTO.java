@@ -17,16 +17,13 @@
 
 package org.apache.inlong.manager.pojo.cluster.tencent.sort;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
-import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.JsonUtils;
 
 import javax.validation.constraints.NotNull;
 
@@ -40,9 +37,9 @@ import javax.validation.constraints.NotNull;
 @ApiModel("Base sort cluster info")
 public class BaseSortClusterDTO {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(); // thread safe
     @ApiModelProperty("backup data path")
     private String backupDataPath;
+
     @ApiModelProperty("backup hadoop proxy user")
     private String backupHadoopProxyUser;
 
@@ -60,11 +57,6 @@ public class BaseSortClusterDTO {
      * Get the dto instance from the JSON string.
      */
     public static BaseSortClusterDTO getFromJson(@NotNull String extParams) {
-        try {
-            OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return OBJECT_MAPPER.readValue(extParams, BaseSortClusterDTO.class);
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCodeEnum.GROUP_INFO_INCORRECT.getMessage());
-        }
+        return JsonUtils.parseObject(extParams, BaseSortClusterDTO.class);
     }
 }

@@ -17,15 +17,12 @@
 
 package org.apache.inlong.manager.pojo.sink.tencent.ck;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
-import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.JsonUtils;
 
 import javax.validation.constraints.NotNull;
 
@@ -37,8 +34,6 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InnerClickHouseDTO {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(); // thread safe
 
     @ApiModelProperty("target database name")
     private String dbName;
@@ -85,11 +80,6 @@ public class InnerClickHouseDTO {
     }
 
     public static InnerClickHouseDTO getFromJson(@NotNull String extParams) {
-        try {
-            OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return OBJECT_MAPPER.readValue(extParams, InnerClickHouseDTO.class);
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCodeEnum.SINK_INFO_INCORRECT.getMessage() + ": " + e.getMessage());
-        }
+        return JsonUtils.parseObject(extParams, InnerClickHouseDTO.class);
     }
 }

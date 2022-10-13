@@ -17,16 +17,13 @@
 
 package org.apache.inlong.manager.pojo.cluster.tencent.zk;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
-import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.JsonUtils;
 
 import javax.validation.constraints.NotNull;
 
@@ -40,12 +37,10 @@ import javax.validation.constraints.NotNull;
 @ApiModel("ZK cluster info")
 public class ZkClusterDTO {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(); // thread safe
-
-    @ApiModelProperty(value = "tube root", notes = "tube root")
+    @ApiModelProperty(value = "TubeMQ root")
     private String tubeRoot;
 
-    @ApiModelProperty(value = "pulsar root", notes = "")
+    @ApiModelProperty(value = "Pulsar root")
     private String pulsarRoot;
 
     /**
@@ -62,12 +57,7 @@ public class ZkClusterDTO {
      * Get the dto instance from the JSON string.
      */
     public static ZkClusterDTO getFromJson(@NotNull String extParams) {
-        try {
-            OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return OBJECT_MAPPER.readValue(extParams, ZkClusterDTO.class);
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCodeEnum.CLUSTER_INFO_INCORRECT.getMessage() + ": " + e.getMessage());
-        }
+        return JsonUtils.parseObject(extParams, ZkClusterDTO.class);
     }
 
 }

@@ -93,8 +93,7 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                     InnerBaseHiveSinkDTO hiveInfo = InnerBaseHiveSinkDTO.getFromJson(sinkInfo.getExtParams());
                     StreamSinkEntity sink = sinkMapper.selectByPrimaryKey(sinkInfo.getId());
                     InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) getDataNodeInfo(
-                            sink.getDataNodeName(),
-                            sink.getSinkType());
+                            sink.getDataNodeName(), sink.getSinkType());
                     InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getHiveFullInfo(hiveInfo, sinkInfo,
                             dataNodeInfo);
                     hiveInfos.add(hiveFullInfo);

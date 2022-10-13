@@ -37,10 +37,10 @@ import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 @ApiModel("Inlong cluster info for ZK")
 public class ZkClusterInfo extends ClusterInfo {
 
-    @ApiModelProperty(value = "tube root", notes = "tube root")
+    @ApiModelProperty(value = "TubeMQ root")
     private String tubeRoot;
 
-    @ApiModelProperty(value = "pulsar root", notes = "")
+    @ApiModelProperty(value = "Pulsar root")
     private String pulsarRoot;
 
     public ZkClusterInfo() {

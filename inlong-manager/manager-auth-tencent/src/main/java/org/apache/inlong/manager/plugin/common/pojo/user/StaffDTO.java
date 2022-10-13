@@ -17,16 +17,12 @@
 
 package org.apache.inlong.manager.plugin.common.pojo.user;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
-import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
 
 import javax.validation.constraints.NotNull;
@@ -41,8 +37,6 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StaffDTO {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @ApiModelProperty(value = "user name")
     private String username;
@@ -84,23 +78,13 @@ public class StaffDTO {
      * Get the dto instance from the json
      */
     public static StaffDTO getFromJson(@NotNull String extParams) {
-        try {
-            OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return OBJECT_MAPPER.readValue(extParams, StaffDTO.class);
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCodeEnum.AUTHENTICATION_REQUIRED.getMessage() + ": " + e.getMessage());
-        }
+        return JsonUtils.parseObject(extParams, StaffDTO.class);
     }
 
     /**
      * Convert the dto instance to string
      */
     public static String convertToJson(StaffDTO dto) {
-        try {
-            OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return OBJECT_MAPPER.writeValueAsString(dto);
-        } catch (JsonProcessingException e) {
-            throw new BusinessException(ErrorCodeEnum.AUTHENTICATION_REQUIRED.getMessage() + ": " + e.getMessage());
-        }
+        return JsonUtils.toJsonString(dto);
     }
 }

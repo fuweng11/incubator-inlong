@@ -17,8 +17,6 @@
 
 package org.apache.inlong.manager.pojo.sink.tencent.hive;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,9 +24,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.SinkType;
-import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
-import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.AESUtils;
+import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
@@ -46,8 +43,6 @@ import java.util.Objects;
 @AllArgsConstructor
 public class InnerBaseHiveSinkDTO {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(); // thread safe
-
     @ApiModelProperty("bg id")
     private Integer bgId;
 
@@ -61,7 +56,7 @@ public class InnerBaseHiveSinkDTO {
     private String usTaskId;
 
     @ApiModelProperty("verified task id")
-    private String verifiedTaskId; // the US task of verifying data is a sub task of the above task
+    private String verifiedTaskId; // the US task of verifying data is a sub-task of the above task
 
     @ApiModelProperty("app group name")
     private String appGroupName;
@@ -200,13 +195,7 @@ public class InnerBaseHiveSinkDTO {
      * Get Hive sink info from JSON string
      */
     public static InnerBaseHiveSinkDTO getFromJson(@NotNull String extParams) {
-        try {
-            OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return OBJECT_MAPPER.readValue(extParams, InnerBaseHiveSinkDTO.class);
-        } catch (Exception e) {
-            System.out.println(e);
-            throw new BusinessException(ErrorCodeEnum.SINK_INFO_INCORRECT.getMessage());
-        }
+        return JsonUtils.parseObject(extParams, InnerBaseHiveSinkDTO.class);
     }
 
     /**
