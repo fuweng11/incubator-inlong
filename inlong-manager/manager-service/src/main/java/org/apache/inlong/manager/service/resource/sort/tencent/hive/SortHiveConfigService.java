@@ -199,10 +199,13 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
         // Dynamic configuration information,
         // which can be used to specify optional parameter information of source or sink
+        // After that, source.tdbank.bid, source.tdbank.tid will be dropped
+        // Just stay source.inlong.groupId, source.inlong.streamId
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("source.tdbank.bid", groupInfo.getInlongGroupId());
         properties.put("source.tdbank.tid", hiveFullInfo.getInlongStreamId());
-
+        properties.put("source.inlongGroupId", groupInfo.getInlongGroupId());
+        properties.put("source.inlongStreamId", hiveFullInfo.getInlongStreamId());
         String flowId = hiveFullInfo.getSinkId().toString();
         DataFlowInfo flowInfo = new DataFlowInfo(flowId, sourceInfo, sinkInfo, properties);
         LOGGER.info("hive data flow info: " + OBJECT_MAPPER.writeValueAsString(flowInfo));

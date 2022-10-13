@@ -59,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -136,7 +137,16 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
         ClickHouseSinkInfo ckSink = getCkSinkInfo(groupInfo, clickHouseSink);
 
         String flowId = clickHouseSink.getId().toString();
-        DataFlowInfo flowInfo = new DataFlowInfo(flowId, sourceInfo, ckSink);
+        // Dynamic configuration information,
+        // which can be used to specify optional parameter information of source or sink
+        // After that, source.tdbank.bid, source.tdbank.tid will be dropped
+        // Just stay source.inlong.groupId, source.inlong.streamId
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put("source.tdbank.bid", clickHouseSink.getInlongGroupId());
+        properties.put("source.tdbank.tid", clickHouseSink.getInlongStreamId());
+        properties.put("source.inlongGroupId", clickHouseSink.getInlongGroupId());
+        properties.put("source.inlongStreamId", clickHouseSink.getInlongStreamId());
+        DataFlowInfo flowInfo = new DataFlowInfo(flowId, sourceInfo, ckSink, properties);
         log.info("click house data flow info: " + JSON_MAPPER.writeValueAsString(flowInfo));
 
         return flowInfo;
