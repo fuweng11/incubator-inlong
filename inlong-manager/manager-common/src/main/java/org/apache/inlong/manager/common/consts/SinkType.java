@@ -44,4 +44,5 @@ public class SinkType {
     public static final String INNER_HIVE = "INNER_HIVE";
     public static final String INNER_THIVE = "INNER_THIVE";
     public static final String INNER_CK = "INNER_CK";
+    public static final String CUSTOM = "CUSTOM";
 }
