@@ -33,16 +33,8 @@ public class DbSyncTaskFullInfo {
     @ApiModelProperty(value = "DbSync cluster info")
     private DbSyncClusterInfo cluster;
 
-    @Deprecated
-    @ApiModelProperty(value = "List of offline ServerIDs, replaced by offlineServers")
-    private List<Integer> offlineServerIdList;
-
     @ApiModelProperty(value = "Offline server name list")
     private List<String> offlineServers;
-
-    @Deprecated
-    @ApiModelProperty(value = "List of changed ServerIDs, replaced by changedServers")
-    private List<Integer> changedServerIdList;
 
     @ApiModelProperty(value = "Changed server name list")
     private List<String> changedServers;

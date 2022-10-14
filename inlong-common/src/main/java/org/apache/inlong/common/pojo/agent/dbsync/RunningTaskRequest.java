@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -33,6 +34,14 @@ public class RunningTaskRequest {
     @NotNull
     @ApiModelProperty(value = "IP of the current node")
     private String ip;
+
+    @NotBlank
+    @ApiModelProperty(value = "Cluster tag of the current node")
+    private String clusterTag;
+
+    @NotBlank
+    @ApiModelProperty(value = "Cluster name of the current node")
+    private String clusterName;
 
     @NotNull
     @ApiModelProperty(value = "Cluster info")

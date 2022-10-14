@@ -30,6 +30,9 @@ import java.util.List;
 @ApiModel("Init info for DbSync")
 public class DbSyncInitInfo {
 
+    @ApiModelProperty(value = "ZooKeeper cluster URL, used for HA")
+    private String zkUrl;
+
     @ApiModelProperty(value = "DbSync cluster info")
     private DbSyncClusterInfo cluster;
 

@@ -289,24 +289,27 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     public DbSyncInitInfo getInitInfo(InitTaskRequest request) {
         LOGGER.info("begin to get init info for: " + request);
 
+        List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(
+                request.getClusterTag(), null, ClusterType.ZOOKEEPER);
+        if (CollectionUtils.isEmpty(zkClusters)) {
+            throw new BusinessException("zk cluster for ha not found for cluster tag=" + request.getClusterTag());
+        }
+        DbSyncInitInfo initInfo = new DbSyncInitInfo();
+        initInfo.setZkUrl(zkClusters.get(0).getUrl());
+
         AgentClusterInfo clusterInfo = (AgentClusterInfo) clusterService.getOne(
                 request.getClusterTag(), request.getClusterName(), ClusterType.AGENT);
-        DbSyncInitInfo info = new DbSyncInitInfo();
-        info.setCluster(DbSyncClusterInfo.builder()
+        initInfo.setCluster(DbSyncClusterInfo.builder()
                 .parentId(clusterInfo.getId())
                 .clusterName(clusterInfo.getName())
                 .serverVersion(clusterInfo.getServerVersion())
                 .build());
 
         List<String> nodeNames = sourceMapper.selectNodeNames(request.getClusterName(), SourceType.HA_BINLOG);
-        info.setServerNames(nodeNames);
+        initInfo.setServerNames(nodeNames);
 
-        // Agent need config the ZK URL
-        // DbSyncClusterInfo zkCluster = clusterService.getOne(request.getClusterTag(), null, ClusterType.ZOOKEEPER);
-        // info.setZkUrl(zkCluster.getUrl());
-
-        LOGGER.info("success to get init info for: {}, result: {}", request, info);
-        return info;
+        LOGGER.info("success to get init info for: {}, result: {}", request, initInfo);
+        return initInfo;
     }
 
     @Override
@@ -318,13 +321,17 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             return null;
         }
 
+        // check the dbsync cluster, zk cluster info
         DbSyncClusterInfo dbSyncCluster = request.getDbSyncCluster();
         if (dbSyncCluster == null || dbSyncCluster.getClusterName() == null) {
             throw new BusinessException("dbsync cluster or clusterId cannot be null when getRunningTask");
         }
+        ClusterInfo clusterInfo = clusterService.get(dbSyncCluster.getParentId());
+        if (!(clusterInfo instanceof AgentClusterInfo)) {
+            throw new BusinessException("inlong cluster type is not AGENT for id=" + dbSyncCluster.getParentId());
+        }
 
         DbSyncTaskFullInfo fullTaskInfo = new DbSyncTaskFullInfo();
-
         // pull all tasks for this running server, including normal and updated tasks
         String clusterName = dbSyncCluster.getClusterName();
         List<Integer> taskIdList = sourceMapper.selectValidIds(SourceType.HA_BINLOG, clusterName,
@@ -333,16 +340,11 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         fullTaskInfo.setTaskInfoList(taskList);
 
         // if the cluster version changed, should issue all changed server ids
-        ClusterInfo clusterInfo = clusterService.get(dbSyncCluster.getParentId());
-        if (!(clusterInfo instanceof AgentClusterInfo)) {
-            throw new BusinessException("inlong cluster type is not AGENT for id=" + dbSyncCluster.getParentId());
-        }
         Integer serverVersion = ((AgentClusterInfo) clusterInfo).getServerVersion();
         if (!Objects.equals(dbSyncCluster.getServerVersion(), serverVersion)) {
             dbSyncCluster.setServerVersion(serverVersion);
             fullTaskInfo.setChangedServers(sourceMapper.selectNodeNames(clusterName, SourceType.HA_BINLOG));
         }
-
         fullTaskInfo.setCluster(dbSyncCluster);
 
         LOGGER.info("get running tasks success, changed server names: {}, cluster: {}, task size: {}, request: {}",
@@ -444,6 +446,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
 
         oldCluster.setServerVersion(curVersion);
         fullTaskInfo.setCluster(oldCluster);
+
         return fullTaskInfo;
     }
 

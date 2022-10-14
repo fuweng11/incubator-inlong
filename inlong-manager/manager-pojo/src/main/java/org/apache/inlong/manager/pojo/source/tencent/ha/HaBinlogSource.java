@@ -43,11 +43,12 @@ import org.apache.inlong.manager.pojo.source.StreamSource;
 @JsonTypeDefine(value = SourceType.HA_BINLOG)
 public class HaBinlogSource extends StreamSource {
 
-    @ApiModelProperty(value = "List of DBs to be collected, seperated by ',', supporting regular expressions")
-    private String databaseWhiteList;
+    @ApiModelProperty(value = "Database name")
+    private String dbName;
 
-    @ApiModelProperty(value = "List of tables to be collected, seperated by ',',supporting regular expressions")
-    private String tableWhiteList;
+    @ApiModelProperty(value = "Table name, support regular, such as: order_[0-9]{8}$",
+            notes = "All table schemas must be the same")
+    private String tableName;
 
     @ApiModelProperty("Binlog data code, default is UTF-8")
     private String charset;

@@ -27,6 +27,7 @@ import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
 import org.apache.inlong.manager.pojo.source.SourceRequest;
 
+import javax.validation.constraints.NotBlank;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -39,11 +40,14 @@ import java.nio.charset.StandardCharsets;
 @JsonTypeDefine(value = SourceType.HA_BINLOG)
 public class HaBinlogSourceRequest extends SourceRequest {
 
-    @ApiModelProperty(value = "List of DBs to be collected, seperated by ',', supporting regular expressions")
-    private String databaseWhiteList;
+    @NotBlank(message = "dbName cannot be blank")
+    @ApiModelProperty(value = "Database name")
+    private String dbName;
 
-    @ApiModelProperty(value = "List of tables to be collected, seperated by ',',supporting regular expressions")
-    private String tableWhiteList;
+    @NotBlank(message = "tableName cannot be blank")
+    @ApiModelProperty(value = "Table name, support regular, such as: order_[0-9]{8}$",
+            notes = "All table schemas must be the same")
+    private String tableName;
 
     @ApiModelProperty("Binlog data code, default is UTF-8")
     private String charset = StandardCharsets.UTF_8.name();

@@ -48,16 +48,8 @@ public class DbSyncTaskInfo {
     @ApiModelProperty(value = "Parent cluster ID of the current IP belongs")
     private Integer parentId;
 
-    @Deprecated
-    @ApiModelProperty(value = "Agent IPs, separated by commas. Replaced by nodeIps")
-    private String transferIp;
-
     @ApiModelProperty(value = "All nodes IPs of the current cluster")
     private List<String> nodeIps;
-
-    @Deprecated
-    @ApiModelProperty(value = "DB server ID, replaced by serverName")
-    private Integer serverId;
 
     @ApiModelProperty(value = "DB server name, as a grouping for DbSync scheduling")
     private String serverName;
@@ -65,15 +57,12 @@ public class DbSyncTaskInfo {
     @ApiModelProperty(value = "Database name")
     private String dbName;
 
-    @ApiModelProperty(value = "Table name, multiple tables are separated by commas",
-            notes = "All table structures must be the same")
+    @ApiModelProperty(value = "Table name, support regular, such as: order_[0-9]{8}$",
+            notes = "All table schemas must be the same")
     private String tableName;
 
-    @Deprecated
-    private String charset = "UTF-8";
-
-    @Deprecated
-    private String dataSeparator = "0x01";
+    @ApiModelProperty(value = "Binlog data code name, default is UTF-8")
+    private String charset;
 
     @ApiModelProperty(value = "MQ type, including TUBEMQ, PULSAR, KAFKA, etc")
     private String mqType;
@@ -99,14 +88,6 @@ public class DbSyncTaskInfo {
     @ApiModelProperty(value = "Collect from the specified binlog position",
             notes = "Modify it after publishing, and return an empty string if empty")
     private String startPosition;
-
-    @Deprecated
-    @ApiModelProperty(value = "Olny support: 100, 5242880000, 524288000000, default: 5242880000")
-    private String needSpeed = "5242880000";
-
-    @Deprecated
-    @ApiModelProperty(value = "Set to this value when the field value is null. Default set to 'null'")
-    private String nullFieldChar;
 
     @ApiModelProperty(value = "Operate status")
     private Integer status;

@@ -36,6 +36,14 @@ public class ReportTaskRequest {
     private String ip;
 
     @NotBlank
+    @ApiModelProperty(value = "Cluster tag of the current node")
+    private String clusterTag;
+
+    @NotBlank
+    @ApiModelProperty(value = "Cluster name of the current node")
+    private String clusterName;
+
+    @NotBlank
     @ApiModelProperty(value = "DbSync cluster info")
     private DbSyncClusterInfo dbSyncCluster;
 
