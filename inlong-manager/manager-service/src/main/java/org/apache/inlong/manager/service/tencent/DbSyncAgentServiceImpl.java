@@ -330,8 +330,15 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         if (!(clusterInfo instanceof AgentClusterInfo)) {
             throw new BusinessException("inlong cluster type is not AGENT for id=" + dbSyncCluster.getParentId());
         }
+        List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(
+                request.getClusterTag(), null, ClusterType.ZOOKEEPER);
+        if (CollectionUtils.isEmpty(zkClusters)) {
+            throw new BusinessException("zk cluster for ha not found for cluster tag=" + request.getClusterTag());
+        }
 
         DbSyncTaskFullInfo fullTaskInfo = new DbSyncTaskFullInfo();
+        fullTaskInfo.setZkUrl(zkClusters.get(0).getUrl());
+
         // pull all tasks for this running server, including normal and updated tasks
         String clusterName = dbSyncCluster.getClusterName();
         List<Integer> taskIdList = sourceMapper.selectValidIds(SourceType.HA_BINLOG, clusterName,
@@ -389,6 +396,14 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
      */
     private DbSyncTaskFullInfo getFullTaskInfo(ReportTaskRequest request) {
         DbSyncTaskFullInfo fullTaskInfo = new DbSyncTaskFullInfo();
+
+        List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(
+                request.getClusterTag(), null, ClusterType.ZOOKEEPER);
+        if (CollectionUtils.isEmpty(zkClusters)) {
+            throw new BusinessException("zk cluster for ha not found for cluster tag=" + request.getClusterTag());
+        }
+
+        fullTaskInfo.setZkUrl(zkClusters.get(0).getUrl());
 
         DbSyncClusterInfo oldCluster = request.getDbSyncCluster();
         String ip = request.getIp();
