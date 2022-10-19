@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.binlog.event;
 
 import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
@@ -11,41 +28,41 @@ import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
  * different format and length even for different events of the same type. The
  * binary formats of Post-Header and Body are documented separately in each
  * subclass. The binary format of Common-Header is as follows.
- * 
+ *
  * <table>
  * <caption>Common-Header</caption>
- * 
+ *
  * <tr>
  * <th>Name</th>
  * <th>Format</th>
  * <th>Description</th>
  * </tr>
- * 
+ *
  * <tr>
  * <td>timestamp</td>
  * <td>4 byte unsigned integer</td>
  * <td>The time when the query started, in seconds since 1970.</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td>type</td>
  * <td>1 byte enumeration</td>
  * <td>See enum #Log_event_type.</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td>server_id</td>
  * <td>4 byte unsigned integer</td>
  * <td>Server ID of the server that created the event.</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td>total_size</td>
  * <td>4 byte unsigned integer</td>
  * <td>The total size of this event, in bytes. In other words, this is the sum
  * of the sizes of Common-Header, Post-Header, and Body.</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td>master_position</td>
  * <td>4 byte unsigned integer</td>
@@ -54,24 +71,21 @@ import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
  * the position of the next event, in bytes from the beginning of the file. In a
  * relay log, this is the position of the next event in the master's binlog.</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td>flags</td>
  * <td>2 byte bitfield</td>
  * <td>See Log_event::flags.</td>
  * </tr>
  * </table>
- * 
+ *
  * Summing up the numbers above, we see that the total size of the common header
  * is 19 bytes.
- * 
- * @see mysql-5.1.60/sql/log_event.cc
- * 
- * @author <a href="mailto:changyuan.lh@taobao.com">Changyuan.lh</a>
+ *
  * @version 1.0
  */
-public final class LogHeader
-{
+public final class LogHeader {
+
     protected final int type;
 
     /**
@@ -84,7 +98,7 @@ public final class LogHeader
      * of the BEGIN, which is logical as rollback may occur), except the COMMIT
      * query which has its real offset.
      */
-    protected long      logPos;
+    protected long logPos;
 
     /**
      * Timestamp on the master(for debugging and replication of
@@ -94,53 +108,52 @@ public final class LogHeader
      * good replication (otherwise, we could have a query and its event with
      * different timestamps).
      */
-    protected long      when;
+    protected long when;
 
-    /** Number of bytes written by write() function */
-    protected int       eventLen;
+    /**
+     * Number of bytes written by write() function
+     */
+    protected int eventLen;
 
     /**
      * The master's server id (is preserved in the relay log; used to prevent
      * from infinite loops in circular replication).
      */
-    protected long      serverId;
+    protected long serverId;
 
     /**
      * Some 16 flags. See the definitions above for LOG_EVENT_TIME_F,
      * LOG_EVENT_FORCED_ROTATE_F, LOG_EVENT_THREAD_SPECIFIC_F, and
      * LOG_EVENT_SUPPRESS_USE_F for notes.
      */
-    protected int       flags;
-    
-    /** 
+    protected int flags;
+
+    /**
      * The value is set by caller of FD constructor and
      * Log_event::write_header() for the rest.
-     * In the FD case it's propagated into the last byte 
+     * In the FD case it's propagated into the last byte
      * of post_header_len[] at FD::write().
-     * On the slave side the value is assigned from post_header_len[last] 
+     * On the slave side the value is assigned from post_header_len[last]
      * of the last seen FD event.
      */
-    protected int       checksumAlg;
+    protected int checksumAlg;
     /**
-       Placeholder for event checksum while writing to binlog.
-    */
-    protected long      crc;      // ha_checksum
+     * Placeholder for event checksum while writing to binlog.
+     */
+    protected long crc;      // ha_checksum
 
     /* for Start_event_v3 */
-    public LogHeader(final int type)
-    {
+    public LogHeader(final int type) {
         this.type = type;
     }
 
-    public LogHeader(LogBuffer buffer, FormatDescriptionLogEvent descriptionEvent)
-    {
+    public LogHeader(LogBuffer buffer, FormatDescriptionLogEvent descriptionEvent) {
         when = buffer.getUint32();
         type = buffer.getUint8(); // LogEvent.EVENT_TYPE_OFFSET;
         serverId = buffer.getUint32(); // LogEvent.SERVER_ID_OFFSET;
         eventLen = (int) buffer.getUint32(); // LogEvent.EVENT_LEN_OFFSET;
-        
-        if (descriptionEvent.binlogVersion == 1)
-        {
+
+        if (descriptionEvent.binlogVersion == 1) {
             logPos = 0;
             flags = 0;
             return;
@@ -188,16 +201,18 @@ public final class LogHeader
               twice when you have two masters which are slaves of a 3rd master).
               Then we are done.
             */
-            
+
             if (type == LogEvent.FORMAT_DESCRIPTION_EVENT) {
                 int commonHeaderLen = buffer.getUint8(FormatDescriptionLogEvent.LOG_EVENT_MINIMAL_HEADER_LEN
-                                                      + FormatDescriptionLogEvent.ST_COMMON_HEADER_LEN_OFFSET);
+                        + FormatDescriptionLogEvent.ST_COMMON_HEADER_LEN_OFFSET);
                 buffer.position(commonHeaderLen + FormatDescriptionLogEvent.ST_SERVER_VER_OFFSET);
-                String serverVersion = buffer.getFixString(FormatDescriptionLogEvent.ST_SERVER_VER_LEN); // ST_SERVER_VER_OFFSET
-                int versionSplit[] = new int[] { 0, 0, 0 };
+                String serverVersion = buffer.getFixString(
+                        FormatDescriptionLogEvent.ST_SERVER_VER_LEN); // ST_SERVER_VER_OFFSET
+                int[] versionSplit = new int[]{0, 0, 0};
                 FormatDescriptionLogEvent.doServerVersionSplit(serverVersion, versionSplit);
                 checksumAlg = LogEvent.BINLOG_CHECKSUM_ALG_UNDEF;
-                if (FormatDescriptionLogEvent.versionProduct(versionSplit) >= FormatDescriptionLogEvent.checksumVersionProduct) {
+                if (FormatDescriptionLogEvent.versionProduct(versionSplit)
+                        >= FormatDescriptionLogEvent.CHECKSUM_VERSION_PRODUCT) {
                     buffer.position(eventLen - LogEvent.BINLOG_CHECKSUM_LEN - LogEvent.BINLOG_CHECKSUM_ALG_DESC_LEN);
                     checksumAlg = buffer.getUint8();
                 }
@@ -234,8 +249,7 @@ public final class LogHeader
     /**
      * The different types of log events.
      */
-    public final int getType()
-    {
+    public final int getType() {
         return type;
     }
 
@@ -246,8 +260,7 @@ public final class LogHeader
      * file. In a relay log, this is the position of the next event in the
      * master's binlog.
      */
-    public final long getLogPos()
-    {
+    public final long getLogPos() {
         return logPos;
     }
 
@@ -255,24 +268,21 @@ public final class LogHeader
      * The total size of this event, in bytes. In other words, this is the sum
      * of the sizes of Common-Header, Post-Header, and Body.
      */
-    public final int getEventLen()
-    {
+    public final int getEventLen() {
         return eventLen;
     }
 
     /**
      * The time when the query started, in seconds since 1970.
      */
-    public final long getWhen()
-    {
+    public final long getWhen() {
         return when;
     }
 
     /**
      * Server ID of the server that created the event.
      */
-    public final long getServerId()
-    {
+    public final long getServerId() {
         return serverId;
     }
 
@@ -281,25 +291,21 @@ public final class LogHeader
      * LOG_EVENT_FORCED_ROTATE_F, LOG_EVENT_THREAD_SPECIFIC_F, and
      * LOG_EVENT_SUPPRESS_USE_F for notes.
      */
-    public final int getFlags()
-    {
+    public final int getFlags() {
         return flags;
     }
 
-    
     public long getCrc() {
         return crc;
     }
-    
-    
+
     public int getChecksumAlg() {
         return checksumAlg;
     }
 
     private void processCheckSum(LogBuffer buffer) {
-        if (checksumAlg != LogEvent.BINLOG_CHECKSUM_ALG_OFF &&
-                checksumAlg != LogEvent.BINLOG_CHECKSUM_ALG_UNDEF){
-            crc = buffer.getUint32(eventLen -  LogEvent.BINLOG_CHECKSUM_LEN);
+        if (checksumAlg != LogEvent.BINLOG_CHECKSUM_ALG_OFF && checksumAlg != LogEvent.BINLOG_CHECKSUM_ALG_UNDEF) {
+            crc = buffer.getUint32(eventLen - LogEvent.BINLOG_CHECKSUM_LEN);
         }
     }
 }

@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.driver.packets;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -7,23 +24,21 @@ import org.apache.inlong.agent.mysql.utils.CanalToStringStyle;
  * <pre>
  * Offset  Length     Description
  *   0       3        Packet body length stored with the low byte first.
- *   3       1        Packet sequence number. The sequence numbers are reset with each new command. 
+ *   3       1        Packet sequence number. The sequence numbers are reset with each new command.
  *                      While the correct packet sequencing is ensured by the underlying transmission protocol,
  *                      this field is used for the sanity checks of the application logic.
  * </pre>
- * 
+ *
  * <br>
  * The Packet Header will not be shown in the descriptions of packets that follow this section. Think of it as always
  * there. But logically, it "precedes the packet" rather than "is included in the packet".<br>
- * 
- * @author fujohnwang
  */
 public class HeaderPacket implements IPacket {
 
     /**
      * this field indicates the packet length that follows the header, with header packet's 4 bytes excluded.
      */
-    private int  packetBodyLength;
+    private int packetBodyLength;
     private byte packetSequenceNumber;
 
     /**
@@ -57,12 +72,12 @@ public class HeaderPacket implements IPacket {
         this.packetBodyLength = packetBodyLength;
     }
 
-    public void setPacketSequenceNumber(byte packetSequenceNumber) {
-        this.packetSequenceNumber = packetSequenceNumber;
-    }
-
     public byte getPacketSequenceNumber() {
         return packetSequenceNumber;
+    }
+
+    public void setPacketSequenceNumber(byte packetSequenceNumber) {
+        this.packetSequenceNumber = packetSequenceNumber;
     }
 
     public String toString() {

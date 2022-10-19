@@ -25,6 +25,7 @@ import org.apache.inlong.agent.conf.TriggerProfile;
 import org.apache.inlong.agent.constant.AgentConstants;
 import org.apache.inlong.agent.core.conf.ConfigJetty;
 import org.apache.inlong.agent.core.job.JobManager;
+import org.apache.inlong.agent.core.monitor.JobMonitor;
 import org.apache.inlong.agent.core.task.TaskManager;
 import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.core.trigger.TriggerManager;
@@ -50,6 +51,8 @@ import static org.apache.inlong.agent.constant.JobConstants.JOB_TRIGGER;
 public class AgentManager extends AbstractDaemon {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AgentManager.class);
+    // dbsync
+    private static JobMonitor jobMonitor;
     private final JobManager jobManager;
     private final TaskManager taskManager;
     private final TriggerManager triggerManager;
@@ -63,6 +66,9 @@ public class AgentManager extends AbstractDaemon {
     private final JobProfileDb jobProfileDb;
     // jetty for config operations via http.
     private ConfigJetty configJetty;
+    private FieldManager fieldManager;
+    private boolean enableReportFiledChange;
+    private boolean enableDBSync;
 
     public AgentManager() {
         conf = AgentConfiguration.getAgentConf();
@@ -82,6 +88,20 @@ public class AgentManager extends AbstractDaemon {
                 AgentConstants.AGENT_ENABLE_HTTP, AgentConstants.DEFAULT_AGENT_ENABLE_HTTP)) {
             this.configJetty = new ConfigJetty(jobManager, triggerManager);
         }
+
+        this.enableDBSync = conf.getBoolean(AgentConstants.DBSYNC_ENABLE, AgentConstants.DEFAULT_DBSYNC_ENABLE);
+        this.enableReportFiledChange = conf.getBoolean(AgentConstants.DBSYNC_FILED_CHANGED_REPORT_ENABLE,
+                AgentConstants.DEFAULT_DBSYNC_FILED_CHANGED_REPORT_ENABLE);
+        if (enableDBSync) {
+            jobMonitor = new JobMonitor(this);
+            if (enableReportFiledChange) {
+                this.fieldManager = FieldManager.getInstance();
+            }
+        }
+    }
+
+    public static JobMonitor getJobMonitor() {
+        return jobMonitor;
     }
 
     /**
@@ -111,7 +131,7 @@ public class AgentManager extends AbstractDaemon {
             // db is a required component, so if not init correctly,
             // throw exception and stop running.
             return (Db) Class.forName(conf.get(
-                    AgentConstants.AGENT_DB_CLASSNAME, AgentConstants.DEFAULT_AGENT_DB_CLASSNAME))
+                            AgentConstants.AGENT_DB_CLASSNAME, AgentConstants.DEFAULT_AGENT_DB_CLASSNAME))
                     .newInstance();
         } catch (Exception ex) {
             throw new UnsupportedClassVersionError(ex.getMessage());
@@ -183,8 +203,15 @@ public class AgentManager extends AbstractDaemon {
                 jobManager.submitFileJobProfile(profile);
             }
         }
+        //TODO:fetcher need to move forward?
         if (fetcher != null) {
             fetcher.start();
+        }
+        if (jobMonitor != null) {
+            jobMonitor.start();
+        }
+        if (fieldManager != null) {
+            fieldManager.start();
         }
     }
 
@@ -200,6 +227,9 @@ public class AgentManager extends AbstractDaemon {
         }
         if (fetcher != null) {
             fetcher.stop();
+        }
+        if (jobMonitor != null) {
+            jobMonitor.stop();
         }
         // TODO: change job state which is in running state.
         LOGGER.info("stopping agent manager");

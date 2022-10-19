@@ -552,7 +552,7 @@
                 </exclusion>
                 <exclusion>
                     <artifactId>tdbank-commons</artifactId>
-                    <groupId>com.tencent.tdbank</groupId>
+                   <groupId>com.tencent.tdbank</groupId>
                 </exclusion>
                 <exclusion>
                     <artifactId>elasticsearch-rest-client-sniffer</artifactId>
@@ -584,7 +584,7 @@
                 </exclusion>
                 <exclusion>
                     <artifactId>TDBusSDK</artifactId>
-                    <groupId>com.tencent.tdbank</groupId>
+                   <groupId>com.tencent.tdbank</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

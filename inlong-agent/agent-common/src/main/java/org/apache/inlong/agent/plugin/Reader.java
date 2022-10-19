@@ -17,6 +17,9 @@
 
 package org.apache.inlong.agent.plugin;
 
+import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
+import org.apache.inlong.agent.state.JobStat;
+
 /**
  * Reader reads data and provides condition whether the reading action is finished. It's called at
  * Task level.
@@ -65,4 +68,12 @@ public interface Reader extends Stage {
      * source is exist
      */
     boolean isSourceExist();
+
+    JobStat.State getState();
+
+    void setState(JobStat.State state);
+
+    long ackJobData(int cnt);
+
+    void ackSendPosition(LogPosition ackPosition);
 }

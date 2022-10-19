@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.binlog.event;
 
 import org.apache.commons.logging.Log;
@@ -14,24 +31,21 @@ import java.util.Calendar;
 /**
  * Extracting JDBC type & value information from packed rows-buffer.
  *
- * @author <a href="mailto:changyuan.lh@taobao.com">Changyuan.lh</a>
  * @version 1.0
- * @see mysql-5.1.60/sql/log_event.cc - Rows_log_event::print_verbose_one_row
  */
 public final class RowsLogBuffer {
-    protected static final Log logger = LogFactory.getLog(RowsLogBuffer.class);
 
     public static final long DATETIMEF_INT_OFS = 0x8000000000L;
     public static final long TIMEF_INT_OFS = 0x800000L;
     public static final long TIMEF_OFS = 0x800000000000L;
+    protected static final Log logger = LogFactory.getLog(RowsLogBuffer.class);
     private static char[] digits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
     private final LogBuffer buffer;
     private final int columnLen;
     private final String charsetName;
-    private Calendar cal;
-
     private final BitSet nullBits;
+    private Calendar cal;
     private int nullBitIndex;
 
     private boolean fNull;
@@ -44,49 +58,6 @@ public final class RowsLogBuffer {
         this.columnLen = columnLen;
         this.charsetName = charsetName;
         this.nullBits = new BitSet(columnLen);
-    }
-
-    /**
-     * Extracting next row from packed buffer.
-     *
-     * @see mysql-5.1.60/sql/log_event.cc -
-     * Rows_log_event::print_verbose_one_row
-     */
-    public final boolean nextOneRow(BitSet columns) {
-        final boolean hasOneRow = buffer.hasRemaining();
-
-        if (hasOneRow) {
-            int column = 0;
-
-            for (int i = 0; i < columnLen; i++)
-                if (columns.get(i))
-                    column++;
-
-            nullBitIndex = 0;
-            nullBits.clear();
-            buffer.fillBitmap(nullBits, column);
-        }
-        return hasOneRow;
-    }
-
-    /**
-     * Extracting next field value from packed buffer.
-     *
-     * @see mysql-5.1.60/sql/log_event.cc -
-     * Rows_log_event::print_verbose_one_row
-     */
-    public final Serializable nextValue(final int type, final int meta) {
-        fNull = nullBits.get(nullBitIndex++);
-
-        if (fNull) {
-            value = null;
-            javaType = mysqlToJavaType(type, meta);
-            length = 0;
-            return null;
-        } else {
-            // Extracting field value from packed buffer.
-            return fetchValue(type, meta);
-        }
     }
 
     /**
@@ -213,9 +184,46 @@ public final class RowsLogBuffer {
     }
 
     /**
+     * Extracting next row from packed buffer.
+     */
+    public final boolean nextOneRow(BitSet columns) {
+        final boolean hasOneRow = buffer.hasRemaining();
+
+        if (hasOneRow) {
+            int column = 0;
+
+            for (int i = 0; i < columnLen; i++) {
+                if (columns.get(i)) {
+                    column++;
+                }
+            }
+
+            nullBitIndex = 0;
+            nullBits.clear();
+            buffer.fillBitmap(nullBits, column);
+        }
+        return hasOneRow;
+    }
+
+    /**
      * Extracting next field value from packed buffer.
-     *
-     * @see mysql-5.1.60/sql/log_event.cc - log_event_print_value
+     */
+    public final Serializable nextValue(final int type, final int meta) {
+        fNull = nullBits.get(nullBitIndex++);
+
+        if (fNull) {
+            value = null;
+            javaType = mysqlToJavaType(type, meta);
+            length = 0;
+            return null;
+        } else {
+            // Extracting field value from packed buffer.
+            return fetchValue(type, meta);
+        }
+    }
+
+    /**
+     * Extracting next field value from packed buffer.
      */
     final Serializable fetchValue(int type, final int meta) {
         int len = 0;
@@ -243,8 +251,9 @@ public final class RowsLogBuffer {
                                             type, meta, meta));
                     }
                 }
-            } else
+            } else {
                 len = meta;
+            }
         }
 
         switch (type) {
@@ -350,25 +359,25 @@ public final class RowsLogBuffer {
             }
             case LogEvent.MYSQL_TYPE_TIMESTAMP2: {
                 final long tv_sec = buffer.getBeUint32(); //big-endian
-                int tv_usec = 0;
+                int tvUsec = 0;
                 switch (meta) {
                     case 0:
-                        tv_usec = 0;
+                        tvUsec = 0;
                         break;
                     case 1:
                     case 2:
-                        tv_usec = buffer.getInt8() * 10000;
+                        tvUsec = buffer.getInt8() * 10000;
                         break;
                     case 3:
                     case 4:
-                        tv_usec = buffer.getBeInt16() * 100;
+                        tvUsec = buffer.getBeInt16() * 100;
                         break;
                     case 5:
                     case 6:
-                        tv_usec = buffer.getBeInt24();
+                        tvUsec = buffer.getBeInt24();
                         break;
                     default:
-                        tv_usec = 0;
+                        tvUsec = 0;
                         break;
                 }
 
@@ -378,11 +387,11 @@ public final class RowsLogBuffer {
                 } else {
                     Timestamp time = new Timestamp(tv_sec * 1000);
                     second = time.toString();
-                    second = second.substring(0, second.length() - 2);// 去掉毫秒精度.0
+                    second = second.substring(0, second.length() - 2);// remove ms
                 }
 
                 if (meta >= 1) {
-                    String microSecond = usecondsToStr(tv_usec, meta);
+                    String microSecond = usecondsToStr(tvUsec, meta);
                     microSecond = microSecond.substring(0, meta);
                     value = second + '.' + microSecond;
                 } else {
@@ -475,25 +484,9 @@ public final class RowsLogBuffer {
                 if (intpart == 0) {
                     second = "0000-00-00 00:00:00";
                 } else {
-                    // 构造TimeStamp只处理到秒
+                    // second timestamp
                     long ymd = intpart >> 17;
                     long ym = ymd >> 5;
-                    long hms = intpart % (1 << 17);
-
-                    // if (cal == null) cal = Calendar.getInstance();
-                    // cal.clear();
-                    // cal.set((int) (ym / 13), (int) (ym % 13) - 1, (int) (ymd
-                    // % (1 << 5)), (int) (hms >> 12),
-                    // (int) ((hms >> 6) % (1 << 6)), (int) (hms % (1 << 6)));
-                    // value = new Timestamp(cal.getTimeInMillis());
-                    // second = String.format("%04d-%02d-%02d %02d:%02d:%02d",
-                    // (int) (ym / 13),
-                    // (int) (ym % 13),
-                    // (int) (ymd % (1 << 5)),
-                    // (int) (hms >> 12),
-                    // (int) ((hms >> 6) % (1 << 6)),
-                    // (int) (hms % (1 << 6)));
-
                     StringBuilder builder = new StringBuilder(26);
                     appendNumber4(builder, (int) (ym / 13));
                     builder.append('-');
@@ -501,6 +494,7 @@ public final class RowsLogBuffer {
                     builder.append('-');
                     appendNumber2(builder, (int) (ymd % (1 << 5)));
                     builder.append(' ');
+                    long hms = intpart % (1 << 17);
                     appendNumber2(builder, (int) (hms >> 12));
                     builder.append(':');
                     appendNumber2(builder, (int) ((hms >> 6) % (1 << 6)));
@@ -619,10 +613,6 @@ public final class RowsLogBuffer {
                         intpart = buffer.getBeUint24() - TIMEF_INT_OFS;
                         frac = buffer.getBeUint16();
                         if (intpart < 0 && frac > 0) {
-                          /*
-                            Fix reverse fractional part order: "0x10000 - frac".
-                            See comments for FSP=1 and FSP=2 above.
-                          */
                             intpart++;      /* Shift to the next integer value */
                             frac -= 0x10000; /* -(0x10000-frac) */
                             // fraclong = frac * 100;
@@ -646,21 +636,8 @@ public final class RowsLogBuffer {
                 if (intpart == 0) {
                     second = "00:00:00";
                 } else {
-                    // 目前只记录秒，不处理us frac
-                    // if (cal == null) cal = Calendar.getInstance();
-                    // cal.clear();
-                    // cal.set(70, 0, 1, (int) ((intpart >> 12) % (1 << 10)),
-                    // (int) ((intpart >> 6) % (1 << 6)),
-                    // (int) (intpart % (1 << 6)));
-                    // value = new Time(cal.getTimeInMillis());
                     long ultime = Math.abs(ltime);
                     intpart = ultime >> 24;
-                    // second = String.format("%s%02d:%02d:%02d",
-                    // ltime >= 0 ? "" : "-",
-                    // (int) ((intpart >> 12) % (1 << 10)),
-                    // (int) ((intpart >> 6) % (1 << 6)),
-                    // (int) (intpart % (1 << 6)));
-
                     StringBuilder builder = new StringBuilder(12);
                     if (ltime < 0) {
                         builder.append('-');
@@ -791,7 +768,6 @@ public final class RowsLogBuffer {
                 if (nbits > 1) {
                     // byte[] bits = new byte[len];
                     // buffer.fillBytes(bits, 0, len);
-                    // 转化为unsign long
                     switch (len) {
                         case 1:
                             value = buffer.getUint8();
@@ -837,6 +813,7 @@ public final class RowsLogBuffer {
                  */
                 logger.warn("MYSQL_TYPE_TINY_BLOB : This enumeration value is "
                         + "only used internally and cannot exist in a binlog!");
+                break;
             }
             case LogEvent.MYSQL_TYPE_MEDIUM_BLOB: {
                 /*
@@ -845,6 +822,7 @@ public final class RowsLogBuffer {
                  */
                 logger.warn("MYSQL_TYPE_MEDIUM_BLOB : This enumeration value is "
                         + "only used internally and cannot exist in a binlog!");
+                break;
             }
             case LogEvent.MYSQL_TYPE_LONG_BLOB: {
                 /*
@@ -853,11 +831,11 @@ public final class RowsLogBuffer {
                  */
                 logger.warn("MYSQL_TYPE_LONG_BLOB : This enumeration value is "
                         + "only used internally and cannot exist in a binlog!");
+                break;
             }
 
             //lynd add in 5.7.13
             case LogEvent.MYSQL_TYPE_JSON:
-
             case LogEvent.MYSQL_TYPE_BLOB: {
                 /*
                  * BLOB or TEXT datatype

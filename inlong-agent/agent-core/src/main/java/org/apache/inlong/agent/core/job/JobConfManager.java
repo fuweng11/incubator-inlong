@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.core.job;
 
 import com.google.common.collect.Sets;
@@ -8,6 +25,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class JobConfManager {
+
     private final Set<JobProfile> delegate;
 
     public JobConfManager() {
@@ -18,23 +36,18 @@ public class JobConfManager {
         delegate.add(conf);
     }
 
-    /**
-     * 是否正在采集解析
-     * @param instName
-     * @return true if parsing else false
-     */
     public synchronized boolean isParsing(String instName) {
 //        return inst2ConfMap.containsKey(instName);
         return delegate.stream().anyMatch(conf -> Objects.equals(instName, conf.getDbSyncJobConf().getJobName()));
     }
 
     /**
-     * 从当前正在采集的实例列表中 获取配置信息
+     * get config info from current collecting instance list
+     *
      * @param instName
-     * @return 存在则返回配置信息，不存在返回null
+     * @return if not exist, return null
      */
     public synchronized JobProfile getParsingConfigByInstName(String instName) {
-//        return inst2ConfMap.get(instName);
         return delegate.stream()
                 .filter(conf -> Objects.equals(instName, conf.getDbSyncJobConf().getJobName()))
                 .findFirst()
@@ -59,7 +72,6 @@ public class JobConfManager {
     }
 
     public synchronized JobProfile getConfByTaskId(Integer taskId) {
-//        return taskId2ConfMap.get(taskId);
         return delegate.stream()
                 .filter(conf -> conf.getDbSyncJobConf().getTaskIdList().contains(taskId))
                 .findFirst()
@@ -67,10 +79,7 @@ public class JobConfManager {
     }
 
     public synchronized void removeConfByInst(String instName) {
-//        JobProfile conf = inst2ConfMap.remove(instName);
-//        if (conf != null) {
-//            conf.getTaskIdList().forEach(taskId -> taskId2ConfMap.remove(taskId));
-//        }
+
         delegate.removeIf(conf -> Objects.equals(instName, conf.getDbSyncJobConf().getJobName()));
     }
 
@@ -79,14 +88,11 @@ public class JobConfManager {
     }
 
     public synchronized int getConfSize() {
-//        return inst2ConfMap.size();
         return delegate.size();
     }
 
     @Override
     public String toString() {
-        return "JobConfManager{" +
-                "delegate=" + Arrays.toString(delegate.toArray()) +
-                '}';
+        return "JobConfManager{delegate=" + Arrays.toString(delegate.toArray()) + '}';
     }
 }

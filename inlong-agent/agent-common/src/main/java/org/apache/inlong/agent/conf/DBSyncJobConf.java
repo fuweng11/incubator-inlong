@@ -1,9 +1,25 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.conf;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
-import org.apache.inlong.agent.conf.DBSyncConf.ConfVars;
 import org.apache.inlong.agent.mysql.filter.CanalEventFilter;
 import org.apache.inlong.agent.mysql.filter.exception.CanalFilterException;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
@@ -74,8 +90,6 @@ public class DBSyncJobConf {
 
     private String serverId;
 
-    private int maxColumnValuesSize = 1024 * 1024;
-
     public DBSyncJobConf(String ip, int port, String userName, String passwd, Charset charset, LogPosition startPos,
             String serverId) {
         this.dbAddrList = Lists.newArrayList(new InetSocketAddress(ip, port));
@@ -91,8 +105,6 @@ public class DBSyncJobConf {
         this.jobAlarmPerson = new HashSet<>();
         this.filter = new TableNameFilter();
         this.serverId = serverId;
-        this.maxColumnValuesSize = DBSyncConf.getInstance(null).getIntVar(ConfVars.MAX_COLUMN_VALUE_SIZE);
-
         STATUS_UPDATER.set(DBSyncJobConf.this, TaskStat.NORMAL);
     }
 
@@ -215,6 +227,12 @@ public class DBSyncJobConf {
         } else {
             return null;
         }
+    }
+
+    public Collection<MysqlTableConf> getMysqlTableConfList() {
+        return table2MysqlConf.values().stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
     }
 
     public void removeTable(String dbName, String tbName) {
@@ -366,8 +384,7 @@ public class DBSyncJobConf {
 
     public void setAlarmPerson(String person) {
 
-        if (person == null ||
-                person.trim().length() <= 0) {
+        if (person == null || person.trim().length() <= 0) {
             return;
         }
 
@@ -473,30 +490,11 @@ public class DBSyncJobConf {
                 || status == JobStat.TaskStat.SWITCHED;
     }
 
-    public Collection<MysqlTableConf> getMysqlTableConfList() {
-        return table2MysqlConf.values().stream()
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
-    }
-
-    public int getMaxColumnValuesSize() {
-        return maxColumnValuesSize;
-    }
-
-    public void setMaxColumnValuesSize(int maxColumnValuesSize) {
-        this.maxColumnValuesSize = maxColumnValuesSize;
-    }
-
     @Override
     public String toString() {
-        return "DBSyncJobConf{" +
-                "mysqlUserName='" + mysqlUserName + '\'' +
-                ", mysqlPassWd='" + mysqlPassWd + '\'' +
-                ", charset=" + charset +
-                ", sep=" + sep +
-                ", dbAddrList=" + dbAddrList +
-                ", startPos=" + startPos + '\'' +
-                '}';
+        return "DBSyncJobConf{mysqlUserName='" + mysqlUserName + '\'' + ", mysqlPassWd='" + mysqlPassWd + '\''
+                + ", charset=" + charset + ", sep=" + sep + ", dbAddrList=" + dbAddrList + ", startPos=" + startPos
+                + '\'' + '}';
     }
 
     public List<InetSocketAddress> getDbAddrList() {

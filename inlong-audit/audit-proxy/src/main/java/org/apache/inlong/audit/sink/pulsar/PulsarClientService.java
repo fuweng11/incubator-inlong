@@ -24,7 +24,7 @@ import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.inlong.audit.consts.AttributeConstants;
 import org.apache.inlong.audit.sink.EventStat;
-import org.apache.inlong.audit.utils.LogCounter;
+import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.common.util.NetworkUtils;
 import org.apache.pulsar.client.api.AuthenticationFactory;
 import org.apache.pulsar.client.api.ClientBuilder;

@@ -32,6 +32,7 @@ import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.db.CommandDb;
 import org.apache.inlong.agent.db.JobProfileDb;
 import org.apache.inlong.agent.db.StateSearchKey;
+import org.apache.inlong.agent.entites.CommonResponse;
 import org.apache.inlong.agent.plugin.Trigger;
 import org.apache.inlong.agent.plugin.utils.PluginUtils;
 import org.apache.inlong.agent.pojo.ConfirmAgentIpRequest;
@@ -47,6 +48,7 @@ import org.apache.inlong.common.pojo.agent.CmdConfig;
 import org.apache.inlong.common.pojo.agent.DataConfig;
 import org.apache.inlong.common.pojo.agent.TaskRequest;
 import org.apache.inlong.common.pojo.agent.TaskResult;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskFullInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -240,7 +242,7 @@ public class ManagerFetcher extends AbstractDaemon implements ProfileFetcher {
      */
     public void fetchCommand() {
         List<CommandEntity> unackedCommands = commandDb.getUnackedCommands();
-        String resultStr = httpManager.doSentPost(managerTaskUrl, getFetchRequest(unackedCommands));
+        String resultStr = httpManager.doSentPost(managerTaskUrl, getFetchRequest(unackedCommands), "", "");
         JsonObject resultData = getResultData(resultStr);
         JsonElement element = resultData.get(AGENT_MANAGER_RETURN_PARAM_DATA);
         if (element != null) {
@@ -263,7 +265,8 @@ public class ManagerFetcher extends AbstractDaemon implements ProfileFetcher {
         if (agentManager.getJobManager().sqlJobExist()) {
             return;
         }
-        JsonObject resultData = getResultData(httpManager.doSentPost(managerDbCollectorTaskUrl, getSqlTaskRequest()));
+        JsonObject resultData = getResultData(
+                httpManager.doSentPost(managerDbCollectorTaskUrl, getSqlTaskRequest(), "", ""));
         dealWithSqlTaskResult(GSON.fromJson(resultData.get(AGENT_MANAGER_RETURN_PARAM_DATA).getAsJsonObject(),
                 DbCollectorTaskResult.class));
     }
@@ -413,7 +416,7 @@ public class ManagerFetcher extends AbstractDaemon implements ProfileFetcher {
         Collection<File> suitFiles = PluginUtils.findSuitFiles(triggerProfile);
         // filter files exited before
         List<File> pendingFiles = suitFiles.stream().filter(file ->
-                !agentManager.getJobManager().checkJobExist(file.getAbsolutePath()))
+                        !agentManager.getJobManager().checkJobExist(file.getAbsolutePath()))
                 .collect(Collectors.toList());
         for (File pendingFile : pendingFiles) {
             JobProfile copiedProfile = copyJobProfile(triggerProfile, dataTime,
@@ -469,8 +472,8 @@ public class ManagerFetcher extends AbstractDaemon implements ProfileFetcher {
      */
     private String confirmLocalIps(List<String> localIps) {
         ConfirmAgentIpRequest request = new ConfirmAgentIpRequest(AGENT, localIps);
-        JsonObject resultData = getResultData(httpManager.doSentPost(managerIpsCheckUrl, request))
-                .get(AGENT_MANAGER_RETURN_PARAM_DATA).getAsJsonObject();
+        JsonObject resultData = getResultData(httpManager.doSentPost(managerIpsCheckUrl, request, "", "")).get(
+                AGENT_MANAGER_RETURN_PARAM_DATA).getAsJsonObject();
         if (!resultData.has(AGENT_MANAGER_RETURN_PARAM_IP)) {
             throw new IllegalArgumentException("cannot get ip from data " + resultData.getAsString());
         }
@@ -538,6 +541,11 @@ public class ManagerFetcher extends AbstractDaemon implements ProfileFetcher {
     @Override
     public List<TriggerProfile> getTriggerProfiles() {
         return null;
+    }
+
+    @Override
+    public boolean parseJobAndCheckForStart(CommonResponse<DbSyncTaskFullInfo> commonResponse) {
+        return false;
     }
 
     @Override

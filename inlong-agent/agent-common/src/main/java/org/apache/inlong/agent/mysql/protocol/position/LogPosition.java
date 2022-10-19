@@ -1,40 +1,50 @@
-package org.apache.inlong.agent.mysql.protocol.position;
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package org.apache.inlong.agent.mysql.protocol.position;
 
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 
-/**
- * 基于mysql/oracle log位置标示
- * 
- * @author jianghang 2012-6-21 上午10:52:41
- * @version 1.0.0
- */
-public class LogPosition extends Position implements Comparable<LogPosition>{
+public class LogPosition extends Position implements Comparable<LogPosition> {
 
     private static final long serialVersionUID = 3875012010277005819L;
-    private LogIdentity       identity;
-    private EntryPosition     position;
+    private LogIdentity identity;
+    private EntryPosition position;
     private boolean bAcked = false;
     private long genTimeStample;
     private int sendIndex = 0;
     private long pkgIndex = 0;
     private String parseThreadName;
 
-    public LogPosition(){
-    	genTimeStample = System.currentTimeMillis();
+    public LogPosition() {
+        genTimeStample = System.currentTimeMillis();
     }
-    
-    public LogPosition(LogPosition other){
-    	this.identity = new LogIdentity(other.identity);
-    	this.position = new EntryPosition(other.position);
-    	this.sendIndex = other.sendIndex;
-    	this.pkgIndex = other.pkgIndex;
+
+    public LogPosition(LogPosition other) {
+        this.identity = new LogIdentity(other.identity);
+        this.position = new EntryPosition(other.position);
+        this.sendIndex = other.sendIndex;
+        this.pkgIndex = other.pkgIndex;
         this.parseThreadName = other.parseThreadName;
     }
-    
-    public LogPosition(JSONObject obj){
-    	this.identity = new LogIdentity(obj.getJSONObject("logIdentity"));
-    	this.position = new EntryPosition(obj.getJSONObject("entryPosition"));
+
+    public LogPosition(JSONObject obj) {
+        this.identity = new LogIdentity(obj.getJSONObject("logIdentity"));
+        this.position = new EntryPosition(obj.getJSONObject("entryPosition"));
     }
 
     public LogIdentity getIdentity() {
@@ -52,17 +62,17 @@ public class LogPosition extends Position implements Comparable<LogPosition>{
     public void setPosition(EntryPosition position) {
         this.position = position;
     }
-    
-    public void ackePosiiton(){
-    	bAcked = true;
+
+    public void ackePosiiton() {
+        bAcked = true;
     }
-    
-    public boolean bAcked(){
-    	return bAcked;
+
+    public boolean bAcked() {
+        return bAcked;
     }
-    
-    public long getGenTimeStample(){
-    	return genTimeStample;
+
+    public long getGenTimeStample() {
+        return genTimeStample;
     }
 
     public int getSendIndex() {
@@ -81,21 +91,21 @@ public class LogPosition extends Position implements Comparable<LogPosition>{
         this.pkgIndex = pkgIndex;
     }
 
-    public JSONObject getJsonObj(){
-    	JSONObject obj = new JSONObject();
-    	obj.put("logIdentity", this.identity.getJsonObj());
-    	obj.put("entryPosition", this.position.getJsonObj());
-    	obj.put("sendIndex", this.getSendIndex());
+    public JSONObject getJsonObj() {
+        JSONObject obj = new JSONObject();
+        obj.put("logIdentity", this.identity.getJsonObj());
+        obj.put("entryPosition", this.position.getJsonObj());
+        obj.put("sendIndex", this.getSendIndex());
         obj.put("pkgIndex", this.getPkgIndex());
         obj.put("parseJobName", this.getParseThreadName());
         return obj;
     }
-    
+
     @Override
-    public String toString(){
-    	JSONObject obj = new JSONObject();
-    	obj.put("logIdentity", this.identity.getJsonObj());
-    	obj.put("entryPosition", this.position.getJsonObj());
+    public String toString() {
+        JSONObject obj = new JSONObject();
+        obj.put("logIdentity", this.identity.getJsonObj());
+        obj.put("entryPosition", this.position.getJsonObj());
         obj.put("sendIndex", this.getSendIndex());
         obj.put("pkgIndex", this.getPkgIndex());
         obj.put("parseJobName", this.getParseThreadName());
@@ -170,7 +180,6 @@ public class LogPosition extends Position implements Comparable<LogPosition>{
         }
         return (int) cmp;
     }
-
 
     public String getParseThreadName() {
         return parseThreadName;

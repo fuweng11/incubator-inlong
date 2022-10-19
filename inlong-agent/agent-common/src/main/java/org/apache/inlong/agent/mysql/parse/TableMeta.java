@@ -1,37 +1,36 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.parse;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.inlong.agent.mysql.connector.binlog.event.TableMapLogEvent;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
-
-/**
- * 描述数据meta对象,mysql binlog中对应的{@linkplain TableMapLogEvent}包含的信息不全
- * 
- * <pre>
- * 1. 主键信息
- * 2. column name
- * 3. unsigned字段
- * </pre>
- * 
- * @author jianghang 2013-1-18 下午12:24:59
- * @version 1.0.0
- */
 public class TableMeta {
 
-	protected final Logger logger = LogManager.getLogger(this.getClass());
-	
-    private String          fullName; // schema.table
+    protected static final Logger LOGGER = LoggerFactory.getLogger(TableMeta.class);
+
+    private String fullName; // schema.table
     private List<FieldMeta> fields;
-    //for Gen key
-    //private List<Integer> keyList;
-    //private HashSet<Integer> needFields;    
 
-	//MysqlTableConf tableConf;
-
-	public TableMeta(String fullName, List<FieldMeta> fields/*, MysqlTableConf tableConf*/){
+    public TableMeta(String fullName, List<FieldMeta> fields/*, MysqlTableConf tableConf*/) {
         this.fullName = fullName;
         this.fields = fields;
     }
@@ -123,7 +122,7 @@ public class TableMeta {
 
         public String toString() {
             return "FieldMeta [columnName=" + columnName + ", columnType=" + columnType + ", defaultValue="
-                   + defaultValue + ", extra=" + extra + ", isNullable=" + isNullable + ", iskey=" + iskey + "]";
+                    + defaultValue + ", extra=" + extra + ", isNullable=" + isNullable + ", iskey=" + iskey + "]";
         }
 
     }

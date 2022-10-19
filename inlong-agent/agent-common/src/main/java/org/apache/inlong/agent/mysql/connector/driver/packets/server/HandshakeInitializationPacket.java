@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.driver.packets.server;
 
 import org.apache.inlong.agent.mysql.connector.driver.packets.HeaderPacket;
@@ -9,25 +26,22 @@ import java.io.IOException;
 
 /**
  * MySQL Handshake Initialization Packet.<br>
- * 
- * @author fujohnwang
- * @since 1.0
  */
 public class HandshakeInitializationPacket extends PacketWithHeaderPacket {
 
-    public byte   protocolVersion = MSC.DEFAULT_PROTOCOL_VERSION;
+    public byte protocolVersion = MSC.DEFAULT_PROTOCOL_VERSION;
     public String serverVersion;
-    public long   threadId;
+    public long threadId;
     public byte[] seed;
-    public int    serverCapabilities;
-    public byte   serverCharsetNumber;
-    public int    serverStatus;
+    public int serverCapabilities;
+    public byte serverCharsetNumber;
+    public int serverStatus;
     public byte[] restOfScrambleBuff;
 
-    public HandshakeInitializationPacket(){
+    public HandshakeInitializationPacket() {
     }
 
-    public HandshakeInitializationPacket(HeaderPacket header){
+    public HandshakeInitializationPacket(HeaderPacket header) {
         super(header);
     }
 
@@ -75,9 +89,7 @@ public class HandshakeInitializationPacket extends PacketWithHeaderPacket {
         // 8. bypass filtered bytes
         index += 13;
         // 9. read rest of scramble_buff
-        this.restOfScrambleBuff = ByteHelper.readFixedLengthBytes(data, index, 12); // 虽然Handshake Initialization
-        // Packet规定最后13个byte是剩下的scrumble,
-        // 但实际上最后一个字节是0, 不应该包含在scrumble中.
+        this.restOfScrambleBuff = ByteHelper.readFixedLengthBytes(data, index, 12);
         // end read
     }
 

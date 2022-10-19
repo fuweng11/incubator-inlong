@@ -1,15 +1,25 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.core.ha.lb;
 
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * description：job ha
- *
- * @Auther: nicobao
- * @Date: 2021/7/28 19:07
- * @Description:
- */
 @Getter
 @Setter
 public class LoadBalanceInfo
@@ -89,7 +99,7 @@ public class LoadBalanceInfo
             return 0;
         }
 
-        int capacityPercentUsageComp = (int)(localCapacityPercentUsage * PERCENT_HUNDRED
+        int capacityPercentUsageComp = (int) (localCapacityPercentUsage * PERCENT_HUNDRED
                 - otherCapacityPercentUsage * PERCENT_HUNDRED);
         /*
          * Compare payload if The value of subtracting two
@@ -97,25 +107,23 @@ public class LoadBalanceInfo
          */
         int comp = 0;
         if (Math.abs(capacityPercentUsageComp) < COMPARE_LOAD_THRESHOLD) {
-            if ((bandwidthIn == null || bandwidthIn.percentUsage() < CHECK_LOAD_THRESHOLD) &&
-                    (bandwidthOut == null || bandwidthOut.percentUsage() < CHECK_LOAD_THRESHOLD) &&
-                    (o.getBandwidthIn() == null ||
-                            o.getBandwidthIn().percentUsage() < CHECK_LOAD_THRESHOLD) &&
-                    (o.getBandwidthOut() == null ||
-                            o.getBandwidthOut().percentUsage() < CHECK_LOAD_THRESHOLD)) {
-                if ((memory == null || memory.percentUsage() < CHECK_LOAD_THRESHOLD)
-                        && (o.getMemory() == null || o.getMemory().percentUsage() <
-                        CHECK_LOAD_THRESHOLD)) {
+            if ((bandwidthIn == null || bandwidthIn.percentUsage() < CHECK_LOAD_THRESHOLD) && (bandwidthOut == null
+                    || bandwidthOut.percentUsage() < CHECK_LOAD_THRESHOLD) && (o.getBandwidthIn() == null
+                    || o.getBandwidthIn().percentUsage() < CHECK_LOAD_THRESHOLD) && (o.getBandwidthOut() == null
+                    || o.getBandwidthOut().percentUsage() < CHECK_LOAD_THRESHOLD)) {
+                if ((memory == null || memory.percentUsage() < CHECK_LOAD_THRESHOLD) && (o.getMemory() == null
+                        || o.getMemory().percentUsage() < CHECK_LOAD_THRESHOLD)) {
                     if (cpu != null && o.getCpu() != null) {
                         comp = (int) (cpu.percentUsage() * PERCENT_HUNDRED
                                 - o.getCpu().percentUsage() * PERCENT_HUNDRED);
                     }
                 } else if (memory != null && o.getMemory() != null) {
-                    comp = (int) (memory.percentUsage() * PERCENT_HUNDRED - o.getMemory().percentUsage() * PERCENT_HUNDRED);
+                    comp = (int) (memory.percentUsage() * PERCENT_HUNDRED
+                            - o.getMemory().percentUsage() * PERCENT_HUNDRED);
                 }
             } else if (bandwidthIn != null && o.getBandwidthIn() != null) {
-                comp = (int) (bandwidthIn.percentUsage() * PERCENT_HUNDRED -
-                        o.getBandwidthIn().percentUsage() * PERCENT_HUNDRED);
+                comp = (int) (bandwidthIn.percentUsage() * PERCENT_HUNDRED
+                        - o.getBandwidthIn().percentUsage() * PERCENT_HUNDRED);
             }
         }
 

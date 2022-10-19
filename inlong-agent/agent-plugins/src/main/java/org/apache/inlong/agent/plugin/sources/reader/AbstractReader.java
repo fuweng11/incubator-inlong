@@ -20,7 +20,9 @@ package org.apache.inlong.agent.plugin.sources.reader;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
+import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.plugin.Reader;
+import org.apache.inlong.agent.state.JobStat.State;
 import org.apache.inlong.common.metric.MetricRegister;
 
 import java.util.HashMap;
@@ -67,5 +69,25 @@ public abstract class AbstractReader implements Reader {
 
     public String getInlongGroupId() {
         return inlongGroupId;
+    }
+
+    @Override
+    public State getState() {
+        return null;
+    }
+
+    @Override
+    public void setState(State state) {
+
+    }
+
+    @Override
+    public long ackJobData(int cnt) {
+        return 0;
+    }
+
+    @Override
+    public void ackSendPosition(LogPosition ackPosition) {
+
     }
 }

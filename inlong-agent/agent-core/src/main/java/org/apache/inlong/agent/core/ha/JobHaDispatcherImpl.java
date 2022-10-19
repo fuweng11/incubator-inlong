@@ -1,10 +1,26 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.core.ha;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.common.DefaultThreadFactory;
-import org.apache.inlong.agent.conf.DBSyncConf;
-import org.apache.inlong.agent.conf.DBSyncConf.ConfVars;
+import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.ProfileFetcher;
 import org.apache.inlong.agent.core.ha.lb.LoadBalanceInfo;
 import org.apache.inlong.agent.core.ha.lb.LoadBalanceService;
@@ -19,11 +35,13 @@ import org.apache.inlong.agent.core.job.DBSyncJob;
 import org.apache.inlong.agent.core.job.JobManager;
 import org.apache.inlong.agent.entites.CommonResponse;
 import org.apache.inlong.agent.except.DataSourceConfigException.JobSizeExceedMaxException;
+import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.DBSyncUtils;
-import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
-import org.apache.inlong.agent.utils.TDManagerConn;
+import org.apache.inlong.agent.utils.HttpManager;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncClusterInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskFullInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
+import org.apache.inlong.common.pojo.agent.dbsync.RunningTaskRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +64,32 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_NAME;
+import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_TAG;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_COORDINATOR_MONITOR_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_JOB_STATE_MONITOR_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_LOADBALANCE_CHECK_LOAD_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_LOADBALANCE_COMPARE_LOAD_USAGE_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_POSITION_UPDATE_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_RUN_NODE_CHANGE_CANDIDATE_MAX_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_RUN_NODE_CHANGE_MAX_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_AUTH_TOKEN;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_SERVICE_NAME;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MAX_CON_DB_SIZE;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_SKIP_ZK_POSITION_ENABLE;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_HA_COORDINATOR_MONITOR_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_SERVICE_NAME;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MAX_CON_DB_SIZE;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_SKIP_ZK_POSITION_ENABLE;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_JOB_STATE_MONITOR_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_LOADBALANCE_CHECK_LOAD_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_LOADBALANCE_COMPARE_LOAD_USAGE_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_POSITION_UPDATE_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_RUN_NODE_CHANGE_CANDIDATE_MAX_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_RUN_NODE_CHANGE_MAX_THRESHOLD;
+import static org.apache.inlong.agent.constant.FetcherConstants.DBSYNC_GET_RUNNING_TASKS;
+import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_DBSYNC_GET_RUNNING_TASKS;
 
 public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
 
@@ -65,6 +109,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
     private final ScheduledExecutorService positionUpdateExecutor;
     private final ScheduledExecutorService jobStateMonitorExecutor;
     private final ProfileFetcher haFetcher;
+    private final AgentConfiguration agentConf = AgentConfiguration.getAgentConf();
     private String zkUrl;
     private volatile boolean isZkHealth = true;
     /*
@@ -102,38 +147,53 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
     private int loadBalanceCompareLoadUsageThreshold = 10;
     private float loadBalanceCheckLoadThreshold = 0.6F;
     private String getTaskConfigByIpAndServerIdUrl;
+    private String token;
+    private String serviceName;
+    private HttpManager httpManager;
     private Gson gson = new Gson();
-    private DBSyncConf config;//TODO:融合
 
     public JobHaDispatcherImpl(JobManager jobManager, ProfileFetcher fetcher) {
-        this.getTaskConfigByIpAndServerIdUrl = config.getStringVar(
-                ConfVars.TDMANAGER_POST_TASKS_BY_SERVER_ID_AND_IP_URL);
-        this.localIp = config.getLocalIp();
-        this.isSkipZkPositionEnable = config.isSkipZkPositionEnable();
+        this.getTaskConfigByIpAndServerIdUrl = buildGetRunningTaskUrl();
+        this.localIp = AgentUtils.getLocalIp();
+        this.isSkipZkPositionEnable = agentConf.getBoolean(DBSYNC_SKIP_ZK_POSITION_ENABLE,
+                DEFAULT_DBSYNC_SKIP_ZK_POSITION_ENABLE);
         this.jobManager = jobManager;
         this.haFetcher = fetcher;
         this.jobRunNodeChangeListener = new JobRunNodeChangeListener(this);
         this.jobCoordinatorChangeListener = new JobCoordinatorChangeListener(this);
         this.updateSwitchNodeChangeListener = new UpdateSwitchNodeChangeListener(this);
         this.loadBalanceService = new LoadBalanceService(this, localIp);
-        this.coordinatorIntervalMs = config.getCoordinatorMonitorInterval();
-        this.maxSyncIdsThreshold = config.getIntVar(ConfVars.MAX_CON_DB_SIZE);
-        this.haNodeChangeCandidateThreshold = config.getHaNodeChangeCandidateThreshold();
-        this.haNodeNeedChangeMaxThreshold = config.getHaNodeChangeMaxThreshold();
-        this.loadBalanceCompareLoadUsageThreshold =
-                config.getIntVar(ConfVars.HA_LOADBALANCE_COMPARE_LOAD_USAGE_THRESHOLD);
+        this.coordinatorIntervalMs = agentConf.getLong(DBSYNC_HA_COORDINATOR_MONITOR_INTERVAL_MS,
+                DEFAULT_DBSYNC_HA_COORDINATOR_MONITOR_INTERVAL_MS);
+        this.maxSyncIdsThreshold = agentConf.getInt(DBSYNC_MAX_CON_DB_SIZE, DEFAULT_DBSYNC_MAX_CON_DB_SIZE);
+        this.haNodeChangeCandidateThreshold = agentConf.getFloat(DBSYNC_HA_RUN_NODE_CHANGE_CANDIDATE_MAX_THRESHOLD,
+                DEFAULT_HA_RUN_NODE_CHANGE_CANDIDATE_MAX_THRESHOLD);
+        this.haNodeNeedChangeMaxThreshold = agentConf.getFloat(DBSYNC_HA_RUN_NODE_CHANGE_MAX_THRESHOLD,
+                DEFAULT_HA_RUN_NODE_CHANGE_MAX_THRESHOLD);
+        this.loadBalanceCompareLoadUsageThreshold = agentConf.getInt(DBSYNC_HA_LOADBALANCE_COMPARE_LOAD_USAGE_THRESHOLD,
+                DEFAULT_HA_LOADBALANCE_COMPARE_LOAD_USAGE_THRESHOLD);
         this.loadBalanceCheckLoadThreshold =
-                config.getFloatVar(ConfVars.HA_LOADBALANCE_CHECK_LOAD_THRESHOLD);
+                agentConf.getFloat(DBSYNC_HA_LOADBALANCE_CHECK_LOAD_THRESHOLD,
+                        DEFAULT_HA_LOADBALANCE_CHECK_LOAD_THRESHOLD);
         this.positionUpdateExecutor = Executors
                 .newSingleThreadScheduledExecutor(new DefaultThreadFactory("position-updater"));
         this.jobStateMonitorExecutor = Executors
                 .newSingleThreadScheduledExecutor(new DefaultThreadFactory("job-state-monitor"));
-        long interval = config.getPositionUpdateInterval();
+        long interval = agentConf.getLong(DBSYNC_HA_POSITION_UPDATE_INTERVAL_MS,
+                DEFAULT_HA_POSITION_UPDATE_INTERVAL_MS);
         positionUpdateExecutor.scheduleWithFixedDelay(getPositionUpdateTask(),
                 interval, interval, TimeUnit.MILLISECONDS);
-        interval = config.getJobStateMonitorInterval();
+        interval = agentConf.getLong(DBSYNC_HA_JOB_STATE_MONITOR_INTERVAL_MS, DEFAULT_HA_JOB_STATE_MONITOR_INTERVAL_MS);
         jobStateMonitorExecutor.scheduleWithFixedDelay(getJobStateMonitorTask(),
                 interval, interval, TimeUnit.MILLISECONDS);
+        this.token = agentConf.get(DBSYNC_MANAGER_AUTH_TOKEN, DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN);
+        this.serviceName = agentConf.get(DBSYNC_MANAGER_SERVICE_NAME, DEFAULT_DBSYNC_MANAGER_SERVICE_NAME);
+        this.httpManager = new HttpManager(agentConf);
+
+    }
+
+    private String buildGetRunningTaskUrl() {
+        return HttpManager.buildBaseUrl() + agentConf.get(DBSYNC_GET_RUNNING_TASKS, DEFAULT_DBSYNC_GET_RUNNING_TASKS);
     }
 
     /**
@@ -202,6 +262,41 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
     public void stopJob(String syncId, Integer taskId) {
         LOGGER.info("stop job syncId = {}, taskId = {}", syncId, taskId);
         deleteJob(syncId, taskId, null);
+    }
+
+    /**
+     * stop job
+     *
+     * @param jobHaInfo
+     */
+    private void stopJob(JobHaInfo jobHaInfo) {
+        String jobName = jobHaInfo.getJobName();
+        String syncId = jobHaInfo.getSyncId();
+        if (jobHaInfo.getTaskConfMap().size() > 0) {
+            Set<Map.Entry<Integer, DbSyncTaskInfo>> entrySet =
+                    jobHaInfo.getTaskConfMap().entrySet();
+            jobName = null;
+            for (Map.Entry<Integer, DbSyncTaskInfo> entry : entrySet) {
+                if (jobName == null) {
+                    jobName = this.jobManager.getJobNameByTaskId(entry.getValue().getId());
+                }
+                stopOldRunningNodeTask(jobHaInfo, entry.getValue());
+            }
+        }
+        try {
+            if (StringUtils.isNotEmpty(jobName)) {
+                this.jobManager.checkAndStopJobForce(jobName);
+            }
+            String position = jobSenderPosition.remove(syncId);
+            if (position != null) {
+                jobHaInfo.setSyncPosition(position);
+                updatePositionToZk(jobHaInfo, jobHaInfo.getSyncPosition());
+            }
+            jobHaInfo.getTaskConfMap().clear();
+            LOGGER.info("Job syncId = {} JobName = {} is stopped!", jobHaInfo.getSyncId(), jobName);
+        } catch (Throwable e) {
+            LOGGER.error("checkAndStopJobForce has error e = {}", e);
+        }
     }
 
     /**
@@ -291,7 +386,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                                 dbJobsMap.putIfAbsent(jobHaInfo.getSyncId(), dbJob);
                             }
                             LOGGER.info("startJobWithAllTaskOnce add task syncId = {} "
-                                            + ", taskId = {} finished！",
+                                            + ", taskId = {} finished!",
                                     taskConf.getServerName(), taskConf.getId());
                             opFuture.whenComplete((v, e) -> {
                                 if (e != null && !isJobExceedException(e)) {
@@ -338,7 +433,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
     private boolean checkValidConfig(Map.Entry<String, List<DbSyncTaskInfo>> entry, JobHaInfo jobHaInfo,
             List<DbSyncTaskInfo> confList) {
         for (DbSyncTaskInfo taskConf : confList) {
-            /**
+            /*
              * when the running node under syncId is removed
              * the jobInfo should also be removed from zk
              */
@@ -373,41 +468,6 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                     startPosStr);
         }
         return true;
-    }
-
-    /**
-     * stop job
-     *
-     * @param jobHaInfo
-     */
-    private void stopJob(JobHaInfo jobHaInfo) {
-        String jobName = jobHaInfo.getJobName();
-        String syncId = jobHaInfo.getSyncId();
-        if (jobHaInfo.getTaskConfMap().size() > 0) {
-            Set<Map.Entry<Integer, DbSyncTaskInfo>> entrySet =
-                    jobHaInfo.getTaskConfMap().entrySet();
-            jobName = null;
-            for (Map.Entry<Integer, DbSyncTaskInfo> entry : entrySet) {
-                if (jobName == null) {
-                    jobName = this.jobManager.getJobNameByTaskId(entry.getValue().getId());
-                }
-                stopOldRunningNodeTask(jobHaInfo, entry.getValue());
-            }
-        }
-        try {
-            if (StringUtils.isNotEmpty(jobName)) {
-                this.jobManager.checkAndStopJobForce(jobName);
-            }
-            String position = jobSenderPosition.remove(syncId);
-            if (position != null) {
-                jobHaInfo.setSyncPosition(position);
-                updatePositionToZk(jobHaInfo, jobHaInfo.getSyncPosition());
-            }
-            jobHaInfo.getTaskConfMap().clear();
-            LOGGER.info("Job syncId = {} JobName = {} is stopped!", jobHaInfo.getSyncId(), jobName);
-        } catch (Throwable e) {
-            LOGGER.error("checkAndStopJobForce has error e = {}", e);
-        }
     }
 
     @Override
@@ -461,10 +521,6 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         return null;
     }
 
-    /**
-     * @param jobHaInfo
-     * @param taskConf
-     */
     private void stopOldRunningNodeTask(JobHaInfo jobHaInfo, DbSyncTaskInfo taskConf) {
         LOGGER.info("updateRunNode deleteTask for change runNode info jobHaInfo = {}",
                 jobHaInfo);
@@ -515,9 +571,6 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         }
     }
 
-    /**
-     * @return
-     */
     @Override
     public List<DbSyncTaskInfo> getErrorTaskConfInfList() {
         List list = null;
@@ -544,11 +597,6 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         return list;
     }
 
-
-    /**
-     * @return
-     */
-    @Override
     public List<DbSyncTaskInfo> getCorrectTaskConfInfList() {
         List<DbSyncTaskInfo> list = null;
         if (correctTaskInfoList.size() > 0) {
@@ -824,13 +872,13 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         ConfigDelegate configDelegate = getZkConfigDelegate();
 
         /*
-         * 1、create job run node info
+         * 1 create job run node info
          */
         configDelegate.createIfNeededPath(ConfigDelegate.ZK_GROUP,
                 ZkUtil.getJobRunNodePath(clusterId, syncId));
 
         /*
-         * 2、create position node
+         * 2 create position node
          */
         configDelegate.createIfNeededPath(ConfigDelegate.ZK_GROUP,
                 ZkUtil.getJobPositionPath(clusterId, syncId));
@@ -854,10 +902,6 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         return false;
     }
 
-    /**
-     * @param serverIdList
-     * @param zkUrl
-     */
     private void cleanMovedJobInfo(List<Integer> serverIdList, String zkUrl) {
         if (serverIdList != null) {
             for (Integer syncId : serverIdList) {
@@ -935,8 +979,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
             try {
                 initTaskInfoByServerId(syncId);
             } catch (Exception e) {
-                LOGGER.error("initTaskInfoByServerId SyncId = {} has exception e = {}"
-                        , syncId, e);
+                LOGGER.error("initTaskInfoByServerId SyncId = {} has exception e = {}", syncId, e);
             }
             return true;
         }).thenAccept(u -> {
@@ -951,22 +994,17 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      * get all taskInfos of one server Id for run jobs
      *
      * @param syncId syncId
-     * @return
-     * @throws Exception
      */
     private int initTaskInfoByServerId(String syncId) throws Exception {
         int taskConfigSize = -1;
-        JSONObject params = new JSONObject();
-        params.put("ip", localIp);
-        params.put("serverId", syncId);
-        JSONObject clusterInfo = new JSONObject();
-        clusterInfo.put("id", getClusterId());
-        clusterInfo.put("serverIdListVersion", getSyncIdListVersion());
-        params.put("clusterInfo", clusterInfo);
-        String token = config.getStringVar(ConfVars.TDMANAGER_AUTH_TOKEN);
-        String serviceName = config.getStringVar(ConfVars.TDMANAGER_SERVICE_NAME);
-        String jobConfigString = TDManagerConn.cgi2TDManager(getTaskConfigByIpAndServerIdUrl,
-                params, token, serviceName);
+        String clusterName = agentConf.get(AGENT_CLUSTER_NAME);
+        String clusterTag = agentConf.get(AGENT_CLUSTER_TAG);
+        DbSyncClusterInfo clusterInfo = new DbSyncClusterInfo(getClusterId(), clusterName, getSyncIdListVersion());
+        RunningTaskRequest runningTaskRequest = new RunningTaskRequest(localIp, clusterTag, clusterName, clusterInfo,
+                syncId);
+
+        String jobConfigString = httpManager.doSentPost(getTaskConfigByIpAndServerIdUrl, runningTaskRequest, token,
+                serviceName);
         CommonResponse<DbSyncTaskFullInfo> commonResponse =
                 CommonResponse.fromJson(jobConfigString, DbSyncTaskFullInfo.class);
         if (commonResponse == null || !haFetcher.parseJobAndCheckForStart(commonResponse)) {
@@ -989,8 +1027,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
             try {
                 stopJob(jobHaInfo);
             } catch (Exception e) {
-                LOGGER.error("stop job by SyncId = {} has exception e = {}"
-                        , jobHaInfo.getSyncId(), e);
+                LOGGER.error("stop job by SyncId = {} has exception e = {}", jobHaInfo.getSyncId(), e);
             }
             return true;
         }).thenAccept(u -> {
@@ -998,8 +1035,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
             jobHaInfoMap.remove(jobHaInfo.getSyncId());
             LOGGER.info("stop job SyncId = {} finished!", jobHaInfo.getSyncId());
         }).exceptionally(ex -> {
-            LOGGER.error("stop job SyncId = {} finished has exception e = {}",
-                    jobHaInfo.getSyncId(), ex);
+            LOGGER.error("stop job SyncId = {} finished has exception e = {}", jobHaInfo.getSyncId(), ex);
             return null;
         });
     }

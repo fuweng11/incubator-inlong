@@ -1,10 +1,27 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.driver.packets;
 
 import com.google.common.collect.Lists;
 import lombok.Synchronized;
+import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
 import org.apache.inlong.agent.mysql.connector.driver.packets.UUIDSet.Interval;
 import org.apache.inlong.agent.mysql.connector.driver.utils.ByteHelper;
-import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,74 +35,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.apache.inlong.agent.mysql.connector.binlog.event.GtidLogEvent.ENCODED_SID_LENGTH;
 
-/**
- * Created by hiwjd on 2018/4/23. hiwjd0@gmail.com
- */
-
 public class MysqlGTIDSet implements GTIDSet {
 
     public Map<String, UUIDSet> sets;
 
-    @Override
-    @Synchronized
-    public byte[] encode() throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteHelper.writeUnsignedInt64LittleEndian(sets.size(), out);
-
-        for (Map.Entry<String, UUIDSet> entry : sets.entrySet()) {
-            out.write(entry.getValue().encode());
-        }
-
-        return out.toByteArray();
-    }
-
-    @Override
-    @Synchronized
-    public void update(String str) {
-        UUIDSet us = UUIDSet.parse(str);
-        update(us);
-    }
-
-    @Synchronized
-    public void update(UUIDSet uuidSet) {
-        String sid = uuidSet.SID.toString();
-        if (sets.containsKey(sid)) {
-            sets.get(sid).intervals.addAll(uuidSet.intervals);
-            sets.get(sid).intervals = UUIDSet.combine(sets.get(sid).intervals);
-        } else {
-            sets.put(sid, uuidSet);
-        }
-    }
-
-    @Synchronized
-    public void update(MysqlGTIDSet mysqlGTIDSet) {
-        mysqlGTIDSet.sets.values().forEach(this::update);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null) return false;
-        if (this == o) return true;
-
-        MysqlGTIDSet gs = (MysqlGTIDSet) o;
-        if (gs.sets == null) return false;
-
-        for (Map.Entry<String, UUIDSet> entry : sets.entrySet()) {
-            if (!entry.getValue().equals(gs.sets.get(entry.getKey()))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(sets);
-    }
-
     /**
-     * 解析如下格式的字符串为MysqlGTIDSet: 726757ad-4455-11e8-ae04-0242ac110002:1 =>
+     * parse as MysqlGTIDSet: 726757ad-4455-11e8-ae04-0242ac110002:1 =>
      * MysqlGTIDSet{ sets: { 726757ad-4455-11e8-ae04-0242ac110002: UUIDSet{ SID:
      * 726757ad-4455-11e8-ae04-0242ac110002, intervals: [{start:1, stop:2}] } }
      * } 726757ad-4455-11e8-ae04-0242ac110002:1-3 => MysqlGTIDSet{ sets: {
@@ -115,12 +70,11 @@ public class MysqlGTIDSet implements GTIDSet {
         if (gtidData == null || gtidData.length() < 1) {
             m = new ConcurrentHashMap<>();
         } else {
-            // 存在多个GTID时会有回车符
             String[] uuidStrs = gtidData.replaceAll("\n", "").split(",");
             m = new HashMap<>(uuidStrs.length);
             for (int i = 0; i < uuidStrs.length; i++) {
                 UUIDSet uuidSet = UUIDSet.parse(uuidStrs[i]);
-                m.put(uuidSet.SID.toString(), uuidSet);
+                m.put(uuidSet.sid.toString(), uuidSet);
             }
         }
 
@@ -131,7 +85,7 @@ public class MysqlGTIDSet implements GTIDSet {
     }
 
     public static MysqlGTIDSet parse(LogBuffer buffer) {
-        Map<String, UUIDSet> m  = new ConcurrentHashMap<>();
+        Map<String, UUIDSet> m = new ConcurrentHashMap<>();
 
         if (buffer != null && buffer.hasRemaining()) {
             long nsids = buffer.getLong64();
@@ -146,7 +100,7 @@ public class MysqlGTIDSet implements GTIDSet {
 
                 List<Interval> intervals = Lists.newArrayList();
                 for (long n = 0; n < nInternals; n++) {
-                    Interval  interval = new Interval();
+                    Interval interval = new Interval();
                     interval.start = buffer.getLong64();
                     interval.stop = buffer.getLong64();
                     intervals.add(interval);
@@ -161,6 +115,70 @@ public class MysqlGTIDSet implements GTIDSet {
         mysqlGTIDSet.sets = m;
 
         return mysqlGTIDSet;
+    }
+
+    @Override
+    @Synchronized
+    public byte[] encode() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteHelper.writeUnsignedInt64LittleEndian(sets.size(), out);
+
+        for (Map.Entry<String, UUIDSet> entry : sets.entrySet()) {
+            out.write(entry.getValue().encode());
+        }
+
+        return out.toByteArray();
+    }
+
+    @Override
+    @Synchronized
+    public void update(String str) {
+        UUIDSet us = UUIDSet.parse(str);
+        update(us);
+    }
+
+    @Synchronized
+    public void update(UUIDSet uuidSet) {
+        String sid = uuidSet.sid.toString();
+        if (sets.containsKey(sid)) {
+            sets.get(sid).intervals.addAll(uuidSet.intervals);
+            sets.get(sid).intervals = UUIDSet.combine(sets.get(sid).intervals);
+        } else {
+            sets.put(sid, uuidSet);
+        }
+    }
+
+    @Synchronized
+    public void update(MysqlGTIDSet mysqlGTIDSet) {
+        mysqlGTIDSet.sets.values().forEach(this::update);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (this == o) {
+            return true;
+        }
+
+        MysqlGTIDSet gs = (MysqlGTIDSet) o;
+        if (gs.sets == null) {
+            return false;
+        }
+
+        for (Map.Entry<String, UUIDSet> entry : sets.entrySet()) {
+            if (!entry.getValue().equals(gs.sets.get(entry.getKey()))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sets);
     }
 
     public boolean isEmpty() {

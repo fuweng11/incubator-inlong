@@ -1,14 +1,26 @@
-package org.apache.inlong.agent.core.ha.lb;
-
-/**
- * 功能描述：job ha
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * @Auther: nicobao
- * @Date: 2021/8/3 14:47
- * @Description:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
+package org.apache.inlong.agent.core.ha.lb;
+
 import com.sun.management.OperatingSystemMXBean;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
@@ -22,21 +34,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 
 public class LinuxDbSyncHostUsageImpl
         implements DbSyncHostUsage {
+
+    private static final Logger LOG = LogManager.getLogger(LinuxDbSyncHostUsageImpl.class);
+    private final Optional<Double> overrideBrokerNicSpeedGbps;
     private long lastCollection;
     private double lastTotalNicUsageTx;
     private double lastTotalNicUsageRx;
     private CpuStat lastCpuStat;
     private OperatingSystemMXBean systemBean;
     private SystemResourceUsage usage;
-
-    private final Optional<Double> overrideBrokerNicSpeedGbps;
-
-    private static final Logger LOG = LogManager.getLogger(LinuxDbSyncHostUsageImpl.class);
 
     public LinuxDbSyncHostUsageImpl(int hostUsageCheckIntervalMin,
             Optional<Double> overrideBrokerNicSpeedGbps,
@@ -73,9 +82,6 @@ public class LinuxDbSyncHostUsageImpl
             usage.setCpu(new ResourceUsage(0d, totalCpuLimit));
         } else {
             double elapsedSeconds = (now - lastCollection) / 1000d;
-            double nicUsageTx = (totalNicUsageTx - lastTotalNicUsageTx) / elapsedSeconds;
-            double nicUsageRx = (totalNicUsageRx - lastTotalNicUsageRx) / elapsedSeconds;
-
             if (cpuStat != null && lastCpuStat != null) {
                 // we need two non null stats to get a usage report
                 long cpuTimeDiff = cpuStat.getTotalTime() - lastCpuStat.getTotalTime();
@@ -83,7 +89,8 @@ public class LinuxDbSyncHostUsageImpl
                 double cpuUsage = ((double) cpuUsageDiff / (double) cpuTimeDiff) * totalCpuLimit;
                 usage.setCpu(new ResourceUsage(cpuUsage, totalCpuLimit));
             }
-
+            double nicUsageTx = (totalNicUsageTx - lastTotalNicUsageTx) / elapsedSeconds;
+            double nicUsageRx = (totalNicUsageRx - lastTotalNicUsageRx) / elapsedSeconds;
             usage.setSystemMemory(getMemUsage());
             usage.setBandwidthIn(new ResourceUsage(nicUsageRx, totalNicLimit));
             usage.setBandwidthOut(new ResourceUsage(nicUsageTx, totalNicLimit));
@@ -205,6 +212,7 @@ public class LinuxDbSyncHostUsageImpl
     }
 
     private class CpuStat {
+
         private long totalTime;
         private long usage;
 

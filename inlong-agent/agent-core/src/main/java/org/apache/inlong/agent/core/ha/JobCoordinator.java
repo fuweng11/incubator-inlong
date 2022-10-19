@@ -1,7 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.core.ha;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.common.DefaultThreadFactory;
@@ -27,10 +42,8 @@ import java.util.concurrent.TimeUnit;
 
 public class JobCoordinator {
 
-    private Logger logger = LogManager.getLogger(JobCoordinator.class);
-
     private static final String EMPTY_IP_KEY = "empty_ip_key";
-
+    private Logger logger = LogManager.getLogger(JobCoordinator.class);
     private Integer clusterId;
 
     private String clusterIdStr;
@@ -132,8 +145,7 @@ public class JobCoordinator {
          * key: candidate ip
          * value : run serverId List
          */
-        private ConcurrentHashMap<String, Set<String>> jobRunNodeMap = new ConcurrentHashMap<String
-                , Set<String>>();
+        private ConcurrentHashMap<String, Set<String>> jobRunNodeMap = new ConcurrentHashMap<>();
 
         @Override
         public void run() {
@@ -156,8 +168,8 @@ public class JobCoordinator {
                      * query all infos for coordinate
                      */
                     /*
-                     * 1、query all server id's run node info
-                     * key : ip ,value : server id set
+                     * 1. query all server id's run node info
+                     * key: ip, value: server id set
                      */
                     if (jobRunNodeMap.size() == 0 || syncIdListIsChanged || isNeedUpdateRunNodeMap) {
                         if (isNeedUpdateRunNodeMap) {
@@ -170,7 +182,7 @@ public class JobCoordinator {
                     }
 
                     /*
-                     * 2、query all candidate load info
+                     * 2. query all candidate load info
                      * key : ip, value : load
                      */
                     Map<String, LoadBalanceInfo> candidateLoadMap = getAllCandidateNodeLoad();
@@ -207,7 +219,7 @@ public class JobCoordinator {
                         for (Map.Entry<String, Set<String>> entry : runNodeInfoEntrySet) {
                             if (candidateLoadMap.get(entry.getKey()) == null) {
                                 logger.info("Candidate [{}] is offline, so need change run "
-                                        + "syncIds [{}]", entry.getKey(),
+                                                + "syncIds [{}]", entry.getKey(),
                                         gson.toJson(entry.getValue()));
                                 if (!assignSyncIdsToDbSyncNode(entry.getKey(), entry.getValue(),
                                         cadLoadSet)) {
@@ -231,7 +243,7 @@ public class JobCoordinator {
 
         private boolean assignSyncIdsToDbSyncNode(String fromIp,
                 Set<String> unassignedSyncIdsSet,
-                TreeSet<LoadBalanceInfo> cadLoadSet) throws Exception{
+                TreeSet<LoadBalanceInfo> cadLoadSet) throws Exception {
             if (unassignedSyncIdsSet == null || unassignedSyncIdsSet.size() == 0) {
                 logger.info("JobCoordinator assignServerIdsToDbSyncNode unassignedServerIdsSet is "
                         + "null or size is 0 !");
@@ -290,7 +302,7 @@ public class JobCoordinator {
 
         private boolean assignSyncIdToDbSyncNode(String syncId,
                 TreeSet<LoadBalanceInfo> cadLoadSet) {
-            if (StringUtils.isEmpty(syncId) || cadLoadSet == null || cadLoadSet.size() == 0 ) {
+            if (StringUtils.isEmpty(syncId) || cadLoadSet == null || cadLoadSet.size() == 0) {
                 logger.info("JobCoordinator assign syncId [{}] or cadLoadSet is"
                         + " null or size is 0!", syncId);
                 return false;
@@ -331,7 +343,8 @@ public class JobCoordinator {
 
         /**
          * change one syncId per time
-         * @param balanceInfoTreeSet  balanceInfoTreeSet
+         *
+         * @param balanceInfoTreeSet balanceInfoTreeSet
          */
         private void tryToChangeRunNodeByLoad(TreeSet<LoadBalanceInfo> balanceInfoTreeSet) {
             if (balanceInfoTreeSet == null || balanceInfoTreeSet.size() == 0) {
@@ -362,7 +375,7 @@ public class JobCoordinator {
                                                 firstNode.getIp(), toChangeSyncId, e);
                                     }
                                 }
-                            } else if (firstNode != null){
+                            } else if (firstNode != null) {
                                 logger.warn("There is not any node can bee used to change, firstNode is "
                                                 + "not match condition!"
                                                 + " first node [{}]/[{}]!, last node [{}]/[{}]",
@@ -387,24 +400,20 @@ public class JobCoordinator {
                 loadBalanceInfo = balanceInfoTreeSet.pollLast();
             }
         }
-        /**
-         *
-         * @param ip
-         * @param syncId
-         */
+
         private void doChangeRunNodeInfo(String ip, String syncId) throws Exception {
             JobRunNodeInfo info = new JobRunNodeInfo();
             info.setIp(ip);
             info.setTimeStamp(System.currentTimeMillis());
             ConfigDelegate configDelegate = getConfigDelegate();
             String runNodePath = ZkUtil.getJobRunNodePath(clusterIdStr, syncId);
-            configDelegate.createPathAndSetData(ConfigDelegate.ZK_GROUP, runNodePath,
-                    JSONObject.toJSONString(info));
+            configDelegate.createPathAndSetData(ConfigDelegate.ZK_GROUP, runNodePath, info.toString());
             logger.info("doChangeRunNode, path = {}, runNodeIp = {}, syncId {}", runNodePath, ip, syncId);
         }
 
         /**
          * print current job execute stat info
+         *
          * @param syncIdList
          * @param map
          */
@@ -437,9 +446,10 @@ public class JobCoordinator {
         /**
          * key: candidate ip
          * value: dbsync node load info
+         *
          * @return
          */
-        private Map<String, LoadBalanceInfo> getAllCandidateNodeLoad() throws Exception{
+        private Map<String, LoadBalanceInfo> getAllCandidateNodeLoad() throws Exception {
             Map<String, LoadBalanceInfo> candidateNodeLoadMap = null;
             ConfigDelegate configDelegate = getConfigDelegate();
             String candidateNodePath = ZkUtil.getCandidateParentPath(clusterIdStr);
@@ -452,7 +462,8 @@ public class JobCoordinator {
                     byte[] data = configDelegate.getData(ConfigDelegate.ZK_GROUP, path);
                     if (data != null) {
                         try {
-                            loadBalanceInfo = JSON.parseObject(data, LoadBalanceInfo.class);
+                            Gson gson = new Gson();
+                            loadBalanceInfo = gson.fromJson(String.valueOf(data), LoadBalanceInfo.class);
                             loadBalanceInfo.setSyncIdNum(0);
                             candidateNodeLoadMap.put(candidate, loadBalanceInfo);
                         } catch (Exception e) {
@@ -468,17 +479,12 @@ public class JobCoordinator {
             return candidateNodeLoadMap;
         }
 
-        /*
-         * 获取当前所有server id正在那个dbsync节点执行
-         * key : dbsync Ip
-         * value: server id set 集合
-         */
-        private Map<String, Set<String>> getAllJobRunNodeInfo(List<String> syncIdList) throws Exception{
+        private Map<String, Set<String>> getAllJobRunNodeInfo(List<String> syncIdList) throws Exception {
             int totalSize = syncIdList.size();
             Map<String, Set<String>> runNodeInfoMap = new HashMap<>();
             Map<String, String> serverIpMap = new HashMap<>();
             if (totalSize > 0) {
-                for (int i = 0 ; i < totalSize ; i ++) {
+                for (int i = 0; i < totalSize; i++) {
                     String syncId = syncIdList.get(i);
                     JobRunNodeInfo runNodeInfo = getJobRunNodeInfo(syncId);
                     String ip;
@@ -505,7 +511,7 @@ public class JobCoordinator {
             return runNodeInfoMap;
         }
 
-        private ConfigDelegate getConfigDelegate() throws Exception{
+        private ConfigDelegate getConfigDelegate() throws Exception {
             ConfigDelegate configDelegate = jobHaDispatcher.getZkConfigDelegate();
             if (configDelegate == null) {
                 throw new Exception("configDelegate is null, zkUrl = "
@@ -514,18 +520,15 @@ public class JobCoordinator {
             return configDelegate;
         }
 
-        /**
-         * @param syncId syncId
-         * @return
-         */
-        private JobRunNodeInfo getJobRunNodeInfo(String syncId) throws Exception{
+        private JobRunNodeInfo getJobRunNodeInfo(String syncId) throws Exception {
             String runNodePath = ZkUtil.getJobRunNodePath(clusterIdStr, syncId);
             ConfigDelegate configDelegate = getConfigDelegate();
             JobRunNodeInfo runNodeInfo = null;
             byte[] data = configDelegate.getData(ConfigDelegate.ZK_GROUP, runNodePath);
             if (data != null) {
                 try {
-                    runNodeInfo = JSON.parseObject(data, JobRunNodeInfo.class);
+                    Gson gson = new Gson();
+                    runNodeInfo = gson.fromJson(String.valueOf(data), JobRunNodeInfo.class);
                 } catch (Exception e) {
                     logger.error("GetJobRunNodeInfo parseObject exception SyncId = {}, e = {}",
                             syncId, e);
@@ -538,23 +541,21 @@ public class JobCoordinator {
 
         /**
          * check is or not change runningNode
+         *
          * @param runningNodeLoad running Node load
          * @return true/false
          */
         private boolean isNeedChangeRunNode(LoadBalanceInfo runningNodeLoad) {
             if (runningNodeLoad != null) {
-                if ((runningNodeLoad.getCpu() != null && runningNodeLoad.getCpu().percentUsage()
-                        > haNodeNeedChangeMaxThreshold) ||
-                        (runningNodeLoad.getMemory() != null &&
-                                runningNodeLoad.getMemory().percentUsage()
-                                        > haNodeNeedChangeMaxThreshold) ||
-                        (runningNodeLoad.getBandwidthOut() != null &&
-                                runningNodeLoad.getBandwidthOut().percentUsage()
-                                        > haNodeNeedChangeMaxThreshold) ||
-                        (runningNodeLoad.getBandwidthIn() != null &&
-                                runningNodeLoad.getBandwidthIn().percentUsage()
-                                        > haNodeNeedChangeMaxThreshold) ||
-                        runningNodeLoad.getSyncsCapacityPercentUsage() > haNodeNeedChangeMaxThreshold) {
+                if ((runningNodeLoad.getCpu() != null
+                        && runningNodeLoad.getCpu().percentUsage() > haNodeNeedChangeMaxThreshold) || (
+                        runningNodeLoad.getMemory() != null
+                                && runningNodeLoad.getMemory().percentUsage() > haNodeNeedChangeMaxThreshold) || (
+                        runningNodeLoad.getBandwidthOut() != null
+                                && runningNodeLoad.getBandwidthOut().percentUsage() > haNodeNeedChangeMaxThreshold) || (
+                        runningNodeLoad.getBandwidthIn() != null
+                                && runningNodeLoad.getBandwidthIn().percentUsage() > haNodeNeedChangeMaxThreshold)
+                        || runningNodeLoad.getSyncsCapacityPercentUsage() > haNodeNeedChangeMaxThreshold) {
                     return true;
                 }
             }
@@ -563,24 +564,22 @@ public class JobCoordinator {
 
         /**
          * check is or not change runningNode
+         *
          * @param candidateNodeLoad running Node load
          * @return true/false
          */
         private boolean isNodeCanBeUsedToChange(LoadBalanceInfo candidateNodeLoad) {
             if (candidateNodeLoad != null) {
-                if ((candidateNodeLoad.getSyncIdNum() < candidateNodeLoad.getMaxSyncIdsThreshold())
-                    && (candidateNodeLoad.getCpu() == null || candidateNodeLoad.getCpu().percentUsage()
-                        < haNodeChangeCandidateThreshold) &&
-                        (candidateNodeLoad.getMemory() == null ||
-                                candidateNodeLoad.getMemory().percentUsage()
-                                        < haNodeChangeCandidateThreshold) &&
-                        (candidateNodeLoad.getBandwidthOut() == null ||
-                                candidateNodeLoad.getBandwidthOut().percentUsage()
-                                        < haNodeChangeCandidateThreshold) &&
-                        (candidateNodeLoad.getBandwidthIn() == null ||
-                                candidateNodeLoad.getBandwidthIn().percentUsage()
-                                        > haNodeChangeCandidateThreshold) &&
-                        candidateNodeLoad.getSyncsCapacityPercentUsage() < 1.0F) {
+                if ((candidateNodeLoad.getSyncIdNum() < candidateNodeLoad.getMaxSyncIdsThreshold()) && (
+                        candidateNodeLoad.getCpu() == null
+                                || candidateNodeLoad.getCpu().percentUsage() < haNodeChangeCandidateThreshold) && (
+                        candidateNodeLoad.getMemory() == null
+                                || candidateNodeLoad.getMemory().percentUsage() < haNodeChangeCandidateThreshold) && (
+                        candidateNodeLoad.getBandwidthOut() == null
+                                || candidateNodeLoad.getBandwidthOut().percentUsage() < haNodeChangeCandidateThreshold)
+                        && (candidateNodeLoad.getBandwidthIn() == null
+                        || candidateNodeLoad.getBandwidthIn().percentUsage() > haNodeChangeCandidateThreshold)
+                        && candidateNodeLoad.getSyncsCapacityPercentUsage() < 1.0F) {
                     return true;
                 }
             }

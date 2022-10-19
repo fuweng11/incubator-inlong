@@ -17,9 +17,6 @@
 
 package org.apache.inlong.dataproxy.sink;
 
-import static org.apache.inlong.dataproxy.consts.AttributeConstants.SEP_HASHTAG;
-import static org.apache.inlong.dataproxy.consts.ConfigConstants.MAX_MONITOR_CNT;
-
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -27,16 +24,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.RateLimiter;
-import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import io.netty.handler.codec.TooLongFrameException;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -74,6 +61,20 @@ import org.apache.pulsar.client.api.PulsarClientException.ProducerQueueIsFullErr
 import org.apache.pulsar.client.api.PulsarClientException.TopicTerminatedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.apache.inlong.dataproxy.consts.AttributeConstants.SEP_HASHTAG;
+import static org.apache.inlong.dataproxy.consts.ConfigConstants.MAX_MONITOR_CNT;
 
 /**
  * Use pulsarSink need adding such config, if these ara not config in dataproxy-pulsar.conf,

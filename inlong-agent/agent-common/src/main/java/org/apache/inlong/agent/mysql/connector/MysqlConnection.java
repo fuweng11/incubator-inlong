@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector;
 
 import org.apache.commons.lang.StringUtils;
@@ -19,9 +36,8 @@ import org.apache.inlong.agent.mysql.connector.driver.packets.server.ResultSetPa
 import org.apache.inlong.agent.mysql.connector.driver.utils.PacketManager;
 import org.apache.inlong.agent.mysql.connector.exception.CanalParseException;
 import org.apache.inlong.agent.mysql.protocol.position.EntryPosition;
-import org.apache.inlong.agent.mysql.relayLog.RelayLog;
-import org.apache.inlong.agent.mysql.relayLog.exception.RelayLogPosErrorException;
-import org.apache.inlong.agent.utils.tokenbucket.TokenBucket;
+import org.apache.inlong.agent.mysql.relaylog.RelayLog;
+import org.apache.inlong.agent.mysql.relaylog.exception.RelayLogPosErrorException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,26 +53,25 @@ import static org.apache.inlong.agent.mysql.connector.dbsync.DirectLogFetcher.MA
 
 public class MysqlConnection implements ErosaConnection {
 
-    private static final Logger logger       = LogManager.getLogger(MysqlConnection.class);
+    private static final Logger logger = LogManager.getLogger(MysqlConnection.class);
 
-    private MysqlConnector      connector;
-    private long                slaveId;
-    private Charset             charset      = StandardCharsets.UTF_8;
-    private BinlogFormat        binlogFormat = BinlogFormat.ROW;
-    private TokenBucket jobBuckect;
-    private int                 binlogChecksum;
-    private BinlogImage         binlogImage;
+    private MysqlConnector connector;
+    private long slaveId;
+    private Charset charset = StandardCharsets.UTF_8;
+    private BinlogFormat binlogFormat = BinlogFormat.ROW;
+    private int binlogChecksum;
+    private BinlogImage binlogImage;
 
-    public MysqlConnection(){
+    public MysqlConnection() {
     }
 
-    public MysqlConnection(InetSocketAddress address, String username, String password){
+    public MysqlConnection(InetSocketAddress address, String username, String password) {
 
         connector = new MysqlConnector(address, username, password);
     }
 
     public MysqlConnection(InetSocketAddress address, String username, String password, byte charsetNumber,
-                           String defaultSchema){
+            String defaultSchema) {
         connector = new MysqlConnector(address, username, password, charsetNumber, defaultSchema);
     }
 
@@ -86,21 +101,15 @@ public class MysqlConnection implements ErosaConnection {
         exector.update(cmd);
     }
 
-    /**
-     * 加速主备切换时的查找速度，做一些特殊优化，比如只解析事务头或者尾
-     */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-	public void seek(String binlogfilename, Long binlogPosition, SinkFunction func) throws IOException {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void seek(String binlogfilename, Long binlogPosition, SinkFunction func) throws IOException {
         updateSettings();
         loadBinlogChecksum();
         sendBinlogDump(binlogfilename, binlogPosition);
         DirectLogFetcher fetcher = new DirectLogFetcher(connector.getReceiveBufferSize());
-        fetcher.setJobBucket(jobBuckect);
         fetcher.start(connector.getChannel());
         LogDecoder decoder = new LogDecoder();
         decoder.handle(LogEvent.ROTATE_EVENT);
-//        decoder.handle(LogEvent.PREVIOUS_GTIDS_LOG_EVENT);
-//        decoder.handle(LogEvent.GTID_LOG_EVENT);
         decoder.handle(LogEvent.QUERY_EVENT);
         decoder.handle(LogEvent.XID_EVENT);
         LogContext context = new LogContext();
@@ -120,44 +129,14 @@ public class MysqlConnection implements ErosaConnection {
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-	public void dump(String binlogfilename, Long binlogPosition, SinkFunction func) throws IOException {
-        updateSettings();
-        loadBinlogChecksum();
-        sendBinlogDump(binlogfilename, binlogPosition);
-        DirectLogFetcher fetcher = new DirectLogFetcher(connector.getReceiveBufferSize());
-        fetcher.setJobBucket(jobBuckect);
-        fetcher.start(connector.getChannel());
-        LogDecoder decoder = new LogDecoder(LogEvent.UNKNOWN_EVENT, LogEvent.ENUM_END_EVENT);
-        LogContext context = new LogContext();
-        context.setFormatDescription(new FormatDescriptionLogEvent(4, binlogChecksum));
-
-        while (fetcher.fetch()) {
-            LogEvent event = null;
-            event = decoder.decode(fetcher, context);
-
-            if (event == null) {
-                throw new CanalParseException("parse failed");
-            }
-
-            if (!func.sink(event)) {
-                break;
-            }
-        }
-    }
-    
-    /**
-     * 异步解析,只是解析默写特定的事件，同时所有event都会写入relay-log
-     */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-	public void seekAndCopyData(String binlogfilename, Long binlogPosition,
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void seekAndCopyData(String binlogfilename, Long binlogPosition,
             SinkFunction func, RelayLog relayLog)
             throws IOException {
         updateSettings();
         loadBinlogChecksum();
         sendBinlogDump(binlogfilename, binlogPosition);
         DirectLogFetcher fetcher = new DirectLogFetcher(connector.getReceiveBufferSize());
-        fetcher.setJobBucket(jobBuckect);
         fetcher.start(connector.getChannel());
         LogDecoder decoder = new LogDecoder();
         decoder.handle(LogEvent.ROTATE_EVENT);
@@ -178,12 +157,12 @@ public class MysqlConnection implements ErosaConnection {
                 throw new CanalParseException("parse failed");
             }
             byte[] eventBody = decoder.getEventBody();
-            if(eventBody != null){
-            	if(!relayLog.putLog(eventBody)){
-            		throw new RelayLogPosErrorException("Relay log pos error, need redump");
-            	}
+            if (eventBody != null) {
+                if (!relayLog.putLog(eventBody)) {
+                    throw new RelayLogPosErrorException("Relay log pos error, need redump");
+                }
             } else {
-            	throw new CanalParseException("parse event, but can't get event data body");
+                throw new CanalParseException("parse event, but can't get event data body");
             }
 
             if (!func.sink(event)) {
@@ -195,14 +174,11 @@ public class MysqlConnection implements ErosaConnection {
     @SuppressWarnings({"rawtypes"})
     public void seekAndCopyData(EntryPosition dumpPosition, MysqlGTIDSet mysqlGTIDSet,
             SinkFunction func, RelayLog relayLog)
-        throws IOException {
+            throws IOException {
         seekAndCopyData(dumpPosition, mysqlGTIDSet, func, relayLog, true);
     }
 
-    /**
-     * 异步解析,只是解析默写特定的事件，同时所有event都会写入relay-log
-     */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void seekAndCopyData(EntryPosition dumpPosition, MysqlGTIDSet mysqlGTIDSet,
             SinkFunction func, RelayLog relayLog, boolean gtidDump)
             throws IOException {
@@ -222,7 +198,6 @@ public class MysqlConnection implements ErosaConnection {
         }
 
         DirectLogFetcher fetcher = new DirectLogFetcher(connector.getReceiveBufferSize());
-        fetcher.setJobBucket(jobBuckect);
         fetcher.start(connector.getChannel());
         LogDecoder decoder = new LogDecoder();
         decoder.handle(LogEvent.ROTATE_EVENT);
@@ -232,9 +207,7 @@ public class MysqlConnection implements ErosaConnection {
         decoder.handle(LogEvent.GTID_LOG_EVENT);
         decoder.handle(LogEvent.PREVIOUS_GTIDS_LOG_EVENT);
         LogContext context = new LogContext();
-//        if (useGtid) {
-//            context.setGtidSet(mysqlGTIDSet);
-//        }
+
         context.setFormatDescription(new FormatDescriptionLogEvent(4, binlogChecksum));
 
         // a symbol for dump begin
@@ -248,8 +221,8 @@ public class MysqlConnection implements ErosaConnection {
                 throw new CanalParseException("parse failed");
             }
             byte[] eventBody = decoder.getEventBody();
-            if(eventBody != null){
-                if(!relayLog.putLog(eventBody)){
+            if (eventBody != null) {
+                if (!relayLog.putLog(eventBody)) {
                     throw new RelayLogPosErrorException("Relay log pos error, need redump");
                 }
             } else {
@@ -262,8 +235,33 @@ public class MysqlConnection implements ErosaConnection {
         }
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void dump(String binlogfilename, Long binlogPosition, SinkFunction func) throws IOException {
+        updateSettings();
+        loadBinlogChecksum();
+        sendBinlogDump(binlogfilename, binlogPosition);
+        DirectLogFetcher fetcher = new DirectLogFetcher(connector.getReceiveBufferSize());
+        fetcher.start(connector.getChannel());
+        LogDecoder decoder = new LogDecoder(LogEvent.UNKNOWN_EVENT, LogEvent.ENUM_END_EVENT);
+        LogContext context = new LogContext();
+        context.setFormatDescription(new FormatDescriptionLogEvent(4, binlogChecksum));
+
+        while (fetcher.fetch()) {
+            LogEvent event = null;
+            event = decoder.decode(fetcher, context);
+
+            if (event == null) {
+                throw new CanalParseException("parse failed");
+            }
+
+            if (!func.sink(event)) {
+                break;
+            }
+        }
+    }
+
     @SuppressWarnings("rawtypes")
-	public void dump(long timestamp, SinkFunction func) throws IOException {
+    public void dump(long timestamp, SinkFunction func) throws IOException {
         throw new NullPointerException("Not implement yet");
     }
 
@@ -279,7 +277,7 @@ public class MysqlConnection implements ErosaConnection {
             LogDecoder decoder = new LogDecoder(LogEvent.UNKNOWN_EVENT, LogEvent.ENUM_END_EVENT);
             LogContext context = new LogContext();
             context.setFormatDescription(new FormatDescriptionLogEvent(4, binlogChecksum));
-            // fix bug: #890 将gtid传输至context中，供decode使用
+            // fix bug: #890
 //            context.setGtidSet(gtidSet);
             while (fetcher.fetch()) {
                 LogEvent event = null;
@@ -302,10 +300,10 @@ public class MysqlConnection implements ErosaConnection {
         byte[] magic = null;
         switch (checkSum) {
             case LogEvent.BINLOG_CHECKSUM_ALG_OFF:
-                magic = new byte[] {0x00, 0x00, 0x00, 0x00};
+                magic = new byte[]{0x00, 0x00, 0x00, 0x00};
                 break;
             case LogEvent.BINLOG_CHECKSUM_ALG_CRC32:
-                magic = new byte[] {0x00, 0x00, 0x00, 0x01};
+                magic = new byte[]{0x00, 0x00, 0x00, 0x01};
                 break;
             default:
                 magic = null;
@@ -327,8 +325,8 @@ public class MysqlConnection implements ErosaConnection {
         HeaderPacket binlogDumpHeader = new HeaderPacket();
         binlogDumpHeader.setPacketBodyLength(cmdBody.length);
         binlogDumpHeader.setPacketSequenceNumber((byte) 0x00);
-        PacketManager.write(connector.getChannel(), new ByteBuffer[] {
-                ByteBuffer.wrap(binlogDumpHeader.toBytes()), ByteBuffer.wrap(cmdBody) });
+        PacketManager.write(connector.getChannel(), new ByteBuffer[]{
+                ByteBuffer.wrap(binlogDumpHeader.toBytes()), ByteBuffer.wrap(cmdBody)});
     }
 
     private void sendBinlogDumpGTID(GTIDSet gtidSet) throws IOException {
@@ -342,8 +340,8 @@ public class MysqlConnection implements ErosaConnection {
         HeaderPacket binlogDumpHeader = new HeaderPacket();
         binlogDumpHeader.setPacketBodyLength(cmdBody.length);
         binlogDumpHeader.setPacketSequenceNumber((byte) 0x00);
-        PacketManager.write(connector.getChannel(), new ByteBuffer[] {
-                ByteBuffer.wrap(binlogDumpHeader.toBytes()), ByteBuffer.wrap(cmdBody) });
+        PacketManager.write(connector.getChannel(), new ByteBuffer[]{
+                ByteBuffer.wrap(binlogDumpHeader.toBytes()), ByteBuffer.wrap(cmdBody)});
     }
 
     public MysqlConnection fork() {
@@ -354,8 +352,6 @@ public class MysqlConnection implements ErosaConnection {
         return connection;
     }
 
-    // ====================== help method ====================
-
     /**
      * the settings that will need to be checked or set:<br>
      * <ol>
@@ -363,7 +359,7 @@ public class MysqlConnection implements ErosaConnection {
      * <li>net_write_timeout</li>
      * <li>net_read_timeout</li>
      * </ol>
-     * 
+     *
      * @throws IOException
      */
     private void updateSettings() throws IOException {
@@ -385,16 +381,12 @@ public class MysqlConnection implements ErosaConnection {
         }
 
         try {
-            // 设置服务端返回结果时不做编码转化，直接按照数据库的二进制编码进行发送，由客户端自己根据需求进行编码转化
             update("set names 'binary'");
         } catch (Exception e) {
             logger.warn(ExceptionUtils.getFullStackTrace(e));
         }
 
         try {
-            // mysql5.6针对checksum支持需要设置session变量
-            // 如果不设置会出现错误： Slave can not handle replication events with the checksum that master is configured to log
-            // 但也不能乱设置，需要和mysql server的checksum配置一致，不然RotateLogEvent会出现乱码
             update("set @master_binlog_checksum= @@global.binlog_checksum");
         } catch (Exception e) {
             if (!StringUtils.contains(e.getMessage(), "Unknown system variable")) {
@@ -402,8 +394,7 @@ public class MysqlConnection implements ErosaConnection {
             }
         }
 
-
-        /**
+        /*
          * MASTER_HEARTBEAT_PERIOD sets the interval in seconds between
          * replication heartbeats. Whenever the master's binary log is updated
          * with an event, the waiting period for the next heartbeat is reset.
@@ -468,7 +459,6 @@ public class MysqlConnection implements ErosaConnection {
 
         List<String> columnValues = rs.getFieldValues();
         if (columnValues == null || columnValues.size() != 2) {
-            // 可能历时版本没有image特性
             binlogImage = BinlogImage.FULL;
         } else {
             binlogImage = BinlogImage.valuesOf(columnValues.get(1));
@@ -488,81 +478,14 @@ public class MysqlConnection implements ErosaConnection {
         }
 
         List<String> columnValues = rs.getFieldValues();
-        if(columnValues != null && columnValues.size() >= 1 && columnValues.get(0) != null
-                && columnValues.get(0).toUpperCase().equals("CRC32")){
+        if (columnValues != null && columnValues.size() >= 1 && columnValues.get(0) != null
+                && columnValues.get(0).toUpperCase().equals("CRC32")) {
             binlogChecksum = LogEvent.BINLOG_CHECKSUM_ALG_CRC32;
-        }else{
+        } else {
             binlogChecksum = LogEvent.BINLOG_CHECKSUM_ALG_OFF;
         }
     }
 
-    public static enum BinlogFormat {
-
-        STATEMENT("STATEMENT"), ROW("ROW"), MIXED("MIXED");
-
-        public boolean isStatement() {
-            return this == STATEMENT;
-        }
-
-        public boolean isRow() {
-            return this == ROW;
-        }
-
-        public boolean isMixed() {
-            return this == MIXED;
-        }
-
-        private String value;
-
-        private BinlogFormat(String value){
-            this.value = value;
-        }
-
-        public static BinlogFormat valuesOf(String value) {
-            BinlogFormat[] formats = values();
-            for (BinlogFormat format : formats) {
-                if (format.value.equalsIgnoreCase(value)) {
-                    return format;
-                }
-            }
-            return null;
-        }
-    }
-
-    public static enum BinlogImage {
-
-        FULL("FULL"), MINIMAL("MINIMAL"), NOBLOB("NOBLOB");
-
-        public boolean isFull() {
-            return this == FULL;
-        }
-
-        public boolean isMinimal() {
-            return this == MINIMAL;
-        }
-
-        public boolean isNoBlob() {
-            return this == NOBLOB;
-        }
-
-        private String value;
-
-        private BinlogImage(String value){
-            this.value = value;
-        }
-
-        public static BinlogImage valuesOf(String value) {
-            BinlogImage[] formats = values();
-            for (BinlogImage format : formats) {
-                if (format.value.equalsIgnoreCase(value)) {
-                    return format;
-                }
-            }
-            return null;
-        }
-    }
-
-    // ================== setter / getter ===================
     public BinlogImage getBinlogImage() {
         if (binlogImage == null) {
             synchronized (this) {
@@ -596,10 +519,6 @@ public class MysqlConnection implements ErosaConnection {
     public void setConnector(MysqlConnector connector) {
         this.connector = connector;
     }
-    
-    public void setJobBucket(TokenBucket jobBuckect){
-    	this.jobBuckect = jobBuckect;
-    }
 
     public BinlogFormat getBinlogFormat() {
         if (binlogFormat == null) {
@@ -616,12 +535,78 @@ public class MysqlConnection implements ErosaConnection {
     }
 
     // for test lynd
-    public int getLocalPort(){
-    	
-    	if(connector == null){
-    		return -1;
-    	}    	
-    	return connector.getLocalPort();
+    public int getLocalPort() {
+
+        if (connector == null) {
+            return -1;
+        }
+        return connector.getLocalPort();
+    }
+
+    public static enum BinlogFormat {
+
+        STATEMENT("STATEMENT"), ROW("ROW"), MIXED("MIXED");
+
+        private String value;
+
+        private BinlogFormat(String value) {
+            this.value = value;
+        }
+
+        public static BinlogFormat valuesOf(String value) {
+            BinlogFormat[] formats = values();
+            for (BinlogFormat format : formats) {
+                if (format.value.equalsIgnoreCase(value)) {
+                    return format;
+                }
+            }
+            return null;
+        }
+
+        public boolean isStatement() {
+            return this == STATEMENT;
+        }
+
+        public boolean isRow() {
+            return this == ROW;
+        }
+
+        public boolean isMixed() {
+            return this == MIXED;
+        }
+    }
+
+    public static enum BinlogImage {
+
+        FULL("FULL"), MINIMAL("MINIMAL"), NOBLOB("NOBLOB");
+
+        private String value;
+
+        private BinlogImage(String value) {
+            this.value = value;
+        }
+
+        public static BinlogImage valuesOf(String value) {
+            BinlogImage[] formats = values();
+            for (BinlogImage format : formats) {
+                if (format.value.equalsIgnoreCase(value)) {
+                    return format;
+                }
+            }
+            return null;
+        }
+
+        public boolean isFull() {
+            return this == FULL;
+        }
+
+        public boolean isMinimal() {
+            return this == MINIMAL;
+        }
+
+        public boolean isNoBlob() {
+            return this == NOBLOB;
+        }
     }
 
 }

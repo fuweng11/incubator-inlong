@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.binlog.event;
 
 import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
@@ -332,10 +349,15 @@ import java.util.BitSet;
  *
  * </table>
  *
- * @author <a href="mailto:changyuan.lh@taobao.com">Changyuan.lh</a>
  * @version 1.0
  */
 public final class TableMapLogEvent extends LogEvent {
+
+    /**
+     * TM = "Table Map"
+     */
+    public static final int TM_MAPID_OFFSET = 0;
+    public static final int TM_FLAGS_OFFSET = 6;
     /**
      * Fixed data part:
      * <ul>
@@ -364,34 +386,17 @@ public final class TableMapLogEvent extends LogEvent {
      */
     protected final String dbname;
     protected final String tblname;
-
-    /**
-     * Holding mysql column information.
-     */
-    public static final class ColumnInfo {
-        public int type;
-        public int meta;
-    }
-
     protected final int columnCnt;
     protected final ColumnInfo[] columnInfo;         // buffer for field metadata
-
     protected final long tableId;
     protected BitSet nullBits;
-
-    /**
-     * TM = "Table Map"
-     */
-    public static final int TM_MAPID_OFFSET = 0;
-    public static final int TM_FLAGS_OFFSET = 6;
-
     private FormatDescriptionLogEvent descriptionEvent;
 
     /**
      * Constructor used by slave to read the event from the binary log.
      */
     public TableMapLogEvent(LogHeader header, LogBuffer buffer,
-                            FormatDescriptionLogEvent descriptionEvent) {
+            FormatDescriptionLogEvent descriptionEvent) {
         super(header);
 
         this.descriptionEvent = descriptionEvent;
@@ -433,8 +438,6 @@ public final class TableMapLogEvent extends LogEvent {
 
     /**
      * Decode field metadata by column types.
-     *
-     * @see mysql-5.1.60/sql/rpl_utility.h
      */
     private final void decodeFields(LogBuffer buffer, final int len) {
         final int limit = buffer.limit();
@@ -453,25 +456,10 @@ public final class TableMapLogEvent extends LogEvent {
                 case MYSQL_TYPE_GEOMETRY:
                     //lynd add for mysql 5.7.13
                 case MYSQL_TYPE_JSON:
-                /*
-                  These types store a single byte.
-                */
                     info.meta = buffer.getUint8();
                     break;
                 case MYSQL_TYPE_SET:
                 case MYSQL_TYPE_ENUM:
-                    /*
-                     * log_event.h : MYSQL_TYPE_SET & MYSQL_TYPE_ENUM : This
-                     * enumeration value is only used internally and cannot
-                     * exist in a binlog.
-                     */
-
-//                    //lynd add for 5.7
-//                    if (descriptionEvent.bUseNewBinlogFormat()) {
-//                        @SuppressWarnings("unused")
-//                        int typeValue = buffer.getUint8();
-//                        info.meta = buffer.getUint8();
-//                    }
 
                     logger.warn("This enumeration value is only used internally "
                             + "and cannot exist in a binlog: type=" + info.type);
@@ -538,5 +526,14 @@ public final class TableMapLogEvent extends LogEvent {
 
     public final long getTableId() {
         return tableId;
+    }
+
+    /**
+     * Holding mysql column information.
+     */
+    public static final class ColumnInfo {
+
+        public int type;
+        public int meta;
     }
 }

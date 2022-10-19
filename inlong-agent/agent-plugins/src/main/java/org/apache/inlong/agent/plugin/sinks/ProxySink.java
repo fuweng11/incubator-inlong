@@ -25,7 +25,7 @@ import org.apache.inlong.agent.message.EndMessage;
 import org.apache.inlong.agent.message.ProxyMessage;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.MessageFilter;
-import org.apache.inlong.agent.plugin.message.PackProxyMessage;
+import org.apache.inlong.agent.message.PackProxyMessage;
 import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.ThreadUtils;
 import org.slf4j.Logger;

@@ -19,7 +19,9 @@ package org.apache.inlong.common.pojo.agent.dbsync;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.util.List;
@@ -28,6 +30,8 @@ import java.util.List;
  * Request of DbSync to report results and pull tasks
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @ApiModel("Request of DbSync to report results and pull tasks")
 public class ReportTaskRequest {
 
@@ -54,6 +58,8 @@ public class ReportTaskRequest {
     private List<TaskInfoBean> taskInfoList;
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     @ApiModel("Task result, corresponding to the stream_source table")
     public static class TaskInfoBean {
 

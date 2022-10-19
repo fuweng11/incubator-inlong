@@ -1,8 +1,24 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.dbsync;
 
 import org.apache.inlong.agent.mysql.connector.binlog.LogFetcher;
 import org.apache.inlong.agent.mysql.connector.exception.BinlogMissException;
-import org.apache.inlong.agent.utils.tokenbucket.TokenBucket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,58 +32,46 @@ import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.SocketChannel;
 
-/**
- * 基于socket的logEvent实现
- * 
- * @author jianghang 2013-1-14 下午07:39:30
- * @version 1.0.0
- */
 public class DirectLogFetcher extends LogFetcher {
 
-    protected static final Logger logger            = LogManager.getLogger(DirectLogFetcher.class);
-
     // Master heartbeat interval
-    public static final int       MASTER_HEARTBEAT_PERIOD_SECONDS = 15;
-    // +10s 确保 timeout > heartbeat interval
-    private static final int      READ_TIMEOUT_MILLISECONDS       = (MASTER_HEARTBEAT_PERIOD_SECONDS + 10) * 1000;
+    public static final int MASTER_HEARTBEAT_PERIOD_SECONDS = 15;
+    /**
+     * Command to dump binlog
+     */
+    public static final byte COM_BINLOG_DUMP = 18;
+    /**
+     * Packet header sizes
+     */
+    public static final int NET_HEADER_SIZE = 4;
+    public static final int SQLSTATE_LENGTH = 5;
+    /**
+     * Packet offsets
+     */
+    public static final int PACKET_LEN_OFFSET = 0;
+    public static final int PACKET_SEQ_OFFSET = 3;
+    /**
+     * Maximum packet length
+     */
+    public static final int MAX_PACKET_LENGTH = (256 * 256 * 256 - 1);
+    protected static final Logger logger = LogManager.getLogger(DirectLogFetcher.class);
+    static final int SO_TIMEOUT = 1000;
+    // +10s to ensure timeout > heartbeat interval
+    private static final int READ_TIMEOUT_MILLISECONDS = (MASTER_HEARTBEAT_PERIOD_SECONDS + 10) * 1000;
+    private SocketChannel channel;
+    private InputStream input;
+    private OutputStream output;
 
-    /** Command to dump binlog */
-    public static final byte      COM_BINLOG_DUMP   = 18;
-
-    /** Packet header sizes */
-    public static final int       NET_HEADER_SIZE   = 4;
-    public static final int       SQLSTATE_LENGTH   = 5;
-
-    /** Packet offsets */
-    public static final int       PACKET_LEN_OFFSET = 0;
-    public static final int       PACKET_SEQ_OFFSET = 3;
-
-    /** Maximum packet length */
-    public static final int       MAX_PACKET_LENGTH = (256 * 256 * 256 - 1);
-
-    static final int              SO_TIMEOUT              = 1000;
-
-    private SocketChannel         channel;
-    private InputStream           input;
-    private OutputStream          output;
-    
-    //add by lyndldeng, for dump speed control
-    private TokenBucket jobBuckect;
-
-    public DirectLogFetcher(){
+    public DirectLogFetcher() {
         super(DEFAULT_INITIAL_CAPACITY, DEFAULT_GROWTH_FACTOR);
     }
 
-    public DirectLogFetcher(final int initialCapacity){
+    public DirectLogFetcher(final int initialCapacity) {
         super(initialCapacity, DEFAULT_GROWTH_FACTOR);
     }
 
-    public DirectLogFetcher(final int initialCapacity, final float growthFactor){
+    public DirectLogFetcher(final int initialCapacity, final float growthFactor) {
         super(initialCapacity, growthFactor);
-    }
-    
-    public void setJobBucket(TokenBucket jobBuckect){
-    	this.jobBuckect = jobBuckect;
     }
 
     public void start(SocketChannel channel) throws IOException {
@@ -77,9 +81,9 @@ public class DirectLogFetcher extends LogFetcher {
     }
 
     public boolean fetch() throws IOException {
-    	
-    	long fetchBytes = 0;
-    	
+
+        long fetchBytes = 0;
+
         try {
             // Fetching packet header from input.
             if (!fetch0(0, NET_HEADER_SIZE)) {
@@ -100,20 +104,22 @@ public class DirectLogFetcher extends LogFetcher {
             // Detecting error code.
             final int mark = getUint8(NET_HEADER_SIZE);
             if (mark != 0) {
-                if (mark == 255) // error from master
-                {
+                // error from master
+                if (mark == 255) {
                     // Indicates an error, for example trying to fetch from wrong
                     // binlog position.
                     position = NET_HEADER_SIZE + 1;
                     final int errno = getInt16();
                     String sqlstate = forward(1).getFixString(SQLSTATE_LENGTH);
                     String errmsg = getFixString(limit - position);
-                    if(errno == 1236 || 29 == errno || 1373 == errno){
-                    	throw new BinlogMissException("Received error packet:" + " errno = " + errno + ", sqlstate = " + sqlstate
-                                + " errmsg = " + errmsg);
+                    if (errno == 1236 || 29 == errno || 1373 == errno) {
+                        throw new BinlogMissException(
+                                "Received error packet:" + " errno = " + errno + ", sqlstate = " + sqlstate
+                                        + " errmsg = " + errmsg);
                     } else {
-                    	throw new IOException("Received error packet:" + " errno = " + errno + ", sqlstate = " + sqlstate
-                                          + " errmsg = " + errmsg);
+                        throw new IOException(
+                                "Received error packet:" + " errno = " + errno + ", sqlstate = " + sqlstate
+                                        + " errmsg = " + errmsg);
                     }
                 } else if (mark == 254) {
                     // Indicates end of stream. It's not clear when this would
@@ -123,7 +129,7 @@ public class DirectLogFetcher extends LogFetcher {
                 } else {
                     // Should not happen.
                     throw new IOException("Unexpected response " + mark + " while fetching binlog: packet #" + netnum
-                                          + ", len = " + netlen);
+                            + ", len = " + netlen);
                 }
             }
 
@@ -148,13 +154,7 @@ public class DirectLogFetcher extends LogFetcher {
             origin = NET_HEADER_SIZE + 1;
             position = origin;
             limit -= origin;
-            
-            
-            //lynd add for speed control
-//			if (jobBuckect != null) {
-//				jobBuckect.consume(fetchBytes);
-//			}
-            
+
             return true;
         } catch (SocketTimeoutException e) {
             close(); /* Do cleanup */
@@ -177,14 +177,6 @@ public class DirectLogFetcher extends LogFetcher {
 
     private final boolean fetch0(final int off, final int len) throws IOException {
         ensureCapacity(off + len);
-
-//        ByteBuffer buffer = ByteBuffer.wrap(this.buffer, off, len);
-//        while (buffer.hasRemaining()) {
-//            int readNum = channel.read(buffer);
-//            if (readNum == -1) {
-//                throw new IOException("Unexpected End Stream");
-//            }
-//        }
         read(buffer, off, len, READ_TIMEOUT_MILLISECONDS);
 
         if (limit < off + len) {

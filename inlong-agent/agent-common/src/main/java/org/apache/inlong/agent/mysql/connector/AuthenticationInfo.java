@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -5,28 +22,22 @@ import org.apache.commons.lang.builder.ToStringStyle;
 
 import java.net.InetSocketAddress;
 
-/**
- * 数据库认证信息
- * 
- * @author jianghang 2012-7-11 上午11:22:19
- * @version 1.0.0
- */
 public class AuthenticationInfo {
 
-    private InetSocketAddress address;            // 主库信息
-    private String            username;           // 帐号
-    private String            password;           // 密码
-    private String            defaultDatabaseName; // 默认链接的数据库
+    private InetSocketAddress address;
+    private String username;
+    private String password;
+    private String defaultDatabaseName;
 
-    public AuthenticationInfo(){
+    public AuthenticationInfo() {
         super();
     }
 
-    public AuthenticationInfo(InetSocketAddress address, String username, String password){
+    public AuthenticationInfo(InetSocketAddress address, String username, String password) {
         this(address, username, password, "");
     }
 
-    public AuthenticationInfo(InetSocketAddress address, String username, String password, String defaultDatabaseName){
+    public AuthenticationInfo(InetSocketAddress address, String username, String password, String defaultDatabaseName) {
         this.address = address;
         this.username = username;
         this.password = password;

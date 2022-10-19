@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.core.ha.lb;
 
 import com.alibaba.fastjson.JSONObject;
@@ -6,11 +23,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.inlong.agent.common.DefaultThreadFactory;
 import org.apache.inlong.agent.core.ha.JobHaDispatcher;
+import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
 import org.apache.inlong.agent.core.ha.zk.ConfigDelegate;
 import org.apache.inlong.agent.core.ha.zk.ZkUtil;
-import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
-import org.apache.inlong.agent.common.DefaultThreadFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,40 +37,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * description：job ha
- *
- * @Auther: nicobao
- * @Date: 2021/7/28 19:07
- * @Description:
- */
 @Getter
 @Setter
 public class LoadBalanceService implements AutoCloseable {
 
-    private Logger logger = LogManager.getLogger(JobHaDispatcherImpl.class);
-
-    private JobHaDispatcher jobHaDispatcher;
-
-    private volatile ScheduledExecutorService executor;
-
-    private OperatingSystemMXBean systemBean;
-
-    private int totalCpuLimit;
-
-    private DbSyncHostUsage dbSyncHostUsage;
-
-    private final ScheduledExecutorService  loadManagerExecutor = Executors
-            .newSingleThreadScheduledExecutor(new DefaultThreadFactory("dbsync_load-manager"));
-
     public static final long MIBI = 1024 * 1024L;
-
+    private final ScheduledExecutorService loadManagerExecutor = Executors
+            .newSingleThreadScheduledExecutor(new DefaultThreadFactory("dbsync_load-manager"));
     public String localIp;
-
     public String clusterId;
-
     public String localLoadBalancePath;
-
+    private Logger logger = LogManager.getLogger(JobHaDispatcherImpl.class);
+    private JobHaDispatcher jobHaDispatcher;
+    private volatile ScheduledExecutorService executor;
+    private OperatingSystemMXBean systemBean;
+    private int totalCpuLimit;
+    private DbSyncHostUsage dbSyncHostUsage;
     private volatile LoadBalanceInfo localLoadBalanceInfo;
 
     public LoadBalanceService(JobHaDispatcher jobHaDispatcher, String localIp) {
@@ -62,10 +61,10 @@ public class LoadBalanceService implements AutoCloseable {
         if (SystemUtils.IS_OS_LINUX) {
             dbSyncHostUsage = new LinuxDbSyncHostUsageImpl(1,
                     Optional.empty(),
-                loadManagerExecutor);
+                    loadManagerExecutor);
         } else {
             dbSyncHostUsage = new GenericDbSyncHostUsageImpl(1,
-                loadManagerExecutor);
+                    loadManagerExecutor);
         }
 
         this.executor = Executors
@@ -111,23 +110,21 @@ public class LoadBalanceService implements AutoCloseable {
                 (double) maxHeapMemoryInBytes / MIBI);
     }
 
-    /**
-     *
-     * @return
-     */
     public LoadBalanceInfo getLocalLoadBalanceInfo() {
         if (localLoadBalanceInfo == null) {
-            this.reportLoadBalance();;
+            this.reportLoadBalance();
+            ;
         }
         return localLoadBalanceInfo;
     }
 
     /**
-     *  atuo close
+     * atuo close
+     *
      * @throws Exception ex
      */
     public void close() throws Exception {
-        if(!this.executor.isShutdown()) {
+        if (!this.executor.isShutdown()) {
             this.executor.shutdown();
         }
     }

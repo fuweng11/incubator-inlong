@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.driver.packets.server;
 
 import org.apache.inlong.agent.mysql.connector.driver.packets.PacketWithHeaderPacket;
@@ -8,16 +25,14 @@ import java.util.Arrays;
 
 /**
  * Aka. OK packet
- * 
- * @author fujohnwang
  */
 public class OKPacket extends PacketWithHeaderPacket {
 
-    public byte   fieldCount;
+    public byte fieldCount;
     public byte[] affectedRows;
     public byte[] insertId;
-    public int    serverStatus;
-    public int    warningCount;
+    public int serverStatus;
+    public int warningCount;
     public String message;
 
     /**
@@ -32,7 +47,7 @@ public class OKPacket extends PacketWithHeaderPacket {
      *  2                           warning_count
      *  n   (until end of packet)   message
      * </pre>
-     * 
+     *
      * @throws IOException
      */
     public void fromBytes(byte[] data) throws IOException {
@@ -111,8 +126,8 @@ public class OKPacket extends PacketWithHeaderPacket {
 
     public String toString() {
         return "OKPacket [affectedRows=" + Arrays.toString(affectedRows) + ", fieldCount=" + fieldCount + ", insertId="
-               + Arrays.toString(insertId) + ", message=" + message + ", serverStatus=" + serverStatus
-               + ", warningCount=" + warningCount + "]";
+                + Arrays.toString(insertId) + ", message=" + message + ", serverStatus=" + serverStatus
+                + ", warningCount=" + warningCount + "]";
     }
 
 }

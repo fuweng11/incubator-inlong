@@ -1,19 +1,30 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.utils;
 
 import org.apache.inlong.agent.mysql.connector.exception.CanalException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * 基本实现
- * 
- * @author jianghang 2012-7-12 上午10:11:07
- * @version 1.0.0
- */
 public abstract class AbstractCanalLifeCycle implements CanalLifeCycle {
 
-    protected volatile boolean running = false; // 是否处于运行中
-    public static final Logger logger              = LogManager.getLogger(AbstractCanalLifeCycle.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCanalLifeCycle.class);
+    protected volatile boolean running = false;
 
     public boolean isStart() {
         return running;
@@ -28,7 +39,7 @@ public abstract class AbstractCanalLifeCycle implements CanalLifeCycle {
     }
 
     public void stop() {
-        logger.info("stop parse");
+        LOGGER.info("stop parse");
         if (!running) {
             throw new CanalException(this.getClass().getName() + " isn't start , please check");
         }

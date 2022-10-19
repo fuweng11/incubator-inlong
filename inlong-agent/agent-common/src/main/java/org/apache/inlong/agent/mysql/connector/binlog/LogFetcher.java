@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.binlog;
 
 import java.io.Closeable;
@@ -6,18 +23,18 @@ import java.util.Arrays;
 
 /**
  * Declaration a binary-log fetcher. It extends from <code>LogBuffer</code>.
- * 
+ *
  * <pre>
  * LogFetcher fetcher = new SomeLogFetcher();
  * ...
- * 
+ *
  * while (fetcher.fetch())
  * {
  *     LogEvent event;
  *     do
  *     {
  *         event = decoder.decode(fetcher, context);
- * 
+ *
  *         // process log event.
  *     }
  *     while (event != null);
@@ -25,35 +42,37 @@ import java.util.Arrays;
  * // no more binlog.
  * fetcher.close();
  * </pre>
- * 
- * @author <a href="mailto:changyuan.lh@taobao.com">Changyuan.lh</a>
+ *
  * @version 1.0
  */
-public abstract class LogFetcher extends LogBuffer implements Closeable
-{
-    /** Default initial capacity. */
-    public static final int   DEFAULT_INITIAL_CAPACITY = 8192;
+public abstract class LogFetcher extends LogBuffer implements Closeable {
 
-    /** Default growth factor. */
-    public static final float DEFAULT_GROWTH_FACTOR    = 2.0f;
+    /**
+     * Default initial capacity.
+     */
+    public static final int DEFAULT_INITIAL_CAPACITY = 8192;
 
-    /** Binlog file header size */
-    public static final int   BIN_LOG_HEADER_SIZE      = 4;
+    /**
+     * Default growth factor.
+     */
+    public static final float DEFAULT_GROWTH_FACTOR = 2.0f;
 
-    protected final float     factor;
+    /**
+     * Binlog file header size
+     */
+    public static final int BIN_LOG_HEADER_SIZE = 4;
 
-    public LogFetcher()
-    {
+    protected final float factor;
+
+    public LogFetcher() {
         this(DEFAULT_INITIAL_CAPACITY, DEFAULT_GROWTH_FACTOR);
     }
 
-    public LogFetcher(final int initialCapacity)
-    {
+    public LogFetcher(final int initialCapacity) {
         this(initialCapacity, DEFAULT_GROWTH_FACTOR);
     }
 
-    public LogFetcher(final int initialCapacity, final float growthFactor)
-    {
+    public LogFetcher(final int initialCapacity, final float growthFactor) {
         this.buffer = new byte[initialCapacity];
         this.factor = growthFactor;
     }
@@ -62,18 +81,17 @@ public abstract class LogFetcher extends LogBuffer implements Closeable
      * Increases the capacity of this <tt>LogFetcher</tt> instance, if
      * necessary, to ensure that it can hold at least the number of elements
      * specified by the minimum capacity argument.
-     * 
+     *
      * @param minCapacity the desired minimum capacity
      */
-    protected final void ensureCapacity(final int minCapacity)
-    {
+    protected final void ensureCapacity(final int minCapacity) {
         final int oldCapacity = buffer.length;
 
-        if (minCapacity > oldCapacity)
-        {
+        if (minCapacity > oldCapacity) {
             int newCapacity = (int) (oldCapacity * factor);
-            if (newCapacity < minCapacity)
+            if (newCapacity < minCapacity) {
                 newCapacity = minCapacity;
+            }
 
             buffer = Arrays.copyOf(buffer, newCapacity);
         }
@@ -86,7 +104,7 @@ public abstract class LogFetcher extends LogBuffer implements Closeable
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see java.io.Closeable#close()
      */
     public abstract void close() throws IOException;

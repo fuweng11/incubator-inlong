@@ -17,43 +17,69 @@
 
 package org.apache.inlong.agent.core.job;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.common.AgentThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
+import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.conf.MysqlTableConf;
 import org.apache.inlong.agent.constant.AgentConstants;
+import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.db.JobProfileDb;
 import org.apache.inlong.agent.db.StateSearchKey;
+import org.apache.inlong.agent.except.DataSourceConfigException.InvalidCharsetNameException;
+import org.apache.inlong.agent.except.DataSourceConfigException.JobSizeExceedMaxException;
 import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
+import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
+import org.apache.inlong.agent.state.JobStat;
+import org.apache.inlong.agent.state.JobStat.TaskStat;
 import org.apache.inlong.agent.utils.AgentUtils;
+import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.GsonUtil;
+import org.apache.inlong.agent.utils.JsonUtils.JSONArray;
+import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import org.apache.inlong.agent.utils.ThreadUtils;
 import org.apache.inlong.common.metric.MetricRegister;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_JOB_DB_CACHE_CHECK_INTERVAL;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_JOB_DB_CACHE_TIME;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_JOB_NUMBER_LIMIT;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD;
 import static org.apache.inlong.agent.constant.AgentConstants.JOB_DB_CACHE_CHECK_INTERVAL;
 import static org.apache.inlong.agent.constant.AgentConstants.JOB_DB_CACHE_TIME;
 import static org.apache.inlong.agent.constant.AgentConstants.JOB_NUMBER_LIMIT;
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_GROUP_ID;
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_ID;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_ID_PREFIX;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_INSTANCE_ID;
 import static org.apache.inlong.agent.constant.JobConstants.SQL_JOB_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_COMPONENT_NAME;
+import static org.apache.inlong.agent.pojo.JobProfileDto.DBSYNC_SOURCE;
+import static org.apache.inlong.agent.pojo.JobProfileDto.DEFAULT_CHANNEL;
+import static org.apache.inlong.agent.pojo.JobProfileDto.DEFAULT_DATAPROXY_SINK;
 
 /**
  * JobManager maintains lots of jobs, and communicate between server and task manager.
@@ -79,34 +105,83 @@ public class JobManager extends AbstractDaemon {
     private final AgentMetricItemSet jobMetrics;
     private final Map<String, String> dimensions;
 
+    private final AgentConfiguration agentConf;
+    private final int maxConDbSize;
+    private final JobConfManager jobConfManager;
+    private final ConcurrentHashMap<String, DBSyncJob> allJobs; //TODO:merge to jobs
+    private final ArrayList<JobProfile> newJobs;
+    private final ConcurrentHashMap<String, LogPosition> runningJobsLastStorePositionMap;
+    private final ReentrantReadWriteLock.WriteLock wLock;
+    private ConcurrentHashMap<String, DBSyncJob> runningJobs;
+
     /**
      * init job manager
      *
      * @param agentManager agent manager
      */
     public JobManager(AgentManager agentManager, JobProfileDb jobProfileDb) {
+        this.jobConfManager = new JobConfManager();
         this.jobProfileDb = jobProfileDb;
         this.agentManager = agentManager;
         // job thread pool for running
-        this.runningPool = new ThreadPoolExecutor(
-                0, Integer.MAX_VALUE,
-                60L, TimeUnit.SECONDS,
-                new SynchronousQueue<>(),
-                new AgentThreadFactory("job"));
+        this.runningPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
+                new SynchronousQueue<>(), new AgentThreadFactory("job"));
         this.jobs = new ConcurrentHashMap<>();
+        this.allJobs = new ConcurrentHashMap<>();
+        this.runningJobs = new ConcurrentHashMap<>();
+        this.newJobs = new ArrayList<>();
+        this.agentConf = AgentConfiguration.getAgentConf();
+        this.maxConDbSize = agentConf.getDbSyncMaxConDbSize();
+        ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+        this.wLock = lock.writeLock();
+        this.runningJobsLastStorePositionMap = new ConcurrentHashMap<>();
         this.pendingJobs = new ConcurrentHashMap<>();
-        AgentConfiguration conf = AgentConfiguration.getAgentConf();
-        this.monitorInterval = conf
+        this.monitorInterval = agentConf
                 .getInt(
                         AgentConstants.JOB_MONITOR_INTERVAL, AgentConstants.DEFAULT_JOB_MONITOR_INTERVAL);
-        this.jobDbCacheTime = conf.getLong(JOB_DB_CACHE_TIME, DEFAULT_JOB_DB_CACHE_TIME);
-        this.jobDbCacheCheckInterval = conf.getLong(JOB_DB_CACHE_CHECK_INTERVAL, DEFAULT_JOB_DB_CACHE_CHECK_INTERVAL);
-        this.jobMaxSize = conf.getLong(JOB_NUMBER_LIMIT, DEFAULT_JOB_NUMBER_LIMIT);
+        this.jobDbCacheTime = agentConf.getLong(JOB_DB_CACHE_TIME, DEFAULT_JOB_DB_CACHE_TIME);
+        this.jobDbCacheCheckInterval = agentConf.getLong(JOB_DB_CACHE_CHECK_INTERVAL,
+                DEFAULT_JOB_DB_CACHE_CHECK_INTERVAL);
+        this.jobMaxSize = agentConf.getLong(JOB_NUMBER_LIMIT, DEFAULT_JOB_NUMBER_LIMIT);
 
         this.dimensions = new HashMap<>();
         this.dimensions.put(KEY_COMPONENT_NAME, this.getClass().getSimpleName());
         this.jobMetrics = new AgentMetricItemSet(this.getClass().getSimpleName());
         MetricRegister.register(jobMetrics);
+    }
+
+    public List<String> getCurrentRunSyncIdList() {
+        List<String> set = runningJobs.values().stream().map((job) -> (job.getDBSyncJobConf().getServerId()))
+                .filter(StringUtils::isNotEmpty).collect(Collectors.toList());
+        return set;
+    }
+
+    public DBSyncJob getJob(String jobName) {
+        return allJobs.get(jobName);
+    }
+
+    public ConcurrentHashMap<String, DBSyncJob> getRunningJobs() {
+        return runningJobs;
+    }
+
+    public ConcurrentHashMap<String, LogPosition> getRunningJobsLastStorePositionMap() {
+        return runningJobsLastStorePositionMap;
+    }
+
+    public ConcurrentHashMap<String, DBSyncJob> getAllJobs() {
+        return allJobs;
+    }
+
+    public boolean isRunningJob(String syncId) {
+        if (StringUtils.isNotEmpty(syncId)) {
+            List<String> list =
+                    runningJobs.values().stream().map((job) -> job.getDBSyncJobConf().getServerId()).collect(
+                            Collectors.toList());
+            if (list != null && list.contains(syncId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -202,6 +277,272 @@ public class JobManager extends AbstractDaemon {
             return true;
         }
         return false;
+    }
+
+    //TODO: merge to deleteJob?
+    public void stopJob(String jobName) {
+        DBSyncJob job = runningJobs.get(jobName);
+        if (job == null) {
+            return;
+        }
+        int retryDelCnt = 0;
+        do {
+            job.stop();
+            LOGGER.debug("get {} delete cmd, retry delete task!", jobName);
+            DBSyncUtils.sleep(1000);
+            retryDelCnt++;
+        } while (job.getJobStat() != JobStat.State.STOP && retryDelCnt < 20);
+        if (job.getJobStat() != JobStat.State.STOP) {
+            LOGGER.error("stop {} task, after stop, state error {}", jobName, job.getJobStat());
+        }
+
+        runningJobs.remove(jobName);
+        runningJobsLastStorePositionMap.remove(jobName);
+        allJobs.remove(jobName);
+        jobConfManager.removeConf(job.getJobConf());
+        LOGGER.info("delete {} task!", jobName);
+    }
+
+    /**
+     * add a new task to job
+     *
+     * @param taskConf config
+     * @param future future
+     */
+    //TODO:addTask refactor as addDBSyncTask
+    public synchronized DBSyncJob addDbSyncTask(DbSyncTaskInfo taskConf, CompletableFuture<Void> future) {
+        LOGGER.info("DbSyncTaskInfo is {}", taskConf);
+        if (!DBSyncUtils.checkValidateDbInfo(taskConf, future)) {
+            return null;
+        }
+
+        String bakDbUrl = null;
+        if (StringUtils.isNotBlank(taskConf.getDbServerInfo().getBackupUrl())) {
+            bakDbUrl = taskConf.getDbServerInfo().getBackupUrl();
+        }
+
+        Charset charset = null;
+        try {
+            if (StringUtils.isNotBlank(taskConf.getCharset())) {
+                charset = Charset.forName(taskConf.getCharset());
+            } else {
+                charset = StandardCharsets.UTF_8;
+            }
+        } catch (Exception e) {
+            LOGGER.error("invalid charset name: {}, {}", taskConf.getCharset(), e.getMessage());
+            future.completeExceptionally(
+                    new InvalidCharsetNameException("invalid charset name " + taskConf.getCharset()));
+            return null;
+        }
+
+        String instName = taskConf.getDbServerInfo() + ":" + taskConf.getServerName();
+        LOGGER.debug("Get instance name :{}, dbName:{}, tbName:{}  to add task!", instName, taskConf.getDbName(),
+                taskConf.getTableName());
+
+        boolean skipDelete = false;
+        if (taskConf.getSkipDelete() != null) {
+            if (taskConf.getSkipDelete() == 1) {
+                skipDelete = true;
+            }
+        }
+
+        LogPosition startPosition = null;
+        if (StringUtils.isNotBlank(taskConf.getStartPosition())) {
+            try {
+                JSONObject obj = JSONObject.parseObject(taskConf.getStartPosition());
+                startPosition = new LogPosition(obj);
+                LOGGER.info("startPosition set to: " + startPosition);
+            } catch (Throwable t) {
+                LOGGER.error("parse start position error: {}, startPosition set to null.", t.getMessage());
+            }
+        }
+
+        boolean isFound = false;
+        JobProfile conf = jobConfManager.getConfByTaskId(taskConf.getId());
+        DBSyncJobConf dbsyncJobConf = null;
+        if (conf == null) {
+            conf = jobConfManager.getConfigByDatabase(taskConf.getDbServerInfo().getUrl(), taskConf.getServerName());
+            if (conf == null) {
+                //find back
+                if (bakDbUrl != null) {
+                    conf = jobConfManager.getConfigByDatabase(bakDbUrl, taskConf.getServerName());
+                }
+            }
+
+            //can't find both master and bak
+            if (conf == null) {
+                // add new conf
+                int dumpedSize = jobConfManager.getConfSize();
+                if (dumpedSize >= maxConDbSize) {
+                    LOGGER.error("skip job add, now dumped job size is {}, max job size {}, "
+                                    + "skipped config is {}, jobConfMng is {} ",
+                            dumpedSize, maxConDbSize, taskConf.toString(), jobConfManager.toString());
+                    future.completeExceptionally(
+                            new JobSizeExceedMaxException("exceed max job size " + maxConDbSize));
+                    return null;
+                }
+
+                String tmpUrl = taskConf.getDbServerInfo().getUrl();
+                dbsyncJobConf = new DBSyncJobConf(DBSyncUtils.getHost(tmpUrl), DBSyncUtils.getPort(tmpUrl),
+                        taskConf.getDbServerInfo().getUsername(), taskConf.getDbServerInfo().getPassword(), charset,
+                        startPosition, taskConf.getServerName());
+                dbsyncJobConf.setMaxUnackedLogPositions(agentConf.getInt(DBSYNC_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD,
+                        DEFAULT_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD));
+                if (bakDbUrl != null) {
+                    dbsyncJobConf.setBakMysqlInfo(DBSyncUtils.getHost(bakDbUrl), DBSyncUtils.getPort(bakDbUrl));
+                }
+                conf = new JobProfile();
+                //TODO:improve, move to jobProfileDto
+                conf.set(JobConstants.JOB_SOURCE_CLASS, DBSYNC_SOURCE);
+                conf.set(JobConstants.JOB_SINK, DEFAULT_DATAPROXY_SINK);
+                conf.set(JobConstants.JOB_CHANNEL, DEFAULT_CHANNEL);
+                conf.set(PROXY_INLONG_GROUP_ID, taskConf.getInlongGroupId());
+                conf.set(PROXY_INLONG_STREAM_ID, taskConf.getInlongStreamId());
+                conf.set(JOB_INSTANCE_ID, String.valueOf(taskConf.getId()));
+                conf.setDbSyncJobConf(dbsyncJobConf);
+                newJobs.add(conf);
+                jobConfManager.putConf(instName, conf);
+            } else {
+                isFound = true;
+            }
+        } else {
+            isFound = true;
+        }
+
+        if (isFound) {
+            // update conf
+            dbsyncJobConf = conf.getDbSyncJobConf();
+            dbsyncJobConf.updateUserPasswd(taskConf.getDbServerInfo().getUsername(),
+                    taskConf.getDbServerInfo().getPassword());
+            dbsyncJobConf.updateCharset(charset, taskConf.getId());
+//            allJobs.get(dbsyncJobConf.getJobName()).updateJobConf();//TODO:update charset
+            String dbUrl = taskConf.getDbServerInfo().getUrl();
+            try {
+                dbsyncJobConf.resetDbInfo(dbUrl, bakDbUrl);
+            } catch (Exception e) {
+                LOGGER.error("exception occurred when reset: ", e);
+            }
+        }
+
+        if (!dbsyncJobConf.containsTask(taskConf.getId())) {
+            dbsyncJobConf.addTable(taskConf.getDbName(), taskConf.getTableName(), taskConf.getInlongGroupId(),
+                    taskConf.getInlongStreamId(), taskConf.getId(), skipDelete, charset);
+            dbsyncJobConf.getMysqlTableConfList(taskConf.getDbName(), taskConf.getTableName())
+                    .forEach(myconf -> myconf.updateJobStatus(TaskStat.NORMAL));
+        } else {
+            MysqlTableConf mysqlTableConf = dbsyncJobConf.getMysqlTableConf(taskConf.getId());
+            if (mysqlTableConf != null) {
+                mysqlTableConf.setSkipDelete(skipDelete);
+            }
+            LOGGER.warn("dbName {}, tableName {} already in conf, taskId {}",
+                    taskConf.getDbName(), taskConf.getTableName(), taskConf.getId());
+        }
+
+        if (!allJobs.containsKey(dbsyncJobConf.getJobName())) {
+            DBSyncJob newDBSyncJob = new DBSyncJob(agentManager, conf);
+            allJobs.put(dbsyncJobConf.getJobName(), newDBSyncJob);
+        }
+        future.complete(null);
+        return allJobs.get(dbsyncJobConf.getJobName());
+    }
+
+    public synchronized void updateJob(String newJobName, String oldJobName, TaskStat stat) {
+        try {
+            //lock jobMap
+            wLock.lock();
+            DBSyncJobConf tmpJobConf = jobConfManager.getParsingConfigByInstName(newJobName).getDbSyncJobConf();
+            if (tmpJobConf == null) {
+                LOGGER.error("find newJobName {}, old job Name {} null, pls check",
+                        newJobName, oldJobName);
+                return;
+            }
+            tmpJobConf.setStatus(stat);
+        } finally {
+            wLock.unlock();
+        }
+    }
+
+    /**
+     * delelte the task from job, if job not db data need dump, stop the job
+     *
+     * @param taskConf
+     */
+    public synchronized void deleteTask(DbSyncTaskInfo taskConf, CompletableFuture<Void> future) {
+        Integer taskId = taskConf.getId();
+        String dbName = taskConf.getDbName();
+        String tableName = taskConf.getTableName();
+
+        LOGGER.debug("Get taskId :{}, dbName:{}, tbName:{} to delete task!",
+                taskId, dbName, tableName);
+
+        DBSyncJobConf conf = jobConfManager.getConfByTaskId(taskId).getDbSyncJobConf();
+        if (conf == null) {
+            LOGGER.warn("can't find task_id {} ", taskId);
+            // not exist, delete ok!
+            future.complete(null);
+        } else {
+            String jobName = conf.getJobName();
+            conf.removeTable(taskId);
+            if (conf.bNoNeedDb()) {
+                stopJob(jobName);
+            }
+            future.complete(null);
+        }
+    }
+
+    public String getJobNameByTaskId(Integer taskId) {
+        DBSyncJobConf conf = jobConfManager.getConfByTaskId(taskId).getDbSyncJobConf();
+        if (conf != null) {
+            return conf.getJobName();
+        }
+        return null;
+    }
+
+    public void checkAndStopJobForce(String jobName) {
+        DBSyncJob job = runningJobs.get(jobName);
+        if (job == null) {
+            return;
+        }
+        DBSyncJobConf conf = job.getDBSyncJobConf();
+        if (!conf.bNoNeedDb()) {
+            LOGGER.warn("There are some task is not stop in Job! {}", conf.getMysqlTableConfList());
+        }
+        stopJob(jobName);
+    }
+
+    /**
+     * start all init jobs when starting dbsync to avoid data loss when task are
+     * send at different time
+     */
+    public void startAllInitJobs(List<DBSyncJob> newJobs) {
+        if (newJobs != null && newJobs.size() > 0) {
+            LOGGER.info("start new jobs {}", newJobs.size());
+            for (DBSyncJob job : newJobs) {
+                String jobName = job.getDBSyncJobConf() == null ? "" : job.getDBSyncJobConf().getJobName();
+                JSONArray taskIds = job.getDBSyncJobConf() == null ? null :
+                        job.getDBSyncJobConf().getTasksJson();
+                if (StringUtils.isNotEmpty(jobName)) {
+                    runningJobs.compute(jobName, (k, v) -> {
+                        if (v == null) {
+                            LOGGER.info("Start new job after init, jobName={}, conf={}, "
+                                            + "taskIdsSize = {}, taskIdList = {}",
+                                    jobName,
+                                    job.getDBSyncJobConf(),
+                                    (taskIds == null ? 0 : taskIds.size()),
+                                    (taskIds == null ? "" : taskIds.toJSONString()));
+                            job.start();
+                            return job;
+                        }
+                        JSONArray vTaskIds = (v.getDBSyncJobConf() == null ? null :
+                                v.getDBSyncJobConf().getTasksJson());
+                        LOGGER.info("Job {} has started! taskIdsSize = {}, taskIdList = {}",
+                                jobName, (vTaskIds == null ? 0 : vTaskIds.size()),
+                                (vTaskIds == null ? "" : vTaskIds.toJSONString()));
+                        return v;
+                    });
+                }
+            }
+        }
     }
 
     /**

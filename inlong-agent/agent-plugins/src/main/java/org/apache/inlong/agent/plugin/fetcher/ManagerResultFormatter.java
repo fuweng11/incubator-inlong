@@ -19,6 +19,7 @@ package org.apache.inlong.agent.plugin.fetcher;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.apache.inlong.agent.entites.CommonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,5 +70,27 @@ public class ManagerResultFormatter {
         Collections.shuffle(newHostList);
         num = Math.min(num, baseList.size());
         return newHostList.subList(0, num);
+    }
+
+    public static boolean checkTdmReturnMsg(CommonResponse commonResponse) {
+        if (commonResponse == null) {
+            return false;
+        }
+        Boolean res = commonResponse.isSuccess();
+        if (res == null) {
+            LOGGER.error("error response, tdmanager response not key [result] found");
+            return false;
+        }
+        if (!res) {
+            LOGGER.error("query failed, [result] is false, tdmanager return errMsg is: {}",
+                    commonResponse.getErrMsg());
+            return false;
+        }
+        Object data = commonResponse.getData();
+        if (data == null) {
+            LOGGER.error("error response, tdmanager response no data return");
+            return false;
+        }
+        return true;
     }
 }

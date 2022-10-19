@@ -19,7 +19,9 @@ package org.apache.inlong.common.pojo.agent.dbsync;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -28,6 +30,8 @@ import javax.validation.constraints.NotNull;
  * Request of DbSync to pull running tasks
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @ApiModel("Request of DbSync to pull running tasks")
 public class RunningTaskRequest {
 

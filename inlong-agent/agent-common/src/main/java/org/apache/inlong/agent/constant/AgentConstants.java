@@ -127,7 +127,140 @@ public class AgentConstants {
     public static final String AGENT_ENABLE_OOM_EXIT = "agent.enable.oom.exit";
     public static final boolean DEFAULT_ENABLE_OOM_EXIT = false;
 
-    public static final String AGENT_METRIC_LISTENER_CLASS = "agent.domainListeners";
-    public static final String AGENT_METRIC_LISTENER_CLASS_DEFAULT =
-            "org.apache.inlong.agent.metrics.AgentPrometheusMetricListener";
+    // dbsync config
+    public static final String DBSYNC_MSG_INDEX_KEY = "pkgIndexId";
+
+    public static final String DBSYNC_ENABLE = "agent.dbsync.enable";
+    public static final boolean DEFAULT_DBSYNC_ENABLE = false;
+
+    public static final String DBSYNC_FILED_CHANGED_REPORT_ENABLE = "agent.dbsync.filed.changed.report.enable";
+    public static final boolean DEFAULT_DBSYNC_FILED_CHANGED_REPORT_ENABLE = true;
+
+    public static final String DBSYNC_MANAGER_AUTH_TOKEN = "agent.dbsync.manager.auth.token";
+    public static final String DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN = "secure-authentication";
+
+    public static final String DBSYNC_MANAGER_SERVICE_NAME = "agent.dbsync.manager.service.nam";
+    public static final String DEFAULT_DBSYNC_MANAGER_SERVICE_NAME = "inlong_manager";
+
+    public static final String DBSYNC_TAUTH_TEST_USER_NAME = "inlong-agent";
+    public static final String DBSYNC_TAUTH_TEST_USER_KEY = "ZmE1MWJjZTliYTNiYjBjNWIxZDJjO"
+            + "WMxY2RmOGEzZGI1NGYwMGZiZDFlODhiZmQw";
+
+    public static final String DBSYNC_HEART_INTERVAL = "agent.dbsync.heart.interval.msec";
+    public static final long DEFAULT_DBSYNC_HEART_INTERVAL = 3 * 60 * 1000L;
+
+    public static final String DBSYNC_CONN_INTERVAL = "agent.dbsync.conn.interval.msec";
+    public static final long DEFAULT_DBSYNC_CONN_INTERVAL = 1 * 60 * 1000L;
+
+    public static final String DBSYNC_NEED_SKIP_DELETE_DATA = "agent.dbsync.is.skip.delete.data";
+    public static final boolean DEFAULT_DBSYNC_NEED_SKIP_DELETE_DATA = false;
+
+    public static final String DBSYNC_IS_DEBUG_MODE = "agent.dbsync.is.debug.mode";
+    public static final boolean DEFAULT_DBSYNC_IS_DEBUG_MODE = false;
+
+    public static final String DBSYNC_JOB_RECV_BUFFER_KB = "agent.dbsync.job.recv.buffer.kb";
+    public static final int DEFAULT_DBSYNC_JOB_RECV_BUFFER_KB = 64;
+
+    public static final String DBSYNC_ACK_THREAD_NUM = "agent.dbsync.ack.thread.num";
+    public static final int DEFAULT_ACK_THREAD_NUM = 5;
+
+    public static final String DBSYNC_IS_READ_FROM_FIRST_BINLOG_IF_MISS = "agent.dbsync.is.read.first.if.miss";
+    public static final boolean DEFAULT_DBSYNC_IS_READ_FROM_FIRST_BINLOG_IF_MISS = false;
+
+    public static final String DBSYNC_RELAY_LOG_WAY = "agent.dbsync.relay-log.way";
+    public static final String DEFAULT_RELAY_LOG_WAY = "memory";
+
+    public static final String DBSYNC_MAX_CON_DB_SIZE = "agent.dbsync.max.con.db.size";
+    public static final int DEFAULT_DBSYNC_MAX_CON_DB_SIZE = 1;
+
+    public static final String DBSYNC_RELAY_LOG_MEM_SZIE = "agent.dbsync.relay-log.memory.size";
+    public static final int DEFAULT_RELAY_LOG_MEM_SZIE = 1024;
+
+    public static final String DBSYNC_RELAY_LOG_FILE_SIZE = "agent.dbsync.relay-log.file.size";
+    public static final int DEFAULT_DBSYNC_RELAY_LOG_FILE_SIZE = 1024 * 1024 * 1024;
+
+    public static final String DBSYNC_RELAY_LOG_DIFF_FILE_INDEX = "agent.dbsync.relay-log.diff.file.index";
+    public static final int DEFAULT_DBSYNC_RELAY_LOG_DIFF_FILE_INDEX = 3;
+
+    public static final String DBSYNC_RELAY_LOG_ROOT = "agent.dbsync.relay-log.root";
+    public static final String DEFAULT_DBSYNC_RELAY_LOG_ROOT = "./relay/";
+
+    public static final String DBSYNC_RELAY_LOG_BLOG_SIZE = "agent.dbsync.relay-log.block.size";
+    public static final int DEFAULT_DBSYNC_RELAY_LOG_BLOG_SIZE = 1024 * 1024 * 4;
+
+    public static final String DBSYNC_MAX_COLUMN_VALUE_SIZE = "agent.dbsync.max.column.value.size";
+    public static final int DEFAULT_MAX_COLUMN_VALUE_SIZE = 1024 * 1024;
+
+    public static final String DBSYNC_MYSQL_BINLOG_FORMATS = "agent.dbsync.mysql.binlog.format";
+    public static final String DEFAULT_MYSQL_BINLOG_FORMATS = "ROW,STATEMENT,MIXED";
+
+    public static final String DBSYNC_MYSQL_BINLOG_IMAGES = "agent.dbsync.mysql.binlog.images";
+    public static final String DEFAULT_MYSQL_BINLOG_IMAGES = "FULL,MINIMAL,NOBLOB";
+
+    public static final String DBSYNC_IS_NEED_TRANSACTION = "agent.dbsync.is.need.transaction";
+    public static final boolean DEFAULT_IS_NEED_TRANSACTION = true;
+
+    public static final String DBSYNC_JOB_DO_SWITCH_CNT = "agent.dbsync.job.do.switch.cnt";
+    public static final int DEFAULT_DBSYNC_JOB_DO_SWITCH_CNT = 10;
+
+    public static final long DBSYNC_BINLOG_START_OFFEST = 4L;
+
+    public static final String DBSYNC_SKIP_ZK_POSITION_ENABLE = "agent.dbsync.skip.zk.position.enable";
+    public static final boolean DEFAULT_DBSYNC_SKIP_ZK_POSITION_ENABLE = false;
+
+    public static final String DBSYNC_HA_COORDINATOR_MONITOR_INTERVAL_MS = "agent.dbsync.skip.zk.position.enable";
+    public static final long DEFAULT_DBSYNC_HA_COORDINATOR_MONITOR_INTERVAL_MS = 2 * 60 * 1000L;
+
+    public static final String DBSYNC_HA_RUN_NODE_CHANGE_CANDIDATE_MAX_THRESHOLD = "agent.dbsync.ha.run.mode.change."
+            + "candidate.threshold";
+    public static final float DEFAULT_HA_RUN_NODE_CHANGE_CANDIDATE_MAX_THRESHOLD = 0.5F;
+
+    public static final String DBSYNC_HA_RUN_NODE_CHANGE_MAX_THRESHOLD =
+            "agent.dbsync.ha.run.mode.change.max.threshold";
+    public static final float DEFAULT_HA_RUN_NODE_CHANGE_MAX_THRESHOLD = 0.7F;
+
+    public static final String DBSYNC_HA_LOADBALANCE_COMPARE_LOAD_USAGE_THRESHOLD =
+            "agent.dbsync.ha.loadbalance.compare.load.usage.threshold";
+    public static final int DEFAULT_HA_LOADBALANCE_COMPARE_LOAD_USAGE_THRESHOLD = 10;
+
+    public static final String DBSYNC_HA_LOADBALANCE_CHECK_LOAD_THRESHOLD =
+            "agent.dbsync.ha.loadbalance.check.load.threshold";
+    public static final float DEFAULT_HA_LOADBALANCE_CHECK_LOAD_THRESHOLD = 0.6F;
+
+    public static final String DBSYNC_HA_POSITION_UPDATE_INTERVAL_MS = "agent.dbsync.ha.position.update.intervalms";
+    public static final long DEFAULT_HA_POSITION_UPDATE_INTERVAL_MS = 10 * 1000L;
+
+    public static final String DBSYNC_HA_JOB_STATE_MONITOR_INTERVAL_MS = "agent.dbsync.ha.job.state.monitor.intervalms";
+    public static final long DEFAULT_HA_JOB_STATE_MONITOR_INTERVAL_MS = 1 * 60 * 1000L;
+
+    public static final String DBSYNC_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD =
+            "agent.dbsync.ha.job.state.monitor.intervalms";
+    public static final int DEFAULT_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD = 100000;
+
+    public static final String DBSYNC_UPDATE_POSITION_INTERVAL = "agent.dbsync.default.update.position.interval";
+    public static final int DEFAULT_UPDATE_POSITION_INTERVAL = 60;
+
+    public static final String DBSYNC_RESETTING_CHECK_INTERVAL = "agent.dbsync.resetting.check.interval";
+    public static final int DEFAULT_RESETTING_CHECK_INTERVAL = 60;
+
+    //
+    public static final String DBSYNC_FIELD_CHANGED_REPORT_RETRY_MAX_TIMES =
+            "agent.dbsync.filed.changed.report.retry.max.times";
+    public static final int DEFAULT_DBSYNC_FIELD_CHANGED_REPORT_RETRY_MAX_TIMES = 10;
+
+    public static final String DBSYNC_FIELD_CHANGED_REPORT_INTREVALS = "agent.dbsync.resetting.check.interval";
+    public static final int DEFAULT_DBSYNC_FIELD_CHANGED_REPORT_INTREVALS = 10000;
+
+    public static final String DBSYNC_FIELD_CHANGED_MAX_MESSAGE_QUEUE_SIZE =
+            "agent.dbsync.filed.changed.max.message.queue.size";
+    public static final int DEFAULT_DBSYNC_FIELD_CHANGED_MAX_MESSAGE_QUEUE_SIZE = 10000;
+
+    public static final String DBSYNC_FIELD_CHANGED_MYSQL_TYPE_LIST = "agent.dbsync.filed.changed.mysql.type.list";
+    public static final String DEFAULT_DBSYNC_FIELD_CHANGED_MYSQL_TYPE_LIST = "bit,tinyint,smallint"
+            + ",mediumint,int,integer,bigint,dec,float,double,decimal,date,time"
+            + ",datetime,timestamp,year,char,varchar,binary,varbinary,blob,text"
+            + ",enum,set,geometry,point,linestring,polygon,multipoint,multilinestring"
+            + ",multipolygon,geometrycollection,json";
+
+    public static final String NULL_STRING = "NULL";
 }

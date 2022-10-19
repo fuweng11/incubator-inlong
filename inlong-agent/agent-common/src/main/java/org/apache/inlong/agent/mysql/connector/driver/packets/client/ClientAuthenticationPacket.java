@@ -1,11 +1,28 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.driver.packets.client;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.mysql.connector.driver.packets.Capability;
+import org.apache.inlong.agent.mysql.connector.driver.packets.PacketWithHeaderPacket;
 import org.apache.inlong.agent.mysql.connector.driver.utils.ByteHelper;
 import org.apache.inlong.agent.mysql.connector.driver.utils.MSC;
 import org.apache.inlong.agent.mysql.connector.driver.utils.MySQLPasswordEncrypter;
-import org.apache.inlong.agent.mysql.connector.driver.packets.PacketWithHeaderPacket;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,19 +30,17 @@ import java.security.NoSuchAlgorithmException;
 
 public class ClientAuthenticationPacket extends PacketWithHeaderPacket {
 
-    private int    clientCapability = Capability.CLIENT_LONG_PASSWORD | Capability.CLIENT_LONG_FLAG
-        | Capability.CLIENT_PROTOCOL_41 | Capability.CLIENT_INTERACTIVE
-        | Capability.CLIENT_TRANSACTIONS | Capability.CLIENT_SECURE_CONNECTION
-        | Capability.CLIENT_MULTI_STATEMENTS | Capability.CLIENT_PLUGIN_AUTH;
-
-
-    public static final MySQLPasswordEncrypter encrypter = new MySQLPasswordEncrypter();
-    private String                             username;
-    private String                             password;
-    private byte                               charsetNumber;
-    private String                             databaseName;
-    private int                                serverCapabilities;
-    private byte[]                             scrumbleBuff;
+    public static final MySQLPasswordEncrypter ENCRYPTER = new MySQLPasswordEncrypter();
+    private int clientCapability = Capability.CLIENT_LONG_PASSWORD | Capability.CLIENT_LONG_FLAG
+            | Capability.CLIENT_PROTOCOL_41 | Capability.CLIENT_INTERACTIVE
+            | Capability.CLIENT_TRANSACTIONS | Capability.CLIENT_SECURE_CONNECTION
+            | Capability.CLIENT_MULTI_STATEMENTS | Capability.CLIENT_PLUGIN_AUTH;
+    private String username;
+    private String password;
+    private byte charsetNumber;
+    private String databaseName;
+    private int serverCapabilities;
+    private byte[] scrumbleBuff;
     private byte[] authPluginName;
 
     public void fromBytes(byte[] data) {
@@ -45,7 +60,7 @@ public class ClientAuthenticationPacket extends PacketWithHeaderPacket {
      *  n (Length Coded Binary)      scramble_buff (1 + x bytes)
      *  n (Null-Terminated String)   databasename (optional)
      * </pre>
-     * 
+     *
      * @throws IOException
      */
     public byte[] toBytes() throws IOException {
@@ -102,12 +117,16 @@ public class ClientAuthenticationPacket extends PacketWithHeaderPacket {
         this.password = password;
     }
 
+    public byte getCharsetNumber() {
+        return charsetNumber;
+    }
+
     public void setCharsetNumber(byte charsetNumber) {
         this.charsetNumber = charsetNumber;
     }
 
-    public byte getCharsetNumber() {
-        return charsetNumber;
+    public String getDatabaseName() {
+        return databaseName;
     }
 
     public void setDatabaseName(String databaseName) {
@@ -117,26 +136,21 @@ public class ClientAuthenticationPacket extends PacketWithHeaderPacket {
         }
     }
 
-    public String getDatabaseName() {
-        return databaseName;
+    public int getServerCapabilities() {
+        return serverCapabilities;
     }
 
     public void setServerCapabilities(int serverCapabilities) {
         this.serverCapabilities = serverCapabilities;
     }
 
-    public int getServerCapabilities() {
-        return serverCapabilities;
+    public byte[] getScrumbleBuff() {
+        return scrumbleBuff;
     }
 
     public void setScrumbleBuff(byte[] scrumbleBuff) {
         this.scrumbleBuff = scrumbleBuff;
     }
-
-    public byte[] getScrumbleBuff() {
-        return scrumbleBuff;
-    }
-
 
     public byte[] getAuthPluginName() {
         return authPluginName;

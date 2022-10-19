@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.driver.utils;
 
 import org.apache.inlong.agent.mysql.connector.driver.packets.HeaderPacket;
@@ -6,7 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-
 
 public abstract class PacketManager {
 
@@ -40,13 +56,9 @@ public abstract class PacketManager {
     }
 
     /**
-     * Since We r using blocking IO, so we will just write once and assert the length to simplify the read operation.<br>
+     * Since We r using blocking IO, so we will just write once and assert the length to simplify the read
+     * operation.<br>
      * If the block write doesn't work as we expected, we will change this implementation as per the result.
-     *
-     * @param ch
-     * @param len
-     * @return
-     * @throws IOException
      */
     public static void write(SocketChannel ch, ByteBuffer[] srcs) throws IOException {
         @SuppressWarnings("unused")
@@ -56,12 +68,6 @@ public abstract class PacketManager {
         }
 
         ch.write(srcs);
-        // https://github.com/alibaba/canal/issues/24
-        // 部分windows用户会出现size != total的情况，jdk为java7/openjdk，估计和java版本有关，暂时不做检查
-        // long size = ch.write(srcs);
-        // if (size != total) {
-        // throw new IOException("unexpected blocking io behavior");
-        // }
     }
 
     public static void write(SocketChannel ch, byte[] body) throws IOException {
@@ -72,6 +78,6 @@ public abstract class PacketManager {
         HeaderPacket header = new HeaderPacket();
         header.setPacketBodyLength(body.length);
         header.setPacketSequenceNumber(packetSeqNumber);
-        write(ch, new ByteBuffer[] { ByteBuffer.wrap(header.toBytes()), ByteBuffer.wrap(body) });
+        write(ch, new ByteBuffer[]{ByteBuffer.wrap(header.toBytes()), ByteBuffer.wrap(body)});
     }
 }

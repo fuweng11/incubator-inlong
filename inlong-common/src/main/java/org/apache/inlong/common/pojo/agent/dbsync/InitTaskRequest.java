@@ -19,7 +19,9 @@ package org.apache.inlong.common.pojo.agent.dbsync;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 
@@ -27,6 +29,8 @@ import javax.validation.constraints.NotBlank;
  * Request for DbSync initialization task
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @ApiModel("DbSync initialization task request")
 public class InitTaskRequest {
 

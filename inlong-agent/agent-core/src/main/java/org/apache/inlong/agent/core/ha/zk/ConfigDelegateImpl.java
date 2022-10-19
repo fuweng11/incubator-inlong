@@ -1,10 +1,23 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.core.ha.zk;
 
 import com.alibaba.fastjson.JSONObject;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -17,25 +30,24 @@ import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.curator.utils.CloseableUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ConfigDelegateImpl implements ConfigDelegate {
-    
-    /**
-     * 日志
-     */
-    private Logger logger = LogManager.getLogger(ConfigDelegateImpl.class);
 
     /**
-     * 默认session timeout
+     * session timeout
      */
     private static final int DEFAULT_SESSION_TIMEOUT_MS = 10 * 1000;
     /**
-     * 默认connection timeout
+     * connection timeout
      */
     private static final int DEFAULT_CONNECTION_TIMEOUT_MS = 5 * 1000;
     /**
@@ -46,6 +58,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
      * initial amount of time to wait between retries
      */
     private static final int DEFAULT_BASE_SLEEP_TIMEMS = 10 * 1000;
+    private Logger logger = LogManager.getLogger(ConfigDelegateImpl.class);
     /**
      * zk client cache
      */
@@ -54,48 +67,72 @@ public class ConfigDelegateImpl implements ConfigDelegate {
     private Map<String, TreeCache> treeCacheMap = new HashMap<String, TreeCache>();
 
     private Map<String, PathChildrenCache> childrenCacheMap = new HashMap<String, PathChildrenCache>();
-    
+
     /**
-     * 构造函数
-     * 
-     * @param baseSleepTimeMs  initial amount of time to wait between retries
-     * @param maxRetries  max number of times to retry
-     * @param connectStrMap  zookeeper客户端连接字符串Map, key:zk的group, value:连接字符串
+     * constructor
+     *
+     * @param baseSleepTimeMs initial amount of time to wait between retries
+     * @param maxRetries max number of times to retry
+     * @param connectStrMap zookeeper map, key:zk group, value:conn string
      * @param sessionTimeoutMs session timeout
      * @param connectionTimeoutMs connection timeout
      */
     public ConfigDelegateImpl(int baseSleepTimeMs, int maxRetries,
-                              Map<String, String> connectStrMap,
-                              int sessionTimeoutMs, int connectionTimeoutMs) {
-        
+            Map<String, String> connectStrMap,
+            int sessionTimeoutMs, int connectionTimeoutMs) {
+
         if (connectStrMap != null && !connectStrMap.isEmpty()) {
             for (Map.Entry<String, String> entry : connectStrMap.entrySet()) {
                 String connectionString = entry.getValue();
-                String group =  entry.getKey();
-                    
+                String group = entry.getKey();
+
                 CuratorFramework client = initClient(baseSleepTimeMs, maxRetries, connectionString,
-                    sessionTimeoutMs, connectionTimeoutMs);
+                        sessionTimeoutMs, connectionTimeoutMs);
                 clientCache.put(group, client);
 
-                //添加监听，连接丢失或者重连时清空缓存，防止缓存数据为脏数据
+                //add listen, clear cache when conn lost or is invalid
                 client.getConnectionStateListenable().addListener(new ConnectionStateListener() {
                     @Override
                     public void stateChanged(CuratorFramework client, ConnectionState newState) {
-                        if (ConnectionState.RECONNECTED == newState
-                            || ConnectionState.LOST == newState) {
+                        if (ConnectionState.RECONNECTED == newState || ConnectionState.LOST == newState) {
 //                            ConfigCacheUtil.clearCache();
                         }
                     }
                 });
             }
         } else {
-            throw new IllegalArgumentException("zookeeper客户端连接字符串Map 不能为空");
+            throw new IllegalArgumentException("zookeeper client connection string map can't be empty");
         }
-        
+
+    }
+
+    public ConfigDelegateImpl(Map<String, String> connectStrMap) {
+        this(DEFAULT_BASE_SLEEP_TIMEMS, DEFAULT_MAX_RETRIES, connectStrMap,
+                DEFAULT_SESSION_TIMEOUT_MS, DEFAULT_CONNECTION_TIMEOUT_MS);
+    }
+
+    /**
+     * get client
+     *
+     * @param baseSleepTimeMs initial amount of time to wait between retries
+     * @param maxRetries max number of times to retry
+     * @param connectionString zookeeper client conn string
+     * @param sessionTimeoutMs session timeout
+     * @param connectionTimeoutMs connection timeout
+     * @return zookeeper client
+     */
+    public static CuratorFramework getClient(int baseSleepTimeMs, int maxRetries, String connectionString,
+            int sessionTimeoutMs, int connectionTimeoutMs) {
+        RetryPolicy retryPolicy = new RetryNTimes(maxRetries, baseSleepTimeMs);
+        CuratorFramework client = CuratorFrameworkFactory.newClient(connectionString,
+                sessionTimeoutMs, connectionTimeoutMs, retryPolicy);
+        client.start();
+        return client;
     }
 
     /**
      * check path is or not exist
+     *
      * @param group group
      * @param path path
      * @return true/false
@@ -110,19 +147,11 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         }
         return false;
     }
-    /**
-     * 构造函数
-     * 
-     * @param connectStrMap  zookeeper客户端连接字符串Map, key:zk的group, value:连接字符串
-     */
-    public ConfigDelegateImpl(Map<String, String> connectStrMap) {
-        this(DEFAULT_BASE_SLEEP_TIMEMS, DEFAULT_MAX_RETRIES, connectStrMap,
-            DEFAULT_SESSION_TIMEOUT_MS, DEFAULT_CONNECTION_TIMEOUT_MS);
-    }
 
     /**
      * get zookeeper client
-     * @param group 分组
+     *
+     * @param group
      * @return
      */
     private CuratorFramework getZkClient(String group) {
@@ -135,10 +164,8 @@ public class ConfigDelegateImpl implements ConfigDelegate {
     }
 
     /**
-     *  会把path带上环境前缀
-     * @param group 分组
-     * @param path 路径
-     * @param key key
+     * add env-prefix to path
+     *
      * @return
      */
     @Override
@@ -147,7 +174,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
             String result = new String(getData(group, path), "UTF-8");
             if (!StringUtils.isEmpty(key)) {
                 Map map = JSONObject.parseObject(result, Map.class);
-                result = (String)map.get(key);
+                result = (String) map.get(key);
             }
             return result;
         } catch (Exception e) {
@@ -171,54 +198,27 @@ public class ConfigDelegateImpl implements ConfigDelegate {
             return null;
         }
     }
-    
+
     /**
-     * 初始化zk连接
-     * 
-     * @param baseSleepTimeMs  initial amount of time to wait between retries
-     * @param maxRetries  max number of times to retry
-     * @param connectionString  zookeeper客户端连接字符串
+     * init zk conn
+     *
+     * @param baseSleepTimeMs initial amount of time to wait between retries
+     * @param maxRetries max number of times to retry
+     * @param connectionString zookeeper conn string
      * @param sessionTimeoutMs session timeout
      * @param connectionTimeoutMs connection timeout
      * @return zk client
      */
     private CuratorFramework initClient(int baseSleepTimeMs, int maxRetries,
-                                        String connectionString, int sessionTimeoutMs,
-                                        int connectionTimeoutMs) {
+            String connectionString, int sessionTimeoutMs,
+            int connectionTimeoutMs) {
         CuratorFramework client = getClient(baseSleepTimeMs,
-            maxRetries, connectionString,
-            sessionTimeoutMs, connectionTimeoutMs);
-        
-        return client;
-    }
-
-    /**
-     * 获取客户端
-     *
-     * @param baseSleepTimeMs initial amount of time to wait between retries
-     * @param maxRetries max number of times to retry
-     * @param connectionString zookeeper客户端连接字符串
-     * @param sessionTimeoutMs    session timeout
-     * @param connectionTimeoutMs connection timeout
-     * @return zookeeper 客户端
-     */
-    public static CuratorFramework getClient(int baseSleepTimeMs,
-            int maxRetries, String connectionString,
-            int sessionTimeoutMs, int connectionTimeoutMs) {
-        RetryPolicy retryPolicy = new RetryNTimes(maxRetries, baseSleepTimeMs);
-        CuratorFramework client = CuratorFrameworkFactory.newClient(connectionString,
-                sessionTimeoutMs, connectionTimeoutMs, retryPolicy);
-        client.start();
+                maxRetries, connectionString,
+                sessionTimeoutMs, connectionTimeoutMs);
 
         return client;
     }
 
-    /**
-     * 配置数据
-     * @param group 分组
-     * @param path 路径
-     * @return
-     */
     @Override
     public boolean deletePath(String group, String path) {
         CuratorFramework cf = getZkClient(group);
@@ -236,11 +236,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
     }
 
     /**
-     * 配置数据
-     * @param group 分组
-     * @param path 路径
-     * @param data 数据
-     * @return
+     * configure data
      */
     @Override
     public String createOrderEphemeralPathAndSetData(String group, String path, String data) {
@@ -260,13 +256,6 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         return createPath;
     }
 
-    /**
-     * 配置数据
-     * @param group 分组
-     * @param path 路径
-     * @param data 数据
-     * @return
-     */
     @Override
     public boolean createEphemeralPathAndSetData(String group, String path, String data) {
         CuratorFramework cf = getZkClient(group);
@@ -289,7 +278,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
 
     @Override
     public boolean createEphemeralPathAndSetDataForClient(String path, String data) {
-        Collection<CuratorFramework>  cfs = clientCache.values();
+        Collection<CuratorFramework> cfs = clientCache.values();
         if (cfs != null) {
             for (CuratorFramework cf : cfs) {
                 Stat stat = null;
@@ -311,13 +300,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         }
         return true;
     }
-    /**
-     * 配置数据
-     * @param group 分组
-     * @param path 路径
-     * @param data 数据
-     * @return
-     */
+
     @Override
     public void setOrderEphemeralPathData(String group, String path, String data) {
         CuratorFramework cf = getZkClient(group);
@@ -331,13 +314,6 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         }
     }
 
-    /**
-     * 配置数据
-     * @param group 分组
-     * @param path 路径
-     * @param data 数据
-     * @return
-     */
     @Override
     public void createPathAndSetData(String group, String path, String data) {
         CuratorFramework cf = getZkClient(group);
@@ -356,12 +332,6 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         }
     }
 
-    /**
-     * 创建路径
-     * @param group 分组
-     * @param path 路径
-     * @return
-     */
     @Override
     public boolean createIfNeededPath(String group, String path) {
         CuratorFramework cf = getZkClient(group);
@@ -388,7 +358,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
                     .build();
             treeCache.getListenable().addListener(listener);
             treeCache.start();
-            treeCacheMap.put(group+path, treeCache);
+            treeCacheMap.put(group + path, treeCache);
             return true;
         } catch (Exception e) {
             if (treeCache != null) {
@@ -403,7 +373,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
     @Override
     public boolean removeNodeListener(String group, String path) {
         try {
-            TreeCache treeCache = treeCacheMap.remove(group+path);
+            TreeCache treeCache = treeCacheMap.remove(group + path);
             if (treeCache != null) {
                 treeCache.close();
             }
@@ -415,10 +385,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
     }
 
     /**
-     * 添加监听器
-     *
-     * @param listener 监听器
-     * @return boolean
+     * add listener
      */
     public boolean addChildNodeListener(PathChildrenCacheListener listener, String group, String path) {
         PathChildrenCache childrenCache = null;
@@ -427,7 +394,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
             childrenCache = new PathChildrenCache(client, path, true);
             childrenCache.getListenable().addListener(listener);
             childrenCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
-            childrenCacheMap.put(group+path, childrenCache);
+            childrenCacheMap.put(group + path, childrenCache);
             return true;
         } catch (Exception e) {
             if (childrenCache != null) {
@@ -440,7 +407,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
     }
 
     /**
-     * 删除监听器
+     * remove listener
      *
      * @param group group
      * @param path path
@@ -448,7 +415,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
      */
     public boolean removeChildNodeListener(String group, String path) {
         try {
-            PathChildrenCache childrenCache = childrenCacheMap.remove(group+path);
+            PathChildrenCache childrenCache = childrenCacheMap.remove(group + path);
             if (childrenCache != null) {
                 childrenCache.close();
             }
@@ -460,10 +427,7 @@ public class ConfigDelegateImpl implements ConfigDelegate {
     }
 
     /**
-     * 获取路径下孩子节点
-     * @param group 分组
-     * @param path 路径
-     * @return
+     * get child node of path
      */
     @Override
     public List<String> getChildren(String group, String path) {
@@ -477,12 +441,6 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         return list;
     }
 
-    /**
-     * 获取路径下孩子节点的个数
-     * @param group 分组
-     * @param path 路径
-     * @return
-     */
     @Override
     public Integer getChildrenNum(String group, String path) {
         CuratorFramework cf = getZkClient(group);
@@ -502,22 +460,15 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         return num;
     }
 
-    /**
-     * 获取当前路径的父路径
-     * @param path 当前path
-     * @return
-     */
     private String getParentPath(String path) {
         String parentPath = "/";
         if (!StringUtils.isEmpty(path) && path.lastIndexOf("/") > 0) {
-            parentPath = path.substring(0,path.lastIndexOf("/"));
+            parentPath = path.substring(0, path.lastIndexOf("/"));
         }
         return parentPath;
     }
 
     public void close() throws Exception {
-        clientCache.entrySet().stream().forEach((e)->{
-            e.getValue().close();
-        });
+        clientCache.entrySet().stream().forEach((e) -> e.getValue().close());
     }
 }

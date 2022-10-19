@@ -39,12 +39,13 @@ public class Job {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Job.class);
     private static int COUNTER = 1;
-    private final JobProfile jobConf;
+    protected final JobProfile jobConf;
     // job name
     private String name;
     // job description
     private String description;
     private String jobInstanceId;
+    protected List<Task> taskList = new ArrayList<>();
     private ThreadLocal<Integer> threadNum = new ThreadLocal<Integer>() {
         protected Integer initialValue() {
             return 0;
@@ -103,7 +104,6 @@ public class Job {
     }
 
     private List<Task> getTasks(JobProfile jobConf) {
-        List<Task> taskList = new ArrayList<>();
         try {
             LOGGER.info("job id: {}, source: {}, channel: {}, sink: {}",
                     getJobInstanceId(), jobConf.get(JobConstants.JOB_SOURCE_CLASS),

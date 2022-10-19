@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.driver;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -12,8 +29,8 @@ import org.apache.inlong.agent.mysql.connector.driver.packets.server.HandshakeIn
 import org.apache.inlong.agent.mysql.connector.driver.utils.MSC;
 import org.apache.inlong.agent.mysql.connector.driver.utils.MySQLPasswordEncrypter;
 import org.apache.inlong.agent.mysql.connector.driver.utils.PacketManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -22,32 +39,26 @@ import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * 基于mysql socket协议的链接实现
- * 
- * @author jianghang 2013-2-18 下午09:22:30
- * @version 1.0.1
- */
 public class MysqlConnector {
 
-    private static final Logger logger            = LogManager.getLogger(MysqlConnector.class);
-    private InetSocketAddress   address;
-    private String              username;
-    private String              password;
+    private static final Logger LOGGER = LoggerFactory.getLogger(MysqlConnector.class);
+    private InetSocketAddress address;
+    private String username;
+    private String password;
 
-    private byte                charsetNumber     = 33;
-    private String              defaultSchema     = "retl";
-    private int                 soTimeout         = 30 * 1000;
-    private int                 receiveBufferSize = 16 * 1024;
-    private int                 sendBufferSize    = 16 * 1024;
+    private byte charsetNumber = 33;
+    private String defaultSchema = "retl";
+    private int soTimeout = 30 * 1000;
+    private int receiveBufferSize = 16 * 1024;
+    private int sendBufferSize = 16 * 1024;
 
-    private SocketChannel       channel;
-    private AtomicBoolean       connected         = new AtomicBoolean(false);
+    private SocketChannel channel;
+    private AtomicBoolean connected = new AtomicBoolean(false);
 
-    public MysqlConnector(){
+    public MysqlConnector() {
     }
 
-    public MysqlConnector(InetSocketAddress address, String username, String password){
+    public MysqlConnector(InetSocketAddress address, String username, String password) {
 
         this.address = address;
         this.username = username;
@@ -55,7 +66,7 @@ public class MysqlConnector {
     }
 
     public MysqlConnector(InetSocketAddress address, String username, String password, byte charsetNumber,
-                          String defaultSchema){
+            String defaultSchema) {
         this(address, username, password);
 
         this.charsetNumber = charsetNumber;
@@ -67,9 +78,9 @@ public class MysqlConnector {
             channel = SocketChannel.open();
             try {
                 configChannel(channel);
-                logger.info("connect MysqlConnection to {}...", address);
+                LOGGER.info("connect MysqlConnection to {}...", address);
                 channel.connect(address);
-                logger.info("MysqlConnection port : {}", channel.socket().getLocalPort());
+                LOGGER.info("MysqlConnection port : {}", channel.socket().getLocalPort());
                 negotiate(channel);
             } catch (Exception e) {
                 disconnect();
@@ -77,14 +88,14 @@ public class MysqlConnector {
                 throw new IOException("connect " + this.address + " failure:" + ExceptionUtils.getStackTrace(e));
             }
         } else {
-            logger.error("the channel can't be connected twice.");
+            LOGGER.error("the channel can't be connected twice.");
         }
     }
 
     public void reconnect() throws IOException {
         disconnect();
         connect();
-        logger.info("reconnect use MysqlConnection Local port : {}", getLocalPort());
+        LOGGER.info("reconnect use MysqlConnection Local port : {}", getLocalPort());
     }
 
     public void disconnect() throws IOException {
@@ -94,12 +105,12 @@ public class MysqlConnector {
                     channel.close();
                 }
 
-                logger.info("disConnect MysqlConnection to {}...", address);
+                LOGGER.info("disConnect MysqlConnection to {}...", address);
             } catch (Exception e) {
                 throw new IOException("disconnect " + this.address + " failure:" + ExceptionUtils.getStackTrace(e));
             }
         } else {
-            logger.info("the channel {} is not connected", this.address);
+            LOGGER.info("the channel {} is not connected", this.address);
         }
     }
 
@@ -118,7 +129,7 @@ public class MysqlConnector {
         connector.setSendBufferSize(getSendBufferSize());
         connector.setSoTimeout(getSoTimeout());
         return connector;
-    }   
+    }
 
     // ====================== help method ====================
 
@@ -127,16 +138,13 @@ public class MysqlConnector {
         channel.socket().setReuseAddress(true);
         channel.socket().setSoTimeout(soTimeout);
         channel.socket().setTcpNoDelay(true);
-//        channel.socket().setReceiveBufferSize(receiveBufferSize);
-//        channel.socket().setSendBufferSize(sendBufferSize);
-//        channel.socket().setTrafficClass(0x08 | 0x04);
     }
 
     private void negotiate(SocketChannel channel) throws IOException {
-        // https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol
         HeaderPacket header = PacketManager.readHeader(channel, 4);
         byte[] body = PacketManager.readBytes(channel, header.getPacketBodyLength());
-        if (body[0] < 0) {// check field_count
+        // check field_count
+        if (body[0] < 0) {
             if (body[0] == -1) {
                 ErrorPacket error = new ErrorPacket();
                 error.fromBytes(body);
@@ -155,8 +163,7 @@ public class MysqlConnector {
             return;
         }
 
-
-        logger.info("handshake initialization packet received, prepare the client authentication packet to send");
+        LOGGER.info("handshake initialization packet received, prepare the client authentication packet to send");
         ClientAuthenticationPacket clientAuth = new ClientAuthenticationPacket();
         clientAuth.setCharsetNumber(charsetNumber);
 
@@ -172,7 +179,7 @@ public class MysqlConnector {
         h.setPacketSequenceNumber((byte) (header.getPacketSequenceNumber() + 1));
 
         PacketManager.writePkg(channel, h.toBytes(), clientAuthPkgBody);
-        logger.info("client authentication packet is sent out.");
+        LOGGER.info("client authentication packet is sent out.");
 
         // check auth result
         header = null;
@@ -219,7 +226,7 @@ public class MysqlConnector {
             h.setPacketBodyLength(auth.length);
             h.setPacketSequenceNumber((byte) (header.getPacketSequenceNumber() + 1));
             PacketManager.writePkg(channel, h.toBytes(), auth);
-            logger.info("auth switch response packet is sent out.");
+            LOGGER.info("auth switch response packet is sent out.");
 
             header = null;
             header = PacketManager.readHeader(channel, 4);
@@ -250,7 +257,6 @@ public class MysqlConnector {
         }
     }
 
-
     private void auth323(SocketChannel channel, byte packetSequenceNumber, byte[] seed) throws IOException {
         // auth 323
         Reply323Packet r323 = new Reply323Packet();
@@ -264,7 +270,7 @@ public class MysqlConnector {
         h323.setPacketSequenceNumber((byte) (packetSequenceNumber + 1));
 
         PacketManager.writePkg(channel, h323.toBytes(), b323Body);
-        logger.info("client 323 authentication packet is sent out.");
+        LOGGER.info("client 323 authentication packet is sent out.");
         // check auth result
         HeaderPacket header = PacketManager.readHeader(channel, 4);
         byte[] body = PacketManager.readBytes(channel, header.getPacketBodyLength());
@@ -285,7 +291,7 @@ public class MysqlConnector {
         byte[] dest = new byte[handshakePacket.seed.length + handshakePacket.restOfScrambleBuff.length];
         System.arraycopy(handshakePacket.seed, 0, dest, 0, handshakePacket.seed.length);
         System.arraycopy(handshakePacket.restOfScrambleBuff, 0, dest, handshakePacket.seed.length,
-                         handshakePacket.restOfScrambleBuff.length);
+                handshakePacket.restOfScrambleBuff.length);
         return dest;
     }
 
@@ -356,20 +362,21 @@ public class MysqlConnector {
     public void setPassword(String password) {
         this.password = password;
     }
-    
-    public int getLocalPort(){
-    	
-    	if(channel == null || channel.socket() == null){
-    		return -1;
-    	}
-    	
-    	return channel.socket().getLocalPort();
+
+    public int getLocalPort() {
+
+        if (channel == null || channel.socket() == null) {
+            return -1;
+        }
+
+        return channel.socket().getLocalPort();
     }
-    
-    public String getRemoteAddress(){
-    	if(connected.get())
-    		return channel.socket().getInetAddress().getHostAddress();
-    	return null;
+
+    public String getRemoteAddress() {
+        if (connected.get()) {
+            return channel.socket().getInetAddress().getHostAddress();
+        }
+        return null;
     }
 
 }

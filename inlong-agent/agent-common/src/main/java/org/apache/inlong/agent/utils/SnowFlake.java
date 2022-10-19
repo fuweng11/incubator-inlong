@@ -1,49 +1,51 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.utils;
 
-/**
- * @Author pengzirui ref https://github.com/beyondfengyu/SnowFlake
- * @Date 2021/12/29 3:59 下午
- * @Version 1.0
- */
 public class SnowFlake {
-    /**
-     * 起始的时间戳 2016-11-26 21:21:05
-     */
-    private final static long START_STMP = 1480166465631L;
 
-    /**
-     * 每一部分占用的位数
-     */
-    private final static long SEQUENCE_BIT = 9; //序列号占用的位数
-    private final static long MACHINE_BIT = 13;   //serverId占用的位数，总共8192
+    // start timestamp
+    private static final long START_STMP = 1480166465631L;
 
-    /**
-     * 每一部分的最大值
-     */
-    private final static long MAX_MACHINE_NUM = -1L ^ (-1L << MACHINE_BIT);
-    private final static long MAX_SEQUENCE = -1L ^ (-1L << SEQUENCE_BIT);
+    private static final long SEQUENCE_BIT = 9;
+    private static final long MACHINE_BIT = 13;
 
-    /**
-     * 每一部分向左的位移
-     */
-    private final static long MACHINE_LEFT = SEQUENCE_BIT;
-    private final static long TIMESTMP_LEFT = SEQUENCE_BIT + MACHINE_BIT;
+    private static final long MAX_MACHINE_NUM = -1L ^ (-1L << MACHINE_BIT);
+    private static final long MAX_SEQUENCE = -1L ^ (-1L << SEQUENCE_BIT);
 
-    private long machineId;     //机器标识
-    private long sequence = 0L; //序列号
-    private long lastStmp = -1L;//上一次时间戳
+    private static final long MACHINE_LEFT = SEQUENCE_BIT;
+    private static final long TIMESTMP_LEFT = SEQUENCE_BIT + MACHINE_BIT;
+
+    private long machineId;
+    private long sequence = 0L;
+    private long lastStmp = -1L;
 
     public SnowFlake(long machineId) {
         if (machineId > MAX_MACHINE_NUM || machineId < 0) {
-            throw new IllegalArgumentException(machineId + "machineId can't be greater than MAX_MACHINE_NUM or less than 0 MAX_MACHINE_NUM" + MAX_MACHINE_NUM);
+            throw new IllegalArgumentException(
+                    machineId + "machineId can't be greater than MAX_MACHINE_NUM or less than 0 MAX_MACHINE_NUM"
+                            + MAX_MACHINE_NUM);
         }
         this.machineId = machineId;
     }
 
     /**
-     * 产生下一个ID
-     *
-     * @return
+     * generate nextId
      */
     public synchronized long nextId() {
         long currStmp = getNewstmp();
@@ -52,22 +54,19 @@ public class SnowFlake {
         }
 
         if (currStmp == lastStmp) {
-            //相同毫秒内，序列号自增
             sequence = (sequence + 1) & MAX_SEQUENCE;
-            //同一毫秒的序列数已经达到最大
             if (sequence == 0L) {
                 currStmp = getNextMill();
             }
         } else {
-            //不同毫秒内，序列号置为0
             sequence = 0L;
         }
 
         lastStmp = currStmp;
 
-        return (currStmp - START_STMP) << TIMESTMP_LEFT //时间戳部分
-            | machineId << MACHINE_LEFT             //serverId部分
-            | sequence;                             //序列号部分
+        return (currStmp - START_STMP) << TIMESTMP_LEFT
+                | machineId << MACHINE_LEFT
+                | sequence;
     }
 
     private long getNextMill() {

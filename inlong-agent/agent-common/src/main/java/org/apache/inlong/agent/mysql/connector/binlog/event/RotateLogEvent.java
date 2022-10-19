@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.binlog.event;
 
 import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
@@ -5,56 +22,62 @@ import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
 
 /**
  * This will be deprecated when we move to using sequence ids.
- * 
+ *
  * Binary Format
- * 
+ *
  * The Post-Header has one component:
- * 
+ *
  * <table>
  * <caption>Post-Header for Rotate_log_event</caption>
- * 
+ *
  * <tr>
  * <th>Name</th>
  * <th>Format</th>
  * <th>Description</th>
  * </tr>
- * 
+ *
  * <tr>
  * <td>position</td>
  * <td>8 byte integer</td>
  * <td>The position within the binlog to rotate to.</td>
  * </tr>
- * 
+ *
  * </table>
- * 
+ *
  * The Body has one component:
- * 
+ *
  * <table>
  * <caption>Body for Rotate_log_event</caption>
- * 
+ *
  * <tr>
  * <th>Name</th>
  * <th>Format</th>
  * <th>Description</th>
  * </tr>
- * 
+ *
  * <tr>
  * <td>new_log</td>
  * <td>variable length string without trailing zero, extending to the end of the
  * event (determined by the length field of the Common-Header)</td>
  * <td>Name of the binlog to rotate to.</td>
  * </tr>
- * 
+ *
  * </table>
- * 
- * @author <a href="mailto:changyuan.lh@taobao.com">Changyuan.lh</a>
+ *
  * @version 1.0
  */
-public final class RotateLogEvent extends LogEvent
-{
+public final class RotateLogEvent extends LogEvent {
+
+    /* Rotate event post-header */
+    public static final int R_POS_OFFSET = 0;
+    public static final int R_IDENT_OFFSET = 8;
+    /* Max length of full path-name */
+    public static final int FN_REFLEN = 512;
+    // Rotate header with all empty fields.
+    public static final LogHeader ROTATE_HEADER = new LogHeader(ROTATE_EVENT);
     /**
      * Fixed data part:
-     * 
+     *
      * <ul>
      * <li>8 bytes. The position of the first event in the next log file. Always
      * contains the number 4 (meaning the next event starts at position 4 in the
@@ -62,38 +85,25 @@ public final class RotateLogEvent extends LogEvent
      * is assumed to be 4.</li>
      * </ul>
      * <p>
-     * 
+     *
      * Variable data part:
-     * 
+     *
      * <ul>
      * <li>The name of the next binary log. The filename is not null-terminated.
      * Its length is the event size minus the size of the fixed parts.</li>
      * </ul>
-     * 
+     *
      * Source : http://forge.mysql.com/wiki/MySQL_Internals_Binary_Log
      */
-    private final String          filename;
-    private final long            position;
-
-    /* Rotate event post-header */
-    public static final int       R_POS_OFFSET   = 0;
-    public static final int       R_IDENT_OFFSET = 8;
-
-    /* Max length of full path-name */
-    public static final int       FN_REFLEN      = 512;
-
-    // Rotate header with all empty fields.
-    public static final LogHeader ROTATE_HEADER  = new LogHeader(ROTATE_EVENT);
+    private final String filename;
+    private final long position;
 
     /**
      * Creates a new <code>Rotate_log_event</code> object read normally from
      * log.
-     * 
-     * @throws MySQLExtractException
      */
     public RotateLogEvent(LogHeader header, LogBuffer buffer,
-            FormatDescriptionLogEvent descriptionEvent)
-    {
+            FormatDescriptionLogEvent descriptionEvent) {
         super(header);
 
         final int headerSize = descriptionEvent.commonHeaderLen;
@@ -104,8 +114,9 @@ public final class RotateLogEvent extends LogEvent
 
         final int filenameOffset = headerSize + postHeaderLen;
         int filenameLen = buffer.limit() - filenameOffset;
-        if (filenameLen > FN_REFLEN - 1)
+        if (filenameLen > FN_REFLEN - 1) {
             filenameLen = FN_REFLEN - 1;
+        }
         buffer.position(filenameOffset);
         filename = buffer.getFixString(filenameLen);
     }
@@ -114,8 +125,7 @@ public final class RotateLogEvent extends LogEvent
      * Creates a new <code>Rotate_log_event</code> without log information. This
      * is used to generate missing log rotation events.
      */
-    public RotateLogEvent(String filename)
-    {
+    public RotateLogEvent(String filename) {
         super(ROTATE_HEADER);
 
         this.filename = filename;
@@ -125,21 +135,18 @@ public final class RotateLogEvent extends LogEvent
     /**
      * Creates a new <code>Rotate_log_event</code> without log information.
      */
-    public RotateLogEvent(String filename, final long position)
-    {
+    public RotateLogEvent(String filename, final long position) {
         super(ROTATE_HEADER);
 
         this.filename = filename;
         this.position = position;
     }
 
-    public final String getFilename()
-    {
+    public final String getFilename() {
         return filename;
     }
 
-    public final long getPosition()
-    {
+    public final long getPosition() {
         return position;
     }
 }

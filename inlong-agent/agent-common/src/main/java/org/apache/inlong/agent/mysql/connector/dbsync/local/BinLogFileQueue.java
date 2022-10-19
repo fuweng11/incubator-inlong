@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.dbsync.local;
 
 import org.apache.commons.io.FileUtils;
@@ -14,27 +31,21 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * 维护binlog文件列表
- * 
- * @author jianghang 2012-7-7 下午03:48:05
- * @version 1.0.0
- */
 public class BinLogFileQueue {
 
-    private String        baseName       = "mysql-bin.";
-    private List<File>    binlogs        = new ArrayList<File>();
-    private File          directory;
-    private ReentrantLock lock           = new ReentrantLock();
-    private Condition     nextCondition  = lock.newCondition();
-    private Timer         timer          = new Timer(true);
-    private long          reloadInterval = 10 * 1000L;           // 10秒
+    private String baseName = "mysql-bin.";
+    private List<File> binlogs = new ArrayList<File>();
+    private File directory;
+    private ReentrantLock lock = new ReentrantLock();
+    private Condition nextCondition = lock.newCondition();
+    private Timer timer = new Timer(true);
+    private long reloadInterval = 10 * 1000L; // 10s
 
-    public BinLogFileQueue(String directory){
+    public BinLogFileQueue(String directory) {
         this(new File(directory));
     }
 
-    public BinLogFileQueue(File directory){
+    public BinLogFileQueue(File directory) {
         this.directory = directory;
 
         if (!directory.canRead()) {
@@ -57,19 +68,13 @@ public class BinLogFileQueue {
         }, reloadInterval, reloadInterval);
     }
 
-    /**
-     * 根据前一个文件，获取符合条件的下一个binlog文件
-     * 
-     * @param pre
-     * @return
-     */
     public File getNextFile(File pre) {
         try {
             lock.lockInterruptibly();
             if (binlogs.size() == 0) {
                 return null;
             } else {
-                if (pre == null) {// 第一次
+                if (pre == null) {
                     return binlogs.get(0);
                 } else {
                     int index = seek(pre);
@@ -94,7 +99,7 @@ public class BinLogFileQueue {
             if (binlogs.size() == 0) {
                 return null;
             } else {
-                if (file == null) {// 第一次
+                if (file == null) {
                     return binlogs.get(binlogs.size() - 1);
                 } else {
                     int index = seek(file);
@@ -113,29 +118,22 @@ public class BinLogFileQueue {
         }
     }
 
-    /**
-     * 根据前一个文件，获取符合条件的下一个binlog文件
-     * 
-     * @param pre
-     * @return
-     * @throws InterruptedException
-     */
     public File waitForNextFile(File pre) throws InterruptedException {
         try {
             lock.lockInterruptibly();
             if (binlogs.size() == 0) {
-                nextCondition.await();// 等待新文件
+                nextCondition.await();// wait for new file
             }
 
-            if (pre == null) {// 第一次
+            if (pre == null) {
                 return binlogs.get(0);
             } else {
                 int index = seek(pre);
                 if (index < binlogs.size() - 1) {
                     return binlogs.get(index + 1);
                 } else {
-                    nextCondition.await();// 等待新文件
-                    return waitForNextFile(pre);// 唤醒之后递归调用一下
+                    nextCondition.await();
+                    return waitForNextFile(pre);
                 }
             }
         } finally {
@@ -143,9 +141,6 @@ public class BinLogFileQueue {
         }
     }
 
-    /**
-     * 获取当前所有binlog文件
-     */
     public List<File> currentBinlogs() {
         return new ArrayList<File>(binlogs);
     }
@@ -156,7 +151,7 @@ public class BinLogFileQueue {
             timer.cancel();
             binlogs.clear();
 
-            nextCondition.signalAll();// 唤醒线程，通知退出
+            nextCondition.signalAll();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
@@ -169,7 +164,7 @@ public class BinLogFileQueue {
             lock.lockInterruptibly();
             if (!binlogs.contains(file)) {
                 binlogs.add(file);
-                nextCondition.signalAll();// 唤醒
+                nextCondition.signalAll();
                 return true;
             } else {
                 return false;
@@ -194,14 +189,7 @@ public class BinLogFileQueue {
                 return true;
             }
         }, null));
-        // 排一下序列
-        Collections.sort(files, new Comparator<File>() {
-
-            public int compare(File o1, File o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-
-        });
+        Collections.sort(files, Comparator.comparing(File::getName));
         return files;
     }
 
@@ -215,8 +203,6 @@ public class BinLogFileQueue {
 
         return -1;
     }
-
-    // ================== setter / getter ===================
 
     public void setBaseName(String baseName) {
         this.baseName = baseName;

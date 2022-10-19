@@ -1,52 +1,45 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.entites;
 
-import org.apache.inlong.agent.utils.JsonUtils.JSONArray;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest.FieldObject;
 
-public class FieldChangedEntry implements Comparable<FieldChangedEntry>{
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class FieldChangedEntry implements Comparable<FieldChangedEntry> {
 
     private String groupId;
-    private String taskId;
+    private Integer taskId;
     private String alterQueryString;
     private long lastReportTime = 0L;
     private int sendTimes = 0;
-    private JSONArray jsonArray;
+    private List<FieldObject> fieldChangedList;
 
-    public FieldChangedEntry(String groupId, String taskId, String alterQueryString) {
+    public FieldChangedEntry(String groupId, Integer taskId, String alterQueryString) {
         this.groupId = groupId;
         this.taskId = taskId;
         this.alterQueryString = alterQueryString;
-    }
-
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public String getTaskId() {
-        return taskId;
-    }
-
-    public int getSendTimes() {
-        return sendTimes;
-    }
-
-    public String getAlterQueryString() {
-        return alterQueryString;
-    }
-
-    public long getLastReportTime() {
-        return lastReportTime;
-    }
-
-    public void updateLastReportTime(long lastReportTime) {
-        this.lastReportTime = lastReportTime;
-    }
-
-    public void setJsonArray(JSONArray jsonArray) {
-        this.jsonArray = jsonArray;
-    }
-
-    public JSONArray getJsonArray() {
-        return jsonArray;
     }
 
     public void addSendTimes() {

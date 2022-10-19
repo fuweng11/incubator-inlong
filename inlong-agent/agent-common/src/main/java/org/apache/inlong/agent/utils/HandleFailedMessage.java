@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.utils;
 
 import org.apache.inlong.agent.entites.ProxyEvent;
@@ -41,33 +58,14 @@ public class HandleFailedMessage {
     }
 
     private static class HandleFailedMessageHolder {
-        private static final HandleFailedMessage INSTANCE = new HandleFailedMessage();
-    }
 
-    class HandleFailedMessageThread extends Thread {
-        @Override
-        public void run() {
-            while (!stopFlag) {
-                if (!msgQueue.isEmpty()) {
-                    ProxyEvent event = msgQueue.poll();
-                    BusMessageQueueCallback callback = new BusMessageQueueCallback(event);
-                    sender.asyncSendMessage(event.getMessage(),
-                        event.getBid(), event.getTid(), event.getTime(), event.getTimeout(),
-                        TimeUnit.MILLISECONDS, callback);
-                }
-                try {
-                    Thread.sleep(5000);
-                } catch (Throwable e) {
-                    LOG.warn("handle failed message is interrupted");
-                }
-            }
-        }
+        private static final HandleFailedMessage INSTANCE = new HandleFailedMessage();
     }
 
     public static class BusMessageQueueCallback extends FileCallback {
 
         public static final Logger LOG = LogManager.getLogger(BusMessageQueueCallback.class);
-        private ProxyEvent event;//消息内容对象，包含发送的各个指标
+        private ProxyEvent event;//message content
         private HandleFailedMessage handler = HandleFailedMessage.getInstance();
 
         public BusMessageQueueCallback() {
@@ -94,7 +92,6 @@ public class HandleFailedMessage {
             } else if (result == SendResult.CONNECTION_BREAK) {
                 LOG.warn("SendResult.CONNECTION_BREAK");
                 addBackToQueue();
-            } else if (result == SendResult.OK) {
             } else if (result == SendResult.THREAD_INTERRUPT) {
                 LOG.warn("SendResult.THREAD_INTERRUPT");
                 addBackToQueue();
@@ -119,5 +116,25 @@ public class HandleFailedMessage {
 
     }
 
+    class HandleFailedMessageThread extends Thread {
+
+        @Override
+        public void run() {
+            while (!stopFlag) {
+                if (!msgQueue.isEmpty()) {
+                    ProxyEvent event = msgQueue.poll();
+                    BusMessageQueueCallback callback = new BusMessageQueueCallback(event);
+                    sender.asyncSendMessage(event.getMessage(),
+                            event.getBid(), event.getTid(), event.getTime(), event.getTimeout(),
+                            TimeUnit.MILLISECONDS, callback);
+                }
+                try {
+                    Thread.sleep(5000);
+                } catch (Throwable e) {
+                    LOG.warn("handle failed message is interrupted");
+                }
+            }
+        }
+    }
 
 }

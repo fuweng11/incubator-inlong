@@ -1,16 +1,27 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.protocol.position;
 
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 
 import java.util.Objects;
 
-/**
- * 数据库对象的唯一标示
- * 
- * @author lyndldeng 2016-2-25
- * @version 1.0.0
- */
-public class EntryPosition extends TimePosition implements Comparable<EntryPosition>{
+public class EntryPosition extends TimePosition implements Comparable<EntryPosition> {
 
     public static final int EVENTIDENTITY_SEGMENT = 3;
     public static final char EVENTIDENTITY_SPLIT = (char) 5;
@@ -21,47 +32,45 @@ public class EntryPosition extends TimePosition implements Comparable<EntryPosit
     private Long serverId;
 //    private String gtid;
 
-    public EntryPosition(){
+    public EntryPosition() {
         super(null);
     }
 
-    public EntryPosition(Long timestamp){
+    public EntryPosition(Long timestamp) {
         this(null, null, timestamp);
     }
 
-    public EntryPosition(String journalName, Long position){
+    public EntryPosition(String journalName, Long position) {
         this(journalName, position, null);
     }
 
-    public EntryPosition(String journalName, Long position, Long timestamp){
+    public EntryPosition(String journalName, Long position, Long timestamp) {
         super(timestamp);
         this.journalName = journalName;
         this.position = position;
     }
 
-    public EntryPosition(String journalName, Long position, Long timestamp, Long serverId){
+    public EntryPosition(String journalName, Long position, Long timestamp, Long serverId) {
         this(journalName, position, timestamp);
         this.serverId = serverId;
     }
-    
+
     /*add deep copy*/
-    public EntryPosition(EntryPosition other){
-    	super(other.timestamp);
-    	this.journalName = other.journalName;
-    	this.position = other.position;
-//    	this.gtid =  other.gtid;
+    public EntryPosition(EntryPosition other) {
+        super(other.timestamp);
+        this.journalName = other.journalName;
+        this.position = other.position;
         this.serverId = other.serverId;
-    	this.included = other.included;
-    }
-    
-    public EntryPosition(JSONObject obj) {
-    	super(obj.getLong("timestamp"));
-    	this.journalName = obj.getString("journalName");
-    	this.position = obj.getLong("position");
-    	this.included = obj.getBoolean("included");
-    	this.serverId = obj.getLong("serverId");
+        this.included = other.included;
     }
 
+    public EntryPosition(JSONObject obj) {
+        super(obj.getLong("timestamp"));
+        this.journalName = obj.getString("journalName");
+        this.position = obj.getLong("position");
+        this.included = obj.getBoolean("included");
+        this.serverId = obj.getLong("serverId");
+    }
 
     public String getJournalName() {
         return journalName;
@@ -87,14 +96,6 @@ public class EntryPosition extends TimePosition implements Comparable<EntryPosit
         this.included = included;
     }
 
-//    public String getGtid() {
-//        return gtid;
-//    }
-//
-//    public void setGtid(String gtid) {
-//        this.gtid = gtid;
-//    }
-
     public Long getServerId() {
         return serverId;
     }
@@ -103,21 +104,14 @@ public class EntryPosition extends TimePosition implements Comparable<EntryPosit
         this.serverId = serverId;
     }
 
-//    public boolean hasGtid() {
-//        return StringUtils.isNotBlank(gtid);
-//    }
-
-    public JSONObject getJsonObj(){
-    	JSONObject obj = new JSONObject();
-    	obj.put("journalName", this.journalName);
-    	obj.put("position", this.position);
-    	obj.put("included", this.included);
-//    	if (hasGtid()) {
-//            obj.put("gtid", this.gtid);
-//        }
-    	obj.put("timestamp", this.timestamp);
+    public JSONObject getJsonObj() {
+        JSONObject obj = new JSONObject();
+        obj.put("journalName", this.journalName);
+        obj.put("position", this.position);
+        obj.put("included", this.included);
+        obj.put("timestamp", this.timestamp);
         obj.put("serverId", this.serverId);
-    	return obj;
+        return obj;
     }
 
     @Override
@@ -172,13 +166,13 @@ public class EntryPosition extends TimePosition implements Comparable<EntryPosit
     public int compareTo(EntryPosition o) {
         if (timestamp != null && o.timestamp != null) {
             if (!Objects.equals(timestamp, o.timestamp)) {
-                return (int)(timestamp - o.timestamp);
+                return (int) (timestamp - o.timestamp);
             }
         }
 
         final int val = journalName.compareTo(o.journalName);
         if (val == 0) {
-            return (int)(position - o.position);
+            return (int) (position - o.position);
         }
         return val;
     }

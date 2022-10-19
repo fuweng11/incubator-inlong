@@ -1,13 +1,30 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.inlong.agent.mysql.connector.binlog.event.QueryLogEvent;
-import org.apache.inlong.agent.mysql.connector.dbsync.local.BinLogFileQueue;
 import org.apache.inlong.agent.mysql.connector.binlog.LogContext;
 import org.apache.inlong.agent.mysql.connector.binlog.LogDecoder;
 import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
 import org.apache.inlong.agent.mysql.connector.binlog.LogPosition;
+import org.apache.inlong.agent.mysql.connector.binlog.event.QueryLogEvent;
 import org.apache.inlong.agent.mysql.connector.dbsync.FileLogFetcher;
+import org.apache.inlong.agent.mysql.connector.dbsync.local.BinLogFileQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,22 +34,20 @@ import java.util.List;
 
 /**
  * local bin log connection (not real connection)
- * 
- * @author yuanzu Date: 12-9-27 Time: 下午6:14
  */
 public class LocalBinLogConnection implements ErosaConnection {
 
-    private static final Logger logger     = LogManager.getLogger(LocalBinLogConnection.class);
-    private BinLogFileQueue binlogs    = null;
-    private boolean             needWait;
-    private String              directory;
-    private int                 bufferSize = 16 * 1024;
-    private boolean             running    = false;
+    private static final Logger logger = LogManager.getLogger(LocalBinLogConnection.class);
+    private BinLogFileQueue binlogs = null;
+    private boolean needWait;
+    private String directory;
+    private int bufferSize = 16 * 1024;
+    private boolean running = false;
 
-    public LocalBinLogConnection(){
+    public LocalBinLogConnection() {
     }
 
-    public LocalBinLogConnection(String directory, boolean needWait){
+    public LocalBinLogConnection(String directory, boolean needWait) {
         this.needWait = needWait;
         this.directory = directory;
     }
@@ -69,7 +84,7 @@ public class LocalBinLogConnection implements ErosaConnection {
     public void seek(String binlogfilename, Long binlogPosition, SinkFunction func) throws IOException {
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public void dump(String binlogfilename, Long binlogPosition, SinkFunction func) throws IOException {
         File current = new File(directory, binlogfilename);
 
@@ -91,24 +106,17 @@ public class LocalBinLogConnection implements ErosaConnection {
                         needContinue = false;
                         break;
                     }
-//                    do {
-//                        event = decoder.decode(fetcher, context);
-//                        if (event != null && !func.sink(event)) {
-//                            needContinue = false;
-//                            break;
-//                        }
-//                    } while (event != null);
                 }
 
-                fetcher.close(); // 关闭上一个文件
-                if (needContinue) {// 读取下一个
+                fetcher.close(); // close previous file
+                // read next file
+                if (needContinue) {
                     File nextFile;
                     if (needWait) {
                         nextFile = binlogs.waitForNextFile(current);
                     } else {
                         nextFile = binlogs.getNextFile(current);
                     }
-
                     if (nextFile == null) {
                         break;
                     }
@@ -117,7 +125,7 @@ public class LocalBinLogConnection implements ErosaConnection {
                     fetcher.open(current);
                     context.setLogPosition(new LogPosition(nextFile.getName()));
                 } else {
-                    break;// 跳出
+                    break;
                 }
             }
         } catch (InterruptedException e) {
@@ -142,7 +150,7 @@ public class LocalBinLogConnection implements ErosaConnection {
         decoder.handle(LogEvent.XID_EVENT);
         LogContext context = new LogContext();
         try {
-            fetcher.open(current);            
+            fetcher.open(current);
             context.setLogPosition(new LogPosition(current.getName()));
             while (running) {
                 boolean needContinue = true;
@@ -161,8 +169,8 @@ public class LocalBinLogConnection implements ErosaConnection {
                             break;
                         }
                     } while (event != null);
-                    
-                    if(event == null){
+
+                    if (event == null) {
                         break;
                     }
 
@@ -178,19 +186,18 @@ public class LocalBinLogConnection implements ErosaConnection {
                     }
                 }
 
-                if (needContinue) {// 读取下一个
-                    fetcher.close(); // 关闭上一个文件
+                if (needContinue) {
+                    fetcher.close();
 
                     File nextFile = binlogs.getBefore(current);
                     if (nextFile == null) {
                         break;
                     }
-
                     current = nextFile;
                     fetcher.open(current);
                     context.setLogPosition(new LogPosition(current.getName()));
                 } else {
-                    break;// 跳出
+                    break;
                 }
             }
         } finally {
@@ -198,7 +205,7 @@ public class LocalBinLogConnection implements ErosaConnection {
                 fetcher.close();
             }
         }
-        
+
         dump(binlogFilename, binlogFileOffset, func);
     }
 

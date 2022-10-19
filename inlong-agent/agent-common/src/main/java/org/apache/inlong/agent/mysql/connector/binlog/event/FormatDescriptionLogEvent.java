@@ -1,8 +1,25 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.mysql.connector.binlog.event;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.inlong.agent.plugin.dbsync.util.DBSyncUtils;
 import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
+import org.apache.inlong.agent.utils.DBSyncUtils;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -11,9 +28,7 @@ import java.util.regex.Pattern;
 /**
  * For binlog version 4. This event is saved by threads which read it, as they need it for future use (to decode the
  * ordinary events).
- * 
- * @see mysql-5.1.60/sql/log_event.cc - Format_description_log_event
- * @author <a href="mailto:changyuan.lh@taobao.com">Changyuan.lh</a>
+ *
  * @version 1.0
  */
 public final class FormatDescriptionLogEvent extends StartLogEventV3 {
@@ -22,20 +37,20 @@ public final class FormatDescriptionLogEvent extends StartLogEventV3 {
      * The number of types we handle in Format_description_log_event (UNKNOWN_EVENT is not to be handled, it does not
      * exist in binlogs, it does not have a format).
      */
-    public static final int    LOG_EVENT_TYPES                     = (ENUM_END_EVENT - 1);
+    public static final int LOG_EVENT_TYPES = (ENUM_END_EVENT - 1);
 
-    public static final int    ST_COMMON_HEADER_LEN_OFFSET         = (ST_SERVER_VER_OFFSET + ST_SERVER_VER_LEN + 4);
+    public static final int ST_COMMON_HEADER_LEN_OFFSET = (ST_SERVER_VER_OFFSET + ST_SERVER_VER_LEN + 4);
 
-    public static final int    OLD_HEADER_LEN                      = 13;
-    public static final int    LOG_EVENT_HEADER_LEN                = 19;
-    public static final int    LOG_EVENT_MINIMAL_HEADER_LEN        = 19;
+    public static final int OLD_HEADER_LEN = 13;
+    public static final int LOG_EVENT_HEADER_LEN = 19;
+    public static final int LOG_EVENT_MINIMAL_HEADER_LEN = 19;
 
     /* event-specific post-header sizes */
-    public static final int    STOP_HEADER_LEN                     = 0;
-    public static final int    LOAD_HEADER_LEN                     = (4 + 4 + 4 + 1 + 1 + 4);
-    public static final int    SLAVE_HEADER_LEN                    = 0;
-    public static final int    START_V3_HEADER_LEN                 = (2 + ST_SERVER_VER_LEN + 4);
-    public static final int    ROTATE_HEADER_LEN                   = 8;                                                       // this
+    public static final int STOP_HEADER_LEN = 0;
+    public static final int LOAD_HEADER_LEN = (4 + 4 + 4 + 1 + 1 + 4);
+    public static final int SLAVE_HEADER_LEN = 0;
+    public static final int START_V3_HEADER_LEN = (2 + ST_SERVER_VER_LEN + 4);
+    public static final int ROTATE_HEADER_LEN = 8;                                                       // this
     // is
     // FROZEN
     // (the
@@ -43,63 +58,76 @@ public final class FormatDescriptionLogEvent extends StartLogEventV3 {
     // post-header
     // is
     // frozen)
-    public static final int    INTVAR_HEADER_LEN                   = 0;
-    public static final int    CREATE_FILE_HEADER_LEN              = 4;
-    public static final int    APPEND_BLOCK_HEADER_LEN             = 4;
-    public static final int    EXEC_LOAD_HEADER_LEN                = 4;
-    public static final int    DELETE_FILE_HEADER_LEN              = 4;
-    public static final int    NEW_LOAD_HEADER_LEN                 = LOAD_HEADER_LEN;
-    public static final int    RAND_HEADER_LEN                     = 0;
-    public static final int    USER_VAR_HEADER_LEN                 = 0;
-    public static final int    FORMAT_DESCRIPTION_HEADER_LEN       = (START_V3_HEADER_LEN + 1 + LOG_EVENT_TYPES);
-    public static final int    XID_HEADER_LEN                      = 0;
-    public static final int    BEGIN_LOAD_QUERY_HEADER_LEN         = APPEND_BLOCK_HEADER_LEN;
-    public static final int    ROWS_HEADER_LEN_V1                  = 8;
-    public static final int    TABLE_MAP_HEADER_LEN                = 8;
-    public static final int    EXECUTE_LOAD_QUERY_EXTRA_HEADER_LEN = (4 + 4 + 4 + 1);
-    public static final int    EXECUTE_LOAD_QUERY_HEADER_LEN       = (QUERY_HEADER_LEN + EXECUTE_LOAD_QUERY_EXTRA_HEADER_LEN);
-    public static final int    INCIDENT_HEADER_LEN                 = 2;
-    public static final int    HEARTBEAT_HEADER_LEN                = 0;
-    public static final int    IGNORABLE_HEADER_LEN                = 0;
-    public static final int    ROWS_HEADER_LEN_V2                  = 10;
+    public static final int INTVAR_HEADER_LEN = 0;
+    public static final int CREATE_FILE_HEADER_LEN = 4;
+    public static final int APPEND_BLOCK_HEADER_LEN = 4;
+    public static final int EXEC_LOAD_HEADER_LEN = 4;
+    public static final int DELETE_FILE_HEADER_LEN = 4;
+    public static final int NEW_LOAD_HEADER_LEN = LOAD_HEADER_LEN;
+    public static final int RAND_HEADER_LEN = 0;
+    public static final int USER_VAR_HEADER_LEN = 0;
+    public static final int FORMAT_DESCRIPTION_HEADER_LEN = (START_V3_HEADER_LEN + 1 + LOG_EVENT_TYPES);
+    public static final int XID_HEADER_LEN = 0;
+    public static final int BEGIN_LOAD_QUERY_HEADER_LEN = APPEND_BLOCK_HEADER_LEN;
+    public static final int ROWS_HEADER_LEN_V1 = 8;
+    public static final int TABLE_MAP_HEADER_LEN = 8;
+    public static final int EXECUTE_LOAD_QUERY_EXTRA_HEADER_LEN = (4 + 4 + 4 + 1);
+    public static final int EXECUTE_LOAD_QUERY_HEADER_LEN = (QUERY_HEADER_LEN + EXECUTE_LOAD_QUERY_EXTRA_HEADER_LEN);
+    public static final int INCIDENT_HEADER_LEN = 2;
+    public static final int HEARTBEAT_HEADER_LEN = 0;
+    public static final int IGNORABLE_HEADER_LEN = 0;
+    public static final int ROWS_HEADER_LEN_V2 = 10;
 
-    public static final int    POST_HEADER_LENGTH                  = 11;
+    public static final int POST_HEADER_LENGTH = 11;
 
-    public static final int   BINLOG_CHECKSUM_ALG_DESC_LEN        = 1;
-    public static final int[] checksumVersionSplit                = { 5, 6, 1 };
-    public static final long  checksumVersionProduct              = (checksumVersionSplit[0] * 256 + checksumVersionSplit[1])
-                                                                    * 256 + checksumVersionSplit[2];
+    public static final int BINLOG_CHECKSUM_ALG_DESC_LEN = 1;
+    public static final int[] CHECKSUM_VERSION_SPLIT = {5, 6, 1};
+    public static final long CHECKSUM_VERSION_PRODUCT = (CHECKSUM_VERSION_SPLIT[0] * 256 + CHECKSUM_VERSION_SPLIT[1])
+            * 256 + CHECKSUM_VERSION_SPLIT[2];
+    /**
+     * MySQL 5.0 format descriptions.
+     */
+    public static final FormatDescriptionLogEvent FORMAT_DESCRIPTION_EVENT_5_X = new FormatDescriptionLogEvent(4);
+    /**
+     * MySQL 4.0.x (x>=2) format descriptions.
+     */
+    public static final FormatDescriptionLogEvent FORMAT_DESCRIPTION_EVENT_4_0_X = new FormatDescriptionLogEvent(3);
+    /**
+     * MySQL 3.23 format descriptions.
+     */
+    public static final FormatDescriptionLogEvent FORMAT_DESCRIPTION_EVENT_3_23 = new FormatDescriptionLogEvent(1);
+    private static Pattern versionPattern = Pattern.compile("5\\.7\\.[0-9]+");
     /**
      * The size of the fixed header which _all_ events have (for binlogs written by this version, this is equal to
      * LOG_EVENT_HEADER_LEN), except FORMAT_DESCRIPTION_EVENT and ROTATE_EVENT (those have a header of size
      * LOG_EVENT_MINIMAL_HEADER_LEN).
      */
-    protected final int        commonHeaderLen;
-    protected int              numberOfEventTypes;
-
-    /** The list of post-headers' lengthes */
-    protected final short[]    postHeaderLen;
-    protected int[]            serverVersionSplit                  = new int[3];
-    
-    private static Pattern versionPattern = Pattern.compile("5\\.7\\.[0-9]+");
+    protected final int commonHeaderLen;
+    /**
+     * The list of post-headers' lengthes
+     */
+    protected final short[] postHeaderLen;
+    protected int numberOfEventTypes;
+    protected int[] serverVersionSplit = new int[3];
     private boolean bUseNewBinlogFormat = false;
 
     public FormatDescriptionLogEvent(LogHeader header, LogBuffer buffer, FormatDescriptionLogEvent descriptionEvent)
-                                                                                                                    throws IOException{
+            throws IOException {
         /* Start_log_event_v3 */
         super(header, buffer, descriptionEvent);
 
         buffer.position(LOG_EVENT_MINIMAL_HEADER_LEN + ST_COMMON_HEADER_LEN_OFFSET);
         commonHeaderLen = buffer.getUint8();
-        if (commonHeaderLen < OLD_HEADER_LEN) /* sanity check */
-        {
+        if (commonHeaderLen < OLD_HEADER_LEN) /* sanity check */ {
             throw new IOException("Format Description event header length is too short");
         }
 
         numberOfEventTypes = buffer.limit() - (LOG_EVENT_MINIMAL_HEADER_LEN + ST_COMMON_HEADER_LEN_OFFSET + 1);
 
-        if (logger.isInfoEnabled()) logger.info("common_header_len= " + commonHeaderLen + ", number_of_event_types= "
-                                                + numberOfEventTypes);
+        if (logger.isInfoEnabled()) {
+            logger.info("common_header_len= " + commonHeaderLen + ", number_of_event_types= "
+                    + numberOfEventTypes);
+        }
 
         // buffer.position(LOG_EVENT_MINIMAL_HEADER_LEN
         // + ST_COMMON_HEADER_LEN_OFFSET + 1);
@@ -110,52 +138,29 @@ public final class FormatDescriptionLogEvent extends StartLogEventV3 {
 
         calcServerVersionSplit();
         long calc = getVersionProduct();
-        if (calc >= checksumVersionProduct) {
+        if (calc >= CHECKSUM_VERSION_PRODUCT) {
             /* the last bytes are the checksum alg desc and value (or value's room) */
             numberOfEventTypes -= BINLOG_CHECKSUM_ALG_DESC_LEN;
         }
-        
+
         //lynd add for 5.7
-        if(serverVersion != null){
-        	Matcher matcher = versionPattern.matcher(serverVersion);
-		if (matcher.find()) {
-			int nextVersion = 0;
-			try {
-				nextVersion = Integer.valueOf(StringUtils.remove(
-						serverVersion.substring(matcher.start(), matcher.end()), "5.7."));
-				if(nextVersion >= 13){
-					bUseNewBinlogFormat = true;
-				}
-			} catch (Throwable t) {
-				logger.error("version split error " + serverVersion 
-						+ " , " + DBSyncUtils.getExceptionStack(t));
-			}
-		}
+        if (serverVersion != null) {
+            Matcher matcher = versionPattern.matcher(serverVersion);
+            if (matcher.find()) {
+                int nextVersion = 0;
+                try {
+                    nextVersion = Integer.parseInt(StringUtils.remove(
+                            serverVersion.substring(matcher.start(), matcher.end()), "5.7."));
+                    if (nextVersion >= 13) {
+                        bUseNewBinlogFormat = true;
+                    }
+                } catch (Throwable t) {
+                    logger.error("version split error " + serverVersion
+                            + " , " + DBSyncUtils.getExceptionStack(t));
+                }
+            }
         }
-        
-    }
 
-    /** MySQL 5.0 format descriptions. */
-    public static final FormatDescriptionLogEvent FORMAT_DESCRIPTION_EVENT_5_x   = new FormatDescriptionLogEvent(4);
-
-    /** MySQL 4.0.x (x>=2) format descriptions. */
-    public static final FormatDescriptionLogEvent FORMAT_DESCRIPTION_EVENT_4_0_x = new FormatDescriptionLogEvent(3);
-
-    /** MySQL 3.23 format descriptions. */
-    public static final FormatDescriptionLogEvent FORMAT_DESCRIPTION_EVENT_3_23  = new FormatDescriptionLogEvent(1);
-
-    public static FormatDescriptionLogEvent getFormatDescription(final int binlogVersion) throws IOException {
-        /* identify binlog format */
-        switch (binlogVersion) {
-            case 4: /* MySQL 5.0 */
-                return FORMAT_DESCRIPTION_EVENT_5_x;
-            case 3:
-                return FORMAT_DESCRIPTION_EVENT_4_0_x;
-            case 1:
-                return FORMAT_DESCRIPTION_EVENT_3_23;
-            default:
-                throw new IOException("Unknown binlog version: " + binlogVersion);
-        }
     }
 
     public FormatDescriptionLogEvent(final int binlogVersion, int binlogChecksum) {
@@ -163,7 +168,7 @@ public final class FormatDescriptionLogEvent extends StartLogEventV3 {
         this.header.checksumAlg = binlogChecksum;
     }
 
-    public FormatDescriptionLogEvent(final int binlogVersion){
+    public FormatDescriptionLogEvent(final int binlogVersion) {
         this.binlogVersion = binlogVersion;
 
         postHeaderLen = new short[ENUM_END_EVENT];
@@ -273,17 +278,19 @@ public final class FormatDescriptionLogEvent extends StartLogEventV3 {
                 commonHeaderLen = 0;
         }
     }
-    
-    public void calcServerVersionSplit() {
-        doServerVersionSplit(serverVersion, serverVersionSplit);
-    }
 
-    public long getVersionProduct() {
-        return versionProduct(serverVersionSplit);
-    }
-
-    public boolean isVersionBeforeChecksum() {
-        return getVersionProduct() < checksumVersionProduct;
+    public static FormatDescriptionLogEvent getFormatDescription(final int binlogVersion) throws IOException {
+        /* identify binlog format */
+        switch (binlogVersion) {
+            case 4: /* MySQL 5.0 */
+                return FORMAT_DESCRIPTION_EVENT_5_X;
+            case 3:
+                return FORMAT_DESCRIPTION_EVENT_4_0_X;
+            case 1:
+                return FORMAT_DESCRIPTION_EVENT_3_23;
+            default:
+                throw new IOException("Unknown binlog version: " + binlogVersion);
+        }
     }
 
     public static void doServerVersionSplit(String serverVersion, int[] versionSplit) {
@@ -316,6 +323,18 @@ public final class FormatDescriptionLogEvent extends StartLogEventV3 {
         return ((versionSplit[0] * 256 + versionSplit[1]) * 256 + versionSplit[2]);
     }
 
+    public void calcServerVersionSplit() {
+        doServerVersionSplit(serverVersion, serverVersionSplit);
+    }
+
+    public long getVersionProduct() {
+        return versionProduct(serverVersionSplit);
+    }
+
+    public boolean isVersionBeforeChecksum() {
+        return getVersionProduct() < CHECKSUM_VERSION_PRODUCT;
+    }
+
     public final int getCommonHeaderLen() {
         return commonHeaderLen;
     }
@@ -323,9 +342,9 @@ public final class FormatDescriptionLogEvent extends StartLogEventV3 {
     public final short[] getPostHeaderLen() {
         return postHeaderLen;
     }
-    
-    public boolean bUseNewBinlogFormat(){
-    	return bUseNewBinlogFormat;
+
+    public boolean bUseNewBinlogFormat() {
+        return bUseNewBinlogFormat;
     }
 
 }

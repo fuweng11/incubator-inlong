@@ -18,7 +18,10 @@
 package org.apache.inlong.agent.conf;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.constant.AgentConstants;
+import org.apache.inlong.agent.mysql.connector.MysqlConnection.BinlogFormat;
+import org.apache.inlong.agent.mysql.connector.MysqlConnection.BinlogImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +32,17 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_ENABLE;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MAX_CON_DB_SIZE;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MYSQL_BINLOG_FORMATS;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MYSQL_BINLOG_IMAGES;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_RELAY_LOG_WAY;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_ENABLE;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MAX_CON_DB_SIZE;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_MYSQL_BINLOG_FORMATS;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_MYSQL_BINLOG_IMAGES;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_RELAY_LOG_WAY;
 
 /**
  * agent configuration. Only one instance in the process.
@@ -116,4 +130,46 @@ public class AgentConfiguration extends AbstractConfiguration {
     public boolean allRequiredKeyExist() {
         return true;
     }
+
+    public boolean enableHA() {
+        return getBoolean(DBSYNC_ENABLE, DEFAULT_DBSYNC_ENABLE);
+    }
+
+    public BinlogFormat[] getDbSyncSupportBinlogFormats() {
+        String mysqlBinlogFormat = agentConf.get(DBSYNC_MYSQL_BINLOG_FORMATS, DEFAULT_MYSQL_BINLOG_FORMATS);
+        String[] formats = StringUtils.split(mysqlBinlogFormat, ',');
+        if (formats == null) {
+            return null;
+        }
+        BinlogFormat[] supportBinlogFormats = new BinlogFormat[formats.length];
+        int i = 0;
+        for (String format : formats) {
+            supportBinlogFormats[i++] = BinlogFormat.valuesOf(format);
+        }
+        return supportBinlogFormats;
+    }
+
+    public BinlogImage[] getDbSyncBinlogImages() {
+        String mysqlBinlogImage = agentConf.get(DBSYNC_MYSQL_BINLOG_IMAGES, DEFAULT_MYSQL_BINLOG_IMAGES);
+        String[] images = StringUtils.split(mysqlBinlogImage, ',');
+        if (images == null) {
+            return null;
+        }
+        BinlogImage[] supportBinlogImages = new BinlogImage[images.length];
+        int i = 0;
+        for (String image : images) {
+            supportBinlogImages[i++] = BinlogImage.valuesOf(image);
+        }
+        return supportBinlogImages;
+    }
+
+    public int getDbSyncMaxConDbSize() {
+        int result = Integer.MAX_VALUE;
+        String relayLogWay = agentConf.get(DBSYNC_RELAY_LOG_WAY, DEFAULT_RELAY_LOG_WAY);
+        if (relayLogWay != null && relayLogWay.trim().endsWith("memory")) {
+            result = agentConf.getInt(DBSYNC_MAX_CON_DB_SIZE, DEFAULT_DBSYNC_MAX_CON_DB_SIZE);
+        }
+        return result;
+    }
+
 }

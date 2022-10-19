@@ -17,16 +17,28 @@
 
 package org.apache.inlong.agent.core.task;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.core.AgentManager;
+import org.apache.inlong.agent.core.job.DBSyncJob;
+import org.apache.inlong.agent.core.job.JobManager;
 import org.apache.inlong.agent.db.JobProfileDb;
+import org.apache.inlong.agent.entites.WaitAckDataInfo;
+import org.apache.inlong.agent.message.PackProxyMessage;
+import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.utils.ThreadUtils;
+import org.apache.inlong.common.monitor.LogCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.inlong.agent.constant.CommonConstants.POSITION_SUFFIX;
@@ -43,15 +55,20 @@ public class TaskPositionManager extends AbstractDaemon {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskPositionManager.class);
     private static volatile TaskPositionManager taskPositionManager = null;
     private final AgentManager agentManager;
+    private final JobManager jobManager;
     private final JobProfileDb jobConfDb;
     private final AgentConfiguration conf;
+    private final LinkedBlockingQueue<WaitAckDataInfo> logMapQueue;
+    private final LogCounter logPrinter = new LogCounter(10, 100000, 60 * 1000);
     private ConcurrentHashMap<String, ConcurrentHashMap<String, Long>> jobTaskPositionMap;
 
     private TaskPositionManager(AgentManager agentManager) {
         this.conf = AgentConfiguration.getAgentConf();
         this.agentManager = agentManager;
+        this.jobManager = agentManager.getJobManager();
         this.jobConfDb = agentManager.getJobManager().getJobConfDb();
         this.jobTaskPositionMap = new ConcurrentHashMap<>();
+        this.logMapQueue = new LinkedBlockingQueue<>();
     }
 
     /**
@@ -81,6 +98,110 @@ public class TaskPositionManager extends AbstractDaemon {
     @Override
     public void start() throws Exception {
         submitWorker(taskPositionFlushThread());
+        if (conf.enableHA()) {
+            submitWorker(dbSyncAckWaitDataThread());
+        }
+    }
+
+    private Runnable dbSyncAckWaitDataThread() {
+        return () -> {
+            while (isRunnable() || logMapQueue.size() > 0) {
+                try {
+                    WaitAckDataInfo wAckPkgData = null;
+                    HashMap<String, ArrayList<Pair<LogPosition, Long>>> logMap;
+                    int delCnt = 0;
+                    do {
+                        try {
+                            wAckPkgData = logMapQueue.poll(1, TimeUnit.SECONDS);
+                        } catch (InterruptedException ei) {
+                            LOGGER.error("log map queue poll error", ei);
+                        }
+                        if (null != wAckPkgData && (logMap = wAckPkgData.getPositionMap()) != null) {
+                            for (Map.Entry<String, ArrayList<Pair<LogPosition, Long>>> entry : logMap.entrySet()) {
+                                ackJobSendPosition(entry.getKey(), entry.getValue());
+                            }
+
+                            HashMap<String, Integer> cntMap = wAckPkgData.getInstCntMap();
+                            for (Map.Entry<String, Integer> entry : cntMap.entrySet()) {
+                                DBSyncJob job = getJobFailover(entry.getKey());
+                                if (job != null) {
+                                    job.ackJobData(entry.getValue());
+                                }
+                            }
+                        } else if (wAckPkgData != null) {
+                            logMap = wAckPkgData.getPositionMap();
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug("logMap == {}", logMap == null ? "null" : logMap.size());
+                            }
+                        }
+
+                        if (wAckPkgData != null) {
+                            if (delCnt > 10000) {
+                                break;
+                            } else {
+                                delCnt++;
+                            }
+                        } else {
+                            break;
+                        }
+                    } while (true);
+
+                } catch (Throwable e) {
+                    LOGGER.error("TaskPositionManager has exception ", e);
+                }
+
+            }
+
+        };
+    }
+
+    private void ackJobSendPosition(String jobName, ArrayList<Pair<LogPosition, Long>> positionsList) {
+        if (positionsList != null && positionsList.size() > 0) {
+            for (Pair<LogPosition, Long> pair : positionsList) {
+                ackJobSendPosition(jobName, pair.getLeft());
+            }
+        }
+    }
+
+    private void ackJobSendPosition(String jobName, LogPosition ackPosition) {
+        DBSyncJob job = jobManager.getRunningJobs().get(jobName);
+        if (job != null) {
+            job.ackSendPosition(ackPosition);
+        } else {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("ackJobSendPosition jobName = {} position = {} ", jobName, ackPosition);
+            }
+        }
+    }
+
+    private DBSyncJob getJobFailover(String instName) {
+        DBSyncJob job = jobManager.getRunningJobs().get(instName);
+        if (job == null) {
+            //may switched, try to find the backup job
+            job = jobManager.getRunningJobs().values().stream().filter(v -> {
+                String insName = v.getDBSyncJobConf().getBakMysqlIp() + ":"
+                        + v.getDBSyncJobConf().getBakMysqlPort() + ":" + v.getDBSyncJobConf().getServerId();
+                return Objects.equals(instName, insName);
+            }).findFirst().orElse(null);
+            if (job == null) {
+                if (logPrinter.shouldPrint()) {
+                    LOGGER.error("can't find job {}, runningJobs {}", instName, jobManager.getRunningJobs().values());
+                }
+            } else {
+                String insName = job.getDBSyncJobConf().getBakMysqlIp() + ":"
+                        + job.getDBSyncJobConf().getBakMysqlPort();
+                if (logPrinter.shouldPrint()) {
+                    LOGGER.warn("find backup job {} when getJob {}",
+                            insName, instName);
+                }
+            }
+        }
+        return job;
+    }
+
+    //TODO:use?
+    public void addRecodeLogPosition(PackProxyMessage pkgData) {
+        logMapQueue.add(new WaitAckDataInfo(pkgData));
     }
 
     private Runnable taskPositionFlushThread() {

@@ -19,6 +19,8 @@ package org.apache.inlong.agent.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.tencent.tdw.security.authentication.v2.TauthClient;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -34,12 +36,18 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_TAUTH_TEST_USER_KEY;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_TAUTH_TEST_USER_NAME;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_HTTP_APPLICATION_JSON;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_HTTP_SUCCESS_CODE;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_AUTH_SECRET_ID;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_AUTH_SECRET_KEY;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_REQUEST_TIMEOUT;
+import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_VIP_HTTP_HOST;
+import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_VIP_HTTP_PORT;
+import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_VIP_HTTP_PREFIX_PATH;
 import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_AGENT_MANAGER_REQUEST_TIMEOUT;
+import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_AGENT_MANAGER_VIP_HTTP_PREFIX_PATH;
 
 /**
  * Perform http operation
@@ -48,6 +56,7 @@ public class HttpManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpManager.class);
     private static final Gson gson;
+    private static final AgentConfiguration agentConf = AgentConfiguration.getAgentConf();
 
     static {
         final GsonBuilder gsonBuilder = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -90,13 +99,18 @@ public class HttpManager {
      * @param dto content body needed to post
      * @return response
      */
-    public String doSentPost(String url, Object dto) {
+    public String doSentPost(String url, Object dto, String token, String serviceName) {
         try {
             HttpPost post = getHttpPost(url);
             post.addHeader(BasicAuth.BASIC_AUTH_HEADER, BasicAuth.genBasicAuthCredential(secretId, secretKey));
             StringEntity stringEntity = new StringEntity(toJsonStr(dto));
             stringEntity.setContentType(AGENT_HTTP_APPLICATION_JSON);
             post.setEntity(stringEntity);
+            if (StringUtils.isNotBlank(token) && StringUtils.isNotBlank(serviceName)) {
+                TauthClient tauthClient = new TauthClient(DBSYNC_TAUTH_TEST_USER_NAME, DBSYNC_TAUTH_TEST_USER_KEY);
+                String encodedAuthentication = tauthClient.getAuthentication(serviceName);
+                post.addHeader(token, encodedAuthentication);
+            }
             CloseableHttpResponse response = httpClient.execute(post);
             String returnStr = EntityUtils.toString(response.getEntity());
             if (returnStr != null && !returnStr.isEmpty()
@@ -151,6 +165,17 @@ public class HttpManager {
      */
     private HttpGet getHttpGet(String url) {
         return new HttpGet(url);
+    }
+
+    /**
+     * build base url for manager according to config
+     *
+     * example - http://127.0.0.1:8080/inlong/manager/openapi
+     */
+    public static String buildBaseUrl() {
+        return "http://" + agentConf.get(AGENT_MANAGER_VIP_HTTP_HOST)
+                + ":" + agentConf.get(AGENT_MANAGER_VIP_HTTP_PORT)
+                + agentConf.get(AGENT_MANAGER_VIP_HTTP_PREFIX_PATH, DEFAULT_AGENT_MANAGER_VIP_HTTP_PREFIX_PATH);
     }
 
 }

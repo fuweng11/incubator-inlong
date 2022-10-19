@@ -30,7 +30,7 @@ public class KeyValueEntity {
     private StateSearchKey stateSearchKey;
 
     /**
-     * stores the file name that the jsonValue refers
+     * stores the file name that the JsonValue refers
      */
     private String fileName;
 
@@ -79,7 +79,7 @@ public class KeyValueEntity {
      * @return JobConfiguration
      */
     public JobProfile getAsJobProfile() {
-        // convert jsonValue to jobConfiguration
+        // convert JsonValue to jobConfiguration
         return JobProfile.parseJsonStr(getJsonValue());
     }
 

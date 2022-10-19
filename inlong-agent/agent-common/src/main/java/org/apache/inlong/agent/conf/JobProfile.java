@@ -27,6 +27,16 @@ public class JobProfile extends AbstractConfiguration {
 
     private final Gson gson = new Gson();
 
+    private DBSyncJobConf dbSyncJobConf;
+
+    public DBSyncJobConf getDbSyncJobConf() {
+        return dbSyncJobConf;
+    }
+
+    public void setDbSyncJobConf(DBSyncJobConf dbSyncJobConf) {
+        this.dbSyncJobConf = dbSyncJobConf;
+    }
+
     /**
      * parse json string to configuration instance.
      *

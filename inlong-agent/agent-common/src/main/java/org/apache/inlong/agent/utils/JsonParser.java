@@ -1,40 +1,55 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.utils;
 
 import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
 import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
 
 public class JsonParser {
+
     /**
-     * 处理下MySQL json二进制转化为可读的字符串
-     *
-     * @author agapple 2016年6月30日 上午11:26:17
-     * @since 1.0.22
+     * handle MySQL, convert json to string
      */
     // JSON TYPE
-    public static final int  JSONB_TYPE_SMALL_OBJECT = 0x0;
-    public static final int  JSONB_TYPE_LARGE_OBJECT = 0x1;
-    public static final int  JSONB_TYPE_SMALL_ARRAY  = 0x2;
-    public static final int  JSONB_TYPE_LARGE_ARRAY  = 0x3;
-    public static final int  JSONB_TYPE_LITERAL      = 0x4;
-    public static final int  JSONB_TYPE_INT16        = 0x5;
-    public static final int  JSONB_TYPE_UINT16       = 0x6;
-    public static final int  JSONB_TYPE_INT32        = 0x7;
-    public static final int  JSONB_TYPE_UINT32       = 0x8;
-    public static final int  JSONB_TYPE_INT64        = 0x9;
-    public static final int  JSONB_TYPE_UINT64       = 0xA;
-    public static final int  JSONB_TYPE_DOUBLE       = 0xB;
-    public static final int  JSONB_TYPE_STRING       = 0xC;
-    public static final int  JSONB_TYPE_OPAQUE       = 0xF;
-    public static final char JSONB_NULL_LITERAL      = '\0';
-    public static final char JSONB_TRUE_LITERAL      = '\1';
-    public static final char JSONB_FALSE_LITERAL     = '\2';
+    public static final int JSONB_TYPE_SMALL_OBJECT = 0x0;
+    public static final int JSONB_TYPE_LARGE_OBJECT = 0x1;
+    public static final int JSONB_TYPE_SMALL_ARRAY = 0x2;
+    public static final int JSONB_TYPE_LARGE_ARRAY = 0x3;
+    public static final int JSONB_TYPE_LITERAL = 0x4;
+    public static final int JSONB_TYPE_INT16 = 0x5;
+    public static final int JSONB_TYPE_UINT16 = 0x6;
+    public static final int JSONB_TYPE_INT32 = 0x7;
+    public static final int JSONB_TYPE_UINT32 = 0x8;
+    public static final int JSONB_TYPE_INT64 = 0x9;
+    public static final int JSONB_TYPE_UINT64 = 0xA;
+    public static final int JSONB_TYPE_DOUBLE = 0xB;
+    public static final int JSONB_TYPE_STRING = 0xC;
+    public static final int JSONB_TYPE_OPAQUE = 0xF;
+    public static final char JSONB_NULL_LITERAL = '\0';
+    public static final char JSONB_TRUE_LITERAL = '\1';
+    public static final char JSONB_FALSE_LITERAL = '\2';
 
     /*
      * The size of offset or size fields in the small and the large storage
      * format for JSON objects and JSON arrays.
      */
-    public static final int  SMALL_OFFSET_SIZE       = 2;
-    public static final int  LARGE_OFFSET_SIZE       = 4;
+    public static final int SMALL_OFFSET_SIZE = 2;
+    public static final int LARGE_OFFSET_SIZE = 4;
 
     /*
      * The size of key entries for objects when using the small storage format
@@ -42,8 +57,8 @@ public class JsonParser {
      * for key length and 2 bytes for key offset). In the large format it is 6
      * (2 bytes for length, 4 bytes for offset).
      */
-    public static final int  KEY_ENTRY_SIZE_SMALL    = (2 + SMALL_OFFSET_SIZE);
-    public static final int  KEY_ENTRY_SIZE_LARGE    = (2 + LARGE_OFFSET_SIZE);
+    public static final int KEY_ENTRY_SIZE_SMALL = (2 + SMALL_OFFSET_SIZE);
+    public static final int KEY_ENTRY_SIZE_LARGE = (2 + LARGE_OFFSET_SIZE);
 
     /*
      * The size of value entries for objects or arrays. When using the small
@@ -51,88 +66,88 @@ public class JsonParser {
      * offset). When using the large storage format, it is 5 (1 byte for type, 4
      * bytes for offset).
      */
-    public static final int  VALUE_ENTRY_SIZE_SMALL  = (1 + SMALL_OFFSET_SIZE);
-    public static final int  VALUE_ENTRY_SIZE_LARGE  = (1 + LARGE_OFFSET_SIZE);
+    public static final int VALUE_ENTRY_SIZE_SMALL = (1 + SMALL_OFFSET_SIZE);
+    public static final int VALUE_ENTRY_SIZE_LARGE = (1 + LARGE_OFFSET_SIZE);
 
-    public static Json_Value parse_value(int type, LogBuffer buffer, long len) {
+    public static JsonValue parse_value(int type, LogBuffer buffer, long len) {
         buffer = buffer.duplicate(buffer.position(), (int) len);
         switch (type) {
             case JSONB_TYPE_SMALL_OBJECT:
-                return parse_array_or_object(Json_enum_type.OBJECT, buffer, len, false);
+                return parse_array_or_object(JsonEnumType.OBJECT, buffer, len, false);
             case JSONB_TYPE_LARGE_OBJECT:
-                return parse_array_or_object(Json_enum_type.OBJECT, buffer, len, true);
+                return parse_array_or_object(JsonEnumType.OBJECT, buffer, len, true);
             case JSONB_TYPE_SMALL_ARRAY:
-                return parse_array_or_object(Json_enum_type.ARRAY, buffer, len, false);
+                return parse_array_or_object(JsonEnumType.ARRAY, buffer, len, false);
             case JSONB_TYPE_LARGE_ARRAY:
-                return parse_array_or_object(Json_enum_type.ARRAY, buffer, len, true);
+                return parse_array_or_object(JsonEnumType.ARRAY, buffer, len, true);
             default:
                 return parse_scalar(type, buffer, len);
         }
     }
 
-    private static Json_Value parse_array_or_object(Json_enum_type type, LogBuffer buffer, long len, boolean large) {
-        long offset_size = large ? LARGE_OFFSET_SIZE : SMALL_OFFSET_SIZE;
-        if (len < 2 * offset_size) {
+    private static JsonValue parse_array_or_object(JsonEnumType type, LogBuffer buffer, long len, boolean large) {
+        long offsetSize = large ? LARGE_OFFSET_SIZE : SMALL_OFFSET_SIZE;
+        if (len < 2 * offsetSize) {
             throw new IllegalArgumentException("illegal json data");
         }
-        long element_count = read_offset_or_size(buffer, large);
+        long elementCount = read_offset_or_size(buffer, large);
         long bytes = read_offset_or_size(buffer, large);
 
         if (bytes > len) {
             throw new IllegalArgumentException("illegal json data");
         }
-        long header_size = 2 * offset_size;
-        if (type == Json_enum_type.OBJECT) {
-            header_size += element_count * (large ? KEY_ENTRY_SIZE_LARGE : KEY_ENTRY_SIZE_SMALL);
+        long headerSize = 2 * offsetSize;
+        if (type == JsonEnumType.OBJECT) {
+            headerSize += elementCount * (large ? KEY_ENTRY_SIZE_LARGE : KEY_ENTRY_SIZE_SMALL);
         }
 
-        header_size += element_count * (large ? VALUE_ENTRY_SIZE_LARGE : VALUE_ENTRY_SIZE_SMALL);
-        if (header_size > bytes) {
+        headerSize += elementCount * (large ? VALUE_ENTRY_SIZE_LARGE : VALUE_ENTRY_SIZE_SMALL);
+        if (headerSize > bytes) {
             throw new IllegalArgumentException("illegal json data");
         }
-        return new Json_Value(type, buffer.rewind(), element_count, bytes, large);
+        return new JsonValue(type, buffer.rewind(), elementCount, bytes, large);
     }
 
     private static long read_offset_or_size(LogBuffer buffer, boolean large) {
         return large ? buffer.getUint32() : buffer.getUint16();
     }
 
-    private static Json_Value parse_scalar(int type, LogBuffer buffer, long len) {
+    private static JsonValue parse_scalar(int type, LogBuffer buffer, long len) {
         switch (type) {
             case JSONB_TYPE_LITERAL:
-            /* purecov: inspected */
+                /* purecov: inspected */
                 int data = buffer.getUint8();
                 switch (data) {
                     case JSONB_NULL_LITERAL:
-                        return new Json_Value(Json_enum_type.LITERAL_NULL);
+                        return new JsonValue(JsonEnumType.LITERAL_NULL);
                     case JSONB_TRUE_LITERAL:
-                        return new Json_Value(Json_enum_type.LITERAL_TRUE);
+                        return new JsonValue(JsonEnumType.LITERAL_TRUE);
                     case JSONB_FALSE_LITERAL:
-                        return new Json_Value(Json_enum_type.LITERAL_FALSE);
+                        return new JsonValue(JsonEnumType.LITERAL_FALSE);
                     default:
                         throw new IllegalArgumentException("illegal json data");
                 }
             case JSONB_TYPE_INT16:
-                return new Json_Value(Json_enum_type.INT, buffer.getInt16());
+                return new JsonValue(JsonEnumType.INT, buffer.getInt16());
             case JSONB_TYPE_INT32:
-                return new Json_Value(Json_enum_type.INT, buffer.getInt32());
+                return new JsonValue(JsonEnumType.INT, buffer.getInt32());
             case JSONB_TYPE_INT64:
-                return new Json_Value(Json_enum_type.INT, buffer.getLong64());
+                return new JsonValue(JsonEnumType.INT, buffer.getLong64());
             case JSONB_TYPE_UINT16:
-                return new Json_Value(Json_enum_type.UINT, buffer.getUint16());
+                return new JsonValue(JsonEnumType.UINT, buffer.getUint16());
             case JSONB_TYPE_UINT32:
-                return new Json_Value(Json_enum_type.UINT, buffer.getUint32());
+                return new JsonValue(JsonEnumType.UINT, buffer.getUint32());
             case JSONB_TYPE_UINT64:
-                return new Json_Value(Json_enum_type.UINT, buffer.getUlong64());
+                return new JsonValue(JsonEnumType.UINT, buffer.getUlong64());
             case JSONB_TYPE_DOUBLE:
-                return new Json_Value(Json_enum_type.DOUBLE, Double.valueOf(buffer.getDouble64()));
+                return new JsonValue(JsonEnumType.DOUBLE, Double.valueOf(buffer.getDouble64()));
             case JSONB_TYPE_STRING:
-                int max_bytes = (int) Math.min(len, 5);
+                int maxBytes = (int) Math.min(len, 5);
                 long tlen = 0;
-                long str_len = 0;
+                long strLen = 0;
                 long n = 0;
-                byte[] datas = buffer.getData(max_bytes);
-                for (int i = 0; i < max_bytes; i++) {
+                byte[] datas = buffer.getData(maxBytes);
+                for (int i = 0; i < maxBytes; i++) {
                     // Get the next 7 bits of the length.
                     tlen |= (datas[i] & 0x7f) << (7 * i);
                     if ((datas[i] & 0x80) == 0) {
@@ -143,243 +158,54 @@ public class JsonParser {
 
                         // This was the last byte. Return successfully.
                         n = i + 1;
-                        str_len = tlen;
+                        strLen = tlen;
                         break;
                     }
                 }
 
-                if (len < n + str_len) {
+                if (len < n + strLen) {
                     throw new IllegalArgumentException("illegal json data");
                 }
-                return new Json_Value(Json_enum_type.STRING, buffer.rewind()
-                        .forward((int) n).getFixString((int) str_len));
+                return new JsonValue(JsonEnumType.STRING, buffer.rewind()
+                        .forward((int) n).getFixString((int) strLen));
             case JSONB_TYPE_OPAQUE:
-            /*
-             * There should always be at least one byte, which tells the
-             * field type of the opaque value.
-             */
+                /*
+                 * There should always be at least one byte, which tells the
+                 * field type of the opaque value.
+                 */
                 // The type is encoded as a uint8 that maps to an
                 // enum_field_types.
-                int type_byte = buffer.getUint8();
+                int typeByte = buffer.getUint8();
                 int position = buffer.position();
                 // Then there's the length of the value.
-                int q_max_bytes = (int) Math.min(len, 5);
-                long q_tlen = 0;
-                long q_str_len = 0;
-                long q_n = 0;
-                byte[] q_datas = buffer.getData(q_max_bytes);
-                for (int i = 0; i < q_max_bytes; i++) {
+                int qMaxBytes = (int) Math.min(len, 5);
+                long qTlen = 0;
+                long qStrLen = 0;
+                long qN = 0;
+                byte[] qDatas = buffer.getData(qMaxBytes);
+                for (int i = 0; i < qMaxBytes; i++) {
                     // Get the next 7 bits of the length.
-                    q_tlen |= (q_datas[i] & 0x7f) << (7 * i);
-                    if ((q_datas[i] & 0x80) == 0) {
+                    qTlen |= (qDatas[i] & 0x7f) << (7 * i);
+                    if ((qDatas[i] & 0x80) == 0) {
                         // The length shouldn't exceed 32 bits.
-                        if (q_tlen > 4294967296L) {
+                        if (qTlen > 4294967296L) {
                             throw new IllegalArgumentException("illegal json data");
                         }
 
                         // This was the last byte. Return successfully.
-                        q_n = i + 1;
-                        q_str_len = q_tlen;
+                        qN = i + 1;
+                        qStrLen = qTlen;
                         break;
                     }
                 }
 
-                if (q_str_len == 0 || len < q_n + q_str_len) {
+                if (qStrLen == 0 || len < qN + qStrLen) {
                     throw new IllegalArgumentException("illegal json data");
                 }
-                return new Json_Value(type_byte, buffer.position(position).forward((int) q_n), q_str_len);
+                return new JsonValue(typeByte, buffer.position(position).forward((int) qN), qStrLen);
             default:
                 throw new IllegalArgumentException("illegal json data");
         }
-    }
-
-    public static class Json_Value {
-
-        Json_enum_type m_type;
-        int            m_field_type;
-        LogBuffer      m_data;
-        long           m_element_count;
-        long           m_length;
-        String         m_string_value;
-        Number         m_int_value;
-        double         m_double_value;
-        boolean        m_large;
-
-        public Json_Value(Json_enum_type t){
-            this.m_type = t;
-        }
-
-        public Json_Value(Json_enum_type t, Number val){
-            this.m_type = t;
-            if (t == Json_enum_type.DOUBLE) {
-                this.m_double_value = val.doubleValue();
-            } else {
-                this.m_int_value = val;
-            }
-        }
-
-        public Json_Value(Json_enum_type t, String value){
-            this.m_type = t;
-            this.m_string_value = value;
-        }
-
-        public Json_Value(int field_type, LogBuffer data, long bytes){
-            this.m_type = Json_enum_type.OPAQUE; // 不确定类型
-            this.m_field_type = field_type;
-            this.m_data = data;
-            this.m_length = bytes;
-        }
-
-        public Json_Value(Json_enum_type t, LogBuffer data, long element_count, long bytes, boolean large){
-            this.m_type = t;
-            this.m_data = data;
-            this.m_element_count = element_count;
-            this.m_length = bytes;
-            this.m_large = large;
-        }
-
-        public String key(int i) {
-            m_data.rewind();
-            int offset_size = m_large ? LARGE_OFFSET_SIZE : SMALL_OFFSET_SIZE;
-            int key_entry_size = m_large ? KEY_ENTRY_SIZE_LARGE : KEY_ENTRY_SIZE_SMALL;
-            int entry_offset = 2 * offset_size + key_entry_size * i;
-            // The offset of the key is the first part of the key
-            // entry.
-            m_data.forward(entry_offset);
-            long key_offset = read_offset_or_size(m_data, m_large);
-            // The length of the key is the second part of the
-            // entry, always two
-            // bytes.
-            long key_length = m_data.getUint16();
-            return m_data.rewind().forward((int) key_offset).getFixString((int) key_length);
-        }
-
-        public Json_Value element(int i) {
-            m_data.rewind();
-            int offset_size = m_large ? LARGE_OFFSET_SIZE : SMALL_OFFSET_SIZE;
-            int key_entry_size = m_large ? KEY_ENTRY_SIZE_LARGE : KEY_ENTRY_SIZE_SMALL;
-            int value_entry_size = m_large ? VALUE_ENTRY_SIZE_LARGE : VALUE_ENTRY_SIZE_SMALL;
-            int first_entry_offset = 2 * offset_size;
-            if (m_type == Json_enum_type.OBJECT) {
-                first_entry_offset += m_element_count * key_entry_size;
-            }
-            int entry_offset = first_entry_offset + value_entry_size * i;
-            int type = m_data.forward(entry_offset).getUint8();
-            if (type == JSONB_TYPE_INT16 || type == JSONB_TYPE_UINT16 || type == JSONB_TYPE_LITERAL
-                    || (m_large && (type == JSONB_TYPE_INT32 || type == JSONB_TYPE_UINT32))) {
-                return parse_scalar(type, m_data, value_entry_size - 1);
-            }
-            int value_offset = (int) read_offset_or_size(m_data, m_large);
-            return parse_value(type, m_data.rewind().forward(value_offset), (int) m_length - value_offset);
-        }
-
-        public StringBuilder toJsonString(StringBuilder buf) {
-            switch (m_type) {
-                case OBJECT:
-                    buf.append("{");
-                    for (int i = 0; i < m_element_count; ++i) {
-                        if (i > 0) {
-                            buf.append(", ");
-                        }
-                        buf.append('"').append(key(i)).append('"');
-                        buf.append(": ");
-                        element(i).toJsonString(buf);
-                    }
-                    buf.append("}");
-                    break;
-                case ARRAY:
-                    buf.append("[");
-                    for (int i = 0; i < m_element_count; ++i) {
-                        if (i > 0) {
-                            buf.append(", ");
-                        }
-                        element(i).toJsonString(buf);
-                    }
-                    buf.append("]");
-                    break;
-                case DOUBLE:
-                    buf.append(Double.valueOf(m_double_value).toString());
-                    break;
-                case INT:
-                    buf.append(m_int_value.toString());
-                    break;
-                case UINT:
-                    buf.append(m_int_value.toString());
-                    break;
-                case LITERAL_FALSE:
-                    buf.append("false");
-                    break;
-                case LITERAL_TRUE:
-                    buf.append("true");
-                    break;
-                case LITERAL_NULL:
-                    buf.append("NULL");
-                    break;
-                case OPAQUE:
-                    String text = null;
-                    if (m_field_type == LogEvent.MYSQL_TYPE_NEWDECIMAL) {
-                        int precision = m_data.getInt8();
-                        int scale = m_data.getInt8();
-                        text = m_data.getDecimal(precision, scale).toPlainString();
-                        buf.append(text);
-                    } else if (m_field_type == LogEvent.MYSQL_TYPE_TIME) {
-                        long packed_value = m_data.getLong64();
-                        if (packed_value == 0) {
-                            text = "00:00:00";
-                        } else {
-                            long ultime = Math.abs(packed_value);
-                            long intpart = ultime >> 24;
-                            int frac = (int) (ultime % (1L << 24));
-                            text = String.format("%s%02d:%02d:%02d",
-                                    packed_value >= 0 ? "" : "-",
-                                    (int) ((intpart >> 12) % (1 << 10)),
-                                    (int) ((intpart >> 6) % (1 << 6)),
-                                    (int) (intpart % (1 << 6)));
-                            text = text + "." + usecondsToStr(frac, 6);
-                        }
-                        buf.append('"').append(text).append('"');
-                    } else if (m_field_type == LogEvent.MYSQL_TYPE_DATE || m_field_type == LogEvent.MYSQL_TYPE_DATETIME
-                            || m_field_type == LogEvent.MYSQL_TYPE_TIMESTAMP) {
-                        long packed_value = m_data.getLong64();
-                        if (packed_value == 0) {
-                            text = "0000-00-00 00:00:00";
-                        } else {
-                            // 构造TimeStamp只处理到秒
-                            long ultime = Math.abs(packed_value);
-                            long intpart = ultime >> 24;
-                            int frac = (int) (ultime % (1L << 24));
-                            long ymd = intpart >> 17;
-                            long ym = ymd >> 5;
-                            long hms = intpart % (1 << 17);
-                            text = String.format("%04d-%02d-%02d %02d:%02d:%02d",
-                                    (int) (ym / 13),
-                                    (int) (ym % 13),
-                                    (int) (ymd % (1 << 5)),
-                                    (int) (hms >> 12),
-                                    (int) ((hms >> 6) % (1 << 6)),
-                                    (int) (hms % (1 << 6)));
-                            text = text + "." + usecondsToStr(frac, 6);
-                        }
-                        buf.append('"').append(text).append('"');
-                    } else {
-                        text = m_data.getFixString((int) m_length);
-                        buf.append('"').append(text).append('"');
-                    }
-
-                    break;
-                case STRING:
-                    buf.append('"').append(m_string_value).append('"');
-                    break;
-                case ERROR:
-                    throw new IllegalArgumentException("illegal json data");
-            }
-
-            return buf;
-        }
-    }
-
-    public static enum Json_enum_type {
-        OBJECT, ARRAY, STRING, INT, UINT, DOUBLE, LITERAL_NULL, LITERAL_TRUE, LITERAL_FALSE, OPAQUE, ERROR
     }
 
     private static String usecondsToStr(int frac, int meta) {
@@ -399,6 +225,195 @@ public class JsonParser {
         }
 
         return sec.substring(0, meta);
+    }
+
+    public static enum JsonEnumType {
+        OBJECT, ARRAY, STRING, INT, UINT, DOUBLE, LITERAL_NULL, LITERAL_TRUE, LITERAL_FALSE, OPAQUE, ERROR
+    }
+
+    public static class JsonValue {
+
+        JsonEnumType mType;
+        int mFieldType;
+        LogBuffer mData;
+        long mElementCount;
+        long mLength;
+        String mStringValue;
+        Number mIntValue;
+        double mDoubleValue;
+        boolean mLarge;
+
+        public JsonValue(JsonEnumType t) {
+            this.mType = t;
+        }
+
+        public JsonValue(JsonEnumType t, Number val) {
+            this.mType = t;
+            if (t == JsonEnumType.DOUBLE) {
+                this.mDoubleValue = val.doubleValue();
+            } else {
+                this.mIntValue = val;
+            }
+        }
+
+        public JsonValue(JsonEnumType t, String value) {
+            this.mType = t;
+            this.mStringValue = value;
+        }
+
+        public JsonValue(int fieldType, LogBuffer data, long bytes) {
+            this.mType = JsonEnumType.OPAQUE; //uncertain type
+            this.mFieldType = fieldType;
+            this.mData = data;
+            this.mLength = bytes;
+        }
+
+        public JsonValue(JsonEnumType t, LogBuffer data, long elementCount, long bytes, boolean large) {
+            this.mType = t;
+            this.mData = data;
+            this.mElementCount = elementCount;
+            this.mLength = bytes;
+            this.mLarge = large;
+        }
+
+        public String key(int i) {
+            mData.rewind();
+            int offsetSize = mLarge ? LARGE_OFFSET_SIZE : SMALL_OFFSET_SIZE;
+            int keyEntrySize = mLarge ? KEY_ENTRY_SIZE_LARGE : KEY_ENTRY_SIZE_SMALL;
+            int entryOffset = 2 * offsetSize + keyEntrySize * i;
+            // The offset of the key is the first part of the key
+            // entry.
+            mData.forward(entryOffset);
+            long keyOffset = read_offset_or_size(mData, mLarge);
+            // The length of the key is the second part of the
+            // entry, always two
+            // bytes.
+            long keyLength = mData.getUint16();
+            return mData.rewind().forward((int) keyOffset).getFixString((int) keyLength);
+        }
+
+        public JsonValue element(int i) {
+            mData.rewind();
+            int offsetSize = mLarge ? LARGE_OFFSET_SIZE : SMALL_OFFSET_SIZE;
+            int keyEntrySize = mLarge ? KEY_ENTRY_SIZE_LARGE : KEY_ENTRY_SIZE_SMALL;
+            int valueEntrySize = mLarge ? VALUE_ENTRY_SIZE_LARGE : VALUE_ENTRY_SIZE_SMALL;
+            int firstEntryOffset = 2 * offsetSize;
+            if (mType == JsonEnumType.OBJECT) {
+                firstEntryOffset += mElementCount * keyEntrySize;
+            }
+            int entryOffset = firstEntryOffset + valueEntrySize * i;
+            int type = mData.forward(entryOffset).getUint8();
+            if (type == JSONB_TYPE_INT16 || type == JSONB_TYPE_UINT16 || type == JSONB_TYPE_LITERAL
+                    || (mLarge && (type == JSONB_TYPE_INT32 || type == JSONB_TYPE_UINT32))) {
+                return parse_scalar(type, mData, valueEntrySize - 1);
+            }
+            int valueOffset = (int) read_offset_or_size(mData, mLarge);
+            return parse_value(type, mData.rewind().forward(valueOffset), (int) mLength - valueOffset);
+        }
+
+        public StringBuilder toJsonString(StringBuilder buf) {
+            switch (mType) {
+                case OBJECT:
+                    buf.append("{");
+                    for (int i = 0; i < mElementCount; ++i) {
+                        if (i > 0) {
+                            buf.append(", ");
+                        }
+                        buf.append('"').append(key(i)).append('"');
+                        buf.append(": ");
+                        element(i).toJsonString(buf);
+                    }
+                    buf.append("}");
+                    break;
+                case ARRAY:
+                    buf.append("[");
+                    for (int i = 0; i < mElementCount; ++i) {
+                        if (i > 0) {
+                            buf.append(", ");
+                        }
+                        element(i).toJsonString(buf);
+                    }
+                    buf.append("]");
+                    break;
+                case DOUBLE:
+                    buf.append(Double.valueOf(mDoubleValue).toString());
+                    break;
+                case INT:
+                    buf.append(mIntValue.toString());
+                    break;
+                case UINT:
+                    buf.append(mIntValue.toString());
+                    break;
+                case LITERAL_FALSE:
+                    buf.append("false");
+                    break;
+                case LITERAL_TRUE:
+                    buf.append("true");
+                    break;
+                case LITERAL_NULL:
+                    buf.append("NULL");
+                    break;
+                case OPAQUE:
+                    String text = null;
+                    if (mFieldType == LogEvent.MYSQL_TYPE_NEWDECIMAL) {
+                        int precision = mData.getInt8();
+                        int scale = mData.getInt8();
+                        text = mData.getDecimal(precision, scale).toPlainString();
+                        buf.append(text);
+                    } else if (mFieldType == LogEvent.MYSQL_TYPE_TIME) {
+                        long packedValue = mData.getLong64();
+                        if (packedValue == 0) {
+                            text = "00:00:00";
+                        } else {
+                            long ultime = Math.abs(packedValue);
+                            long intpart = ultime >> 24;
+                            int frac = (int) (ultime % (1L << 24));
+                            text = String.format("%s%02d:%02d:%02d",
+                                    packedValue >= 0 ? "" : "-",
+                                    (int) ((intpart >> 12) % (1 << 10)),
+                                    (int) ((intpart >> 6) % (1 << 6)),
+                                    (int) (intpart % (1 << 6)));
+                            text = text + "." + usecondsToStr(frac, 6);
+                        }
+                        buf.append('"').append(text).append('"');
+                    } else if (mFieldType == LogEvent.MYSQL_TYPE_DATE || mFieldType == LogEvent.MYSQL_TYPE_DATETIME
+                            || mFieldType == LogEvent.MYSQL_TYPE_TIMESTAMP) {
+                        long packedValue = mData.getLong64();
+                        if (packedValue == 0) {
+                            text = "0000-00-00 00:00:00";
+                        } else {
+                            // second timestamp
+                            long ultime = Math.abs(packedValue);
+                            long intpart = ultime >> 24;
+                            int frac = (int) (ultime % (1L << 24));
+                            long ymd = intpart >> 17;
+                            long ym = ymd >> 5;
+                            long hms = intpart % (1 << 17);
+                            text = String.format("%04d-%02d-%02d %02d:%02d:%02d",
+                                    (int) (ym / 13),
+                                    (int) (ym % 13),
+                                    (int) (ymd % (1 << 5)),
+                                    (int) (hms >> 12),
+                                    (int) ((hms >> 6) % (1 << 6)),
+                                    (int) (hms % (1 << 6)));
+                            text = text + "." + usecondsToStr(frac, 6);
+                        }
+                        buf.append('"').append(text).append('"');
+                    } else {
+                        text = mData.getFixString((int) mLength);
+                        buf.append('"').append(text).append('"');
+                    }
+
+                    break;
+                case STRING:
+                    buf.append('"').append(mStringValue).append('"');
+                    break;
+                case ERROR:
+                    throw new IllegalArgumentException("illegal json data");
+            }
+
+            return buf;
+        }
     }
 
 }

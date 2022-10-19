@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.inlong.agent.conf;
 
 import org.apache.inlong.agent.state.JobStat;
@@ -6,7 +23,7 @@ import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-//TODO: directly use DBSyncTaskConf
+//TODO: is it ok to directly use DBSyncTaskConf?
 public class MysqlTableConf {
 
     public static final String INST_NAME = "inst.name";
@@ -32,7 +49,6 @@ public class MysqlTableConf {
     private boolean skipDelete = false;
     private Charset charset;
 
-
     public MysqlTableConf(String instName, String databaseName, String tableName, String groupId, String streamId,
             Integer taskId, Charset charset, boolean skipDelete) {
         this.instName = instName;
@@ -44,24 +60,6 @@ public class MysqlTableConf {
         this.skipDelete = skipDelete;
         this.charset = charset;
         this.fields = new ArrayList<>();
-    }
-
-    public MysqlTableConf(JSONObject obj, Charset charset) {
-
-        this.instName = obj.getString(INST_NAME);
-        this.dbName = obj.getString(DATABASE_NAME);
-        this.tbName = obj.getString(TABLE_NAME);
-        this.taskId = obj.getInteger(TASK_ID);
-        this.streamId = obj.getString(TASK_STREAMID);
-        if (obj.containsKey(TASK_SKIP_DELETE)) {
-            this.skipDelete = obj.getBoolean(TASK_SKIP_DELETE);
-        }
-        this.status = JobStat.TaskStat.valueOf(obj.getString(TASK_STATUS));
-        this.charset = charset;
-        if (obj.containsKey(TASK_CHARSET_NAME)) {
-            //replace if there have charset name, else use jobconf charset
-            this.charset = Charset.forName(obj.getString(TASK_CHARSET_NAME));
-        }
     }
 
     public String getDataBaseName() {
