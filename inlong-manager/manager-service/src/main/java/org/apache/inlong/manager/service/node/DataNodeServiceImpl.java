@@ -91,7 +91,7 @@ public class DataNodeServiceImpl implements DataNodeService {
 
     @Override
     public DataNodeInfo get(String name, String type) {
-        DataNodeEntity entity = dataNodeMapper.selectByNameAndType(name, type);
+        DataNodeEntity entity = dataNodeMapper.selectByUniqueKey(name, type);
         if (entity == null) {
             throw new BusinessException(String.format("data node not found by name=%s, type=%s", name, type));
         }

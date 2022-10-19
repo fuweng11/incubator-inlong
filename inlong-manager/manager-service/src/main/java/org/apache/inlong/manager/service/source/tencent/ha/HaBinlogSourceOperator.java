@@ -19,6 +19,7 @@ package org.apache.inlong.manager.service.source.tencent.ha;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncDumpPosition;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.enums.ClusterType;
@@ -77,6 +78,7 @@ public class HaBinlogSourceOperator extends AbstractSourceOperator {
         HaBinlogSourceRequest sourceRequest = (HaBinlogSourceRequest) request;
         CommonBeanUtils.copyProperties(sourceRequest, targetEntity, true);
         try {
+            targetEntity.setStartPosition(objectMapper.writeValueAsString(sourceRequest.getStartDumpPosition()));
             HaBinlogSourceDTO dto = HaBinlogSourceDTO.getFromRequest(sourceRequest);
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
         } catch (Exception e) {
@@ -94,7 +96,11 @@ public class HaBinlogSourceOperator extends AbstractSourceOperator {
         HaBinlogSourceDTO dto = HaBinlogSourceDTO.getFromJson(entity.getExtParams());
         CommonBeanUtils.copyProperties(entity, source, true);
         CommonBeanUtils.copyProperties(dto, source, true);
-
+        try {
+            source.setStartDumpPosition(objectMapper.readValue(entity.getStartPosition(), DbSyncDumpPosition.class));
+        } catch (Exception e) {
+            LOGGER.error("start position is invalid for id={}, skip to parse and issue", entity.getId());
+        }
         List<StreamField> sourceFields = super.getSourceFields(entity.getId());
         source.setFieldList(sourceFields);
         return source;

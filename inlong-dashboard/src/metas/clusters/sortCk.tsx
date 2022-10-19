@@ -22,7 +22,7 @@ import i18n from '@/i18n';
 import UserSelect from '@/components/UserSelect';
 import React from 'react';
 
-export const sortCk: FieldItemType[] = [
+export const consumeExtends: FieldItemType[] = [
   {
     type: 'input',
     label: i18n.t('meta.Clusters.Sort.BackupDataPath'),

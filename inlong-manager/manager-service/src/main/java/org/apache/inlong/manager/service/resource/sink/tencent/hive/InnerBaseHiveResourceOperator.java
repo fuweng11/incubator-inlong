@@ -557,7 +557,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
     }
 
     private DataNodeInfo getDataNodeInfo(String dataNodeName, String dataNodeType) {
-        DataNodeEntity entity = dataNodeEntityMapper.selectByNameAndType(dataNodeName, dataNodeType);
+        DataNodeEntity entity = dataNodeEntityMapper.selectByUniqueKey(dataNodeName, dataNodeType);
         if (entity == null) {
             LOGGER.error("data node not found by name={}, type={}", dataNodeName, dataNodeType);
             throw new BusinessException("data node not found");

@@ -236,7 +236,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
             throws Exception {
         String groupId = groupInfo.getInlongGroupId();
         String streamId = clickHouseSink.getInlongStreamId();
-        DataNodeEntity ckCluster = dataNodeEntityMapper.selectByNameAndType(clickHouseSink.getDataNodeName(),
+        DataNodeEntity ckCluster = dataNodeEntityMapper.selectByUniqueKey(clickHouseSink.getDataNodeName(),
                 DataNodeType.INNER_CK);
         if (ckCluster == null) {
             log.error("can not find click house cluster for {} - {} ", groupId, streamId);
