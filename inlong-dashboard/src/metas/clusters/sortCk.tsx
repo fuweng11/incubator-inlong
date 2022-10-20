@@ -18,22 +18,7 @@
  */
 
 import type { FieldItemType } from '@/metas/common';
-import i18n from '@/i18n';
-import UserSelect from '@/components/UserSelect';
-import React from 'react';
 
 export const consumeExtends: FieldItemType[] = [
-  {
-    type: 'input',
-    label: i18n.t('meta.Clusters.Sort.BackupDataPath'),
-    name: 'backupDataPath',
-    props: {
-      placeholder: 'hdfs://xx-xxx-xx/xxx/xxx',
-    },
-  },
-  {
-    type: <UserSelect />,
-    label: i18n.t('meta.Clusters.Sort.BackupHadoopProxyUser'),
-    name: 'backupHadoopProxyUser',
-  },
+  // You can extended consume fields here...
 ];
