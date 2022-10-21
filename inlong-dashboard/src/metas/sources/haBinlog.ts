@@ -23,15 +23,6 @@ import type { FieldItemType } from '@/metas/common';
 
 export const haBinlog: FieldItemType[] = [
   {
-    name: 'agentIp',
-    type: 'input',
-    label: 'Agent IP',
-    rules: [{ required: true }],
-    props: values => ({
-      disabled: values?.status === 101,
-    }),
-  },
-  {
     type: 'select',
     label: i18n.t('meta.Sources.HaBinlog.Cluster'),
     name: 'inlongClusterName',
@@ -61,69 +52,6 @@ export const haBinlog: FieldItemType[] = [
         },
       },
     }),
-  },
-  {
-    type: 'select',
-    label: i18n.t('meta.Sources.HaBinlog.DataNode'),
-    name: 'dataNodeName',
-    rules: [{ required: true }],
-    props: values => ({
-      showSearch: true,
-      disabled: values?.status === 101,
-      options: {
-        requestTrigger: ['onOpen', 'onSearch'],
-        requestService: keyword => ({
-          url: '/node/list',
-          method: 'POST',
-          data: {
-            keyword,
-            pageNum: 1,
-            pageSize: 20,
-          },
-        }),
-        requestParams: {
-          formatResult: result =>
-            result?.list?.map(item => ({
-              label: item.name,
-              value: item.name,
-            })),
-        },
-      },
-    }),
-  },
-  {
-    name: 'serializationType',
-    type: 'radio',
-    label: i18n.t('meta.Sources.HaBinlog.SerializationType'),
-    initialValue: 'CSV',
-    rules: [{ required: true }],
-    props: values => ({
-      disabled: values?.status === 101,
-      options: [
-        {
-          label: 'CSV',
-          value: 'CSV',
-        },
-        {
-          label: 'JSON',
-          value: 'JSON',
-        },
-        {
-          label: 'CANAL',
-          value: 'CANAL',
-        },
-        {
-          label: 'AVRO',
-          value: 'AVRO',
-        },
-      ],
-    }),
-  },
-  {
-    name: 'snapshot',
-    type: 'input',
-    label: 'Snapshot',
-    rules: [{ required: true }],
   },
   {
     name: 'dbName',

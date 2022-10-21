@@ -84,7 +84,6 @@
   "meta.Sources.HaBinlog.TableName": "TableName",
   "meta.Sources.HaBinlog.TableNameHint": "Multiple tables are separated by (,). Note: The structure of multiple tables must be exactly the same",
   "meta.Sources.HaBinlog.Encoding": "Encoding",
-  "meta.Sources.HaBinlog.SerializationType": "SerializationType",
   "meta.Sources.HaBinlog.SkipDelete": "Skip the delete event",
   "meta.Sources.HaBinlog.IP": "Database IP",
   "meta.Sources.HaBinlog.IPMessage": "Please enter the correct IP address",
