@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.plugin.sources.reader.dbsync;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
@@ -184,6 +185,13 @@ public class DBSyncReader extends AbstractReader {
     private String errorMsg = "";
     private long oldSecStamp;
     private volatile long oldTimeStampler = 0;
+    private static final String KEY_MYSQL_ADDRESS = "mysqlAddress";
+    private static final String KEY_DBSYNC_JOB_NAME = "dbsyncJobName";
+    private static final String KEY_SERVER_ID = "serverId";
+    private static final String KEY_MYSQL_USER_NAME = "mysqlUserName";
+    private static final String KEY_BINLOG_FILE_PATH = "binlogFilePath";
+    private static final String KEY_BINLOG_START_POSITION = "binlogStartPosition";
+    private static final String KEY_LAST_TIMESTAMP = "lastTimeStamp";
 
     public DBSyncReader(JobProfile profile) {
         // agent conf
@@ -217,6 +225,14 @@ public class DBSyncReader extends AbstractReader {
         slaveId = generateSlaveId();
         parseThreadList = new ConcurrentHashMap<>();
         lastTimeStamp = Instant.now().toEpochMilli();
+        Map<String, String> readerMetricDimensions = readerMetric.getDimensions();
+        readerMetricDimensions.put(KEY_MYSQL_ADDRESS, mysqlAddress);
+        readerMetricDimensions.put(KEY_DBSYNC_JOB_NAME, jobName);
+        readerMetricDimensions.put(KEY_SERVER_ID, jobconf.getServerId());
+        readerMetricDimensions.put(KEY_MYSQL_USER_NAME, jobconf.getMysqlUserName());
+        readerMetricDimensions.put(KEY_BINLOG_FILE_PATH, jobconf.getBinlogFilePath());
+        readerMetricDimensions.put(KEY_BINLOG_START_POSITION, String.valueOf(lastLog));
+        readerMetricDimensions.put(KEY_LAST_TIMESTAMP, String.valueOf(lastTimeStamp));
     }
 
     public DBSyncJobConf getJobconf() {

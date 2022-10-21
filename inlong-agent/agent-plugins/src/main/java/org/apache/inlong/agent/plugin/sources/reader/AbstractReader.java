@@ -28,6 +28,7 @@ import org.apache.inlong.common.metric.MetricRegister;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.inlong.common.util.NetworkUtils;
 
 import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_GROUP_ID;
 import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_STREAM_ID;
@@ -35,7 +36,9 @@ import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_GROU
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_GROUP_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_STREAM_ID;
+import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_LOCAL_ADDRESS;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_PLUGIN_ID;
+import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_PLUGIN_INIT_TIME;
 
 /**
  * Abstract reader, init reader and reader metrics
@@ -60,6 +63,8 @@ public abstract class AbstractReader implements Reader {
         dimensions.put(KEY_PLUGIN_ID, this.getClass().getSimpleName());
         dimensions.put(KEY_INLONG_GROUP_ID, inlongGroupId);
         dimensions.put(KEY_INLONG_STREAM_ID, inlongStreamId);
+        dimensions.put(KEY_LOCAL_ADDRESS, NetworkUtils.getLocalIp());
+        dimensions.put(KEY_PLUGIN_INIT_TIME, String.valueOf(System.currentTimeMillis()));
         metricName = String.join("-", this.getClass().getSimpleName(),
                 String.valueOf(METRIC_INDEX.incrementAndGet()));
         this.metricItemSet = new AgentMetricItemSet(metricName);

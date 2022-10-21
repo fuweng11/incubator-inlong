@@ -34,6 +34,8 @@ public class AgentMetricItem extends MetricItem {
     public static final String KEY_INLONG_STREAM_ID = "inlongStreamId";
     public static final String KEY_COMPONENT_NAME = "componentName"; // for TaskManager, JobManager
     public static final String KEY_STATISTICS_TYPE = "statisticsType";
+    public static final String KEY_LOCAL_ADDRESS = "localAddress";
+    public static final String KEY_PLUGIN_INIT_TIME = "pluginInitTime";
 
     //job
     public static final String M_JOB_RUNNING_COUNT = "jobRunningCount";
