@@ -346,7 +346,7 @@ CREATE TABLE IF NOT EXISTS `stream_source`
     `inlong_cluster_name` varchar(128)          DEFAULT NULL COMMENT 'Cluster name of the agent running the task',
     `serialization_type`  varchar(20)           DEFAULT NULL COMMENT 'Serialization type, support: csv, json, canal, avro, etc',
     `snapshot`            mediumtext            DEFAULT NULL COMMENT 'Snapshot of this source task',
-    `start_position`      varchar(128)          DEFAULT NULL COMMENT 'The location where binlog starts to collect',
+    `start_position`      text                  DEFAULT NULL COMMENT 'The location where binlog starts to collect',
     `report_time`         timestamp    NULL COMMENT 'Snapshot time',
     `ext_params`          mediumtext            DEFAULT NULL COMMENT 'Another fields will be saved as JSON string, such as filePath, dbName, tableName, etc',
     `operate_log`         mediumtext            DEFAULT NULL COMMENT 'Background operate log',

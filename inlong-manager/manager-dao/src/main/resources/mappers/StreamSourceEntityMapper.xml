@@ -65,7 +65,7 @@
                 #{sourceType,jdbcType=VARCHAR}, #{sourceName,jdbcType=VARCHAR}, #{templateId,jdbcType=INTEGER},
                 #{agentIp,jdbcType=VARCHAR}, #{uuid,jdbcType=VARCHAR}, #{dataNodeName,jdbcType=VARCHAR},
                 #{inlongClusterName,jdbcType=VARCHAR}, #{serializationType,jdbcType=VARCHAR},
-                #{snapshot,jdbcType=LONGVARCHAR}, #{startPosition,jdbcType=VARCHAR},
+                #{snapshot,jdbcType=LONGVARCHAR}, #{startPosition,jdbcType=LONGVARCHAR},
                 #{modifyTime,jdbcType=TIMESTAMP}, #{extParams,jdbcType=LONGVARCHAR},
                 #{operateLog,jdbcType=LONGVARCHAR}, #{status,jdbcType=INTEGER},
                 #{previousStatus,jdbcType=INTEGER}, #{creator,jdbcType=VARCHAR}, #{modifier,jdbcType=VARCHAR})
@@ -365,7 +365,7 @@
                 snapshot = #{snapshot,jdbcType=LONGVARCHAR},
             </if>
             <if test="startPosition != null">
-                start_position = #{startPosition,jdbcType=VARCHAR},
+                start_position = #{startPosition,jdbcType=LONGVARCHAR},
             </if>
             <if test="reportTime != null">
                 report_time = #{reportTime,jdbcType=TIMESTAMP},
@@ -408,7 +408,7 @@
             inlong_cluster_name = #{inlongClusterName,jdbcType=VARCHAR},
             serialization_type  = #{serializationType,jdbcType=VARCHAR},
             snapshot            = #{snapshot,jdbcType=LONGVARCHAR},
-            start_position      = #{startPosition,jdbcType=VARCHAR},
+            start_position      = #{startPosition,jdbcType=LONGVARCHAR},
             report_time         = #{reportTime,jdbcType=TIMESTAMP},
             ext_params          = #{extParams,jdbcType=LONGVARCHAR},
             operate_log         = #{operateLog,jdbcType=LONGVARCHAR},
