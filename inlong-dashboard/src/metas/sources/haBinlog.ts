@@ -18,59 +18,112 @@
  */
 
 import i18n from '@/i18n';
-import request from '@/utils/request';
 import rulesPattern from '@/utils/pattern';
 import type { FieldItemType } from '@/metas/common';
 
 export const haBinlog: FieldItemType[] = [
   {
-    name: 'accessType',
-    type: 'radio',
-    label: i18n.t('meta.Sources.HaBinlog.AccessType'),
-    initialValue: 'DB_SYNC_AGENT',
+    name: 'agentIp',
+    type: 'input',
+    label: 'Agent IP',
     rules: [{ required: true }],
-    props: {
-      options: [
-        {
-          label: '采集BinLog',
-          value: 'DB_SYNC_AGENT',
-        },
-      ],
-    },
+    props: values => ({
+      disabled: values?.status === 101,
+    }),
   },
   {
-    name: 'serverName',
     type: 'select',
-    label: i18n.t('meta.Sources.HaBinlog.DBServer'),
+    label: i18n.t('meta.Sources.HaBinlog.Cluster'),
+    name: 'inlongClusterName',
     rules: [{ required: true }],
-    extraNames: ['serverId'],
-    props: {
+    props: values => ({
+      showSearch: true,
+      disabled: values?.status === 101,
       options: {
-        requestService: async () => {
-          const groupData = await request({
-            url: '/commonserver/getByUser',
-            params: {
-              serverType: 'DB',
-            },
-          });
-          return groupData;
-        },
+        requestTrigger: ['onOpen', 'onSearch'],
+        requestService: keyword => ({
+          url: '/cluster/list',
+          method: 'POST',
+          data: {
+            keyword,
+            pageNum: 1,
+            pageSize: 20,
+            type: 'AGENT',
+          },
+        }),
         requestParams: {
           formatResult: result =>
-            result?.map(item => ({
+            result?.list?.map(item => ({
               ...item,
-              label: item.serverName,
-              value: item.serverName,
-              serverId: item.id,
+              label: item.name,
+              value: item.name,
             })),
         },
       },
-      onChange: (value, option) => ({
-        serverId: option.serverId,
-        dbName: option.dbName,
-        clusterName: undefined,
-      }),
-    },
+    }),
+  },
+  {
+    type: 'select',
+    label: i18n.t('meta.Sources.HaBinlog.DataNode'),
+    name: 'dataNodeName',
+    rules: [{ required: true }],
+    props: values => ({
+      showSearch: true,
+      disabled: values?.status === 101,
+      options: {
+        requestTrigger: ['onOpen', 'onSearch'],
+        requestService: keyword => ({
+          url: '/node/list',
+          method: 'POST',
+          data: {
+            keyword,
+            pageNum: 1,
+            pageSize: 20,
+          },
+        }),
+        requestParams: {
+          formatResult: result =>
+            result?.list?.map(item => ({
+              label: item.name,
+              value: item.name,
+            })),
+        },
+      },
+    }),
+  },
+  {
+    name: 'serializationType',
+    type: 'radio',
+    label: i18n.t('meta.Sources.HaBinlog.SerializationType'),
+    initialValue: 'CSV',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: values?.status === 101,
+      options: [
+        {
+          label: 'CSV',
+          value: 'CSV',
+        },
+        {
+          label: 'JSON',
+          value: 'JSON',
+        },
+        {
+          label: 'CANAL',
+          value: 'CANAL',
+        },
+        {
+          label: 'AVRO',
+          value: 'AVRO',
+        },
+      ],
+    }),
+  },
+  {
+    name: 'snapshot',
+    type: 'input',
+    label: 'Snapshot',
+    rules: [{ required: true }],
   },
   {
     name: 'dbName',
@@ -126,30 +179,10 @@ export const haBinlog: FieldItemType[] = [
     },
   },
   {
-    name: '_startDumpPosition',
-    type: 'radio',
-    label: i18n.t('meta.Sources.HaBinlog.CallBinlog'),
-    rules: [{ required: true }],
-    initialValue: 0,
-    props: {
-      options: [
-        {
-          label: i18n.t('basic.Yes'),
-          value: 1,
-        },
-        {
-          label: i18n.t('basic.No'),
-          value: 0,
-        },
-      ],
-    },
-  },
-  {
     name: 'startDumpPosition.logIdentity.sourceIp',
     type: 'input',
     label: i18n.t('meta.Sources.HaBinlog.IP'),
     rules: [
-      { required: true },
       {
         pattern: rulesPattern.ip,
         message: i18n.t('meta.Sources.HaBinlog.IPMessage'),
@@ -161,7 +194,6 @@ export const haBinlog: FieldItemType[] = [
     type: 'inputnumber',
     label: i18n.t('meta.Sources.HaBinlog.Port'),
     rules: [
-      { required: true },
       {
         pattern: rulesPattern.port,
         message: i18n.t('meta.Sources.HaBinlog.PortMessage'),
@@ -172,13 +204,11 @@ export const haBinlog: FieldItemType[] = [
     name: 'startDumpPosition.entryPosition.journalName',
     type: 'input',
     label: i18n.t('meta.Sources.HaBinlog.FileName'),
-    rules: [{ required: true }],
   },
   {
     name: 'startDumpPosition.entryPosition.position',
     type: 'inputnumber',
     label: i18n.t('meta.Sources.HaBinlog.FileLocation'),
-    rules: [{ required: true }],
     props: {
       min: 1,
       max: 1000000000,
