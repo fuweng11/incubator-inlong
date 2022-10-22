@@ -61,19 +61,19 @@ public class TencentConstants {
 
     /**
      * The name of the sort consumer group for the tube
-     * Naming rules: sort task name_ BID_ consumer_ group
+     * Naming rules: clusterTag_topicName_consumer_group
      */
     public static final String SORT_TUBE_GROUP = "%s_%s_consumer_group";
 
     /**
      * Name of pulsar's sort consumer group
-     * Naming rules: sort task name_ BID_ TID_ consumer_ group
+     * Naming rules: sortTaskName_groupMqResource_streamMqResource_sinkId_consumer_group
      */
-    public static final String SORT_PULSAR_GROUP = "%s_%s_%s_consumer_group";
+    public static final String SORT_PULSAR_GROUP = "%s_%s_%s_%s_consumer_group";
 
     /**
      * Historical version: the name of pulsar's sort consumption group, excluding bid
-     * Naming rules: sort task name_ TID_ consumer_ group
+     * Naming rules: sortTaskName_sinkId_consumer_group
      */
     public static final String OLD_SORT_PULSAR_GROUP = "%s_%s_consumer_group";
 

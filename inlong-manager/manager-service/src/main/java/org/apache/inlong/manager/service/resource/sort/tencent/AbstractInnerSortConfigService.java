@@ -34,15 +34,16 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.Preconditions;
-import org.apache.inlong.manager.dao.entity.ConsumptionEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
+import org.apache.inlong.manager.dao.entity.InlongConsumeEntity;
 import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
 import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
-import org.apache.inlong.manager.dao.mapper.ConsumptionEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongConsumeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
+import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +60,7 @@ public class AbstractInnerSortConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractInnerSortConfigService.class);
 
     @Autowired
-    private ConsumptionEntityMapper consumptionEntityMapper;
+    private InlongConsumeEntityMapper inlongConsumeMapper;
     @Autowired
     private InlongGroupEntityMapper groupService;
     @Autowired
@@ -102,20 +103,24 @@ public class AbstractInnerSortConfigService {
         return zkRoot;
     }
 
-    public String getConsumerGroup(String bid, String tid, String topic, String topoName, String mqType) {
+    public String getConsumerGroup(InlongGroupInfo groupInfo, String topic, String taskName, String streamId,
+            Integer sinkId) {
         String consumerGroup;
+        String groupId = groupInfo.getInlongGroupId();
+        String mqType = groupInfo.getMqType();
         if (MQType.TUBEMQ.equals(mqType)) {
-            consumerGroup = String.format(TencentConstants.SORT_TUBE_GROUP, topoName, bid);
+            consumerGroup = String.format(TencentConstants.SORT_TUBE_GROUP, groupInfo.getInlongClusterTag(), topic);
         } else {
-            consumerGroup = String.format(TencentConstants.OLD_SORT_PULSAR_GROUP, topoName, tid);
-            ConsumptionEntity exists = consumptionEntityMapper.selectConsumptionExists(bid, topic, consumerGroup);
+            consumerGroup = String.format(TencentConstants.OLD_SORT_PULSAR_GROUP, taskName, sinkId);
+            InlongConsumeEntity exists = inlongConsumeMapper.selectExists(consumerGroup, topic, groupId);
             if (exists == null) {
-                consumerGroup = String.format(TencentConstants.SORT_PULSAR_GROUP, topoName, bid, tid);
+                consumerGroup = String.format(TencentConstants.SORT_PULSAR_GROUP, taskName, groupInfo.getMqResource(),
+                        topic, sinkId);
             }
         }
 
-        LOGGER.debug("success to get consumerGroup={} for bid={} tid={} topic={} topoName={}",
-                consumerGroup, bid, tid, topic, topoName);
+        LOGGER.debug("success to get consumerGroup={} for groupId={} sinkId={} topic={} taskName={}",
+                consumerGroup, groupId, sinkId, topic, taskName);
         return consumerGroup;
     }
 

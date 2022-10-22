@@ -57,9 +57,9 @@ import java.util.List;
 public class PulsarResourceOperator implements QueueResourceOperator {
 
     /**
-     * The name rule for Pulsar subscription: clusterTag_topicName_sinkId_consumer_group
+     * The name rule for Pulsar subscription: clusterTag_namespace_topic_sinkId_consumer_group
      */
-    private static final String PULSAR_SUBSCRIPTION = "%s_%s_%s_consumer_group";
+    private static final String PULSAR_SUBSCRIPTION = "%s_%s_%s_%s_consumer_group";
 
     @Autowired
     private InlongClusterService clusterService;
@@ -253,7 +253,7 @@ public class PulsarResourceOperator implements QueueResourceOperator {
             // subscription naming rules: clusterTag_topicName_sinkId_consumer_group
             String clusterTag = pulsarInfo.getInlongClusterTag();
             for (StreamSink sink : streamSinks) {
-                String subs = getPulsarSubscription(clusterTag, sink, topicName);
+                String subs = getPulsarSubscription(pulsarInfo, clusterTag, sink, topicName);
                 pulsarOperator.createSubscription(pulsarAdmin, fullTopicName, pulsarInfo.getQueueModule(), subs);
                 log.info("success to create subs={} for groupId={}, topic={}", subs, groupId, fullTopicName);
 
@@ -286,28 +286,31 @@ public class PulsarResourceOperator implements QueueResourceOperator {
         }
     }
 
-    private String getPulsarSubscription(String clusterTag, StreamSink sink, String topicName) {
-        String topoType;
+    private String getPulsarSubscription(InlongGroupInfo groupInfo, String clusterTag, StreamSink sink,
+            String topicName) {
+        String sortTaskType;
         switch (sink.getSinkType()) {
             case SinkType.INNER_THIVE:
-                topoType = ClusterType.SORT_THIVE;
+                sortTaskType = ClusterType.SORT_THIVE;
                 break;
             case SinkType.INNER_HIVE:
-                topoType = ClusterType.SORT_HIVE;
+                sortTaskType = ClusterType.SORT_HIVE;
                 break;
             case SinkType.INNER_CK:
-                topoType = ClusterType.SORT_CK;
+                sortTaskType = ClusterType.SORT_CK;
                 break;
             default:
-                return String.format(PULSAR_SUBSCRIPTION, clusterTag, topicName, sink.getId());
+                return String.format(PULSAR_SUBSCRIPTION, clusterTag, groupInfo.getMqResource(), topicName,
+                        sink.getId());
         }
         List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                clusterTag, null, topoType);
+                clusterTag, null, sortTaskType);
         if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
             throw new WorkflowListenerException("sort cluster not found for groupId=" + sink.getInlongGroupId());
         }
-        String topoName = sortClusters.get(0).getName();
-        return String.format(PULSAR_SUBSCRIPTION, topoName, sink.getInlongGroupId(), sink.getInlongStreamId());
+        String taskName = sortClusters.get(0).getName();
+        return String.format(PULSAR_SUBSCRIPTION, taskName, groupInfo.getMqResource(), topicName,
+                sink.getId());
     }
 
 }

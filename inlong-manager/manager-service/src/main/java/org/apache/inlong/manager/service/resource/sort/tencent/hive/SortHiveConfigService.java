@@ -58,7 +58,6 @@ import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
-import org.apache.inlong.manager.pojo.cluster.tubemq.TubeClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
@@ -157,7 +156,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 throw new WorkflowListenerException("sort cluster not found for groupId=" + groupId);
             }
             InlongClusterEntity sortCluster = sortClusters.get(0);
-            String topoName = sortCluster.getName();
+            String taskName = sortCluster.getName();
 
             // Backup configuration
             BaseSortClusterDTO sortClusterDTO = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
@@ -165,15 +164,15 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             sortExtConfig.setBackupDataPath(sortClusterDTO.getBackupDataPath());
             sortExtConfig.setBackupHadoopProxyUser(sortClusterDTO.getBackupHadoopProxyUser());
 
-            if (topoName == null || StringUtils.isBlank(topoName)) {
+            if (taskName == null || StringUtils.isBlank(taskName)) {
                 throw new WorkflowListenerException("hive topo cluster not found for groupId=" + groupId);
             }
-            LOGGER.info("begin to push hive sort config to zkUrl={}, hiveTopo={}", zkUrl, topoName);
-            DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, hiveFullInfo, topoName, sortExtConfig);
+            LOGGER.info("begin to push hive sort config to zkUrl={}, hiveTopo={}", zkUrl, taskName);
+            DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, hiveFullInfo, taskName, sortExtConfig);
             // Update / add data under dataflow on ZK
-            ZkTools.updateDataFlowInfo(flowInfo, topoName, flowInfo.getId(), zkUrl, zkRoot);
+            ZkTools.updateDataFlowInfo(flowInfo, taskName, flowInfo.getId(), zkUrl, zkRoot);
             // Add data under clusters on ZK
-            ZkTools.addDataFlowToCluster(topoName, flowInfo.getId(), zkUrl, zkRoot);
+            ZkTools.addDataFlowToCluster(taskName, flowInfo.getId(), zkUrl, zkRoot);
 
             LOGGER.info("success to push hive sort config {}", OBJECT_MAPPER.writeValueAsString(flowInfo));
         }
@@ -182,7 +181,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     /**
      * Get DataFlowInfo for Sort
      */
-    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerHiveFullInfo hiveFullInfo, String topoName,
+    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerHiveFullInfo hiveFullInfo, String taskName,
             SortExtConfig sortExtConfig) throws Exception {
         // Get fields from the source fields saved in the data store:
         // the number and order of the source fields must be the same as the target fields
@@ -194,7 +193,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             throw new WorkflowListenerException("fields is null for group id=" + groupId + ", stream id=" + streamId);
         }
 
-        SourceInfo sourceInfo = getSourceInfo(groupInfo, hiveFullInfo, fieldList, topoName);
+        SourceInfo sourceInfo = getSourceInfo(groupInfo, hiveFullInfo, fieldList, taskName);
         com.tencent.oceanus.etl.protocol.sink.SinkInfo sinkInfo = getSinkInfo(hiveFullInfo, fieldList, sortExtConfig);
 
         // Dynamic configuration information,
@@ -435,7 +434,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
      *         the other fields in the sink except the partition field - there is no partition field in the source
      */
     private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, InnerHiveFullInfo hiveFullInfo,
-            List<StreamSinkFieldEntity> fieldList, String topoName) {
+            List<StreamSinkFieldEntity> fieldList, String taskName) {
         String streamId = hiveFullInfo.getInlongStreamId();
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupInfo.getInlongGroupId(), streamId);
         // First determine the data source type. Tddmsgdbsync is temporarily used for DB
@@ -464,13 +463,11 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             InlongClusterEntity tubeCluster = tubeClusters.get(0);
             Preconditions.checkNotNull(tubeCluster, "tube cluster not found for bid=" + groupId);
             Integer tubeId = tubeCluster.getId();
-            TubeClusterDTO tubeClusterDTO = TubeClusterDTO.getFromJson(tubeCluster.getExtParams());
-            String masterAddress = tubeClusterDTO.getMasterWebUrl();
+            String masterAddress = tubeCluster.getUrl();
             Preconditions.checkNotNull(masterAddress, "tube cluster [" + tubeId + "] not contains masterAddress");
 
             String topic = groupInfo.getMqResource();
-            String consumerGroup = getConsumerGroup(groupId, null, topic, topoName,
-                    MQType.TUBEMQ);
+            String consumerGroup = getConsumerGroup(groupInfo, topic, taskName, streamId, hiveFullInfo.getSinkId());
             sourceInfo = new TubeSourceInfo(topic, masterAddress, consumerGroup,
                     deserializationInfo, sourceFields.toArray(new FieldInfo[0]));
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
@@ -503,7 +500,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             try {
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupId, streamId, topic, topoName, MQType.PULSAR);
+                String subscription = getConsumerGroup(groupInfo, topic, taskName, streamId, hiveFullInfo.getSinkId());
                 sourceInfo = new PulsarSourceInfo(null, null, fullTopic, subscription,
                         deserializationInfo, sourceFields.toArray(new FieldInfo[0]),
                         pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null);

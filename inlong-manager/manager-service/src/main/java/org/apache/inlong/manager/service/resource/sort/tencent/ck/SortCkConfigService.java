@@ -161,8 +161,8 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
         List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
                 groupInfo.getInlongClusterTag(), null, ClusterType.SORT_CK);
-        String topoName = sortClusters.get(0).getName();
-        if (topoName == null || StringUtils.isBlank(topoName)) {
+        String taskName = sortClusters.get(0).getName();
+        if (taskName == null || StringUtils.isBlank(taskName)) {
             throw new WorkflowListenerException("click house topo cluster not found for groupId=" + groupId);
         }
         String mqType = groupInfo.getMqType();
@@ -215,7 +215,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
                 DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupId, streamId, topic, topoName, MQType.PULSAR);
+                String subscription = getConsumerGroup(groupInfo, topic, taskName, streamId,clickHouseSink.getId());
                 sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
                         deserializationInfo, fieldList.stream().map(f -> {
                     FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());
