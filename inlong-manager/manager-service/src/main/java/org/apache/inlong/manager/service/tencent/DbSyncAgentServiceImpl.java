@@ -565,17 +565,20 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 .build();
 
         InlongGroupTopicInfo topic = groupService.getTopic(groupId);
+        List<ClusterInfo> clusterInfos = (List<ClusterInfo>) topic.getClusterInfos();
         String middleware = taskInfo.getMqType();
         if (MQType.TUBEMQ.equals(middleware)) {
-            if (StringUtils.isBlank(topic.getTubeMasterUrl())) {
+            if (CollectionUtils.isEmpty(clusterInfos) || StringUtils.isBlank(clusterInfos.get(0).getUrl())) {
                 LOGGER.error("tube cluster url cannot be null for groupId={}", groupId);
+            } else {
+                taskInfo.setTubeCluster(clusterInfos.get(0).getUrl());
             }
-            taskInfo.setTubeCluster(topic.getTubeMasterUrl());
         } else if (MQType.PULSAR.equals(middleware)) {
-            if (StringUtils.isBlank(topic.getPulsarServiceUrl())) {
+            if (CollectionUtils.isEmpty(clusterInfos) || StringUtils.isBlank(clusterInfos.get(0).getUrl())) {
                 LOGGER.error("pulsar service url cannot be null for groupId={}, streamId={}", groupId, streamId);
+            } else {
+                taskInfo.setPulsarCluster(clusterInfos.get(0).getUrl());
             }
-            taskInfo.setPulsarCluster(topic.getPulsarServiceUrl());
         }
 
         // get all cluster node IPs
