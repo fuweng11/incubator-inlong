@@ -145,7 +145,7 @@ public interface StreamSourceEntityMapper {
      * Update the status to `nextStatus` by the given id.
      */
     int updateStatus(@Param("id") Integer id, @Param("nextStatus") Integer nextStatus,
-            @Param("message") String message, @Param("changeTime") Boolean changeModifyTime);
+            @Param("operateLog") String operateLog, @Param("changeTime") Boolean changeModifyTime);
 
     /**
      * Update the status to `nextStatus` by the given group id and stream id.

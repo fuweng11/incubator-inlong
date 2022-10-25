@@ -50,13 +50,12 @@ public class HaBinlogSource extends StreamSource {
             notes = "All table schemas must be the same")
     private String tableName;
 
-    @ApiModelProperty("Binlog data code, default is UTF-8")
+    @ApiModelProperty(value = "Binlog data code, default is UTF-8")
     private String charset;
 
     @ApiModelProperty(value = "Collect from the specified binlog location, "
-            + "and modify it after distribution. If it is empty, null will be returned",
-            notes = "sourceIp, sourcePort, journalName, position required")
-    private DbSyncDumpPosition startDumpPosition;
+            + "and modify it after distribution. If it is empty, null will be returned")
+    private DbSyncDumpPosition startPositionObj;
 
     @ApiModelProperty(value = "Whether to skip the deletion event. Default: 1, skip")
     private Integer skipDelete;

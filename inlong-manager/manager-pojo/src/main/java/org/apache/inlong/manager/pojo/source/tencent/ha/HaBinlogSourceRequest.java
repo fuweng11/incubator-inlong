@@ -54,11 +54,11 @@ public class HaBinlogSourceRequest extends SourceRequest {
 
     @ApiModelProperty(value = "Collect from the specified binlog location, "
             + "and modify it after distribution. If it is empty, null will be returned",
-            notes = "sourceIp, sourcePort, journalName, position required")
-    private DbSyncDumpPosition startDumpPosition;
+            notes = "sourceIp, sourcePort, journalName and position are required")
+    private DbSyncDumpPosition binlogStartPosition;
 
     @ApiModelProperty(value = "Whether to skip the deletion event. Default: 1, skip")
-    private Integer skipDelete;
+    private Integer skipDelete = 1;
 
     public HaBinlogSourceRequest() {
         this.setSourceType(SourceType.HA_BINLOG);

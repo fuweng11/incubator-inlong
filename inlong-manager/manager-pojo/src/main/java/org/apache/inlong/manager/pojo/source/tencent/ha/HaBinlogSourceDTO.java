@@ -22,7 +22,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncDumpPosition;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.JsonUtils;
@@ -45,13 +44,8 @@ public class HaBinlogSourceDTO {
             notes = "All table schemas must be the same")
     private String tableName;
 
-    @ApiModelProperty("Binlog data code, default is UTF-8")
+    @ApiModelProperty(value = "Binlog data code, default is UTF-8")
     private String charset;
-
-    @ApiModelProperty(value = "Collect from the specified binlog location, "
-            + "and modify it after distribution. If it is empty, null will be returned",
-            notes = "sourceIp, sourcePort, journalName, position required")
-    private DbSyncDumpPosition startDumpPosition;
 
     @ApiModelProperty(value = "Whether to skip the deletion event. Default: 1, skip")
     private Integer skipDelete;
@@ -64,7 +58,7 @@ public class HaBinlogSourceDTO {
                 .dbName(request.getDbName())
                 .tableName(request.getTableName())
                 .charset(request.getCharset())
-                .startDumpPosition(request.getStartDumpPosition())
+                // .startPositionObj(request.getStartPositionObj())
                 .skipDelete(request.getSkipDelete())
                 .build();
     }

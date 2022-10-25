@@ -17,8 +17,6 @@
 
 package org.apache.inlong.manager.service.tencent;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +40,7 @@ import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.SourceStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity;
@@ -59,6 +58,7 @@ import org.apache.inlong.manager.pojo.group.InlongGroupTopicInfo;
 import org.apache.inlong.manager.pojo.node.mysql.MySQLDataNodeInfo;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
+import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSourceDTO;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
 import org.apache.inlong.manager.service.group.InlongGroupService;
 import org.apache.inlong.manager.service.node.DataNodeService;
@@ -158,9 +158,6 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     private InlongClusterNodeEntityMapper clusterNodeMapper;
     @Autowired
     private DbSyncHeartbeatEntityMapper dbSyncHeartbeatMapper;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     /**
      * Start the heartbeat task
@@ -267,15 +264,11 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             message.setTaskIds(Arrays.asList(entity.getTaskIds().split(InlongConstants.COMMA)));
         }
         message.setDumpIndex(entity.getDbDumpIndex());
-        try {
-            if (StringUtils.isNotBlank(entity.getDumpPosition())) {
-                message.setDumpPosition(objectMapper.readValue(entity.getDumpPosition(), DbSyncDumpPosition.class));
-            }
-            if (StringUtils.isNotBlank(entity.getMaxLogPosition())) {
-                message.setMaxLogPosition(objectMapper.readValue(entity.getMaxLogPosition(), DbSyncDumpPosition.class));
-            }
-        } catch (JsonProcessingException e) {
-            LOGGER.error("parse json string to DbSyncDumpPosition error: ", e);
+        if (StringUtils.isNotBlank(entity.getDumpPosition())) {
+            message.setDumpPosition(JsonUtils.parseObject(entity.getDumpPosition(), DbSyncDumpPosition.class));
+        }
+        if (StringUtils.isNotBlank(entity.getMaxLogPosition())) {
+            message.setMaxLogPosition(JsonUtils.parseObject(entity.getMaxLogPosition(), DbSyncDumpPosition.class));
         }
 
         message.setErrorMsg(entity.getErrorMsg());
@@ -289,12 +282,19 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     public DbSyncInitInfo getInitInfo(InitTaskRequest request) {
         LOGGER.info("begin to get init info for: " + request);
 
+        List<String> nodeNames = sourceMapper.selectNodeNames(request.getClusterName(), SourceType.HA_BINLOG);
+        if (CollectionUtils.isEmpty(nodeNames)) {
+            LOGGER.warn("return null - not any ha_binlog source found for: {}", request);
+            return null;
+        }
+        DbSyncInitInfo initInfo = new DbSyncInitInfo();
+        initInfo.setServerNames(nodeNames);
+
         List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(
                 request.getClusterTag(), null, ClusterType.ZOOKEEPER);
         if (CollectionUtils.isEmpty(zkClusters)) {
             throw new BusinessException("zk cluster for ha not found for cluster tag=" + request.getClusterTag());
         }
-        DbSyncInitInfo initInfo = new DbSyncInitInfo();
         initInfo.setZkUrl(zkClusters.get(0).getUrl());
 
         AgentClusterInfo clusterInfo = (AgentClusterInfo) clusterService.getOne(
@@ -304,9 +304,6 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 .clusterName(clusterInfo.getName())
                 .serverVersion(clusterInfo.getServerVersion())
                 .build());
-
-        List<String> nodeNames = sourceMapper.selectNodeNames(request.getClusterName(), SourceType.HA_BINLOG);
-        initInfo.setServerNames(nodeNames);
 
         LOGGER.info("success to get init info for: {}, result: {}", request, initInfo);
         return initInfo;
@@ -518,7 +515,8 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 try {
                     String positionStr = taskInfo.getStartPosition();
                     if (StringUtils.isNotBlank(positionStr) && !positionStr.equalsIgnoreCase("null")) {
-                        DbSyncDumpPosition position = objectMapper.readValue(positionStr, DbSyncDumpPosition.class);
+                        DbSyncDumpPosition position = JsonUtils.parseObject(positionStr, DbSyncDumpPosition.class);
+                        assert position != null;
                         EntryPosition entryPosition = position.getEntryPosition();
                         String journalName = entryPosition.getJournalName();
                         if (StringUtils.isNotBlank(journalName) && journalName.endsWith(SUCCESS_SUFFIX)) {
@@ -530,8 +528,8 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                             StreamSourceEntity entity = new StreamSourceEntity();
                             entity.setId(id);
                             entryPosition.setJournalName(journalName + SUCCESS_SUFFIX);
-
-                            entity.setStartPosition(objectMapper.writeValueAsString(position));
+                            position.setEntryPosition(entryPosition);
+                            entity.setStartPosition(JsonUtils.toJsonString(position));
                             sourceMapper.updateByPrimaryKeySelective(entity);
                         }
                     }
@@ -561,8 +559,15 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 .inlongStreamId(streamId)
                 .serverName(sourceEntity.getDataNodeName())
                 .startPosition(sourceEntity.getStartPosition())
+                .status(sourceEntity.getStatus())
                 .version(sourceEntity.getVersion())
                 .build();
+
+        HaBinlogSourceDTO sourceDTO = HaBinlogSourceDTO.getFromJson(sourceEntity.getExtParams());
+        taskInfo.setDbName(sourceDTO.getDbName());
+        taskInfo.setTableName(sourceDTO.getTableName());
+        taskInfo.setCharset(sourceDTO.getCharset());
+        taskInfo.setSkipDelete(sourceDTO.getSkipDelete());
 
         InlongGroupTopicInfo topic = groupService.getTopic(groupId);
         List<ClusterInfo> clusterInfos = (List<ClusterInfo>) topic.getClusterInfos();
@@ -739,10 +744,10 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                         }
                         entity.setDbDumpIndex(message.getDumpIndex());
                         if (message.getDumpPosition() != null) {
-                            entity.setDumpPosition(objectMapper.writeValueAsString(message.getDumpPosition()));
+                            entity.setDumpPosition(JsonUtils.toJsonString(message.getDumpPosition()));
                         }
                         if (message.getMaxLogPosition() != null) {
-                            entity.setMaxLogPosition(objectMapper.writeValueAsString(message.getMaxLogPosition()));
+                            entity.setMaxLogPosition(JsonUtils.toJsonString(message.getMaxLogPosition()));
                         }
                         entity.setErrorMsg(message.getErrorMsg());
                         entity.setModifyTime(now);

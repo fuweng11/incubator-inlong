@@ -425,7 +425,7 @@
         update stream_source
         set previous_status = status,
         status = #{nextStatus, jdbcType=INTEGER},
-        message = #{message, jdbcType=VARCHAR},
+        operate_log = #{operateLog, jdbcType=VARCHAR}
         <if test="changeTime == false">
             , modify_time = modify_time
         </if>
