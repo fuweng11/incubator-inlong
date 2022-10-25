@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 public class JobCoordinator {
 
     private static final String EMPTY_IP_KEY = "empty_ip_key";
-    private Logger logger = LogManager.getLogger(JobCoordinator.class);
+    private static final Logger LOGGER = LogManager.getLogger(JobCoordinator.class);
     private Integer clusterId;
 
     private String clusterIdStr;
@@ -64,7 +64,7 @@ public class JobCoordinator {
 
     private Long lastPrintStatTimeStamp = 0L;
 
-    private Gson gson = new Gson();
+    private static final Gson GSON = new Gson();
 
     private float haNodeNeedChangeMaxThreshold = 0.7F;
 
@@ -104,7 +104,7 @@ public class JobCoordinator {
                     coordinatorInterval,
                     TimeUnit.MILLISECONDS);
         } else {
-            logger.info("JobCoordinator has bean running!");
+            LOGGER.info("JobCoordinator has bean running!");
         }
     }
 
@@ -162,7 +162,7 @@ public class JobCoordinator {
                         }
                     }
                     if (syncIdList.size() == 0) {
-                        logger.warn("CoordinatorTask running and serverIdList size is 0!");
+                        LOGGER.warn("CoordinatorTask running and serverIdList size is 0!");
                     }
                     /*
                      * query all infos for coordinate
@@ -218,9 +218,9 @@ public class JobCoordinator {
                     if (candidateLoadMap != null && candidateLoadMap.size() > 0) {
                         for (Map.Entry<String, Set<String>> entry : runNodeInfoEntrySet) {
                             if (candidateLoadMap.get(entry.getKey()) == null) {
-                                logger.info("Candidate [{}] is offline, so need change run "
+                                LOGGER.info("Candidate [{}] is offline, so need change run "
                                                 + "syncIds [{}]", entry.getKey(),
-                                        gson.toJson(entry.getValue()));
+                                        GSON.toJson(entry.getValue()));
                                 if (!assignSyncIdsToDbSyncNode(entry.getKey(), entry.getValue(),
                                         cadLoadSet)) {
                                     continue;
@@ -234,10 +234,10 @@ public class JobCoordinator {
                     tryToChangeRunNodeByLoad(cadLoadSet);
                     printAllNodeRunJobInfo(syncIdList, jobRunNodeMap);
                 } else {
-                    logger.info("JobCoordinator current is updating !!!!");
+                    LOGGER.info("JobCoordinator current is updating !!!!");
                 }
             } catch (Exception e) {
-                logger.error("JobCoordinator has exception e = {}", e);
+                LOGGER.error("JobCoordinator has exception e = {}", e);
             }
         }
 
@@ -245,12 +245,12 @@ public class JobCoordinator {
                 Set<String> unassignedSyncIdsSet,
                 TreeSet<LoadBalanceInfo> cadLoadSet) throws Exception {
             if (unassignedSyncIdsSet == null || unassignedSyncIdsSet.size() == 0) {
-                logger.info("JobCoordinator assignServerIdsToDbSyncNode unassignedServerIdsSet is "
+                LOGGER.info("JobCoordinator assignServerIdsToDbSyncNode unassignedServerIdsSet is "
                         + "null or size is 0 !");
                 return false;
             }
             if (cadLoadSet == null || cadLoadSet.size() == 0) {
-                logger.info("JobCoordinator assignServerIdsToDbSyncNode candidateSet is null or size "
+                LOGGER.info("JobCoordinator assignServerIdsToDbSyncNode candidateSet is null or size "
                         + "is 0 !");
                 return false;
             }
@@ -277,12 +277,12 @@ public class JobCoordinator {
         private void assignSyncIdsToDbSyncNode(Set<String> unassignedSyncIdsSet,
                 TreeSet<LoadBalanceInfo> cadLoadSet) {
             if (unassignedSyncIdsSet == null || unassignedSyncIdsSet.size() == 0) {
-                logger.info("JobCoordinator assignSyncIdsToDbSyncNode unassignedServerIdsSet is "
+                LOGGER.info("JobCoordinator assignSyncIdsToDbSyncNode unassignedServerIdsSet is "
                         + "null or size is 0 !");
                 return;
             }
             if (cadLoadSet == null || cadLoadSet.size() == 0) {
-                logger.info("JobCoordinator assignSyncIdsToDbSyncNode candidateSet is null or size "
+                LOGGER.info("JobCoordinator assignSyncIdsToDbSyncNode candidateSet is null or size "
                         + "is 0 !");
                 return;
             }
@@ -303,7 +303,7 @@ public class JobCoordinator {
         private boolean assignSyncIdToDbSyncNode(String syncId,
                 TreeSet<LoadBalanceInfo> cadLoadSet) {
             if (StringUtils.isEmpty(syncId) || cadLoadSet == null || cadLoadSet.size() == 0) {
-                logger.info("JobCoordinator assign syncId [{}] or cadLoadSet is"
+                LOGGER.info("JobCoordinator assign syncId [{}] or cadLoadSet is"
                         + " null or size is 0!", syncId);
                 return false;
             }
@@ -315,16 +315,16 @@ public class JobCoordinator {
                     doChangeRunNodeInfo(dbsyncNodeIp, syncId);
                     loadBalanceInfo.setSyncIdNum(loadBalanceInfo.getSyncIdNum() + 1);
                     updateSyncIdsMapInfo(dbsyncNodeIp, syncId);
-                    logger.info("JobCoordinator assign syncId [{}] to DbSync node [{}]!",
+                    LOGGER.info("JobCoordinator assign syncId [{}] to DbSync node [{}]!",
                             syncId, dbsyncNodeIp);
                     return true;
                 } catch (Exception e) {
-                    logger.error("assignServerIdToDbSyncNode has exception e = {}", e);
+                    LOGGER.error("assignServerIdToDbSyncNode has exception e = {}", e);
                 } finally {
                     cadLoadSet.add(loadBalanceInfo);
                 }
             } else {
-                logger.error("JobCoordinator assign syncId [{}] to dbsync node [{}],"
+                LOGGER.error("JobCoordinator assign syncId [{}] to dbsync node [{}],"
                                 + "job num is exceed max size [{}]! must add dbsync node!!!!",
                         syncId, loadBalanceInfo == null ? null : loadBalanceInfo.getIp(),
                         loadBalanceInfo.getMaxSyncIdsThreshold());
@@ -366,36 +366,36 @@ public class JobCoordinator {
                                         doChangeRunNodeInfo(firstNode.getIp(), syncId);
                                         syncIdSet.remove(syncId);
                                         updateSyncIdsMapInfo(firstNode.getIp(), syncId);
-                                        logger.info("tryToChangeRunNodeByLoad success, from [{}]/[{}],"
+                                        LOGGER.info("tryToChangeRunNodeByLoad success, from [{}]/[{}],"
                                                         + "to  [{}]/[{}]", fromIp, toChangeSyncId,
                                                 firstNode.getIp(), toChangeSyncId);
                                     } catch (Exception e) {
-                                        logger.error("tryToChangeRunNodeByLoad has exception, from [{}]/[{}], "
+                                        LOGGER.error("tryToChangeRunNodeByLoad has exception, from [{}]/[{}], "
                                                         + "to  [{}]/[{}] e = {}", fromIp, toChangeSyncId,
                                                 firstNode.getIp(), toChangeSyncId, e);
                                     }
                                 }
                             } else if (firstNode != null) {
-                                logger.warn("There is not any node can bee used to change, firstNode is "
+                                LOGGER.warn("There is not any node can bee used to change, firstNode is "
                                                 + "not match condition!"
                                                 + " first node [{}]/[{}]!, last node [{}]/[{}]",
                                         firstNode.getIp(), firstNode.getSyncIdNum(),
                                         loadBalanceInfo.getIp(), loadBalanceInfo.getSyncIdNum());
                                 break;
                             } else {
-                                logger.warn("There is not any node can bee used to change,"
+                                LOGGER.warn("There is not any node can bee used to change,"
                                                 + " first is null!, last node [{}]/[{}]",
                                         loadBalanceInfo.getIp(), loadBalanceInfo.getSyncIdNum());
                                 break;
                             }
                         } catch (Exception e) {
-                            logger.error("tryToChangeRunNodeByLoad has exception = {}", e);
+                            LOGGER.error("tryToChangeRunNodeByLoad has exception = {}", e);
                         }
                     } else {
                         break;
                     }
                 } catch (Exception e) {
-                    logger.error("tryToChangeRunNodeByLoad has exception = {}", e);
+                    LOGGER.error("tryToChangeRunNodeByLoad has exception = {}", e);
                 }
                 loadBalanceInfo = balanceInfoTreeSet.pollLast();
             }
@@ -408,7 +408,7 @@ public class JobCoordinator {
             ConfigDelegate configDelegate = getConfigDelegate();
             String runNodePath = ZkUtil.getJobRunNodePath(clusterIdStr, syncId);
             configDelegate.createPathAndSetData(ConfigDelegate.ZK_GROUP, runNodePath, info.toString());
-            logger.info("doChangeRunNode, path = {}, runNodeIp = {}, syncId {}", runNodePath, ip, syncId);
+            LOGGER.info("doChangeRunNode, path = {}, runNodeIp = {}, syncId {}", runNodePath, ip, syncId);
         }
 
         /**
@@ -422,22 +422,22 @@ public class JobCoordinator {
             if ((currentTimeStamp - lastPrintStatTimeStamp > (coordinatorInterval * 5))
                     || lastPrintStatTimeStamp == 0) {
                 if (syncIdList != null && syncIdList.size() > 0) {
-                    logger.info("JobCoordinator stat serverIdList = [{}]", gson.toJson(syncIdList));
+                    LOGGER.info("JobCoordinator stat serverIdList = [{}]", GSON.toJson(syncIdList));
                 } else {
-                    logger.info("JobCoordinator stat serverIdList size = 0");
+                    LOGGER.info("JobCoordinator stat serverIdList size = 0");
                 }
                 if (map != null && map.size() > 0) {
                     Set<Map.Entry<String, Set<String>>> set = map.entrySet();
-                    logger.info("JobCoordinator stat candidate size = {}", set.size());
+                    LOGGER.info("JobCoordinator stat candidate size = {}", set.size());
                     for (Map.Entry<String, Set<String>> entry : set) {
                         int size = entry.getValue() == null ? 0 : entry.getValue().size();
-                        logger.info("JobCoordinator stat ip = [{}], size = [{}] run server id "
+                        LOGGER.info("JobCoordinator stat ip = [{}], size = [{}] run server id "
                                         + "List [{}]",
                                 entry.getKey(), size,
-                                gson.toJson(entry.getValue()));
+                                GSON.toJson(entry.getValue()));
                     }
                 } else {
-                    logger.info("JobCoordinator stat Job node distribution map = 0");
+                    LOGGER.info("JobCoordinator stat Job node distribution map = 0");
                 }
                 lastPrintStatTimeStamp = currentTimeStamp;
             }
@@ -462,16 +462,15 @@ public class JobCoordinator {
                     byte[] data = configDelegate.getData(ConfigDelegate.ZK_GROUP, path);
                     if (data != null) {
                         try {
-                            Gson gson = new Gson();
-                            loadBalanceInfo = gson.fromJson(String.valueOf(data), LoadBalanceInfo.class);
+                            loadBalanceInfo = GSON.fromJson(new String(data), LoadBalanceInfo.class);
                             loadBalanceInfo.setSyncIdNum(0);
                             candidateNodeLoadMap.put(candidate, loadBalanceInfo);
                         } catch (Exception e) {
-                            logger.error("GetAllCandidateNodeLoad parseObject exception path = {}, e "
+                            LOGGER.error("GetAllCandidateNodeLoad parseObject exception path = {}, e "
                                     + "= {}", path, e);
                         }
                     } else {
-                        logger.warn("Path [{}] GetAllCandidateNodeLoad info is null", path);
+                        LOGGER.warn("Path [{}] GetAllCandidateNodeLoad info is null", path);
                         candidateNodeLoadMap.put(candidate, new LoadBalanceInfo());
                     }
                 }
@@ -492,7 +491,7 @@ public class JobCoordinator {
                         ip = runNodeInfo.getIp();
                         String lastIp = serverIpMap.put(syncId, ip);
                         if (lastIp != null) {
-                            logger.error("JobCoordinator [{}] execute in multi-node one node {} and "
+                            LOGGER.error("JobCoordinator [{}] execute in multi-node one node {} and "
                                     + "other anther node {}", syncId, ip, lastIp);
                         }
                     } else {
@@ -527,14 +526,13 @@ public class JobCoordinator {
             byte[] data = configDelegate.getData(ConfigDelegate.ZK_GROUP, runNodePath);
             if (data != null) {
                 try {
-                    Gson gson = new Gson();
-                    runNodeInfo = gson.fromJson(String.valueOf(data), JobRunNodeInfo.class);
+                    runNodeInfo = GSON.fromJson(new String(data), JobRunNodeInfo.class);
                 } catch (Exception e) {
-                    logger.error("GetJobRunNodeInfo parseObject exception SyncId = {}, e = {}",
+                    LOGGER.error("GetJobRunNodeInfo parseObject exception SyncId = {}, e = {}",
                             syncId, e);
                 }
             } else {
-                logger.warn("SyncId [{}] getRunNodeInfo info is null", syncId);
+                LOGGER.warn("SyncId [{}] getRunNodeInfo info is null", syncId);
             }
             return runNodeInfo;
         }

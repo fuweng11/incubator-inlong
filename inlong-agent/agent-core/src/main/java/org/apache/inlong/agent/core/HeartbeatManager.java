@@ -121,7 +121,12 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
     @Override
     public void start() throws Exception {
         submitWorker(snapshotReportThread());
+        //TODO:improve, merge two heartbeat report, need manager support
+        //Now, agent automatic registration depends on the heartbeat module, must report
         submitWorker(heartbeatReportThread());
+        if (conf.enableHA()) {
+            submitWorker(dbSyncHbReportThread());
+        }
     }
 
     private Runnable snapshotReportThread() {
@@ -142,18 +147,27 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
         };
     }
 
+    private Runnable dbSyncHbReportThread() {
+        return () -> {
+            LOGGER.info("DbSync-heartbeat-report thread start");
+            while (isRunnable()) {
+                try {
+                    reportDBSyncHeartbeat();
+                    TimeUnit.MILLISECONDS.sleep(getDBSyncInterval());
+                } catch (InterruptedException e) {
+                    LOGGER.error("dbsync-heartbeat-report interrupted while report heartbeat", e);
+                }
+
+            }
+        };
+    }
+
     private Runnable heartbeatReportThread() {
         return () -> {
             while (isRunnable()) {
                 try {
-                    if (conf.enableHA()) {
-                        reportDBSyncHeartbeat();
-                        TimeUnit.MILLISECONDS.sleep(getDBSyncInterval());
-                    } else {
-                        reportHeartbeat(buildHeartbeatMsg());
-                        SECONDS.sleep(heartbeatInterval());
-                    }
-
+                    reportHeartbeat(buildHeartbeatMsg());
+                    SECONDS.sleep(heartbeatInterval());
                 } catch (Throwable e) {
                     LOGGER.error("interrupted while report heartbeat", e);
                     ThreadUtils.threadThrowableHandler(Thread.currentThread(), e);

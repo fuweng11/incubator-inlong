@@ -120,7 +120,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
 
     private Runnable binlogHaFetchThread() {
         return () -> {
-            LOGGER.info("Manager Communicator Thread running!");
+            LOGGER.info("HaBinlogFetcher Communicator Thread running!");
             long connInterval = conf.getLong(DBSYNC_CONN_INTERVAL, DEFAULT_DBSYNC_CONN_INTERVAL);
             long interval = 5 * connInterval;
             Random random = new Random();
@@ -137,7 +137,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
                         reportAndGetTaskConfigPeriod();
                     }
                 } catch (Throwable t) {
-                    LOGGER.error("TDMCommThread getException : {}", DBSyncUtils.getExceptionStack(t));
+                    LOGGER.error("HaBinlogFetcher getException : {}", DBSyncUtils.getExceptionStack(t));
                 }
                 DBSyncUtils.sleep(interval);
             }
@@ -244,7 +244,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
                 taskRegisterResults.put(tc.getId(),
                         new TaskInfoBean(tc.getId(), tc.getStatus(),
                                 "ha addTask has task conf info error! ip:" + localIp, 1, tc.getVersion()));
-                LOGGER.error("Error task config syncId {}, taskId{}", tc.getServerName(), tc.getId());
+                LOGGER.error("Error task config syncId {}, taskId {}", tc.getServerName(), tc.getId());
             }
         }
         List<DbSyncTaskInfo> correctTaskConfigList = jobHaDispatcher.getCorrectTaskConfInfList();

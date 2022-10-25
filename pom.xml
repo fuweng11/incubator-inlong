@@ -219,7 +219,7 @@
         <qcloud.flink.cos.fs.hadoop.version>1.10.0-0.1.10</qcloud.flink.cos.fs.hadoop.version>
         <qcloud.chdfs.version>2.5</qcloud.chdfs.version>
 
-        <curator.version>2.7.1</curator.version>
+        <curator.version>4.2.0</curator.version>
 
         <avro.version>1.10.1</avro.version>
         <orc.core.version>1.6.7</orc.core.version>
