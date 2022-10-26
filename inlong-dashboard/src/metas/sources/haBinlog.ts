@@ -18,7 +18,6 @@
  */
 
 import i18n from '@/i18n';
-import rulesPattern from '@/utils/pattern';
 import type { FieldItemType } from '@/metas/common';
 
 export const haBinlog: FieldItemType[] = [
@@ -40,6 +39,36 @@ export const haBinlog: FieldItemType[] = [
             pageNum: 1,
             pageSize: 20,
             type: 'AGENT',
+          },
+        }),
+        requestParams: {
+          formatResult: result =>
+            result?.list?.map(item => ({
+              ...item,
+              label: item.name,
+              value: item.name,
+            })),
+        },
+      },
+    }),
+  },
+  {
+    type: 'select',
+    label: i18n.t('meta.Sources.HaBinlog.DataNode'),
+    name: 'dataNodeName',
+    rules: [{ required: true }],
+    props: values => ({
+      showSearch: true,
+      disabled: values?.status === 101,
+      options: {
+        requestTrigger: ['onOpen', 'onSearch'],
+        requestService: keyword => ({
+          url: '/node/list',
+          method: 'POST',
+          data: {
+            pageNum: 1,
+            pageSize: 20,
+            type: 'MYSQL',
           },
         }),
         requestParams: {
@@ -105,28 +134,6 @@ export const haBinlog: FieldItemType[] = [
         },
       ],
     },
-  },
-  {
-    name: 'startDumpPosition.logIdentity.sourceIp',
-    type: 'input',
-    label: i18n.t('meta.Sources.HaBinlog.IP'),
-    rules: [
-      {
-        pattern: rulesPattern.ip,
-        message: i18n.t('meta.Sources.HaBinlog.IPMessage'),
-      },
-    ],
-  },
-  {
-    name: 'startDumpPosition.logIdentity.sourcePort',
-    type: 'inputnumber',
-    label: i18n.t('meta.Sources.HaBinlog.Port'),
-    rules: [
-      {
-        pattern: rulesPattern.port,
-        message: i18n.t('meta.Sources.HaBinlog.PortMessage'),
-      },
-    ],
   },
   {
     name: 'startDumpPosition.entryPosition.journalName',

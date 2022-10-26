@@ -77,7 +77,7 @@
   "meta.Sinks.InnerClickhouse.DataConsistency": "Data Consistency",
   "meta.Clusters.Sort.BackupDataPath": "Backup Address",
   "meta.Clusters.Sort.BackupHadoopProxyUser": "BackupProxyUser",
-  "meta.Sources.HaBinlog.Cluster": "Cluster",
+  "meta.Sources.HaBinlog.Cluster": "TransferCluster",
   "meta.Sources.HaBinlog.DataNode": "DataNode",
   "meta.Sources.HaBinlog.DBServer": "DBServer",
   "meta.Sources.HaBinlog.DBName": "DBName",
@@ -85,9 +85,7 @@
   "meta.Sources.HaBinlog.TableNameHint": "Multiple tables are separated by (,). Note: The structure of multiple tables must be exactly the same",
   "meta.Sources.HaBinlog.Encoding": "Encoding",
   "meta.Sources.HaBinlog.SkipDelete": "Skip the delete event",
-  "meta.Sources.HaBinlog.IP": "Database IP",
   "meta.Sources.HaBinlog.IPMessage": "Please enter the correct IP address",
-  "meta.Sources.HaBinlog.Port": "Database Port",
   "meta.Sources.HaBinlog.PortMessage": "Please enter the port number correctly (1-65535)",
   "meta.Sources.HaBinlog.FileName": "BinLog　File　Name",
   "meta.Sources.HaBinlog.FileLocation": "BinLog　File　Location"

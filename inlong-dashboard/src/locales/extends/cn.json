@@ -77,7 +77,7 @@
   "meta.Sinks.InnerClickhouse.PartitionStrategy": "分区策略",
   "meta.Clusters.Sort.BackupDataPath": "备份地址",
   "meta.Clusters.Sort.BackupHadoopProxyUser": "备份代理用户",
-  "meta.Sources.HaBinlog.Cluster": "集群",
+  "meta.Sources.HaBinlog.Cluster": "中转机集群",
   "meta.Sources.HaBinlog.DataNode": "数据节点",
   "meta.Sources.HaBinlog.DBServer": "数据库服务器",
   "meta.Sources.HaBinlog.DBName": "DB名称",
@@ -85,9 +85,7 @@
   "meta.Sources.HaBinlog.TableNameHint": "多张表用（,）分隔，注意：多表的结构须完全一致",
   "meta.Sources.HaBinlog.Encoding": "字符编码",
   "meta.Sources.HaBinlog.SkipDelete": "跳过delete事件",
-  "meta.Sources.HaBinlog.IP": "数据库IP",
   "meta.Sources.HaBinlog.IPMessage": "请正确输入Ip地址",
-  "meta.Sources.HaBinlog.Port": "数据库端口号",
   "meta.Sources.HaBinlog.PortMessage": "请正确输入端口号(1-65535)",
   "meta.Sources.HaBinlog.FileName": "BinLog文件名",
   "meta.Sources.HaBinlog.FileLocation": "BinLog文件位置"
