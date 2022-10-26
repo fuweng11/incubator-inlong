@@ -979,13 +979,13 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
             try {
                 initTaskInfoByServerId(syncId);
             } catch (Exception e) {
-                LOGGER.error("initTaskInfoByServerId SyncId = {} has exception e = {}", syncId, e);
+                LOGGER.error("initTaskInfoByServerId SyncId = {} has exception", syncId, e);
             }
             return true;
         }).thenAccept(u -> {
             LOGGER.info("addSyncIdAsync SyncId = {} finished", syncId);
         }).exceptionally(ex -> {
-            LOGGER.error("addSyncIdAsync SyncId = {} finished has exception e = {}", syncId, ex);
+            LOGGER.error("addSyncIdAsync SyncId = {} finished has exception", syncId, ex);
             return null;
         });
     }

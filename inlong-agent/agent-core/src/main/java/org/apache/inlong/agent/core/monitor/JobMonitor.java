@@ -20,14 +20,11 @@ package org.apache.inlong.agent.core.monitor;
 import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.conf.AgentConfiguration;
-import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
 import org.apache.inlong.agent.core.job.DBSyncJob;
-import org.apache.inlong.agent.core.job.JobConfManager;
 import org.apache.inlong.agent.core.job.JobManager;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
-import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.utils.HandleFailedMessage;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import org.apache.inlong.sdk.dataproxy.network.HttpProxySender;
@@ -37,21 +34,17 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MSG_INDEX_KEY;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_RESETTING_CHECK_INTERVAL;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_UPDATE_POSITION_INTERVAL;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_RESETTING_CHECK_INTERVAL;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_UPDATE_POSITION_INTERVAL;
 
 public class JobMonitor extends AbstractDaemon {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(JobMonitor.class);
     private static HttpProxySender proxySender;
-    private final int resettingCheckInterval;
     private final int updateZkInterval;
     private final AgentConfiguration agentConf = AgentConfiguration.getAgentConf();
     private volatile boolean running = false;
@@ -62,7 +55,6 @@ public class JobMonitor extends AbstractDaemon {
     private boolean monitorFlag = true;
     private long jobBlockTime = 0L;
     private JobManager jobManager;
-    private JobConfManager jobConfManager;
     private JobHaDispatcherImpl jobHaDispatcher;
 
     //TODO:setUncaughtExceptionHandler
@@ -70,7 +62,6 @@ public class JobMonitor extends AbstractDaemon {
         this.jobManager = agentManager.getJobManager();
         handleFailedMessage = HandleFailedMessage.getInstance();
         updateZkInterval = agentConf.getInt(DBSYNC_UPDATE_POSITION_INTERVAL, DEFAULT_UPDATE_POSITION_INTERVAL);
-        resettingCheckInterval = agentConf.getInt(DBSYNC_RESETTING_CHECK_INTERVAL, DEFAULT_RESETTING_CHECK_INTERVAL);
     }
 
     public static HttpProxySender getProxySender() {
@@ -79,53 +70,12 @@ public class JobMonitor extends AbstractDaemon {
 
     @Override
     public void start() {
-        submitWorker(getJobResettingCheckTask());
         submitWorker(getPositionUpdateTask());
     }
 
     @Override
     public void stop() throws Exception {
         waitForTerminate();
-    }
-
-    private Runnable getJobResettingCheckTask() {
-        return () -> {
-            while (isRunnable()) {
-                try {
-                    for (Map.Entry<String, DBSyncJob> runningJob : jobManager.getRunningJobs().entrySet()) {
-                        DBSyncJob job = runningJob.getValue();
-                        DBSyncJobConf jobConf =
-                                jobConfManager.getParsingConfigByInstName(runningJob.getKey()).getDbSyncJobConf();
-                        if (jobConf != null) {
-                            if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("current mysql Ip = {}/{} ,contain = {}",
-                                        jobConf.getCurMysqlIp(), jobConf.getCurMysqlPort(),
-                                        jobConf.containsDatabase(jobConf.getCurMysqlUrl()));
-                            }
-                            if (job != null && (!jobConf.containsDatabase(jobConf.getCurMysqlUrl()))) {
-                                if (jobConf.getStatus() == JobStat.TaskStat.SWITCHING) {
-                                    LOGGER.warn("Job [{}] is switching!, so skip for resetting!",
-                                            runningJob.getKey());
-                                } else {
-                                    CompletableFuture<Void> future = job.resetJob();
-                                    if (future != null) {
-                                        future.whenCompleteAsync((ign, t) -> {
-                                            if (t != null) {
-                                                LOGGER.error("job[{}] has exception while resetting:",
-                                                        runningJob.getKey(), t);
-                                            }
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    TimeUnit.SECONDS.sleep(resettingCheckInterval);
-                } catch (Throwable e) {
-                    LOGGER.error("getJobResettingCheckTask has exception ", e);
-                }
-            }
-        };
     }
 
     private Runnable getPositionUpdateTask() {

@@ -71,14 +71,10 @@ public class DBSyncJobConf {
     private String mysqlUserName;
     private String mysqlPassWd;
     private Charset charset;
-    private char sep;
     private int maxUnackedLogPositions = 100000;
     private List<InetSocketAddress> dbAddrList;
     private volatile JobStat.TaskStat status;
     private volatile InetSocketAddress currAddress;
-
-    private String binlogFilePath;
-
     private ConcurrentHashMap<String, Pattern> namePatternMap;
     private ConcurrentHashMap<String, List<MysqlTableConf>> table2MysqlConf;
     private LRUMap<String, List<String>> lruCache;
@@ -87,7 +83,6 @@ public class DBSyncJobConf {
 
     private LogPosition startPos;
     private String jobName;
-
     private String serverId;
 
     public DBSyncJobConf(String ip, int port, String userName, String passwd, Charset charset, LogPosition startPos,
@@ -140,7 +135,6 @@ public class DBSyncJobConf {
         obj.put(JOB_MYSQL_USERNAME, this.mysqlUserName);
         obj.put(JOB_MYSQL_PASSWD, this.mysqlPassWd);
         obj.put(JOB_STATUS, this.status.name());
-        obj.put(JOB_SEP, (byte) this.sep);
         obj.put(JOB_CHARSET_NAME, charset.name());
 
         JSONObject tableJson = new JSONObject();
@@ -321,13 +315,6 @@ public class DBSyncJobConf {
         return jobName;
     }
 
-    public String getInstName() {
-        if (StringUtils.isEmpty(jobName)) {
-            jobName = currAddress.getHostString() + ":" + currAddress.getPort() + ":" + serverId;
-        }
-        return jobName;
-    }
-
     private InetSocketAddress getAddress(String instName) {
         if (instName == null) {
             LOGGER.error("instName is null");
@@ -340,10 +327,6 @@ public class DBSyncJobConf {
 
         String[] ipPort = instName.split(":");
         return new InetSocketAddress(ipPort[0], Integer.parseInt(ipPort[1]));
-    }
-
-    public char getSeperator() {
-        return sep;
     }
 
     public Charset getCharset() {
@@ -444,20 +427,17 @@ public class DBSyncJobConf {
         return startPos;
     }
 
-    public String getBinlogFilePath() {
-        return binlogFilePath;
-    }
-
     public void resetDbInfo(String url, String bakUrl) {
         String mysqlIp = DBSyncUtils.getHost(url);
         int mysqlPort = DBSyncUtils.getPort(url);
-        String bakMysqlIp = DBSyncUtils.getHost(bakUrl);
-        int bakMysqlPort = DBSyncUtils.getPort(bakUrl);
         List<InetSocketAddress> newDbAddressList = Lists.newArrayList();
         newDbAddressList.add(new InetSocketAddress(mysqlIp, mysqlPort));
+
+        // if bakUrl is valid, add it to newDbAddressList
+        String bakMysqlIp = DBSyncUtils.getHost(bakUrl);
+        int bakMysqlPort = DBSyncUtils.getPort(bakUrl);
         if (StringUtils.isBlank(bakMysqlIp) || bakMysqlPort <= 0) {
-            LOGGER.warn("bakMysqlIp {} is empty or bakMysqlPort {} <=0, set to empty",
-                    bakMysqlIp, bakMysqlPort);
+            LOGGER.warn("bakMysqlIp {} is empty or bakMysqlPort {} <=0, set to empty", bakMysqlIp, bakMysqlPort);
         } else {
             newDbAddressList.add(new InetSocketAddress(bakMysqlIp, bakMysqlPort));
         }
@@ -493,8 +473,7 @@ public class DBSyncJobConf {
     @Override
     public String toString() {
         return "DBSyncJobConf{mysqlUserName='" + mysqlUserName + '\'' + ", mysqlPassWd='" + mysqlPassWd + '\''
-                + ", charset=" + charset + ", sep=" + sep + ", dbAddrList=" + dbAddrList + ", startPos=" + startPos
-                + '\'' + '}';
+                + ", charset=" + charset + ", dbAddrList=" + dbAddrList + ", startPos=" + startPos + '\'' + '}';
     }
 
     public List<InetSocketAddress> getDbAddrList() {

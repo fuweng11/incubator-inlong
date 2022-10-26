@@ -28,6 +28,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -40,7 +41,7 @@ public class DBSyncUtils {
 
     public static final int[] BYTES_PER_SECTION = {4, 2, 2, 2, 6};
     public static final String HEX_STRING_LOW = "0123456789abcdef";
-    protected static final Logger logger = LogManager.getLogger(DBSyncUtils.class);
+    protected static final Logger LOGGER = LogManager.getLogger(DBSyncUtils.class);
     private static String hexString = "0123456789ABCDEF";
 
     public static String getExceptionStack(Throwable e) {
@@ -51,13 +52,13 @@ public class DBSyncUtils {
             e.printStackTrace(pw);
             exceptStr = sw.toString();
         } catch (Exception ex) {
-            logger.error("printStackTrace error: ", ex);
+            LOGGER.error("printStackTrace error: ", ex);
         } finally {
             try {
                 pw.close();
                 sw.close();
             } catch (Exception ex) {
-                logger.error("close writer error: ", ex);
+                LOGGER.error("close writer error: ", ex);
             }
         }
         return exceptStr;
@@ -107,7 +108,7 @@ public class DBSyncUtils {
                     defaultValue = (char) intSplitter;
                 }
             } catch (NumberFormatException ne) {
-                logger.error(DBSyncUtils.getExceptionStack(ne));
+                LOGGER.error(DBSyncUtils.getExceptionStack(ne));
             }
         }
         return defaultValue;
@@ -132,7 +133,7 @@ public class DBSyncUtils {
         try {
             Thread.sleep(millseconds);
         } catch (InterruptedException ie) {
-            logger.error("sleep error", ie);
+            LOGGER.error("sleep error", ie);
         }
     }
 
@@ -193,6 +194,15 @@ public class DBSyncUtils {
         return result;
     }
 
+    public static long serverId2Int(String serverId) {
+        long result = 0;
+        for (byte b : serverId.getBytes(StandardCharsets.UTF_8)) {
+            result = result << 8 | (b & 0xFF);
+        }
+        result %= SnowFlake.MAX_MACHINE_NUM;
+        return result;
+    }
+
     public static String ipStr2HexStr(String ip) {
 
         StringBuffer sb = new StringBuffer();
@@ -232,7 +242,7 @@ public class DBSyncUtils {
                     splitterStr = sb.append((char) intSplitter).toString();
                 }
             } catch (NumberFormatException ne) {
-                logger.error(getExceptionStack(ne));
+                LOGGER.error(getExceptionStack(ne));
             }
         } else {
             splitterStr = character;
@@ -302,13 +312,22 @@ public class DBSyncUtils {
     }
 
     public static String getHost(String url) {
+        if (StringUtils.isBlank(url)) {
+            return null;
+        }
         String[] ipPort = url.split(":");
         return ipPort[0];
     }
 
     public static int getPort(String url) {
+        if (StringUtils.isBlank(url)) {
+            return -1;
+        }
         String[] ipPort = url.split(":");
+        if (ipPort.length < 2) {
+            LOGGER.error("invalid port, url {}", url);
+            return -1;
+        }
         return Integer.parseInt(ipPort[1]);
     }
-
 }

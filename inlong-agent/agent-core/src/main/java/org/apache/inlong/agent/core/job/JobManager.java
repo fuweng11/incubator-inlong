@@ -63,10 +63,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_RESETTING_CHECK_INTERVAL;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_JOB_DB_CACHE_CHECK_INTERVAL;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_JOB_DB_CACHE_TIME;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_JOB_NUMBER_LIMIT;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_RESETTING_CHECK_INTERVAL;
 import static org.apache.inlong.agent.constant.AgentConstants.JOB_DB_CACHE_CHECK_INTERVAL;
 import static org.apache.inlong.agent.constant.AgentConstants.JOB_DB_CACHE_TIME;
 import static org.apache.inlong.agent.constant.AgentConstants.JOB_NUMBER_LIMIT;
@@ -353,7 +355,7 @@ public class JobManager extends AbstractDaemon {
                 startPosition = new LogPosition(obj);
                 LOGGER.info("startPosition set to: " + startPosition);
             } catch (Throwable t) {
-                LOGGER.error("parse start position error: {}, startPosition set to null.", t.getMessage());
+                LOGGER.error("parse start position error, startPosition set to null.", t);
             }
         }
 
@@ -604,6 +606,50 @@ public class JobManager extends AbstractDaemon {
     }
 
     /**
+     * handle dbsync-job resetting operation
+     */
+    private Runnable getJobResettingCheckTask() {
+        return () -> {
+            int resettingCheckInterval = agentConf.getInt(DBSYNC_RESETTING_CHECK_INTERVAL,
+                    DEFAULT_RESETTING_CHECK_INTERVAL);
+
+            while (isRunnable()) {
+                try {
+                    for (Map.Entry<String, DBSyncJob> runningJob : runningJobs.entrySet()) {
+                        DBSyncJob job = runningJob.getValue();
+                        DBSyncJobConf jobConf = jobConfManager.getParsingConfigByInstName(runningJob.getKey())
+                                .getDbSyncJobConf();
+                        if (jobConf != null) {
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug("current mysql Ip = {}/{} ,contain = {}", jobConf.getCurMysqlIp(),
+                                        jobConf.getCurMysqlPort(), jobConf.containsDatabase(jobConf.getCurMysqlUrl()));
+                            }
+                            if (job != null && (!jobConf.containsDatabase(jobConf.getCurMysqlUrl()))) {
+                                if (jobConf.getStatus() == JobStat.TaskStat.SWITCHING) {
+                                    LOGGER.warn("Job [{}] is switching!, so skip for resetting!", runningJob.getKey());
+                                } else {
+                                    CompletableFuture<Void> future = job.resetJob();
+                                    if (future != null) {
+                                        future.whenCompleteAsync((ign, t) -> {
+                                            if (t != null) {
+                                                LOGGER.error("job[{}] has exception while resetting:",
+                                                        runningJob.getKey(), t);
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    TimeUnit.SECONDS.sleep(resettingCheckInterval);
+                } catch (Throwable e) {
+                    LOGGER.error("getJobResettingCheckTask has exception ", e);
+                }
+            }
+        };
+    }
+
+    /**
      * mark job as success by job id.
      *
      * @param jobId job id
@@ -660,6 +706,9 @@ public class JobManager extends AbstractDaemon {
     public void start() {
         submitWorker(jobStateCheckThread());
         submitWorker(dbStorageCheckThread());
+        if (agentConf.enableHA()) {
+            submitWorker(getJobResettingCheckTask());
+        }
         startJobs();
     }
 

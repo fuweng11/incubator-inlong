@@ -25,7 +25,7 @@ public class SnowFlake {
     private static final long SEQUENCE_BIT = 9;
     private static final long MACHINE_BIT = 13;
 
-    private static final long MAX_MACHINE_NUM = -1L ^ (-1L << MACHINE_BIT);
+    public static final long MAX_MACHINE_NUM = -1L ^ (-1L << MACHINE_BIT);
     private static final long MAX_SEQUENCE = -1L ^ (-1L << SEQUENCE_BIT);
 
     private static final long MACHINE_LEFT = SEQUENCE_BIT;

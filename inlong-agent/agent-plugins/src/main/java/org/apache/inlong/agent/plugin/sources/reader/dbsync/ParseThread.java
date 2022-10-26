@@ -127,12 +127,12 @@ public class ParseThread extends Thread {
                 bInTransEnd = pkgEvent.isbHasTransEnd();
                 boolean bNeedFlush = false;
 
-                ArrayList<org.apache.inlong.agent.common.protocol.CanalEntry.Entry> entryList = new ArrayList<>();
+                ArrayList<Entry> entryList = new ArrayList<>();
 
                 LogPosition firstEventPos = null;
                 for (LogEvent event : eventList) {
                     dbSyncReader.setHeartBeat(System.currentTimeMillis());
-                    org.apache.inlong.agent.common.protocol.CanalEntry.Entry entry = null;
+                    Entry entry = null;
                     // Query -> Rows_query -> Table_map -> Update_rows -> Xid
                     if (!bParseRunning) {
                         break;
@@ -163,11 +163,9 @@ public class ParseThread extends Thread {
                                         parseMetaConnection.reconnect();
                                     }
                                 } catch (IOException ioe) {
-                                    LOGGER.error("{}, {} reconnect meta connection error",
-                                            jobName, parserJobName);
+                                    LOGGER.error("{}, {} reconnect meta connection error", jobName, parserJobName, ioe);
                                 }
-                                LOGGER.error("{}, {} parse binlog event Error : {}, ",
-                                        jobName, parserJobName, DBSyncUtils.getExceptionStack(te));
+                                LOGGER.error("{}, {} parse binlog event error ", jobName, parserJobName, te);
                                 retryCnt++;
                                 DBSyncUtils.sleep(100);
                                 continue;
@@ -215,8 +213,7 @@ public class ParseThread extends Thread {
                     } catch (Throwable e) {
                         bNeedFlush = false;
                         if (bParseRunning || LOGGER.isDebugEnabled()) {
-                            LOGGER.error("{}, {} async parse binlog Error : {} ",
-                                    jobName, parserJobName, e);
+                            LOGGER.error("{}, {} async parse binlog Error", jobName, parserJobName, e);
                         }
                     }
                 }
@@ -226,15 +223,10 @@ public class ParseThread extends Thread {
                     firstEventPos = null;
                 }
 
-                //TODO: need?
-//                while (bParseRunning && (sendBuffer.needWait())) {
-//                    TimeUnit.MILLISECONDS.sleep(100);
-//                }
-
             } catch (InterruptedException e) {
                 LOGGER.error("{} {} get binlog error", jobName, parserJobName, e);
             } catch (Throwable e) {
-                LOGGER.error("{}, {} get binlog Error : {}, ", jobName, parserJobName, e);
+                LOGGER.error("{}, {} get binlog error", jobName, parserJobName, e);
             }
         }
         LOGGER.info("stop parse");
@@ -242,8 +234,7 @@ public class ParseThread extends Thread {
         parseStatus = JobStat.State.STOP;
 
         if (lastParsePosition != null) {
-            LOGGER.warn("{}, {} stop position : {}",
-                    jobName, parserJobName, lastParsePosition.getJsonObj().toString());
+            LOGGER.warn("{}, {} stop position : {}", jobName, parserJobName, lastParsePosition.getJsonObj().toString());
         }
     }
 
@@ -288,7 +279,7 @@ public class ParseThread extends Thread {
                     continue;
                 } else {
                     boolean putResult = genSendDataByPbProtoc(rowChange, entry, dbName, tbName, myConf,
-                            sendPosition, parseMsgId, Long.parseLong(dbSyncReader.jobconf.getServerId()));
+                            sendPosition, parseMsgId, dbSyncReader.jobconf.getServerId());
                     if (putResult) {
                         //TODO:puting data first is ok?
                         dbSyncReader.addLogPositionToCache(sendPosition);
@@ -299,9 +290,8 @@ public class ParseThread extends Thread {
         }
     }
 
-    private boolean genSendDataByPbProtoc(RowChange rowChange, Entry entry, String dbName,
-            String tbName,
-            MysqlTableConf myConf, LogPosition logPosition, long parseMsgId, long serverId) {
+    private boolean genSendDataByPbProtoc(RowChange rowChange, Entry entry, String dbName, String tbName,
+            MysqlTableConf myConf, LogPosition logPosition, long parseMsgId, String serverId) {
         if (rowChange == null) {
             return false;
         }
@@ -341,13 +331,14 @@ public class ParseThread extends Thread {
     }
 
     private void parsePbData(RowData rowData, String dbName, String tbName, long execTime,
-            EventType eventType, long msgIdIndex, long serverId, LogPosition logPosition) {
+            EventType eventType, long msgIdIndex, String serverId, LogPosition logPosition) {
         RowData.Builder rowDataOrBuilder = rowData.toBuilder();
 
-        String instName = dbSyncReader.getJobconf().getInstName();
-        String pbInstName = instName.substring(0, instName.lastIndexOf(":"));
-        String schemaName = Joiner.on(ipSep).join(dbName, AgentUtils.getLocalIp(),
-                snowFlakeManager.generateSnowId(serverId));
+        String jobName = dbSyncReader.getJobconf().getJobName();
+        String pbInstName = jobName.substring(0, jobName.lastIndexOf(":"));
+        String schemaName = Joiner.on(ipSep)
+                .join(dbName, AgentUtils.getLocalIp(),
+                        snowFlakeManager.generateSnowId(DBSyncUtils.serverId2Int(serverId)));
         rowDataOrBuilder.setInstanceName(pbInstName);
         rowDataOrBuilder.setSchemaName(schemaName);
         rowDataOrBuilder.setTableName(tbName);

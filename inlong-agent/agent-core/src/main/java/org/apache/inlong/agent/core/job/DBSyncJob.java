@@ -36,7 +36,6 @@ public class DBSyncJob extends Job {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBSyncJob.class);
     public int pkgIndexId;
     protected DBSyncJobConf dbSyncJobConf;
-    protected String instName;
     protected String jobName;
     private AgentManager agentManager;
     private AtomicBoolean needReset = new AtomicBoolean(false);
@@ -48,7 +47,6 @@ public class DBSyncJob extends Job {
         this.dbSyncJobConf = dbSyncJobConf.getDbSyncJobConf();
         this.agentManager = agentManager;
         jobName = this.dbSyncJobConf.getJobName();
-        instName = this.dbSyncJobConf.getInstName();
     }
 
     public DBSyncJobConf getDBSyncJobConf() {

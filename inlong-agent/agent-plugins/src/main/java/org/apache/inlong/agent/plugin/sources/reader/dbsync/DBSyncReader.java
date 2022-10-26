@@ -18,7 +18,6 @@
 package org.apache.inlong.agent.plugin.sources.reader.dbsync;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
@@ -64,6 +63,7 @@ import org.apache.inlong.agent.plugin.sources.reader.AbstractReader;
 import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.state.JobStat.State;
 import org.apache.inlong.agent.state.JobStat.TaskStat;
+import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.ErrorCode;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
@@ -83,6 +83,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Random;
@@ -113,6 +114,8 @@ import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_JOB
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_JOB_RECV_BUFFER_KB;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_RELAY_LOG_ROOT;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_IS_NEED_TRANSACTION;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_RELAY_LOG_MEM_SZIE;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_RELAY_LOG_WAY;
 
 /**
  * Refactor from AsyncParseMysqlJob in DBSync
@@ -124,6 +127,9 @@ public class DBSyncReader extends AbstractReader {
     private static final AtomicReferenceFieldUpdater<DBSyncReader, State> STATUS_UPDATER =
             AtomicReferenceFieldUpdater.newUpdater(DBSyncReader.class, JobStat.State.class, "status");
     private static final long MAX_SECOND = 9999999999L;
+    private static final String KEY_MYSQL_ADDRESS = "mysqlAddress";
+    private static final String KEY_DBSYNC_JOB_NAME = "dbsyncJobName";
+    private static final String KEY_SERVER_ID = "serverId";
     private static AtomicLong randomIndex = new AtomicLong(0);
     private final AgentConfiguration agentConf;
     private final Object syncObject = new Object();
@@ -185,13 +191,6 @@ public class DBSyncReader extends AbstractReader {
     private String errorMsg = "";
     private long oldSecStamp;
     private volatile long oldTimeStampler = 0;
-    private static final String KEY_MYSQL_ADDRESS = "mysqlAddress";
-    private static final String KEY_DBSYNC_JOB_NAME = "dbsyncJobName";
-    private static final String KEY_SERVER_ID = "serverId";
-    private static final String KEY_MYSQL_USER_NAME = "mysqlUserName";
-    private static final String KEY_BINLOG_FILE_PATH = "binlogFilePath";
-    private static final String KEY_BINLOG_START_POSITION = "binlogStartPosition";
-    private static final String KEY_LAST_TIMESTAMP = "lastTimeStamp";
 
     public DBSyncReader(JobProfile profile) {
         // agent conf
@@ -225,14 +224,6 @@ public class DBSyncReader extends AbstractReader {
         slaveId = generateSlaveId();
         parseThreadList = new ConcurrentHashMap<>();
         lastTimeStamp = Instant.now().toEpochMilli();
-        Map<String, String> readerMetricDimensions = readerMetric.getDimensions();
-        readerMetricDimensions.put(KEY_MYSQL_ADDRESS, mysqlAddress);
-        readerMetricDimensions.put(KEY_DBSYNC_JOB_NAME, jobName);
-        readerMetricDimensions.put(KEY_SERVER_ID, jobconf.getServerId());
-        readerMetricDimensions.put(KEY_MYSQL_USER_NAME, jobconf.getMysqlUserName());
-        readerMetricDimensions.put(KEY_BINLOG_FILE_PATH, jobconf.getBinlogFilePath());
-        readerMetricDimensions.put(KEY_BINLOG_START_POSITION, String.valueOf(lastLog));
-        readerMetricDimensions.put(KEY_LAST_TIMESTAMP, String.valueOf(lastTimeStamp));
     }
 
     public DBSyncJobConf getJobconf() {
@@ -242,6 +233,12 @@ public class DBSyncReader extends AbstractReader {
     @Override
     public void init(JobProfile jobConf) {
         super.init(jobConf);
+        // add metric dimensions after readerMetric is created
+        Map<String, String> readerMetricDimensions = readerMetric.getDimensions();
+        readerMetricDimensions.put(KEY_MYSQL_ADDRESS, mysqlAddress);
+        readerMetricDimensions.put(KEY_DBSYNC_JOB_NAME, jobName);
+        readerMetricDimensions.put(KEY_SERVER_ID, jobconf.getServerId());
+
         start();
     }
 
@@ -272,6 +269,7 @@ public class DBSyncReader extends AbstractReader {
     @Override
     public Message read() {
         if (!messageQueue.isEmpty()) {
+            LOGGER.debug("fetch message from {} dbsync-reader", jobName);
             return messageQueue.poll();
         }
         return null;
@@ -280,6 +278,7 @@ public class DBSyncReader extends AbstractReader {
     public void addMessage(DBSyncMessage message) {
         try {
             messageQueue.put(message);
+            LOGGER.debug("{} dbsync-reader addMessage to queue", jobName);
             waitAckCnt.incrementAndGet();
         } catch (InterruptedException e) {
             LOGGER.error("put message to dbsyncReader queue error", e);
@@ -291,10 +290,9 @@ public class DBSyncReader extends AbstractReader {
         return !running;
     }
 
-    //TODO: need?
     @Override
     public String getReadSource() {
-        return null;
+        return jobName;
     }
 
     @Override
@@ -325,7 +323,7 @@ public class DBSyncReader extends AbstractReader {
 
     @Override
     public State getState() {
-        return null;
+        return status;
     }
 
     @Override
@@ -339,17 +337,9 @@ public class DBSyncReader extends AbstractReader {
         finishRead();
     }
 
-    public JobStat.State getJobStat() {
-        return status;
-    }
-
-    public void setJobStat(JobStat.State state) {
-        STATUS_UPDATER.set(DBSyncReader.this, state);
-    }
-
     //TODO:move to job level?
     public synchronized void restart() {
-        if (getJobStat() == JobStat.State.RUN) {
+        if (getState() == JobStat.State.RUN) {
             return;
         }
         relayLog = mkRelayLog();
@@ -425,13 +415,24 @@ public class DBSyncReader extends AbstractReader {
 
     private long generateSlaveId() {
         long result = 0;
+        String ip = AgentUtils.getLocalIp();
+        try {
+            if (Objects.equals(ip, "127.0.0.1") || Objects.equals(ip, "0.0.0.0")) {
+                throw new Exception("conflict address");
+            } else {
+                result = DBSyncUtils.ipStr2Int(ip);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("invalid local ip: {}, slave_id will use a random number.", ip, e);
+            Random r = new Random();
+            result = 1000L + r.nextInt(1024);
+        }
         if (StringUtils.isNotEmpty(jobconf.getServerId())) {
             try {
-                result += Long.parseLong(jobconf.getServerId());
+                result += DBSyncUtils.serverId2Int(jobconf.getServerId());
                 result += randomIndex.addAndGet(1);
             } catch (Exception e) {
-                LOGGER.warn("server Id: {} invalid, {}, slave_id will use a random number.",
-                        jobconf.getServerId(), e.getMessage());
+                LOGGER.warn("invalid server Id: {}, slave_id will use a random number.", jobconf.getServerId(), e);
                 Random r = new Random();
                 result += r.nextInt(1024);
             }
@@ -698,10 +699,10 @@ public class DBSyncReader extends AbstractReader {
 
     private RelayLog mkRelayLog() {
         String relogRoot = agentConf.get(DBSYNC_RELAY_LOG_ROOT, DEFAULT_DBSYNC_RELAY_LOG_ROOT).trim();
-        String relayLogWay = agentConf.get(DBSYNC_RELAY_LOG_WAY);
+        String relayLogWay = agentConf.get(DBSYNC_RELAY_LOG_WAY, DEFAULT_RELAY_LOG_WAY);
         RelayLog log = null;
         if (relayLogWay != null && relayLogWay.trim().endsWith("memory")) {
-            int memSize = agentConf.getInt(DBSYNC_RELAY_LOG_MEM_SZIE);
+            int memSize = agentConf.getInt(DBSYNC_RELAY_LOG_MEM_SZIE, DEFAULT_RELAY_LOG_MEM_SZIE);
             log = new MemRelayLogImpl(memSize * 1024 * 1024L);
         } else {
             String jobRelyLogPath = null;
@@ -895,7 +896,7 @@ public class DBSyncReader extends AbstractReader {
 
         dispatcher.setName(jobName + "-dispatcher");
         dispatcher.setUncaughtExceptionHandler((t, e) -> {
-            setJobStat(State.STOP);
+            setState(State.STOP);
             //TODO:handle monitor
 //            MonitorLogUtils.printJobStat(this.getCurrentDbInfo(), MonitorLogUtils.JOB_STAT_STOP,
 //                    ErrorCode.OP_EXCEPTION_DISPATCH_THREAD_EXIT_UNCAUGHT);
