@@ -31,6 +31,7 @@ import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.except.DBSyncServerException.JobInResetStatus;
 import org.apache.inlong.agent.except.DataSourceConfigException;
 import org.apache.inlong.agent.message.DBSyncMessage;
+import org.apache.inlong.agent.metrics.audit.AuditUtils;
 import org.apache.inlong.agent.mysql.connector.AuthenticationInfo;
 import org.apache.inlong.agent.mysql.connector.MysqlConnection;
 import org.apache.inlong.agent.mysql.connector.MysqlConnection.BinlogFormat;
@@ -269,7 +270,6 @@ public class DBSyncReader extends AbstractReader {
     @Override
     public Message read() {
         if (!messageQueue.isEmpty()) {
-            LOGGER.debug("fetch message from {} dbsync-reader", jobName);
             return messageQueue.poll();
         }
         return null;
@@ -277,11 +277,15 @@ public class DBSyncReader extends AbstractReader {
 
     public void addMessage(DBSyncMessage message) {
         try {
+            readerMetric.pluginReadCount.incrementAndGet();
             messageQueue.put(message);
-            LOGGER.debug("{} dbsync-reader addMessage to queue", jobName);
             waitAckCnt.incrementAndGet();
+            AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_READ_SUCCESS, inlongGroupId, inlongStreamId,
+                    System.currentTimeMillis(), 1, message.getBody().length);
+            readerMetric.pluginReadSuccessCount.incrementAndGet();
         } catch (InterruptedException e) {
             LOGGER.error("put message to dbsyncReader queue error", e);
+            readerMetric.pluginReadFailCount.incrementAndGet();
         }
     }
 
