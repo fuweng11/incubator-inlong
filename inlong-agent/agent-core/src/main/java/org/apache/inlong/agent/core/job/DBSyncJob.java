@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DBSyncJob extends Job {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DBSyncJob.class);
-    public int pkgIndexId;
+    public int pkgIndexId;//TODO:remove to reader
     protected DBSyncJobConf dbSyncJobConf;
     protected String jobName;
     private AgentManager agentManager;
@@ -98,10 +98,6 @@ public class DBSyncJob extends Job {
 
     public int getPkgIndexId() {
         return pkgIndexId;
-    }
-
-    public void setPkgIndexId(int pkgIndexId) {
-        this.pkgIndexId = pkgIndexId;
     }
 
     public boolean isRunning() {

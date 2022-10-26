@@ -440,10 +440,9 @@ public class JobManager extends AbstractDaemon {
                     taskConf.getDbName(), taskConf.getTableName(), taskConf.getId());
         }
 
-        if (!allJobs.containsKey(dbsyncJobConf.getJobName())) {
-            DBSyncJob newDBSyncJob = new DBSyncJob(agentManager, conf);
-            allJobs.put(dbsyncJobConf.getJobName(), newDBSyncJob);
-        }
+        final JobProfile finalConf = conf;
+        allJobs.computeIfAbsent(dbsyncJobConf.getJobName(), (key) -> new DBSyncJob(agentManager, finalConf));
+
         future.complete(null);
         return allJobs.get(dbsyncJobConf.getJobName());
     }

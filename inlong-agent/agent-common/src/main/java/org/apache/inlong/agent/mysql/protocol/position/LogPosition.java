@@ -17,6 +17,7 @@
 
 package org.apache.inlong.agent.mysql.protocol.position;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 
 public class LogPosition extends Position implements Comparable<LogPosition> {
@@ -28,7 +29,7 @@ public class LogPosition extends Position implements Comparable<LogPosition> {
     private long genTimeStample;
     private int sendIndex = 0;
     private long pkgIndex = 0;
-    private String parseThreadName;
+    private String parseThreadName = "";
 
     public LogPosition() {
         genTimeStample = System.currentTimeMillis();
@@ -177,6 +178,10 @@ public class LogPosition extends Position implements Comparable<LogPosition> {
         }
         if (cmp == 0) {
             cmp = pkgIndex - otherPos.getPkgIndex();
+        }
+        if (cmp == 0 && StringUtils.isNotEmpty(parseThreadName)
+                && StringUtils.isNotEmpty(otherPos.parseThreadName)) {
+            cmp = parseThreadName.compareTo(otherPos.parseThreadName);
         }
         return (int) cmp;
     }

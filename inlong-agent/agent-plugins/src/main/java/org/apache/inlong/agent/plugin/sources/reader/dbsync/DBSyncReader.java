@@ -135,7 +135,6 @@ public class DBSyncReader extends AbstractReader {
     private final AgentConfiguration agentConf;
     private final Object syncObject = new Object();
     private final LinkedBlockingQueue<DBSyncMessage> messageQueue;
-    public volatile long pkgIndexId = 0L;
     protected DBSyncJobConf jobconf;
     protected int debugCnt = 0;
     protected AtomicBoolean needTransactionPosition = new AtomicBoolean(false);
@@ -190,8 +189,10 @@ public class DBSyncReader extends AbstractReader {
     private ConcurrentSkipListSet<LogPosition> eventLogPositionCache = new ConcurrentSkipListSet();
     private volatile JobStat.State status;
     private String errorMsg = "";
-    private long oldSecStamp;
-    private volatile long oldTimeStampler = 0;
+
+    public volatile long pkgIndexId = 0L;
+    private volatile long oldSecStamp = 0L;
+    private volatile long oldTimeStampler = 10000L;
 
     public DBSyncReader(JobProfile profile) {
         // agent conf
@@ -996,13 +997,18 @@ public class DBSyncReader extends AbstractReader {
         try {
             long currentTimeStamp = Instant.now().toEpochMilli();
             semaphore.acquire();
-            sendLogPositionCache.add(logPosition);
+            boolean result = sendLogPositionCache.add(logPosition);
             if (LOGGER.isDebugEnabled()
                     && ((currentTimeStamp - lastTimeStamp) > printStatIntervalMs)) {
-                LOGGER.debug("[{}], logPosition {}, cacheLogPosition position in cache [{}],  cache"
-                                + "availablePermits = {}",
+                LOGGER.debug(
+                        "[{}], logPosition {}, cacheLogPosition position in cache [{}], cache availablePermits = {}",
                         jobName, logPosition, sendLogPositionCache.size(), semaphore.availablePermits());
                 lastTimeStamp = currentTimeStamp;
+            }
+            if (!result) {
+                LOGGER.warn(
+                        "[{}], logPosition {}, cacheLogPosition position in cache [{}], cache availablePermits = {}",
+                        jobName, logPosition, sendLogPositionCache.size(), semaphore.availablePermits());
             }
         } catch (Exception e) {
             LOGGER.error("cacheLogPosition has exception e = ", e);
@@ -1763,13 +1769,6 @@ public class DBSyncReader extends AbstractReader {
 
     public long getPkgIndexId() {
         return oldTimeStampler;
-    }
-
-    public void setPkgIndexId(long pkgIndexId) { //TODO: check no usage
-        this.pkgIndexId = pkgIndexId;
-        this.oldSecStamp = pkgIndexId / this.SECOND_MV_BIT;
-//        this.index = (int)(pkgIndexId % this.SECOND_MV_BIT);
-        this.oldTimeStampler = pkgIndexId + 10000L;
     }
 
     public long genIndexOrder(long timeStamp, int transNum) {

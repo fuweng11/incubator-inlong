@@ -185,7 +185,7 @@ public class TaskPositionManager extends AbstractDaemon {
             }).findFirst().orElse(null);
             if (job == null) {
                 if (logPrinter.shouldPrint()) {
-                    LOGGER.error("can't find job {}, runningJobs {}", instName, jobManager.getRunningJobs().values());
+                    LOGGER.error("can't find job {}, runningJobs {}", instName, jobManager.getRunningJobs().keys());
                 }
             } else {
                 String insName = job.getDBSyncJobConf().getBakMysqlIp() + ":"

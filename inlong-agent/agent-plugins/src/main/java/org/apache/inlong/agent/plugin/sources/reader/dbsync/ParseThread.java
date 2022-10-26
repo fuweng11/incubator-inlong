@@ -192,18 +192,19 @@ public class ParseThread extends Thread {
                             if (timeStamp == 0) {
                                 timeStamp = Instant.now().toEpochMilli();
                             }
-                            if (lastProcessedPosition == null) {
-                                lastProcessedPosition = new LogPosition();
-                                lastProcessedPosition.setPosition(new EntryPosition(binlogFilename,
-                                        event.getLogPos(), timeStamp,
-                                        event.getServerId()));
-                                LogIdentity identity = new LogIdentity(dbAddress, -1L);
-                                lastProcessedPosition.setIdentity(identity);
-                            } else if (lastProcessedPosition.getPosition() != null) {
-                                lastProcessedPosition.getPosition().setTimestamp(timeStamp);
-                                lastProcessedPosition.getPosition().setPosition(event.getLogPos());
-                                lastProcessedPosition.getPosition().setJournalName(binlogFilename);
-                            }
+                            LogPosition heartBeatLogPosition = new LogPosition();
+
+                            heartBeatLogPosition.setPosition(new EntryPosition(binlogFilename,
+                                    event.getLogPos(), timeStamp,
+                                    event.getServerId()));
+                            LogIdentity identity = new LogIdentity(dbAddress, -1L);
+                            heartBeatLogPosition.setIdentity(identity);
+
+                            heartBeatLogPosition.setSendIndex(0);
+                            heartBeatLogPosition.setPkgIndex(parseMsgId);
+                            heartBeatLogPosition.setParseThreadName(parserJobName);
+
+                            lastProcessedPosition = heartBeatLogPosition;
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug("parserJobName = {} lastProcessedPosition = {}",
                                         parserJobName, lastProcessedPosition);
@@ -260,7 +261,7 @@ public class ParseThread extends Thread {
                 //multi business report
                 LogPosition sendPosition = new LogPosition(lastParsePosition);
                 sendPosition.setSendIndex(sendIndex);
-                sendPosition.setPkgIndex(dbSyncReader.getPkgIndexId());
+                sendPosition.setPkgIndex(parseMsgId);
                 sendPosition.setParseThreadName(this.parserJobName);
                 RowChange rowChange = null;
                 try {
