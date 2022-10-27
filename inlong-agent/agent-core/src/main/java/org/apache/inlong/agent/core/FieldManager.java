@@ -22,11 +22,11 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.entites.CommonResponse;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest.FieldObject;
 import org.apache.inlong.agent.entites.FieldChangedEntry;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.HttpManager;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest.FieldObject;
 import org.apache.inlong.sdk.dataproxy.utils.ConcurrentHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,14 +42,10 @@ import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_FIELD_CHANG
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_FIELD_CHANGED_MYSQL_TYPE_LIST;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_FIELD_CHANGED_REPORT_INTREVALS;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_FIELD_CHANGED_REPORT_RETRY_MAX_TIMES;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_AUTH_TOKEN;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_SERVICE_NAME;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_FIELD_CHANGED_MAX_MESSAGE_QUEUE_SIZE;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_FIELD_CHANGED_MYSQL_TYPE_LIST;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_FIELD_CHANGED_REPORT_INTREVALS;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_FIELD_CHANGED_REPORT_RETRY_MAX_TIMES;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_SERVICE_NAME;
 import static org.apache.inlong.agent.constant.FetcherConstants.DBSYNC_REPORT_ADD_FIELDS;
 import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_DBSYNC_REPORT_ADD_FIELDS;
 
@@ -62,8 +58,6 @@ public class FieldManager {
     private Set<String> currentChangedSet = new ConcurrentHashSet<String>();
     private FieldChangedTDMThread tdmFieldChangedReportThread;
     private volatile boolean running = false;
-    private String token;
-    private String serviceName;
     private String columnFieldChangeReportUrl;
     private int maxRetryTimes;
     private int retryIntervals;
@@ -72,8 +66,6 @@ public class FieldManager {
     private HttpManager httpManager;
 
     private FieldManager() {
-        this.token = config.get(DBSYNC_MANAGER_AUTH_TOKEN, DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN);
-        this.serviceName = config.get(DBSYNC_MANAGER_SERVICE_NAME, DEFAULT_DBSYNC_MANAGER_SERVICE_NAME);
         tdmFieldChangedReportThread = new FieldChangedTDMThread();
         tdmFieldChangedReportThread.setName(tdmFieldChangedReportThread.getClass().getSimpleName());
         tdmFieldChangedReportThread.setUncaughtExceptionHandler((t, e)
@@ -288,7 +280,7 @@ public class FieldManager {
 
         private boolean reportFiledChanged(FieldChangedEntry entry) {
             DbSyncAddFieldRequest request = new DbSyncAddFieldRequest(entry.getTaskId(), entry.getFieldChangedList());
-            String jobConfigString = httpManager.doSentPost(columnFieldChangeReportUrl, request, token, serviceName);
+            String jobConfigString = httpManager.doSentPost(columnFieldChangeReportUrl, request);
             CommonResponse<Boolean> commonResponse = CommonResponse.fromJson(jobConfigString, Boolean.class);
             if (commonResponse != null) {
                 return commonResponse.getData();

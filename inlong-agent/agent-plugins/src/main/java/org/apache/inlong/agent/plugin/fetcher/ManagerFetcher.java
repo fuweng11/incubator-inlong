@@ -242,7 +242,7 @@ public class ManagerFetcher extends AbstractDaemon implements ProfileFetcher {
      */
     public void fetchCommand() {
         List<CommandEntity> unackedCommands = commandDb.getUnackedCommands();
-        String resultStr = httpManager.doSentPost(managerTaskUrl, getFetchRequest(unackedCommands), "", "");
+        String resultStr = httpManager.doSentPost(managerTaskUrl, getFetchRequest(unackedCommands));
         JsonObject resultData = getResultData(resultStr);
         JsonElement element = resultData.get(AGENT_MANAGER_RETURN_PARAM_DATA);
         if (element != null) {
@@ -266,7 +266,7 @@ public class ManagerFetcher extends AbstractDaemon implements ProfileFetcher {
             return;
         }
         JsonObject resultData = getResultData(
-                httpManager.doSentPost(managerDbCollectorTaskUrl, getSqlTaskRequest(), "", ""));
+                httpManager.doSentPost(managerDbCollectorTaskUrl, getSqlTaskRequest()));
         dealWithSqlTaskResult(GSON.fromJson(resultData.get(AGENT_MANAGER_RETURN_PARAM_DATA).getAsJsonObject(),
                 DbCollectorTaskResult.class));
     }
@@ -472,7 +472,7 @@ public class ManagerFetcher extends AbstractDaemon implements ProfileFetcher {
      */
     private String confirmLocalIps(List<String> localIps) {
         ConfirmAgentIpRequest request = new ConfirmAgentIpRequest(AGENT, localIps);
-        JsonObject resultData = getResultData(httpManager.doSentPost(managerIpsCheckUrl, request, "", "")).get(
+        JsonObject resultData = getResultData(httpManager.doSentPost(managerIpsCheckUrl, request)).get(
                 AGENT_MANAGER_RETURN_PARAM_DATA).getAsJsonObject();
         if (!resultData.has(AGENT_MANAGER_RETURN_PARAM_IP)) {
             throw new IllegalArgumentException("cannot get ip from data " + resultData.getAsString());

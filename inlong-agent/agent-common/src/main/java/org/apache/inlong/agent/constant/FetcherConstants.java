@@ -87,4 +87,15 @@ public class FetcherConstants {
     public static final String DBSYNC_REPORT_ADD_FIELDS = "agent.dbsync.report.addFields.path";
     public static final String DEFAULT_DBSYNC_REPORT_ADD_FIELDS = "/dbsync/addFields";
 
+    // internal secure-auth
+    public static final String INTERNAL_MANAGER_AUTH_TOKEN = "agent.internal.manager.auth.token";
+    public static final String DEFAULT_INTERNAL_MANAGER_AUTH_TOKEN = "secure-authentication";
+
+    public static final String INTERNAL_MANAGER_SERVICE_NAME = "agent.internal.manager.service.nam";
+    public static final String DEFAULT_INTERNAL_MANAGER_SERVICE_NAME = "inlong_manager";
+
+    public static final String INTERNAL_MANAGER_AUTH_USER_NAME = "agent.internal.manager.auth.user.name";
+
+    public static final String INTERNAL_MANAGER_AUTH_USER_KEY = "agent.internal.manager.auth.user.key";
+
 }

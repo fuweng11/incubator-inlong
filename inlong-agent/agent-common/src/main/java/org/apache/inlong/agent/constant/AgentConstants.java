@@ -136,16 +136,6 @@ public class AgentConstants {
     public static final String DBSYNC_FILED_CHANGED_REPORT_ENABLE = "agent.dbsync.filed.changed.report.enable";
     public static final boolean DEFAULT_DBSYNC_FILED_CHANGED_REPORT_ENABLE = true;
 
-    public static final String DBSYNC_MANAGER_AUTH_TOKEN = "agent.dbsync.manager.auth.token";
-    public static final String DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN = "secure-authentication";
-
-    public static final String DBSYNC_MANAGER_SERVICE_NAME = "agent.dbsync.manager.service.nam";
-    public static final String DEFAULT_DBSYNC_MANAGER_SERVICE_NAME = "inlong_manager";
-
-    public static final String DBSYNC_TAUTH_TEST_USER_NAME = "inlong-agent";
-    public static final String DBSYNC_TAUTH_TEST_USER_KEY = "ZmE1MWJjZTliYTNiYjBjNWIxZDJjO"
-            + "WMxY2RmOGEzZGI1NGYwMGZiZDFlODhiZmQw";
-
     public static final String DBSYNC_HEART_INTERVAL = "agent.dbsync.heart.interval.msec";
     public static final long DEFAULT_DBSYNC_HEART_INTERVAL = 3 * 60 * 1000L;
 

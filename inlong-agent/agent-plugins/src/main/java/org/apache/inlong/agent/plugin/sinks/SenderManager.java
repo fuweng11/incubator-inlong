@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.plugin.sinks;
 
 import io.netty.util.concurrent.DefaultThreadFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.CommonConstants;
@@ -51,6 +52,8 @@ import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_AU
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_AUTH_SECRET_KEY;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_VIP_HTTP_HOST;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_VIP_HTTP_PORT;
+import static org.apache.inlong.agent.constant.FetcherConstants.INTERNAL_MANAGER_AUTH_USER_KEY;
+import static org.apache.inlong.agent.constant.FetcherConstants.INTERNAL_MANAGER_AUTH_USER_NAME;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_GROUP_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_STREAM_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_PLUGIN_ID;
@@ -99,6 +102,10 @@ public class SenderManager {
     private String authSecretId;
     private String authSecretKey;
 
+    // internal secure-auth
+    private String secureAuthUserName;
+    private String secureAuthUserKey;
+
     public SenderManager(JobProfile jobConf, String inlongGroupId, String sourcePath) {
         AgentConfiguration conf = AgentConfiguration.getAgentConf();
         managerHost = conf.get(AGENT_MANAGER_VIP_HTTP_HOST);
@@ -135,6 +142,9 @@ public class SenderManager {
                 CommonConstants.DEFAULT_PROXY_CLIENT_ENABLE_BUSY_WAIT);
         authSecretId = conf.get(AGENT_MANAGER_AUTH_SECRET_ID);
         authSecretKey = conf.get(AGENT_MANAGER_AUTH_SECRET_KEY);
+
+        secureAuthUserName = conf.get(INTERNAL_MANAGER_AUTH_USER_NAME, "");
+        secureAuthUserKey = conf.get(INTERNAL_MANAGER_AUTH_USER_KEY, "");
 
         this.sourcePath = sourcePath;
         this.inlongGroupId = inlongGroupId;
@@ -181,10 +191,16 @@ public class SenderManager {
      * @return DefaultMessageSender
      */
     private DefaultMessageSender createMessageSender(String tagName) throws Exception {
+        // considering internalAuth first
+        boolean isInternalAuth = false;
+        if (StringUtils.isNotBlank(secureAuthUserName) && StringUtils.isNotBlank(secureAuthUserKey)) {
+            authSecretId = secureAuthUserName;
+            authSecretKey = secureAuthUserKey;
+            isInternalAuth = true;
+        }
+        ProxyClientConfig proxyClientConfig = new ProxyClientConfig(localhost, isLocalVisit, managerHost, managerPort,
+                tagName, netTag, authSecretId, authSecretKey, isInternalAuth);
 
-        ProxyClientConfig proxyClientConfig = new ProxyClientConfig(
-                localhost, isLocalVisit, managerHost, managerPort, tagName, netTag, authSecretId, authSecretKey);
-        proxyClientConfig.setTotalAsyncCallbackSize(totalAsyncBufSize);
         proxyClientConfig.setFile(isFile);
         proxyClientConfig.setAliveConnections(aliveConnectionNum);
 

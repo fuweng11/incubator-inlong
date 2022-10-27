@@ -73,13 +73,9 @@ import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_LOADBALA
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_POSITION_UPDATE_INTERVAL_MS;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_RUN_NODE_CHANGE_CANDIDATE_MAX_THRESHOLD;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_RUN_NODE_CHANGE_MAX_THRESHOLD;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_AUTH_TOKEN;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_SERVICE_NAME;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MAX_CON_DB_SIZE;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_SKIP_ZK_POSITION_ENABLE;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_HA_COORDINATOR_MONITOR_INTERVAL_MS;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_SERVICE_NAME;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MAX_CON_DB_SIZE;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_SKIP_ZK_POSITION_ENABLE;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_JOB_STATE_MONITOR_INTERVAL_MS;
@@ -147,8 +143,6 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
     private int loadBalanceCompareLoadUsageThreshold = 10;
     private float loadBalanceCheckLoadThreshold = 0.6F;
     private String getTaskConfigByIpAndServerIdUrl;
-    private String token;
-    private String serviceName;
     private HttpManager httpManager;
     private Gson gson = new Gson();
 
@@ -186,8 +180,6 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         interval = agentConf.getLong(DBSYNC_HA_JOB_STATE_MONITOR_INTERVAL_MS, DEFAULT_HA_JOB_STATE_MONITOR_INTERVAL_MS);
         jobStateMonitorExecutor.scheduleWithFixedDelay(getJobStateMonitorTask(),
                 interval, interval, TimeUnit.MILLISECONDS);
-        this.token = agentConf.get(DBSYNC_MANAGER_AUTH_TOKEN, DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN);
-        this.serviceName = agentConf.get(DBSYNC_MANAGER_SERVICE_NAME, DEFAULT_DBSYNC_MANAGER_SERVICE_NAME);
         this.httpManager = new HttpManager(agentConf);
 
     }
@@ -1003,8 +995,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         RunningTaskRequest runningTaskRequest = new RunningTaskRequest(localIp, clusterTag, clusterName, clusterInfo,
                 syncId);
 
-        String jobConfigString = httpManager.doSentPost(getTaskConfigByIpAndServerIdUrl, runningTaskRequest, token,
-                serviceName);
+        String jobConfigString = httpManager.doSentPost(getTaskConfigByIpAndServerIdUrl, runningTaskRequest);
         CommonResponse<DbSyncTaskFullInfo> commonResponse =
                 CommonResponse.fromJson(jobConfigString, DbSyncTaskFullInfo.class);
         if (commonResponse == null || !haFetcher.parseJobAndCheckForStart(commonResponse)) {

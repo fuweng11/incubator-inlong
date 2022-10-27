@@ -60,12 +60,8 @@ import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_NAME
 import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_TAG;
 import static org.apache.inlong.agent.constant.AgentConstants.AGENT_HTTP_PORT;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HEART_INTERVAL;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_AUTH_TOKEN;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_SERVICE_NAME;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_AGENT_HTTP_PORT;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_HEART_INTERVAL;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_SERVICE_NAME;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_HEARTBEAT_INTERVAL;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_HEARTBEAT_HTTP_PATH;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_REPORTSNAPSHOT_HTTP_PATH;
@@ -134,7 +130,7 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
             while (isRunnable()) {
                 try {
                     TaskSnapshotRequest taskSnapshotRequest = buildTaskSnapshotRequest();
-                    httpManager.doSentPost(reportSnapshotUrl, taskSnapshotRequest, "", "");
+                    httpManager.doSentPost(reportSnapshotUrl, taskSnapshotRequest);
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug(" {} report to manager", taskSnapshotRequest);
                     }
@@ -183,7 +179,7 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
 
     @Override
     public void reportHeartbeat(HeartbeatMsg heartbeat) {
-        httpManager.doSentPost(reportHeartbeatUrl, heartbeat, "", "");
+        httpManager.doSentPost(reportHeartbeatUrl, heartbeat);
     }
 
     public long getDBSyncInterval() {
@@ -192,9 +188,7 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
 
     public void reportDBSyncHeartbeat() {
         DbSyncHeartbeatRequest heartbeat = getDbSyncHeartbeat();
-        String token = conf.get(DBSYNC_MANAGER_AUTH_TOKEN, DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN);
-        String serviceName = conf.get(DBSYNC_MANAGER_SERVICE_NAME, DEFAULT_DBSYNC_MANAGER_SERVICE_NAME);
-        httpManager.doSentPost(dbSyncReportUrl, heartbeat, token, serviceName);
+        httpManager.doSentPost(dbSyncReportUrl, heartbeat);
     }
 
     public DbSyncHeartbeatRequest getDbSyncHeartbeat() {

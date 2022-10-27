@@ -59,11 +59,7 @@ import java.util.stream.Collectors;
 import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_NAME;
 import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_TAG;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_CONN_INTERVAL;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_AUTH_TOKEN;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MANAGER_SERVICE_NAME;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_CONN_INTERVAL;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MANAGER_SERVICE_NAME;
 import static org.apache.inlong.agent.constant.FetcherConstants.DBSYNC_GET_SERVER_LIST;
 import static org.apache.inlong.agent.constant.FetcherConstants.DBSYNC_REPORT_AND_GET_TASK;
 import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_DBSYNC_GET_SERVER_LIST;
@@ -85,8 +81,6 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
     private AgentConfiguration conf; //
     private String getServerIdListByIpUrl;
     private String reportTaskConfigPeriodUrl;
-    private String token;
-    private String serviceName;
     private ArrayList<DBSyncJobConf> newJobs;
     private ConcurrentHashMap<Integer, TaskInfoBean> taskRegisterResults;
     private String clusterTag;
@@ -100,8 +94,6 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
         this.clusterName = conf.get(AGENT_CLUSTER_NAME);
         this.clusterTag = conf.get(AGENT_CLUSTER_TAG);
         this.httpManager = new HttpManager(conf);
-        this.token = conf.get(DBSYNC_MANAGER_AUTH_TOKEN, DEFAULT_DBSYNC_MANAGER_AUTH_TOKEN);
-        this.serviceName = conf.get(DBSYNC_MANAGER_SERVICE_NAME, DEFAULT_DBSYNC_MANAGER_SERVICE_NAME);
         this.getServerIdListByIpUrl = buildGetInitInfoUrl();
         this.reportTaskConfigPeriodUrl = buildReportAndGetTaskUrl();
         this.taskRegisterResults = new ConcurrentHashMap<>();
@@ -171,8 +163,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
         int syncIdListSize = -1;
 
         InitTaskRequest initTaskRequest = new InitTaskRequest(clusterTag, clusterName, localIp);
-        String syncIdListInfo = httpManager.doSentPost(getServerIdListByIpUrl, initTaskRequest, token,
-                serviceName);
+        String syncIdListInfo = httpManager.doSentPost(getServerIdListByIpUrl, initTaskRequest);
         CommonResponse<DbSyncInitInfo> commonResponse =
                 CommonResponse.fromJson(syncIdListInfo, DbSyncInitInfo.class);
         if (commonResponse == null || !parseSyncInfoAndRegisterInfo(commonResponse)) {
@@ -209,8 +200,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
 
         reportTaskRequest.setServerNames(jobManager.getCurrentRunSyncIdList());
 
-        String jobConfigString = httpManager.doSentPost(reportTaskConfigPeriodUrl, reportTaskRequest, token,
-                serviceName);
+        String jobConfigString = httpManager.doSentPost(reportTaskConfigPeriodUrl, reportTaskRequest);
         CommonResponse<DbSyncTaskFullInfo> commonResponse =
                 CommonResponse.fromJson(jobConfigString, DbSyncTaskFullInfo.class);
         parseJobAndCheckForStart(commonResponse);
