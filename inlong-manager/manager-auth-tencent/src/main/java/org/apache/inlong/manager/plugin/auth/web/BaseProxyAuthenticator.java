@@ -19,7 +19,9 @@ package org.apache.inlong.manager.plugin.auth.web;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.UserTypeEnum;
+import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
@@ -119,8 +121,15 @@ public abstract class BaseProxyAuthenticator implements Authenticator {
             userInfo.setExtParams(StaffDTO.convertToJson(staffInfo));
             UserRequest request = CommonBeanUtils.copyProperties(userInfo, UserRequest::new);
             request.setPassword(DUMMY_PASSWORD);
-            userService.update(request, username);
-            userInfo.setRoles(Collections.singleton(UserTypeEnum.name(userInfo.getAccountType())));
+            try {
+                userService.update(request, username);
+                userInfo.setRoles(Collections.singleton(UserTypeEnum.name(userInfo.getAccountType())));
+            } catch (BusinessException e) {
+                if (e.getCode() == ErrorCodeEnum.CONFIG_EXPIRED.getCode()) {
+                    // ignore concurrent update because very likely no data needs to update
+                    log.warn("user info {} might be out of date", userInfo);
+                }
+            }
             return userInfo;
         }
         // or create with staff info
