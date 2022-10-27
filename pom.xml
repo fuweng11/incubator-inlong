@@ -261,6 +261,7 @@
         <kubernetes.client.version>6.0.0</kubernetes.client.version>
 
         <zhiyan.monitor.version>1.1.1</zhiyan.monitor.version>
+        <tencent.tdw.version>1.0.1</tencent.tdw.version>
     </properties>
 
     <dependencyManagement>
@@ -1621,6 +1622,19 @@
                 <groupId>com.tencent.teg.monitor</groupId>
                 <artifactId>java-sdk</artifactId>
                 <version>${zhiyan.monitor.version}</version>
+            </dependency>
+
+            <!-- tianqiong -->
+            <dependency>
+                <groupId>com.tencent.tdw</groupId>
+                <artifactId>security-common</artifactId>
+                <version>${tencent.tdw.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>slf4j-log4j12</artifactId>
+                        <groupId>org.slf4j</groupId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>

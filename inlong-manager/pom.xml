@@ -42,6 +42,7 @@
         <module>manager-plugins</module>
         <module>manager-web</module>
         <module>manager-docker</module>
+        <module>manager-auth-tencent</module>
     </modules>
 
     <dependencies>

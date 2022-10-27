@@ -47,6 +47,15 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.inlong</groupId>
+            <artifactId>manager-auth-tencent</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tencent.tdw</groupId>
+            <artifactId>security-common</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <exclusions>
