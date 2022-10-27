@@ -20,7 +20,6 @@ package org.apache.inlong.dataproxy.config;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHeaders;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -58,9 +57,9 @@ import static org.apache.inlong.dataproxy.consts.ConfigConstants.CONFIG_CHECK_IN
  * Config manager class.
  */
 public class ConfigManager {
-    private static final Logger LOG = LoggerFactory.getLogger(ConfigManager.class);
 
     public static final List<ConfigHolder> CONFIG_HOLDER_LIST = new ArrayList<>();
+    private static final Logger LOG = LoggerFactory.getLogger(ConfigManager.class);
     private static volatile boolean isInit = false;
     private static ConfigManager instance = null;
 
@@ -155,8 +154,7 @@ public class ConfigManager {
      * @param holder - property holder
      * @return true if changed else false.
      */
-    private boolean updatePropertiesHolder(Map<String, String> result,
-                                           PropertiesConfigHolder holder) {
+    private boolean updatePropertiesHolder(Map<String, String> result, PropertiesConfigHolder holder) {
         boolean changed = false;
         Map<String, String> tmpHolder = holder.forkHolder();
         // Delete non-existent configuration records
@@ -191,9 +189,8 @@ public class ConfigManager {
      * @param addElseRemove - if add(true) else remove(false)
      * @return true if changed else false.
      */
-    private boolean updatePropertiesHolder(Map<String, String> result,
-                                           PropertiesConfigHolder holder,
-                                           boolean addElseRemove) {
+    private boolean updatePropertiesHolder(Map<String, String> result, PropertiesConfigHolder holder,
+            boolean addElseRemove) {
         Map<String, String> tmpHolder = holder.forkHolder();
         boolean changed = false;
 
@@ -334,9 +331,7 @@ public class ConfigManager {
             HttpPost httpPost = null;
             try {
                 String url = "http://" + host + ConfigConstants.MANAGER_PATH + ConfigConstants.MANAGER_GET_CONFIG_PATH;
-                httpPost = new HttpPost(url);
-                httpPost.addHeader(HttpHeaders.CONNECTION, "close");
-                httpPost.addHeader(HttpHeaders.AUTHORIZATION, AuthUtils.genBasicAuth());
+                httpPost = HttpUtils.getHttPost(url);
 
                 // request body
                 DataProxyConfigRequest request = new DataProxyConfigRequest();

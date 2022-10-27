@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHeaders;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -34,10 +33,10 @@ import org.apache.inlong.common.heartbeat.AbstractHeartbeatManager;
 import org.apache.inlong.common.heartbeat.GroupHeartbeat;
 import org.apache.inlong.common.heartbeat.HeartbeatMsg;
 import org.apache.inlong.common.heartbeat.StreamHeartbeat;
-import org.apache.inlong.dataproxy.config.AuthUtils;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.config.holder.SourceReportInfo;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
+import org.apache.inlong.dataproxy.utils.HttpUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,17 +89,15 @@ public class HeartbeatManager implements AbstractHeartbeatManager {
         final String url =
                 "http://" + managerHost + ConfigConstants.MANAGER_PATH + ConfigConstants.MANAGER_HEARTBEAT_REPORT;
         try {
-            HttpPost post = new HttpPost(url);
-            post.addHeader(HttpHeaders.CONNECTION, "close");
-            post.addHeader(HttpHeaders.AUTHORIZATION, AuthUtils.genBasicAuth());
+            HttpPost post = HttpUtils.getHttPost(url);
+
             String body = gson.toJson(heartbeat);
             StringEntity stringEntity = new StringEntity(body);
             stringEntity.setContentType("application/json");
             post.setEntity(stringEntity);
             CloseableHttpResponse response = httpClient.execute(post);
             String isSuccess = EntityUtils.toString(response.getEntity());
-            if (StringUtils.isNotEmpty(isSuccess)
-                    && response.getStatusLine().getStatusCode() == 200) {
+            if (StringUtils.isNotEmpty(isSuccess) && response.getStatusLine().getStatusCode() == 200) {
                 if (log.isDebugEnabled()) {
                     log.debug("reportHeartbeat url {}, heartbeat: {}, return str {}", url, body, isSuccess);
                 }

@@ -19,9 +19,26 @@ package org.apache.inlong.dataproxy.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.tencent.tdw.security.authentication.v2.TauthClient;
+import com.tencent.tdw.security.exceptions.SecureException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpHeaders;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.inlong.dataproxy.config.AuthUtils;
+import org.apache.inlong.dataproxy.config.ConfigManager;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
+
+import static org.apache.inlong.dataproxy.consts.ConfigConstants.DEFAULT_INTER_MANAGER_NAME;
+import static org.apache.inlong.dataproxy.consts.ConfigConstants.DEFAULT_INTER_MANAGER_SECURE_AUTH;
+import static org.apache.inlong.dataproxy.consts.ConfigConstants.DEFAULT_INTER_NAMANGER_USER_KEY;
+import static org.apache.inlong.dataproxy.consts.ConfigConstants.DEFAULT_INTER_NAMANGER_USER_NAME;
+import static org.apache.inlong.dataproxy.consts.ConfigConstants.INTER_MANAGER_NAME;
+import static org.apache.inlong.dataproxy.consts.ConfigConstants.INTER_MANAGER_SECURE_AUTH;
+import static org.apache.inlong.dataproxy.consts.ConfigConstants.INTER_NAMANGER_USER_KEY;
+import static org.apache.inlong.dataproxy.consts.ConfigConstants.INTER_NAMANGER_USER_NAME;
 
 public class HttpUtils {
 
@@ -32,6 +49,26 @@ public class HttpUtils {
         StringEntity se = new StringEntity(GSON.toJson(obj));
         se.setContentType(APPLICATION_JSON);
         return se;
+    }
+
+    public static HttpPost getHttPost(String url) throws SecureException {
+        Map<String, String> properties = ConfigManager.getInstance().getCommonProperties();
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.addHeader(HttpHeaders.CONNECTION, "close");
+        httpPost.addHeader(HttpHeaders.AUTHORIZATION, AuthUtils.genBasicAuth());
+
+        // internal secure-auth
+        String secureAuth = properties.getOrDefault(INTER_MANAGER_SECURE_AUTH, DEFAULT_INTER_MANAGER_SECURE_AUTH);
+        String serviceName = properties.getOrDefault(INTER_MANAGER_NAME, DEFAULT_INTER_MANAGER_NAME);
+        String secureUserName = properties.getOrDefault(INTER_NAMANGER_USER_NAME, DEFAULT_INTER_NAMANGER_USER_NAME);
+        String secureUserKey = properties.getOrDefault(INTER_NAMANGER_USER_KEY, DEFAULT_INTER_NAMANGER_USER_KEY);
+        if (StringUtils.isNotBlank(secureUserName) && StringUtils.isNotBlank(secureUserKey)) {
+            TauthClient tauthClient = new TauthClient(secureUserName, secureUserKey);
+            String encodedAuthentication = tauthClient.getAuthentication(serviceName);
+            httpPost.addHeader(secureAuth, encodedAuthentication);
+        }
+        return httpPost;
+
     }
 
 }
