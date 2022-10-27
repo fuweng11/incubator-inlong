@@ -116,6 +116,10 @@
             <artifactId>lombok</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.tencent.teg.monitor</groupId>
+            <artifactId>java-sdk</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
