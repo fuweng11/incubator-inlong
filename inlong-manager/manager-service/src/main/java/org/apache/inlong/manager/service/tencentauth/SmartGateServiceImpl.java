@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.plugin.service;
+package org.apache.inlong.manager.service.tencentauth;
 
 import com.google.common.collect.Maps;
 import org.apache.inlong.manager.common.util.JsonUtils;
-import org.apache.inlong.manager.plugin.common.pojo.smtgate.StaffBaseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;

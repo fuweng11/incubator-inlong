@@ -18,7 +18,7 @@
 package org.apache.inlong.manager.plugin.auth.web;
 
 import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
-import org.apache.inlong.manager.plugin.service.SmartGateService;
+import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.service.user.UserService;
 import org.apache.shiro.authc.AuthenticationToken;
 

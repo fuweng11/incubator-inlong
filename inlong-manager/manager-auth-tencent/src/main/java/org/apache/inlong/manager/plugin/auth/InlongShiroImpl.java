@@ -22,9 +22,9 @@ import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthenticationFilter
 import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthorizingRealm;
 import org.apache.inlong.manager.plugin.auth.web.WebAuthenticationFilter;
 import org.apache.inlong.manager.plugin.auth.web.WebAuthorizingRealm;
-import org.apache.inlong.manager.plugin.common.beans.AuthConfig;
+import org.apache.inlong.manager.service.tencentauth.bean.AuthConfig;
 import org.apache.inlong.manager.plugin.common.enums.Env;
-import org.apache.inlong.manager.plugin.service.SmartGateService;
+import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.user.UserService;
 import org.apache.shiro.authc.credential.CredentialsMatcher;

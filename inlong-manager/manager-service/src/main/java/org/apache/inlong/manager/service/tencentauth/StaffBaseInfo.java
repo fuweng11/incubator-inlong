@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.plugin.common.pojo.smtgate;
+package org.apache.inlong.manager.service.tencentauth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

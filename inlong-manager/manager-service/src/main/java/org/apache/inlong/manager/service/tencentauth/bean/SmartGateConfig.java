@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.plugin.common.pojo.smtgate;
+package org.apache.inlong.manager.service.tencentauth.bean;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

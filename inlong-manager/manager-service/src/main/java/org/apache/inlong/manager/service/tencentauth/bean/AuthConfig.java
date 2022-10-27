@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.plugin.common.beans;
+package org.apache.inlong.manager.service.tencentauth.bean;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -30,13 +30,9 @@ import org.springframework.stereotype.Component;
 public class AuthConfig {
 
     private String service;
-
     private String smk;
-
     private String account;
-
     private String cmk;
-
     private String tofKey;
 
     public String getService() {

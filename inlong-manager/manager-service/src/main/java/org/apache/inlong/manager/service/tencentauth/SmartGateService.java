@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.plugin.service;
-
-import org.apache.inlong.manager.plugin.common.pojo.smtgate.StaffBaseInfo;
+package org.apache.inlong.manager.service.tencentauth;
 
 /**
  * Tencent SmartGate Service

@@ -18,7 +18,7 @@
 package org.apache.inlong.manager.plugin.auth.openapi;
 
 import com.google.common.collect.Sets;
-import org.apache.inlong.manager.plugin.common.beans.AuthConfig;
+import org.apache.inlong.manager.service.tencentauth.bean.AuthConfig;
 import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
 import org.apache.shiro.authc.AuthenticationException;

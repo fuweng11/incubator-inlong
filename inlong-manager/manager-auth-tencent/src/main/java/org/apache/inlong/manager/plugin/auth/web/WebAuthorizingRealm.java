@@ -18,8 +18,8 @@
 package org.apache.inlong.manager.plugin.auth.web;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.inlong.manager.plugin.common.beans.AuthConfig;
-import org.apache.inlong.manager.plugin.service.SmartGateService;
+import org.apache.inlong.manager.service.tencentauth.bean.AuthConfig;
+import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
 import org.apache.inlong.manager.service.user.UserService;
