@@ -118,7 +118,7 @@
         <checkstyle.version>6.19</checkstyle.version>
         <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
         <testcontainers.version>1.17.2</testcontainers.version>
-        <docker.organization>inlong</docker.organization>
+        <docker.organization>mirrors.tencent.com/inlong</docker.organization>
 
         <netty.version>4.1.72.Final</netty.version>
         <scala.binary.version>2.11</scala.binary.version>

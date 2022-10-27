@@ -30,25 +30,25 @@ components:
 
 images:
   agent:
-    repository: inlong/agent
+    repository: mirrors.tencent.com/inlong/agent
     tag: latest
   dashboard:
-    repository: inlong/dashboard
+    repository: mirrors.tencent.com/inlong/dashboard
     tag: latest
   dataproxy:
-    repository: inlong/dataproxy
+    repository: mirrors.tencent.com/inlong/dataproxy
     tag: latest
   tubemqManager:
-    repository: inlong/tubemq-manager
+    repository: mirrors.tencent.com/inlong/tubemq-manager
     tag: latest
   tubemqServer:
-    repository: inlong/tubemq-all
+    repository: mirrors.tencent.com/inlong/tubemq-all
     tag: latest
   manager:
-    repository: inlong/manager
+    repository: mirrors.tencent.com/inlong/manager
     tag: latest
   audit:
-    repository: inlong/audit
+    repository: mirrors.tencent.com/inlong/audit
     tag: latest
   mysql:
     repository: mysql
