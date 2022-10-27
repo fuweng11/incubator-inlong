@@ -16,9 +16,8 @@
 # tubemq depend on zookeeper
 FROM mirrors.tencent.com/stp/tlinux2.2-ams_konajdk-8.0.4-272-zookeeper-3.5.5:v1.0.5
 # install tools for debug
-RUN apt-get update \
-    && apt-get install -y net-tools vim curl procps \
-    && rm -rf /var/lib/apt/lists/*
+RUN yum update -y \
+    && yum install -y net-tools vim curl procps wget
 # add tarball from target output
 ARG TUBEMQ_TARBALL
 ADD ${TUBEMQ_TARBALL} /opt/tubemq-server
