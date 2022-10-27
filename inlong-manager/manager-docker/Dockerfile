@@ -16,10 +16,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-FROM openjdk:8-jdk
-RUN apt-get update \
-    && apt-get install -y net-tools vim default-mysql-client \
-    && rm -rf /var/lib/apt/lists/*
+FROM konajdk/konajdk:8-tlinux
+RUN yum -y update \
+    && yum install -y net-tools vim default-mysql-client wget
 EXPOSE 8083
 # profile and env virables
 ENV ACTIVE_PROFILE=prod

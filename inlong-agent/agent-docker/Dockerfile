@@ -16,15 +16,13 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-FROM openjdk:8-jdk
-RUN apt-get update \
-    && apt-get install -y libsnappy-java net-tools vim \
-    && rm -rf /var/lib/apt/lists/*
+FROM konajdk/konajdk:8-tlinux
+RUN yum -y update \
+    && yum install -y libsnappy-java net-tools vim wget
 WORKDIR /opt/inlong-agent
 # add tarball from target output
 ARG AGENT_TARBALL
 ADD ${AGENT_TARBALL} /opt/inlong-agent
-RUN cp /usr/share/java/snappy-java.jar lib/snappy-java-*.jar
 # add mysql connector
 RUN wget -P lib/ https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.27/mysql-connector-java-8.0.27.jar
 EXPOSE 8008

@@ -16,11 +16,10 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-FROM openjdk:8-jdk
+FROM konajdk/konajdk:8-tlinux
 # add tarball from target output
-RUN apt-get update \
-    && apt-get install -y net-tools vim default-mysql-client \
-    && rm -rf /var/lib/apt/lists/*
+RUN yum -y update \
+    && yum install -y net-tools vim default-mysql-client wget
 ARG AUDIT_TARBALL
 ADD ${AUDIT_TARBALL} /opt/inlong-audit
 EXPOSE 10081

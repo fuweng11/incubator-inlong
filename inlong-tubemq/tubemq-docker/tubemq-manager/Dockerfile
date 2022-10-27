@@ -16,10 +16,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-FROM openjdk:8-jdk
-RUN apt-get update \
-    && apt-get install -y net-tools vim \
-    && rm -rf /var/lib/apt/lists/*
+FROM konajdk/konajdk:8-tlinux
+RUN yum -y update \
+    && yum install -y net-tools vim wget
 # add tarball from target output
 ARG TUBEMQ_MANAGER_TARBALL
 ADD ${TUBEMQ_MANAGER_TARBALL} /opt/tubemq-manager
