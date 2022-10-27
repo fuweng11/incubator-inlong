@@ -17,6 +17,8 @@
 
 package org.apache.inlong.common.util;
 
+import com.tencent.tdw.security.authentication.v2.TauthClient;
+import com.tencent.tdw.security.exceptions.SecureException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -43,5 +45,14 @@ public class BasicAuth {
         String credential = String.join(BASIC_AUTH_JOINER, secretId, secretKey);
         return BASIC_AUTH_PREFIX + BASIC_AUTH_SEPARATOR + Base64.getEncoder()
                 .encodeToString(credential.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static String getSecureAuthCredential(String userName, String userKey, String serviceName)
+            throws SecureException {
+        if (StringUtils.isBlank(userName) || StringUtils.isBlank(userKey) || StringUtils.isBlank(serviceName)) {
+            return BASIC_AUTH_EMPTY;
+        }
+        TauthClient tauthClient = new TauthClient(userName, userKey);
+        return tauthClient.getAuthentication(serviceName);
     }
 }

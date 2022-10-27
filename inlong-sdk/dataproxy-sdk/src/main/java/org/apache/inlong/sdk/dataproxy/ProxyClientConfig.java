@@ -101,6 +101,11 @@ public class ProxyClientConfig {
 
     private int maxRetry;
 
+    //internal secure-auth
+    private boolean needSecureAuth = false;
+    private String secureAuthToken = "secure-authentication";
+    private String secureServiceName = "inlong_manager";
+
     /*pay attention to the last url parameter ip*/
     public ProxyClientConfig(String localHost, boolean isLocalVisit, String managerIp,
             int managerPort, String groupId, String netTag, String authSecretId, String authSecretKey,
@@ -142,6 +147,38 @@ public class ProxyClientConfig {
         this(localHost, isLocalVisit, managerIp, managerPort, groupId, netTag, authSecretId, authSecretKey,
                 ConfigConstants.DEFAULT_LOAD_BALANCE, ConfigConstants.DEFAULT_VIRTUAL_NODE,
                 ConfigConstants.DEFAULT_RANDOM_MAX_RETRY);
+    }
+
+    public ProxyClientConfig(String localHost, boolean isLocalVisit, String managerIp, int managerPort, String groupId,
+            String netTag, String authSecretId, String authSecretKey, boolean needSecureAuth) throws ProxysdkException {
+        this(localHost, isLocalVisit, managerIp, managerPort, groupId, netTag, authSecretId, authSecretKey,
+                ConfigConstants.DEFAULT_LOAD_BALANCE, ConfigConstants.DEFAULT_VIRTUAL_NODE,
+                ConfigConstants.DEFAULT_RANDOM_MAX_RETRY);
+        this.needSecureAuth = needSecureAuth;
+    }
+
+    public boolean isNeedSecureAuth() {
+        return needSecureAuth;
+    }
+
+    public void setNeedSecureAuth(boolean needSecureAuth) {
+        this.needSecureAuth = needSecureAuth;
+    }
+
+    public String getSecureAuthToken() {
+        return secureAuthToken;
+    }
+
+    public void setSecureAuthToken(String secureAuthToken) {
+        this.secureAuthToken = secureAuthToken;
+    }
+
+    public String getSecureServiceName() {
+        return secureServiceName;
+    }
+
+    public void setSecureServiceName(String secureServiceName) {
+        this.secureServiceName = secureServiceName;
     }
 
     public String getTlsServerCertFilePathAndName() {

@@ -739,6 +739,12 @@ public class ProxyConfigManager extends Thread {
                 httpPost.addHeader(BasicAuth.BASIC_AUTH_HEADER,
                         BasicAuth.genBasicAuthCredential(clientConfig.getAuthSecretId(),
                                 clientConfig.getAuthSecretKey()));
+                if (clientConfig.isNeedSecureAuth()) {
+                    String encodedAuthentication = BasicAuth.getSecureAuthCredential(clientConfig.getAuthSecretId(),
+                            clientConfig.getAuthSecretKey(), clientConfig.getSecureServiceName());
+                    httpPost.addHeader(clientConfig.getSecureAuthToken(), encodedAuthentication);
+                }
+
                 StringEntity se = getEntity(params);
                 httpPost.setEntity(se);
                 HttpResponse response = httpClient.execute(httpPost);
