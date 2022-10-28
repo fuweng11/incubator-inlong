@@ -190,6 +190,12 @@ public class ServiceDiscoveryUtils {
                         Utils.getAuthorizenInfo(proxyClientConfig.getUserName(),
                                 proxyClientConfig.getSecretKey(), timestamp, nonce));
             }
+            if (proxyClientConfig.isNeedSecureAuth()) {
+                String encodedAuthentication = BasicAuth.getSecureAuthCredential(proxyClientConfig.getAuthSecretId(),
+                        proxyClientConfig.getAuthSecretKey(), proxyClientConfig.getSecureServiceName());
+                httpPost.addHeader(proxyClientConfig.getSecureAuthToken(), encodedAuthentication);
+            }
+
             httpPost.setEntity(new UrlEncodedFormEntity(params));
             HttpResponse response = httpClient.execute(httpPost);
             String returnStr = EntityUtils.toString(response.getEntity());
