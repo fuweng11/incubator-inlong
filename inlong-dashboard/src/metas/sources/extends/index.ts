@@ -21,4 +21,9 @@ import type { MetaExportWithBackendList } from '@/metas/types';
 
 export const allExtendsSources: MetaExportWithBackendList = [
   // You can extends at here...
+  {
+    label: 'HA_BINLOG',
+    value: 'HA_BINLOG',
+    LoadEntity: () => import('./HaBinlog'),
+  },
 ];

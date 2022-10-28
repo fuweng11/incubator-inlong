@@ -19,6 +19,30 @@
 
 import { GroupDefaultInfo } from './GroupDefaultInfo';
 
+import { DataWithBackend } from '@/metas/DataWithBackend';
+import i18n from '@/i18n';
+
+const { I18n, FormField } = DataWithBackend;
+
 export class GroupInfo extends GroupDefaultInfo {
   // You can extends GroupInfo at here...
+  @FormField({
+    type: 'radio',
+    initialValue: 0,
+    // position: ['after', 'description'],
+    props: {
+      options: [
+        {
+          label: i18n.t('basic.Yes'),
+          value: 1,
+        },
+        {
+          label: i18n.t('basic.No'),
+          value: 0,
+        },
+      ],
+    },
+  })
+  @I18n('meta.Group.EnableZookeeper')
+  enableZookeeper: 0 | 1;
 }

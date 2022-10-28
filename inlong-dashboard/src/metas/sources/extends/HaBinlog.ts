@@ -17,14 +17,16 @@
  * under the License.
  */
 
+import { DataWithBackend } from '@/metas/DataWithBackend';
 import i18n from '@/i18n';
-import type { FieldItemType } from '@/metas/common';
+import rulesPattern from '@/utils/pattern';
+import { SourceInfo } from '../common/SourceInfo';
 
-export const haBinlog: FieldItemType[] = [
-  {
+const { I18n, FormField, TableColumn } = DataWithBackend;
+
+export default class PulsarSource extends SourceInfo implements DataWithBackend {
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sources.HaBinlog.Cluster'),
-    name: 'inlongClusterName',
     rules: [{ required: true }],
     props: values => ({
       showSearch: true,
@@ -51,11 +53,13 @@ export const haBinlog: FieldItemType[] = [
         },
       },
     }),
-  },
-  {
+  })
+  @TableColumn()
+  @I18n('meta.Sources.HaBinlog.Cluster')
+  inlongClusterName: string;
+
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sources.HaBinlog.DataNode'),
-    name: 'dataNodeName',
     rules: [{ required: true }],
     props: values => ({
       showSearch: true,
@@ -81,26 +85,30 @@ export const haBinlog: FieldItemType[] = [
         },
       },
     }),
-  },
-  {
-    name: 'dbName',
+  })
+  @TableColumn()
+  @I18n('meta.Sources.HaBinlog.DataNode')
+  dataNodeName: string;
+
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Sources.HaBinlog.DBName'),
     rules: [{ required: true }],
-  },
-  {
-    name: 'tableName',
+  })
+  @I18n('meta.Sources.HaBinlog.DBName')
+  dbName: string;
+
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Sources.HaBinlog.TableName'),
     rules: [{ required: true }],
     props: {
       placeholder: i18n.t('meta.Sources.HaBinlog.TableNameHint'),
     },
-  },
-  {
-    name: 'charset',
+  })
+  @I18n('meta.Sources.HaBinlog.TableName')
+  tableName: string;
+
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sources.HaBinlog.Encoding'),
     rules: [{ required: true }],
     initialValue: 'UTF-8',
     props: {
@@ -115,11 +123,12 @@ export const haBinlog: FieldItemType[] = [
         },
       ],
     },
-  },
-  {
-    name: 'skipDelete',
+  })
+  @I18n('meta.Sources.HaBinlog.Encoding')
+  charset: string;
+
+  @FormField({
     type: 'radio',
-    label: i18n.t('meta.Sources.HaBinlog.SkipDelete'),
     rules: [{ required: true }],
     initialValue: 1,
     props: {
@@ -134,20 +143,24 @@ export const haBinlog: FieldItemType[] = [
         },
       ],
     },
-  },
-  {
-    name: 'startDumpPosition.entryPosition.journalName',
+  })
+  @I18n('meta.Sources.HaBinlog.SkipDelete')
+  skipDelete: number;
+
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Sources.HaBinlog.FileName'),
-  },
-  {
-    name: 'startDumpPosition.entryPosition.position',
+  })
+  @I18n('meta.Sources.HaBinlog.FileName')
+  'startDumpPosition.entryPosition.journalName': string;
+
+  @FormField({
     type: 'inputnumber',
-    label: i18n.t('meta.Sources.HaBinlog.FileLocation'),
     props: {
       min: 1,
       max: 1000000000,
       precision: 0,
     },
-  },
-];
+  })
+  @I18n('meta.Sources.HaBinlog.FileLocation')
+  'startDumpPosition.entryPosition.position': number;
+}

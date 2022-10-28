@@ -1,24 +1,29 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
+import { DataWithBackend } from '@/metas/DataWithBackend';
 import i18n from '@/i18n';
-import type { FieldItemType } from '@/metas/common';
 import EditableTable from '@/components/EditableTable';
-import { sourceFields } from './common/sourceFields';
+import { SinkInfo } from '../common/SinkInfo';
+import { sourceFields } from '../common/sourceFields';
+
+const { I18n, FormField, TableColumn } = DataWithBackend;
 
 const innerClickhouseFieldTypes = [
   'String',
@@ -35,31 +40,9 @@ const innerClickhouseFieldTypes = [
   value: item,
 }));
 
-export const innerClickhouse: FieldItemType[] = [
-  {
-    name: 'dbName',
-    type: 'input',
-    label: i18n.t('meta.Sinks.InnerClickhouse.DbName'),
-    rules: [{ required: true }],
-    props: values => ({
-      disabled: [110, 130].includes(values?.status),
-    }),
-    _renderTable: true,
-  },
-  {
-    name: 'tableName',
-    type: 'input',
-    label: i18n.t('meta.Sinks.InnerClickhouse.TableName'),
-    rules: [{ required: true }],
-    props: values => ({
-      disabled: [110, 130].includes(values?.status),
-    }),
-    _renderTable: true,
-  },
-  {
+export default class InnerClickhouseSink extends SinkInfo implements DataWithBackend {
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sinks.InnerClickhouse.DataNodeName'),
-    name: 'dataNodeName',
     rules: [{ required: true }],
     props: values => ({
       showSearch: true,
@@ -83,12 +66,35 @@ export const innerClickhouse: FieldItemType[] = [
         },
       },
     }),
-    _renderTable: true,
-  },
-  {
-    name: 'flushInterval',
+  })
+  @TableColumn()
+  @I18n('meta.Sinks.InnerClickhouse.DataNodeName')
+  dataNodeName: string;
+
+  @FormField({
+    type: 'input',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
+  })
+  @TableColumn()
+  @I18n('meta.Sinks.InnerClickhouse.DbName')
+  dbName: string;
+
+  @FormField({
+    type: 'input',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
+  })
+  @TableColumn()
+  @I18n('meta.Sinks.InnerClickhouse.TableName')
+  tableName: string;
+
+  @FormField({
     type: 'inputnumber',
-    label: i18n.t('meta.Sinks.InnerClickhouse.FlushInterval'),
     initialValue: 1,
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -96,11 +102,12 @@ export const innerClickhouse: FieldItemType[] = [
     }),
     rules: [{ required: true }],
     suffix: i18n.t('meta.Sinks.InnerClickhouse.FlushIntervalUnit'),
-  },
-  {
-    name: 'packageSize',
+  })
+  @I18n('meta.Sinks.InnerClickhouse.FlushInterval')
+  flushInterval: number;
+
+  @FormField({
     type: 'inputnumber',
-    label: i18n.t('meta.Sinks.InnerClickhouse.PackageSize'),
     initialValue: 1000,
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -108,11 +115,12 @@ export const innerClickhouse: FieldItemType[] = [
     }),
     rules: [{ required: true }],
     suffix: i18n.t('meta.Sinks.InnerClickhouse.PackageSizeUnit'),
-  },
-  {
-    name: 'retryTime',
+  })
+  @I18n('meta.Sinks.InnerClickhouse.PackageSize')
+  packageSize: number;
+
+  @FormField({
     type: 'inputnumber',
-    label: i18n.t('meta.Sinks.InnerClickhouse.RetryTimes'),
     initialValue: 3,
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -120,11 +128,13 @@ export const innerClickhouse: FieldItemType[] = [
     }),
     rules: [{ required: true }],
     suffix: i18n.t('meta.Sinks.InnerClickhouse.RetryTimesUnit'),
-  },
-  {
+  })
+  @I18n('meta.Sinks.InnerClickhouse.RetryTimes')
+  retryTime: number;
+
+  @FormField({
     name: 'isDistribute',
     type: 'radio',
-    label: i18n.t('meta.Sinks.InnerClickhouse.IsDistributed'),
     initialValue: 0,
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -140,11 +150,12 @@ export const innerClickhouse: FieldItemType[] = [
       ],
     }),
     rules: [{ required: true }],
-  },
-  {
-    name: 'partitionStrategy',
+  })
+  @I18n('meta.Sinks.InnerClickhouse.IsDistributed')
+  isDistribute: 0 | 1;
+
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sinks.InnerClickhouse.PartitionStrategy'),
     initialValue: 'BALANCE',
     rules: [{ required: true }],
     props: values => ({
@@ -165,12 +176,12 @@ export const innerClickhouse: FieldItemType[] = [
       ],
     }),
     visible: values => values.isDistributed,
-    _renderTable: true,
-  },
-  {
-    name: 'dataConsistency',
+  })
+  @I18n('meta.Sinks.InnerClickhouse.PartitionStrategy')
+  partitionStrategy: string;
+
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sinks.InnerClickhouse.DataConsistency'),
     initialValue: 'EXACTLY_ONCE',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -186,17 +197,20 @@ export const innerClickhouse: FieldItemType[] = [
       ],
     }),
     isPro: true,
-  },
-  {
-    name: 'sinkFieldList',
+  })
+  @I18n('meta.Sinks.InnerClickhouse.DataConsistency')
+  dataConsistency: string;
+
+  @FormField({
     type: EditableTable,
     props: values => ({
       size: 'small',
       columns: getFieldListColumns(values),
       editing: ![110, 130].includes(values?.status),
     }),
-  },
-];
+  })
+  sinkFieldList: Record<string, unknown>[];
+}
 
 const getFieldListColumns = sinkValues => {
   return [

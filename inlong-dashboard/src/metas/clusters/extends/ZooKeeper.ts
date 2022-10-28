@@ -17,26 +17,29 @@
  * under the License.
  */
 
-// import i18n from '@/i18n';
-import type { FieldItemType } from '@/metas/common';
+import { DataWithBackend } from '@/metas/DataWithBackend';
+import { ClusterInfo } from '../common/ClusterInfo';
 
-export const innerClickhouse: FieldItemType[] = [
-  {
+const { I18n, FormField } = DataWithBackend;
+
+export default class ZooKeeperCluster extends ClusterInfo implements DataWithBackend {
+  @FormField({
     type: 'input',
-    label: 'url',
-    name: 'url',
     rules: [{ required: true }],
-  },
-  {
+    initialValue: '127.0.0.1:9092',
+  })
+  @I18n('URL')
+  url: string;
+
+  @FormField({
     type: 'input',
-    label: 'username',
-    name: 'username',
-    rules: [{ required: true }],
-  },
-  {
+  })
+  @I18n('tubeRoot')
+  tubeRoot: string;
+
+  @FormField({
     type: 'input',
-    label: 'token',
-    name: 'token',
-    rules: [{ required: true }],
-  },
-];
+  })
+  @I18n('pulsarRoot')
+  pulsarRoot: string;
+}

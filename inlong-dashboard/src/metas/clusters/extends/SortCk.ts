@@ -17,24 +17,7 @@
  * under the License.
  */
 
-import type { FieldItemType } from '@/metas/common';
+import { DataWithBackend } from '@/metas/DataWithBackend';
+import { ClusterInfo } from '../common/ClusterInfo';
 
-export const zk: FieldItemType[] = [
-  {
-    type: 'input',
-    label: 'URL',
-    name: 'url',
-    rules: [{ required: true }],
-    initialValue: '127.0.0.1:9092',
-  },
-  {
-    type: 'input',
-    label: 'tubeRoot',
-    name: 'tubeRoot',
-  },
-  {
-    type: 'input',
-    label: 'pulsarRoot',
-    name: 'pulsarRoot',
-  },
-];
+export default class SortCkCluster extends ClusterInfo implements DataWithBackend {}

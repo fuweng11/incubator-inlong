@@ -17,8 +17,25 @@
  * under the License.
  */
 
-import type { FieldItemType } from '@/metas/common';
+import { DataWithBackend } from '@/metas/DataWithBackend';
+import UserSelect from '@/components/UserSelect';
+import { ClusterInfo } from '../common/ClusterInfo';
 
-export const consumeExtends: FieldItemType[] = [
-  // You can extended consume fields here...
-];
+const { I18n, FormField } = DataWithBackend;
+
+export default class SortHiveCluster extends ClusterInfo implements DataWithBackend {
+  @FormField({
+    type: 'input',
+    props: {
+      placeholder: 'hdfs://xx-xxx-xx/xxx/xxx',
+    },
+  })
+  @I18n('meta.Clusters.Sort.BackupDataPath')
+  backupDataPath: string;
+
+  @FormField({
+    type: UserSelect,
+  })
+  @I18n('meta.Clusters.Sort.BackupHadoopProxyUser')
+  backupHadoopProxyUser: string;
+}

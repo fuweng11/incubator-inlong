@@ -1,28 +1,33 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
+import { DataWithBackend } from '@/metas/DataWithBackend';
 import i18n from '@/i18n';
-import type { FieldItemType } from '@/metas/common';
 import EditableTable from '@/components/EditableTable';
 import ProductSelect from '@/components/ProductSelect';
 import UserSelect from '@/components/UserSelect';
-import { sourceFields } from './common/sourceFields';
+import { SinkInfo } from '../common/SinkInfo';
+import { sourceFields } from '../common/sourceFields';
 
-const thiveFieldTypes = [
+const { I18n, FormField, TableColumn } = DataWithBackend;
+
+const innerThiveFieldTypes = [
   'string',
   'varchar',
   'char',
@@ -43,11 +48,9 @@ const thiveFieldTypes = [
   value: item,
 }));
 
-export const innerThive: FieldItemType[] = [
-  {
+export default class InnerThiveSink extends SinkInfo implements DataWithBackend {
+  @FormField({
     type: ProductSelect,
-    label: i18n.t('meta.Group.Product'),
-    name: 'productId',
     extraNames: ['productName'],
     rules: [{ required: true }],
     props: values => ({
@@ -58,11 +61,13 @@ export const innerThive: FieldItemType[] = [
         productName: record.name,
       }),
     }),
-  },
-  {
+  })
+  @TableColumn()
+  @I18n('meta.Group.Product')
+  productId: string | number;
+
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Group.AppGroupName'),
-    name: 'appGroupName',
     rules: [{ required: true }],
     props: values => ({
       allowClear: true,
@@ -83,11 +88,12 @@ export const innerThive: FieldItemType[] = [
         },
       },
     }),
-  },
-  {
+  })
+  @I18n('meta.Group.AppGroupName')
+  appGroupName: string;
+
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sinks.InnerHive.DataNodeName'),
-    name: 'dataNodeName',
     rules: [{ required: true }],
     props: values => ({
       showSearch: true,
@@ -111,31 +117,32 @@ export const innerThive: FieldItemType[] = [
         },
       },
     }),
-  },
-  {
+  })
+  @I18n('meta.Sinks.InnerHive.DataNodeName')
+  dataNodeName: string;
+
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Sinks.THive.DbName'),
-    name: 'dbName',
     rules: [{ required: true }],
     props: values => ({
       disabled: [110, 130].includes(values?.status),
     }),
-    _renderTable: true,
-  },
-  {
+  })
+  @I18n('meta.Sinks.THive.DbName')
+  dbName: string;
+
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Sinks.THive.TableName'),
-    name: 'tableName',
     rules: [{ required: true }],
     props: values => ({
       disabled: [110, 130].includes(values?.status),
     }),
-    _renderTable: true,
-  },
-  {
-    name: 'partitionType',
+  })
+  @I18n('meta.Sinks.THive.TableName')
+  tableName: string;
+
+  @FormField({
     type: 'radio',
-    label: i18n.t('meta.Sinks.THive.PartitionType'),
     initialValue: 'LIST',
     rules: [{ required: true }],
     props: values => ({
@@ -151,16 +158,16 @@ export const innerThive: FieldItemType[] = [
         },
       ],
     }),
-  },
-  {
+  })
+  @I18n('meta.Sinks.THive.PartitionType')
+  partitionType: string;
+
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Sinks.THive.PartitionInterval'),
-    name: 'partitionInterval',
     rules: [{ required: true }],
     props: values => ({
       disabled: [110, 130].includes(values?.status),
     }),
-    _renderTable: true,
     suffix: {
       type: 'select',
       name: 'partitionUnit',
@@ -180,11 +187,12 @@ export const innerThive: FieldItemType[] = [
       },
       _renderTable: true,
     },
-  },
-  {
+  })
+  @I18n('meta.Sinks.THive.PartitionInterval')
+  partitionInterval: string;
+
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sinks.THive.PartitionCreationStrategy'),
-    name: 'partitionCreationStrategy',
     initialValue: 'ARRIVED',
     rules: [{ required: true }],
     props: values => ({
@@ -208,12 +216,12 @@ export const innerThive: FieldItemType[] = [
         },
       ],
     }),
-    _renderTable: true,
-  },
-  {
+  })
+  @I18n('meta.Sinks.THive.PartitionCreationStrategy')
+  partitionCreationStrategy: string;
+
+  @FormField({
     type: 'radio',
-    label: i18n.t('meta.Sinks.THive.FieldFormat'),
-    name: 'fileFormat',
     initialValue: 'TextFile',
     rules: [{ required: true }],
     props: values => ({
@@ -233,12 +241,12 @@ export const innerThive: FieldItemType[] = [
         },
       ],
     }),
-    _renderTable: true,
-  },
-  {
-    name: 'dataEncoding',
+  })
+  @I18n('meta.Sinks.THive.FieldFormat')
+  fileFormat: string;
+
+  @FormField({
     type: 'radio',
-    label: i18n.t('meta.Sinks.THive.DataEncoding'),
     initialValue: 'UTF-8',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -254,11 +262,12 @@ export const innerThive: FieldItemType[] = [
       ],
     }),
     rules: [{ required: true }],
-  },
-  {
-    name: 'dataSeparator',
+  })
+  @I18n('meta.Sinks.THive.DataEncoding')
+  dataEncoding: string;
+
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sinks.THive.DataSeparator'),
     initialValue: '124',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -305,29 +314,32 @@ export const innerThive: FieldItemType[] = [
         max: 127,
       } as any,
     ],
-  },
-  {
+  })
+  @I18n('meta.Sinks.THive.DataSeparator')
+  dataSeparator: string;
+
+  @FormField({
     type: UserSelect,
-    label: i18n.t('meta.Sinks.THive.DefaultSelectors'),
-    name: 'defaultSelectors',
     props: {
       mode: 'multiple',
       currentUserClosable: false,
     },
-  },
-  {
+  })
+  @I18n('meta.Sinks.THive.DefaultSelectors')
+  defaultSelectors: string;
+
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Sinks.THive.SecondaryPartition'),
-    name: 'secondaryPartition',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
     }),
     isPro: true,
-  },
-  {
+  })
+  @I18n('meta.Sinks.THive.SecondaryPartition')
+  secondaryPartition: string;
+
+  @FormField({
     type: 'select',
-    label: i18n.t('meta.Sinks.THive.DataConsistency'),
-    name: 'dataConsistency',
     initialValue: 'EXACTLY_ONCE',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -343,43 +355,92 @@ export const innerThive: FieldItemType[] = [
       ],
     }),
     isPro: true,
-  },
-  {
+  })
+  @I18n('meta.Sinks.THive.DataConsistency')
+  dataConsistency: string;
+
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Sinks.THive.CheckAbsolute'),
-    name: 'checkAbsolute',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
       placeholder: i18n.t('meta.Sinks.THive.CheckHint'),
     }),
     isPro: true,
-  },
-  {
+  })
+  @I18n('meta.Sinks.THive.CheckAbsolute')
+  checkAbsolute: string;
+
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Sinks.THive.CheckRelative'),
-    name: 'checkRelative',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
       placeholder: i18n.t('meta.Sinks.THive.CheckHint'),
     }),
     isPro: true,
-  },
-  {
-    name: 'sinkFieldList',
+  })
+  @I18n('meta.Sinks.THive.CheckRelative')
+  checkRelative: string;
+
+  @FormField({
     type: EditableTable,
     props: values => ({
       size: 'small',
       columns: getFieldListColumns(values),
       canDelete: ![110, 130].includes(values?.status),
     }),
-  },
-];
+  })
+  sinkFieldList: Record<string, unknown>[];
+
+  @FormField({
+    type: EditableTable,
+    tooltip: i18n.t('meta.Sinks.Hive.PartitionFieldListHelp'),
+    col: 24,
+    props: {
+      size: 'small',
+      required: false,
+      columns: [
+        {
+          title: i18n.t('meta.Sinks.Hive.FieldName'),
+          dataIndex: 'fieldName',
+          rules: [{ required: true }],
+        },
+        {
+          title: i18n.t('meta.Sinks.Hive.FieldType'),
+          dataIndex: 'fieldType',
+          type: 'select',
+          initialValue: 'string',
+          props: {
+            options: ['string', 'timestamp'].map(item => ({
+              label: item,
+              value: item,
+            })),
+          },
+        },
+        {
+          title: i18n.t('meta.Sinks.Hive.FieldFormat'),
+          dataIndex: 'fieldFormat',
+          type: 'autocomplete',
+          props: {
+            options: ['MICROSECONDS', 'MILLISECONDS', 'SECONDS', 'SQL', 'ISO_8601'].map(item => ({
+              label: item,
+              value: item,
+            })),
+          },
+          rules: [{ required: true }],
+          visible: (text, record) => record.fieldType === 'timestamp',
+        },
+      ],
+    },
+  })
+  @I18n('meta.Sinks.Hive.PartitionFieldList')
+  partitionFieldList: Record<string, unknown>[];
+}
 
 const getFieldListColumns = sinkValues => {
   return [
     ...sourceFields,
     {
-      title: `THIVE${i18n.t('meta.Sinks.THive.FieldName')}`,
+      title: `Thive${i18n.t('meta.Sinks.THive.FieldName')}`,
       dataIndex: 'fieldName',
       initialValue: '',
       rules: [
@@ -394,12 +455,12 @@ const getFieldListColumns = sinkValues => {
       }),
     },
     {
-      title: `THIVE${i18n.t('meta.Sinks.THive.FieldType')}`,
+      title: `Thive${i18n.t('meta.Sinks.THive.FieldType')}`,
       dataIndex: 'fieldType',
-      initialValue: thiveFieldTypes[0].value,
+      initialValue: innerThiveFieldTypes[0].value,
       type: 'select',
       props: (text, record, idx, isNew) => ({
-        options: thiveFieldTypes,
+        options: innerThiveFieldTypes,
         disabled: [110, 130].includes(sinkValues?.status as number) && !isNew,
       }),
       rules: [{ required: true }],

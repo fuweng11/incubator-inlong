@@ -21,4 +21,24 @@ import type { MetaExportWithBackendList } from '@/metas/types';
 
 export const allExtendsClusters: MetaExportWithBackendList = [
   // You can extends at here...
+  {
+    label: 'SortCk',
+    value: 'SORT_CK',
+    LoadEntity: () => import('./SortCk'),
+  },
+  {
+    label: 'SortHive',
+    value: 'SORT_HIVE',
+    LoadEntity: () => import('./SortHive'),
+  },
+  {
+    label: 'SortThive',
+    value: 'SORT_THIVE',
+    LoadEntity: () => import('./SortThive'),
+  },
+  {
+    label: 'ZooKeeper',
+    value: 'ZOOKEEPER',
+    LoadEntity: () => import('./ZooKeeper'),
+  },
 ];

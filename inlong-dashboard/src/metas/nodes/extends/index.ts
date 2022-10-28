@@ -21,4 +21,19 @@ import type { MetaExportWithBackendList } from '@/metas/types';
 
 export const allExtendsNodes: MetaExportWithBackendList = [
   // You can extends at here...
+  {
+    label: 'Clickhouse',
+    value: 'INNER_CK',
+    LoadEntity: () => import('./InnerClickhouse'),
+  },
+  {
+    label: 'Hive',
+    value: 'INNER_HIVE',
+    LoadEntity: () => import('./InnerHive'),
+  },
+  {
+    label: 'THive',
+    value: 'INNER_THIVE',
+    LoadEntity: () => import('./InnerThive'),
+  },
 ];

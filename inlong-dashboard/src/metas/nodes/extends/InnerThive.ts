@@ -17,53 +17,61 @@
  * under the License.
  */
 
-// import i18n from '@/i18n';
-import type { FieldItemType } from '@/metas/common';
+import { DataWithBackend } from '@/metas/DataWithBackend';
+import { NodeInfo } from '../common/NodeInfo';
 
-export const innerHive: FieldItemType[] = [
-  {
+const { I18n, FormField } = DataWithBackend;
+
+export default class InnerThiveNode extends NodeInfo implements DataWithBackend {
+  @FormField({
     type: 'input',
-    label: 'hiveAddress',
-    name: 'hiveAddress',
     rules: [{ required: true }],
-  },
-  {
+  })
+  @I18n('hiveAddress')
+  hiveAddress: string;
+
+  @FormField({
     type: 'input',
-    label: 'username',
-    name: 'username',
     rules: [{ required: true }],
-  },
-  {
+  })
+  @I18n('username')
+  username: string;
+
+  @FormField({
     type: 'input',
-    label: 'token',
-    name: 'token',
     rules: [{ required: true }],
-  },
-  {
+  })
+  @I18n('token')
+  token: string;
+
+  @FormField({
     type: 'input',
-    label: 'clusterTag',
-    name: 'clusterTag',
     rules: [{ required: true }],
-  },
-  {
+  })
+  @I18n('clusterTag')
+  clusterTag: string;
+
+  @FormField({
     type: 'input',
-    label: 'warehouseDir',
-    name: 'warehouseDir',
-    rules: [{ required: true }],
     initialValue: '/user/tdw/warehouse',
-  },
-  {
-    type: 'input',
-    label: 'hdfsDefaultFs',
-    name: 'hdfsDefaultFs',
     rules: [{ required: true }],
-    initialValue: 'hdfs://',
-  },
-  {
+  })
+  @I18n('warehouseDir')
+  warehouseDir: string;
+
+  @FormField({
     type: 'input',
-    label: 'hdfsUgi',
-    name: 'hdfsUgi',
+    initialValue: 'hdfs:',
     rules: [{ required: true }],
+  })
+  @I18n('hdfsDefaultFs')
+  hdfsDefaultFs: string;
+
+  @FormField({
+    type: 'input',
     initialValue: 'tdwadmin:',
-  },
-];
+    rules: [{ required: true }],
+  })
+  @I18n('hdfsUgi')
+  hdfsUgi: string;
+}

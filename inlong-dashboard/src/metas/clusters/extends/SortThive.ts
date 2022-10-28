@@ -17,23 +17,25 @@
  * under the License.
  */
 
-import type { FieldItemType } from '@/metas/common';
-import i18n from '@/i18n';
+import { DataWithBackend } from '@/metas/DataWithBackend';
 import UserSelect from '@/components/UserSelect';
-import React from 'react';
+import { ClusterInfo } from '../common/ClusterInfo';
 
-export const sortThive: FieldItemType[] = [
-  {
+const { I18n, FormField } = DataWithBackend;
+
+export default class SortThiveCluster extends ClusterInfo implements DataWithBackend {
+  @FormField({
     type: 'input',
-    label: i18n.t('meta.Clusters.Sort.BackupDataPath'),
-    name: 'backupDataPath',
     props: {
       placeholder: 'hdfs://xx-xxx-xx/xxx/xxx',
     },
-  },
-  {
-    type: <UserSelect />,
-    label: i18n.t('meta.Clusters.Sort.BackupHadoopProxyUser'),
-    name: 'backupHadoopProxyUser',
-  },
-];
+  })
+  @I18n('meta.Clusters.Sort.BackupDataPath')
+  backupDataPath: string;
+
+  @FormField({
+    type: UserSelect,
+  })
+  @I18n('meta.Clusters.Sort.BackupHadoopProxyUser')
+  backupHadoopProxyUser: string;
+}
