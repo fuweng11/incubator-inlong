@@ -215,7 +215,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
                 DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupInfo, topic, taskName, streamId,clickHouseSink.getId());
+                String subscription = getConsumerGroup(groupInfo, topic, taskName, clickHouseSink.getId());
                 sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
                         deserializationInfo, fieldList.stream().map(f -> {
                     FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());

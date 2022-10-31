@@ -96,8 +96,7 @@ public class DataNodeServiceImpl implements DataNodeService {
             throw new BusinessException(String.format("data node not found by name=%s, type=%s", name, type));
         }
 
-        String dataNodeType = entity.getType();
-        DataNodeOperator dataNodeOperator = operatorFactory.getInstance(dataNodeType);
+        DataNodeOperator dataNodeOperator = operatorFactory.getInstance(type);
         DataNodeInfo dataNodeInfo = dataNodeOperator.getFromEntity(entity);
         LOGGER.debug("success to get data node by name={} type={}", name, type);
         return dataNodeInfo;

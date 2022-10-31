@@ -42,11 +42,12 @@ public class TencentConstants {
 
     public static final String PULSAR_ROOT_DEFAULT = "/inlong_pulsar";
 
-    public static final String DATA_TYPE_CSV = "CSV";
+    public static final String DATA_TYPE_RAW_CSV = "CSV";
     public static final String DATA_TYPE_INLONG_CSV = "INLONG_CSV";
-    public static final String DATA_TYPE_KV = "KV";
+    public static final String DATA_TYPE_RAW_KV = "KV";
     public static final String DATA_TYPE_INLONG_KV = "INLONG_KV";
     public static final String DATA_TYPE_INLONG_MSG_V1 = "INLONG_MSG_V1";
+    public static final String DATA_TYPE_INLONG_MSG_BINLOG = "INLONG_MSG_BINLOG";
 
     public static final String FILE_FORMAT_ORC = "OrcFile";
 

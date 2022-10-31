@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.service.tencent;
+package org.apache.inlong.manager.service.core.dbsync;
 
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeatRequest;

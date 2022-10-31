@@ -69,9 +69,8 @@ public class InnerHiveFullInfo {
     private String checkAbsolute; // absolute error
     private String checkRelative; // relative error
 
-    // configuration in data flow
+    // configuration in inlong stream
     private String mqResourceObj;
-    private String dataSourceType;
     private String dataType;
     private String description;
     private String sourceSeparator; // source separator in data flow

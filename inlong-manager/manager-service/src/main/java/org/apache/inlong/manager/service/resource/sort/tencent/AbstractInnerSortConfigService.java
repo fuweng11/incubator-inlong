@@ -21,9 +21,11 @@ import com.tencent.oceanus.etl.ZkTools;
 import com.tencent.oceanus.etl.configuration.Constants;
 import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgBinlogDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgPbV1DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.MQType;
@@ -103,11 +105,11 @@ public class AbstractInnerSortConfigService {
         return zkRoot;
     }
 
-    public String getConsumerGroup(InlongGroupInfo groupInfo, String topic, String taskName, String streamId,
-            Integer sinkId) {
-        String consumerGroup;
+    public String getConsumerGroup(InlongGroupInfo groupInfo, String topic, String taskName, Integer sinkId) {
         String groupId = groupInfo.getInlongGroupId();
         String mqType = groupInfo.getMqType();
+
+        String consumerGroup;
         if (MQType.TUBEMQ.equals(mqType)) {
             consumerGroup = String.format(TencentConstants.SORT_TUBE_GROUP, groupInfo.getInlongClusterTag(), topic);
         } else {
@@ -119,13 +121,13 @@ public class AbstractInnerSortConfigService {
             }
         }
 
-        LOGGER.debug("success to get consumerGroup={} for groupId={} sinkId={} topic={} taskName={}",
-                consumerGroup, groupId, sinkId, topic, taskName);
+        LOGGER.debug("success to get consumerGroup={} for groupId={} topic={} taskName={} sinkId={}",
+                consumerGroup, groupId, topic, taskName, sinkId);
         return consumerGroup;
     }
 
     /**
-     * Get deserializationinfo object information
+     * Get deserialization info object information
      */
     public DeserializationInfo getDeserializationInfo(InlongStreamEntity streamInfo) {
         String dataType = streamInfo.getDataType();
@@ -134,31 +136,41 @@ public class AbstractInnerSortConfigService {
         if (streamInfo.getDataEscapeChar() != null) {
             escape = streamInfo.getDataEscapeChar().charAt(0);
         }
-        // Must be a field separator in the data stream
+
+        String streamId = streamInfo.getInlongStreamId();
         char separator = (char) Integer.parseInt(streamInfo.getDataSeparator());
-        if (TencentConstants.DATA_TYPE_INLONG_CSV.equalsIgnoreCase(dataType)) {
-            // Do you want to delete the first separator? The default is false
-            deserializationInfo = new InlongMsgCsvDeserializationInfo(streamInfo.getInlongStreamId(), separator,
-                    escape, false);
-        /* } else if (TencentConstants.DATA_TYPE_INLONG_KV.equalsIgnoreCase(dataType)) {
-            // KV pair separator, which must be the field separator in the data flow
-            // TODO User configuration shall prevail
-            char kvSeparator = '&';
-            // Row separator, which must be a field separator in the data flow
-            Character lineSeparator = null;
-            // TODO Need sort to provide inlong kv
-            deserializationInfo = new TDMsgKvDeserializationInfo(streamInfo.getInlongStreamId(), separator,
-                    kvSeparator, escape, lineSeparator);*/
-        } else if (TencentConstants.DATA_TYPE_CSV.equalsIgnoreCase(dataType)) {
-            deserializationInfo = new CsvDeserializationInfo(separator, escape);
-        } else if (TencentConstants.DATA_TYPE_KV.equalsIgnoreCase(dataType)) {
-            deserializationInfo = new KvDeserializationInfo(separator, escape);
-        } else if (TencentConstants.DATA_TYPE_INLONG_MSG_V1.equalsIgnoreCase(dataType)) {
-            DeserializationInfo inner = new CsvDeserializationInfo(separator, escape);
-            deserializationInfo = new InlongMsgPbV1DeserializationInfo(Constants.CompressionType.GZIP, inner);
-        } else {
-            throw new IllegalArgumentException("can not support sink data type:" + dataType);
+        switch (dataType) {
+            case TencentConstants.DATA_TYPE_INLONG_MSG_BINLOG:
+                deserializationInfo = new InlongMsgBinlogDeserializationInfo(streamId);
+                break;
+            case TencentConstants.DATA_TYPE_INLONG_CSV:
+                // need to delete the first separator? default is false
+                deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
+                break;
+            case TencentConstants.DATA_TYPE_RAW_CSV:
+                deserializationInfo = new CsvDeserializationInfo(separator, escape);
+                break;
+            case TencentConstants.DATA_TYPE_INLONG_KV:
+                // KV pair separator, which must be the field separator in the data flow
+                // TODO should get from the user defined
+                char kvSeparator = '&';
+                // row separator, which must be a field separator in the data flow
+                Character lineSeparator = null;
+                // TODO The Sort module need to support
+                deserializationInfo = new TDMsgKvDeserializationInfo(streamId, separator, kvSeparator,
+                        escape, lineSeparator);
+                break;
+            case TencentConstants.DATA_TYPE_RAW_KV:
+                deserializationInfo = new KvDeserializationInfo(separator, escape);
+                break;
+            case TencentConstants.DATA_TYPE_INLONG_MSG_V1:
+                DeserializationInfo inner = new CsvDeserializationInfo(separator, escape);
+                deserializationInfo = new InlongMsgPbV1DeserializationInfo(Constants.CompressionType.GZIP, inner);
+                break;
+            default:
+                throw new IllegalArgumentException("unsupported data type: " + dataType);
         }
+
         return deserializationInfo;
     }
 

@@ -28,7 +28,7 @@ import org.apache.inlong.common.pojo.agent.dbsync.ReportTaskRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.RunningTaskRequest;
 import org.apache.inlong.manager.pojo.common.Response;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
-import org.apache.inlong.manager.service.tencent.DbSyncAgentService;
+import org.apache.inlong.manager.service.core.dbsync.DbSyncAgentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -25,17 +25,13 @@ import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.SinkStatus;
-import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.exceptions.WorkflowException;
 import org.apache.inlong.manager.common.util.Preconditions;
-import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
-import org.apache.inlong.manager.dao.mapper.DataNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
-import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.hive.HiveColumnInfo;
@@ -51,8 +47,7 @@ import org.apache.inlong.manager.pojo.tencent.ups.UPSOperateResult;
 import org.apache.inlong.manager.pojo.tencent.ups.UpsTableInfo.TableInfoBean;
 import org.apache.inlong.manager.pojo.tencent.ups.UpsTableInfo.TableInfoBean.ColsInfoBean;
 import org.apache.inlong.manager.service.group.InlongGroupService;
-import org.apache.inlong.manager.service.node.DataNodeOperator;
-import org.apache.inlong.manager.service.node.DataNodeOperatorFactory;
+import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.resource.sc.ScAuthorize;
 import org.apache.inlong.manager.service.resource.sc.ScService;
 import org.apache.inlong.manager.service.resource.sink.SinkResourceOperator;
@@ -79,38 +74,27 @@ import java.util.Objects;
 public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InnerBaseHiveResourceOperator.class);
-
     private static final Gson GSON = new GsonBuilder().create();
 
     @Autowired
-    private UPSOperator upsOperator;
-
+    private ScService scService;
     @Autowired
     private ScAuthorize scAuthorize;
-
     @Autowired
-    private ScService scService;
-
-    @Autowired
-    private StreamSinkService sinkService;
-
-    @Autowired
-    private StreamSinkEntityMapper sinkEntityMapper;
-
-    @Autowired
-    private StreamSinkFieldEntityMapper sinkFieldMapper;
-
-    @Autowired
-    private DataNodeEntityMapper dataNodeEntityMapper;
-
-    @Autowired
-    private InlongGroupService inlongGroupService;
-
-    @Autowired
-    private DataNodeOperatorFactory operatorFactory;
-
+    private UPSOperator upsOperator;
     @Autowired
     private UsTaskService usTaskService;
+
+    @Autowired
+    private InlongGroupService groupService;
+    @Autowired
+    private StreamSinkService sinkService;
+    @Autowired
+    private DataNodeService dataNodeService;
+    @Autowired
+    private StreamSinkEntityMapper sinkMapper;
+    @Autowired
+    private StreamSinkFieldEntityMapper sinkFieldMapper;
 
     public static String zeroFormat(String num, int len, boolean prev) {
         int l = num.length();
@@ -197,16 +181,16 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         String streamId = sinkInfo.getInlongStreamId();
         try {
             InnerBaseHiveSinkDTO hiveInfo = InnerBaseHiveSinkDTO.getFromJson(sinkInfo.getExtParams());
-            StreamSinkEntity sink = sinkEntityMapper.selectByPrimaryKey(sinkInfo.getId());
-            InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) getDataNodeInfo(sink.getDataNodeName(),
-                    sink.getSinkType());
+            StreamSinkEntity sink = sinkMapper.selectByPrimaryKey(sinkInfo.getId());
+            InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) dataNodeService.get(
+                    sink.getDataNodeName(), sink.getSinkType());
 
             // get bg id
             Integer clusterId = scService.getClusterIdByIdentifier(dataNodeInfo.getClusterTag());
             AppGroup appGroup = scService.getAppGroup(clusterId, hiveInfo.getAppGroupName());
             hiveInfo.setBgId(appGroup.getBgId());
 
-            InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getHiveFullInfo(hiveInfo, sinkInfo, dataNodeInfo);
+            InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(hiveInfo, sinkInfo, dataNodeInfo);
             String dbName = hiveFullInfo.getDbName();
             String tbName = hiveFullInfo.getTableName();
             TableInfoBean existTable = upsOperator.queryTableInfo(hiveFullInfo.getIsThive(),
@@ -233,7 +217,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             }
             // give the responsible person query permission
             // and the write permission is only required by cluster level users of sort side write partition
-            InlongGroupInfo inlongGroupInfo = inlongGroupService.get(sinkInfo.getInlongGroupId());
+            InlongGroupInfo inlongGroupInfo = groupService.get(sinkInfo.getInlongGroupId());
             DealResult grantResult = grantPrivilege(inlongGroupInfo.getInCharges().trim(), hiveFullInfo, "select");
             LOGGER.info("grant hive privilege finished: {}", grantResult.getMessage());
 
@@ -554,18 +538,6 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         }
 
         return dealResult;
-    }
-
-    private DataNodeInfo getDataNodeInfo(String dataNodeName, String dataNodeType) {
-        DataNodeEntity entity = dataNodeEntityMapper.selectByUniqueKey(dataNodeName, dataNodeType);
-        if (entity == null) {
-            LOGGER.error("data node not found by name={}, type={}", dataNodeName, dataNodeType);
-            throw new BusinessException("data node not found");
-        }
-        DataNodeOperator dataNodeOperator = operatorFactory.getInstance(dataNodeType);
-        DataNodeInfo dataNodeInfo = dataNodeOperator.getFromEntity(entity);
-        LOGGER.debug("success to get data node info by name={}, type={}", dataNodeName, dataNodeType);
-        return dataNodeInfo;
     }
 
 }

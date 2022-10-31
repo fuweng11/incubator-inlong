@@ -118,16 +118,13 @@ public class InnerBaseHiveSinkDTO {
 
     // configuration in data flow
 
-    @ApiModelProperty("data source type")
-    private String dataSourceType;
-
     @ApiModelProperty("data type")
     private String dataType;
 
     @ApiModelProperty("description")
     private String description;
 
-    @ApiModelProperty("source sepatator")
+    @ApiModelProperty("source separator")
     private String sourceSeparator; // source separator in data flow
 
     @ApiModelProperty("kv separator")
@@ -201,50 +198,50 @@ public class InnerBaseHiveSinkDTO {
     /**
      * Get Hive table info
      */
-    public static InnerHiveFullInfo getHiveFullInfo(InnerBaseHiveSinkDTO innerHiveInfo, SinkInfo sinkInfo,
-            InnerBaseHiveDataNodeInfo innerHiveDataNodeInfo) {
+    public static InnerHiveFullInfo getFullInfo(InnerBaseHiveSinkDTO innerHiveDTO, SinkInfo sinkInfo,
+            InnerBaseHiveDataNodeInfo hiveDataNode) {
         Integer isThive = Objects.equals(sinkInfo.getSinkType(), SinkType.INNER_THIVE) ? 1 : 0;
         return InnerHiveFullInfo.builder()
                 .sinkId(sinkInfo.getId())
-                .bgId(innerHiveInfo.getBgId())
-                .productId(innerHiveInfo.getProductId())
-                .productName(innerHiveInfo.getProductName())
-                .appGroupName(innerHiveInfo.getAppGroupName())
+                .bgId(innerHiveDTO.getBgId())
+                .productId(innerHiveDTO.getProductId())
+                .productName(innerHiveDTO.getProductName())
+                .appGroupName(innerHiveDTO.getAppGroupName())
                 .inlongGroupId(sinkInfo.getInlongGroupId())
                 .inlongStreamId(sinkInfo.getInlongStreamId())
                 .isThive(isThive)
-                .usTaskId(innerHiveInfo.getUsTaskId())
-                .verifiedTaskId(innerHiveInfo.getVerifiedTaskId())
-                .appGroupName(innerHiveInfo.getAppGroupName())
-                .defaultSelectors(innerHiveInfo.getDefaultSelectors())
-                .dbName(innerHiveInfo.getDbName())
-                .tableName(innerHiveInfo.getTableName())
-                .partitionType(innerHiveInfo.getPartitionType())
-                .partitionInterval(innerHiveInfo.getPartitionInterval())
-                .partitionUnit(innerHiveInfo.getPartitionUnit())
-                .primaryPartition(innerHiveInfo.getPrimaryPartition())
-                .secondaryPartition(innerHiveInfo.getSecondaryPartition())
-                .partitionCreationStrategy(innerHiveInfo.getPartitionCreationStrategy())
-                .fileFormat(innerHiveInfo.getFileFormat())
-                .dataEncoding(innerHiveInfo.getDataEncoding())
-                .targetSeparator(innerHiveInfo.getTargetSeparator())
-                .virtualUser(innerHiveInfo.getVirtualUser())
-                .dataConsistency(innerHiveInfo.getDataConsistency())
-                .checkAbsolute(innerHiveInfo.getCheckAbsolute())
-                .checkRelative(innerHiveInfo.getCheckRelative())
-                .status(innerHiveInfo.getStatus())
+                .usTaskId(innerHiveDTO.getUsTaskId())
+                .verifiedTaskId(innerHiveDTO.getVerifiedTaskId())
+                .appGroupName(innerHiveDTO.getAppGroupName())
+                .defaultSelectors(innerHiveDTO.getDefaultSelectors())
+                .dbName(innerHiveDTO.getDbName())
+                .tableName(innerHiveDTO.getTableName())
+                .partitionType(innerHiveDTO.getPartitionType())
+                .partitionInterval(innerHiveDTO.getPartitionInterval())
+                .partitionUnit(innerHiveDTO.getPartitionUnit())
+                .primaryPartition(innerHiveDTO.getPrimaryPartition())
+                .secondaryPartition(innerHiveDTO.getSecondaryPartition())
+                .partitionCreationStrategy(innerHiveDTO.getPartitionCreationStrategy())
+                .fileFormat(innerHiveDTO.getFileFormat())
+                .dataEncoding(innerHiveDTO.getDataEncoding())
+                .targetSeparator(innerHiveDTO.getTargetSeparator())
+                .virtualUser(innerHiveDTO.getVirtualUser())
+                .dataConsistency(innerHiveDTO.getDataConsistency())
+                .checkAbsolute(innerHiveDTO.getCheckAbsolute())
+                .checkRelative(innerHiveDTO.getCheckRelative())
+                .status(innerHiveDTO.getStatus())
                 .creator(sinkInfo.getCreator())
                 .mqResourceObj(sinkInfo.getMqResource())
                 .dataType(sinkInfo.getDataType())
                 .sourceSeparator(sinkInfo.getSourceSeparator())
                 .dataEscapeChar(sinkInfo.getDataEscapeChar())
-                .hiveAddress(innerHiveDataNodeInfo.getHiveAddress())
-                .username(innerHiveDataNodeInfo.getUsername())
-                .password(innerHiveDataNodeInfo.getToken())
-                .warehouseDir(innerHiveDataNodeInfo.getWarehouseDir())
-                .hdfsDefaultFs(innerHiveDataNodeInfo.getHdfsDefaultFs())
-                .hdfsUgi(innerHiveDataNodeInfo.getHdfsUgi())
-                .clusterTag(innerHiveDataNodeInfo.getClusterTag())
+                .hiveAddress(hiveDataNode.getHiveAddress())
+                .username(hiveDataNode.getUsername())
+                .password(hiveDataNode.getToken())
+                .warehouseDir(hiveDataNode.getWarehouseDir())
+                .hdfsDefaultFs(hiveDataNode.getHdfsDefaultFs())
+                .hdfsUgi(hiveDataNode.getHdfsUgi())
+                .clusterTag(hiveDataNode.getClusterTag())
                 .build();
     }
 

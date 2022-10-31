@@ -20,13 +20,14 @@ package org.apache.inlong.manager.service.resource.sort.tencent.hive;
 import com.tencent.flink.formats.common.FormatInfo;
 import com.tencent.flink.formats.common.TimestampFormatInfo;
 import com.tencent.oceanus.etl.ZkTools;
+import com.tencent.oceanus.etl.configuration.Constants.SequenceCompressionCodec;
+import com.tencent.oceanus.etl.configuration.Constants.SequenceCompressionType;
 import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo;
 import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo.BuiltInField;
 import com.tencent.oceanus.etl.protocol.DataFlowInfo;
 import com.tencent.oceanus.etl.protocol.FieldInfo;
 import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgDBSyncDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.ConsistencyGuarantee;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.HiveFileFormatInfo;
@@ -130,8 +131,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     @Autowired
     private InlongStreamEntityMapper streamEntityMapper;
 
-    public void buildHiveConfig(InlongGroupInfo groupInfo, List<InnerHiveFullInfo> hiveFullInfos)
-            throws Exception {
+    public void buildHiveConfig(InlongGroupInfo groupInfo, List<InnerHiveFullInfo> hiveFullInfos) throws Exception {
         if (CollectionUtils.isEmpty(hiveFullInfos)) {
             return;
         }
@@ -224,15 +224,16 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             throw new BusinessException("hive server url cannot be empty");
         }
 
-        // Must be the field separator in hive, and the default is textfile
+        // Must be the field separator in hive, and the default is text file
         Character separator = (char) Integer.parseInt(hiveFullInfo.getTargetSeparator());
         HiveFileFormatInfo fileFormat;
         String format = hiveFullInfo.getFileFormat();
-        // Currently, sort does not support bizconstant.file_ FORMAT_ RC
+        // Currently, sort does not support FILE_FORMAT_RC
         if (TencentConstants.FILE_FORMAT_ORC.equalsIgnoreCase(format)) {
             fileFormat = new HiveSinkInfo.OrcFileFormatInfo();
         } else if (TencentConstants.FILE_FORMAT_SEQUENCE.equalsIgnoreCase(format)) {
-            fileFormat = new HiveSinkInfo.SequenceFileFormatInfo(separator, 100);
+            fileFormat = new HiveSinkInfo.SequenceFileFormatInfo(separator,
+                    SequenceCompressionCodec.DEFAULT, SequenceCompressionType.NONE);
         } else if (TencentConstants.FILE_FORMAT_PARQUET.equalsIgnoreCase(format)) {
             fileFormat = new HiveSinkInfo.ParquetFileFormatInfo();
         } else {
@@ -437,15 +438,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             List<StreamSinkFieldEntity> fieldList, String taskName) {
         String streamId = hiveFullInfo.getInlongStreamId();
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupInfo.getInlongGroupId(), streamId);
-        // First determine the data source type. Tddmsgdbsync is temporarily used for DB
-        DeserializationInfo deserializationInfo = null;
-        boolean isDbType = "DB".equals(hiveFullInfo.getDataSourceType());
-        if (isDbType) {
-            deserializationInfo = new TDMsgDBSyncDeserializationInfo(streamId);
-        } else {
-            // File and self pushed source. The data format is text or key-value, or CSV. Tdmsgcsv is temporarily used
-            deserializationInfo = getDeserializationInfo(stream);
-        }
+
+        DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
+
         // Source fields are to be obtained from the source fields saved in the data store:
         // the number and order of source fields must be the same as the target fields
         SourceInfo sourceInfo = null;
@@ -454,9 +449,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
         String groupId = groupInfo.getInlongGroupId();
         String mqType = groupInfo.getMqType();
+        String clusterTag = groupInfo.getInlongClusterTag();
         if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
-            List<InlongClusterEntity> tubeClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(), null,
-                    MQType.TUBEMQ);
+            List<InlongClusterEntity> tubeClusters = clusterMapper.selectByKey(clusterTag, null, MQType.TUBEMQ);
             if (CollectionUtils.isEmpty(tubeClusters)) {
                 throw new WorkflowListenerException("tube cluster not found for groupId=" + groupId);
             }
@@ -467,19 +462,18 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             Preconditions.checkNotNull(masterAddress, "tube cluster [" + tubeId + "] not contains masterAddress");
 
             String topic = groupInfo.getMqResource();
-            String consumerGroup = getConsumerGroup(groupInfo, topic, taskName, streamId, hiveFullInfo.getSinkId());
+            String consumerGroup = getConsumerGroup(groupInfo, topic, taskName, hiveFullInfo.getSinkId());
             sourceInfo = new TubeSourceInfo(topic, masterAddress, consumerGroup,
                     deserializationInfo, sourceFields.toArray(new FieldInfo[0]));
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
-            List<InlongClusterEntity> pulsarClusters = clusterMapper.selectByKey(
-                    groupInfo.getInlongClusterTag(), null, MQType.PULSAR);
+            List<InlongClusterEntity> pulsarClusters = clusterMapper.selectByKey(clusterTag, null, MQType.PULSAR);
             if (CollectionUtils.isEmpty(pulsarClusters)) {
                 throw new WorkflowListenerException("pulsar cluster not found for groupId=" + groupId);
             }
 
             List<PulsarClusterInfo> pulsarClusterInfos = new ArrayList<>();
             pulsarClusters.forEach(pulsarCluster -> {
-                // Multiple adminurls should be configured for pulsar,
+                // Multiple adminUrls should be configured for pulsar,
                 // otherwise all requests will be sent to the same broker
                 PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
                 String adminUrl = pulsarClusterDTO.getAdminUrl();
@@ -487,7 +481,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, null, null));
             });
             InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
-            // Multiple adminurls should be configured for pulsar,
+            // Multiple adminUrls should be configured for pulsar,
             // otherwise all requests will be sent to the same broker
             PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
 
@@ -500,7 +494,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             try {
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupInfo, topic, taskName, streamId, hiveFullInfo.getSinkId());
+                String subscription = getConsumerGroup(groupInfo, topic, taskName, hiveFullInfo.getSinkId());
                 sourceInfo = new PulsarSourceInfo(null, null, fullTopic, subscription,
                         deserializationInfo, sourceFields.toArray(new FieldInfo[0]),
                         pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null);

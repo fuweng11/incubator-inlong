@@ -20,21 +20,16 @@ package org.apache.inlong.manager.service.resource.sort;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
-import org.apache.inlong.manager.common.exceptions.BusinessException;
-import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
-import org.apache.inlong.manager.dao.mapper.DataNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
-import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
-import org.apache.inlong.manager.service.node.DataNodeOperator;
-import org.apache.inlong.manager.service.node.DataNodeOperatorFactory;
+import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.resource.sort.tencent.ck.SortCkConfigService;
 import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
@@ -56,17 +51,16 @@ public class InnerSortConfigOperator implements SortConfigOperator {
     private static final Logger LOGGER = LoggerFactory.getLogger(InnerSortConfigOperator.class);
 
     @Autowired
-    SortHiveConfigService sortHiveConfigService;
+    private StreamSinkService sinkService;
     @Autowired
-    SortCkConfigService sortCkConfigService;
+    private DataNodeService dataNodeService;
     @Autowired
     private StreamSinkEntityMapper sinkMapper;
+
     @Autowired
-    private StreamSinkService streamSinkService;
+    private SortCkConfigService ckConfigService;
     @Autowired
-    private DataNodeEntityMapper dataNodeEntityMapper;
-    @Autowired
-    private DataNodeOperatorFactory operatorFactory;
+    private SortHiveConfigService hiveConfigService;
 
     @Override
     public Boolean accept(Integer enableZk) {
@@ -81,8 +75,8 @@ public class InnerSortConfigOperator implements SortConfigOperator {
             return;
         }
         String groupId = groupInfo.getInlongGroupId();
-        List<String> streamIds = streamInfos.stream().map(InlongStreamInfo::getInlongStreamId)
-                .collect(Collectors.toList());
+        List<String> streamIds = streamInfos.stream()
+                .map(InlongStreamInfo::getInlongStreamId).collect(Collectors.toList());
         List<SinkInfo> configList = sinkMapper.selectAllConfig(groupId, streamIds);
         List<InnerHiveFullInfo> hiveInfos = new ArrayList<>();
         List<InnerClickHouseSink> clickHouseSinkList = new ArrayList<>();
@@ -92,34 +86,22 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                 case DataNodeType.INNER_THIVE:
                     InnerBaseHiveSinkDTO hiveInfo = InnerBaseHiveSinkDTO.getFromJson(sinkInfo.getExtParams());
                     StreamSinkEntity sink = sinkMapper.selectByPrimaryKey(sinkInfo.getId());
-                    InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) getDataNodeInfo(
+                    InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) dataNodeService.get(
                             sink.getDataNodeName(), sink.getSinkType());
-                    InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getHiveFullInfo(hiveInfo, sinkInfo,
+                    InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(hiveInfo, sinkInfo,
                             dataNodeInfo);
                     hiveInfos.add(hiveFullInfo);
                     break;
                 case DataNodeType.INNER_CK:
-                    InnerClickHouseSink clickHouseSink = (InnerClickHouseSink) streamSinkService.get(sinkInfo.getId());
+                    InnerClickHouseSink clickHouseSink = (InnerClickHouseSink) sinkService.get(sinkInfo.getId());
                     clickHouseSinkList.add(clickHouseSink);
                     break;
                 default:
                     LOGGER.warn("skip to push sort config for sink id={}, as no sort config info", sinkInfo.getId());
             }
         }
-        sortHiveConfigService.buildHiveConfig(groupInfo, hiveInfos);
-        sortCkConfigService.buildCkConfig(groupInfo, clickHouseSinkList);
-    }
-
-    private DataNodeInfo getDataNodeInfo(String dataNodeName, String dataNodeType) {
-        DataNodeEntity entity = dataNodeEntityMapper.selectByUniqueKey(dataNodeName, dataNodeType);
-        if (entity == null) {
-            LOGGER.error("data node not found by name={}, type={}", dataNodeName, dataNodeType);
-            throw new BusinessException("data node not found");
-        }
-        DataNodeOperator dataNodeOperator = operatorFactory.getInstance(dataNodeType);
-        DataNodeInfo dataNodeInfo = dataNodeOperator.getFromEntity(entity);
-        LOGGER.debug("success to get data node info by name={}, type={}", dataNodeName, dataNodeType);
-        return dataNodeInfo;
+        hiveConfigService.buildHiveConfig(groupInfo, hiveInfos);
+        ckConfigService.buildCkConfig(groupInfo, clickHouseSinkList);
     }
 
 }
