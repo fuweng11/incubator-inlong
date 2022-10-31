@@ -35,7 +35,6 @@ import org.apache.inlong.common.pojo.agent.dbsync.ReportTaskRequest.TaskInfoBean
 import org.apache.inlong.common.pojo.agent.dbsync.RunningTaskRequest;
 import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
-import org.apache.inlong.manager.common.consts.MQType;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.SourceStatus;
@@ -54,13 +53,11 @@ import org.apache.inlong.manager.dao.mapper.StreamSourceEntityMapper;
 import org.apache.inlong.manager.dao.mapper.tencent.DbSyncHeartbeatEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.agent.AgentClusterInfo;
-import org.apache.inlong.manager.pojo.group.InlongGroupTopicInfo;
 import org.apache.inlong.manager.pojo.node.mysql.MySQLDataNodeInfo;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
 import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSourceDTO;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
-import org.apache.inlong.manager.service.group.InlongGroupService;
 import org.apache.inlong.manager.service.node.DataNodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,8 +139,6 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     // Cached task list
     private final Map<String, LinkedBlockingQueue<DbSyncTaskInfo>> ipTaskCacheMap = new ConcurrentHashMap<>(128);
 
-    @Autowired
-    private InlongGroupService groupService;
     @Autowired
     private DataNodeService dataNodeService;
     @Autowired
@@ -513,7 +508,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 // if the user set the start position, it will be parsed and issued.
                 // in the process of status from 20x to 30x, it will only be issued this time
                 try {
-                    String positionStr = taskInfo.getStartPosition();
+                    String positionStr = sourceEntity.getStartPosition();
                     if (StringUtils.isNotBlank(positionStr) && !positionStr.equalsIgnoreCase("null")) {
                         DbSyncDumpPosition position = JsonUtils.parseObject(positionStr, DbSyncDumpPosition.class);
                         assert position != null;
@@ -558,7 +553,6 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 .inlongGroupId(groupId)
                 .inlongStreamId(streamId)
                 .serverName(sourceEntity.getDataNodeName())
-                .startPosition(sourceEntity.getStartPosition())
                 .status(sourceEntity.getStatus())
                 .version(sourceEntity.getVersion())
                 .build();
@@ -568,23 +562,6 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         taskInfo.setTableName(sourceDTO.getTableName());
         taskInfo.setCharset(sourceDTO.getCharset());
         taskInfo.setSkipDelete(sourceDTO.getSkipDelete());
-
-        InlongGroupTopicInfo topic = groupService.getTopic(groupId);
-        List<ClusterInfo> clusterInfos = (List<ClusterInfo>) topic.getClusterInfos();
-        String middleware = taskInfo.getMqType();
-        if (MQType.TUBEMQ.equals(middleware)) {
-            if (CollectionUtils.isEmpty(clusterInfos) || StringUtils.isBlank(clusterInfos.get(0).getUrl())) {
-                LOGGER.error("tube cluster url cannot be null for groupId={}", groupId);
-            } else {
-                taskInfo.setTubeCluster(clusterInfos.get(0).getUrl());
-            }
-        } else if (MQType.PULSAR.equals(middleware)) {
-            if (CollectionUtils.isEmpty(clusterInfos) || StringUtils.isBlank(clusterInfos.get(0).getUrl())) {
-                LOGGER.error("pulsar service url cannot be null for groupId={}, streamId={}", groupId, streamId);
-            } else {
-                taskInfo.setPulsarCluster(clusterInfos.get(0).getUrl());
-            }
-        }
 
         // get all cluster node IPs
         InlongClusterEntity clusterEntity = clusterMapper.selectByNameAndType(sourceEntity.getInlongClusterName(),

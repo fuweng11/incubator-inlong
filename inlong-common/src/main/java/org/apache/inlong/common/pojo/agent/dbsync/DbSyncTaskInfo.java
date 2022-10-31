@@ -64,24 +64,6 @@ public class DbSyncTaskInfo {
     @ApiModelProperty(value = "Binlog data code name, default is UTF-8")
     private String charset;
 
-    @ApiModelProperty(value = "MQ type, including TUBEMQ, PULSAR, KAFKA, etc")
-    private String mqType;
-
-    @ApiModelProperty(value = "TubeTopic, or PulsarNamespace")
-    private String mqResource;
-
-    @Deprecated
-    @ApiModelProperty(value = "Just for PulsarTopic")
-    private String streamMqResource;
-
-    @Deprecated
-    @ApiModelProperty(value = "Tube cluster URL")
-    private String tubeCluster;
-
-    @Deprecated
-    @ApiModelProperty(value = "Pulsar cluster URL")
-    private String pulsarCluster;
-
     @ApiModelProperty(value = "Whether to skip the deletion event in binlog, default: 1, skip")
     private Integer skipDelete;
 

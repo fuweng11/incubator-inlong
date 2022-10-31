@@ -74,16 +74,10 @@ public class DBSyncUtils {
             } else if (StringUtils.isEmpty(dbConf.getUrl())
                     || StringUtils.isEmpty(taskConf.getDbName())
                     || StringUtils.isEmpty(dbConf.getUsername()) || StringUtils.isEmpty(dbConf.getPassword())) {
-                future.completeExceptionally(new DataSourceConfigException("db config is has "
-                        + "error! dbName = " + taskConf.getDbName() + ",dbUrl = " + dbConf.getUrl() + ",userName = "
-                        + dbConf.getUsername()
-                        + ", password = " + dbConf.getPassword()
+                future.completeExceptionally(new DataSourceConfigException("db config has error! "
+                        + "dbName=" + taskConf.getDbName() + ", dbUrl=" + dbConf.getUrl()
+                        + ", userName=" + dbConf.getUsername() + ", password = " + dbConf.getPassword()
                 ));
-                result = false;
-            } else if ("PULSAR".equalsIgnoreCase(taskConf.getMqType())
-                    && StringUtils.isEmpty(taskConf.getMqResource())) {
-                future.completeExceptionally(new DataSourceConfigException("pulsar address is "
-                        + "empty!"));
                 result = false;
             }
         } else {
@@ -138,12 +132,7 @@ public class DBSyncUtils {
     }
 
     public static String byte2String(byte bb) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("0x");
-        sb.append(hexString.charAt((bb & 0xf0) >> 4));
-        sb.append(hexString.charAt((bb & 0x0f) >> 0));
-
-        return sb.toString();
+        return "0x" + hexString.charAt((bb & 0xf0) >> 4) + hexString.charAt((bb & 0x0f));
     }
 
     public static String byteArrayToString(byte[] bytes) {
@@ -204,7 +193,6 @@ public class DBSyncUtils {
     }
 
     public static String ipStr2HexStr(String ip) {
-
         StringBuffer sb = new StringBuffer();
         if (ip == null) {
             return "";
@@ -219,9 +207,9 @@ public class DBSyncUtils {
         for (int i = 0; i < 4; i++) {
             byteStr = String.valueOf((byte) (Integer.parseInt(ipSetStr[i]) & 0xFF));
             if (byteStr.length() == 1) {
-                sb.append("0").append(String.valueOf(byteStr));
+                sb.append("0").append(byteStr);
             } else {
-                sb.append(String.valueOf(byteStr));
+                sb.append(byteStr);
             }
         }
         return sb.toString();
@@ -233,7 +221,7 @@ public class DBSyncUtils {
         }
 
         String splitterStr = null;
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (character.startsWith("0x")) {
             character = character.replaceFirst("0x", "").trim();
             try {
@@ -255,9 +243,8 @@ public class DBSyncUtils {
         String binlogFileNamePrefix = binlogFileName.substring(0, binlogFileName.lastIndexOf(".") + 1);
         int binlogSeqNum = Integer.parseInt(binlogFileName.substring(binlogFileName.lastIndexOf(".") + 1));
         int nexBinlogSeqIndex = binlogSeqNum + 1;
-        String nextBinlogFileName = binlogFileNamePrefix + String.format("%06d", nexBinlogSeqIndex);
 
-        return nextBinlogFileName;
+        return binlogFileNamePrefix + String.format("%06d", nexBinlogSeqIndex);
     }
 
     public static LocalDateTime convertFrom(long millisec) {
