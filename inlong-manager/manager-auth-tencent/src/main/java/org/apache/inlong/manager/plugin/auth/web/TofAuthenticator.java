@@ -35,11 +35,11 @@ public class TofAuthenticator extends BaseProxyAuthenticator {
 
     private static final String COMMA = ",";
 
-    private final String key;
+    private final String appToken;
 
-    public TofAuthenticator(UserService userService, SmartGateService smartGateService, String key) {
+    public TofAuthenticator(UserService userService, SmartGateService smartGateService, String appToken) {
         super(userService, smartGateService);
-        this.key = key;
+        this.appToken = appToken;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class TofAuthenticator extends BaseProxyAuthenticator {
 
     private void checkSignature(TofAuthenticationToken token) {
         if (log.isDebugEnabled()) {
-            log.info(token.toString() + ", key = " + this.key);
+            log.info(token.toString() + ", key = " + this.appToken);
         }
 
         long now = System.currentTimeMillis();
@@ -72,7 +72,7 @@ public class TofAuthenticator extends BaseProxyAuthenticator {
     private String computeSignature(String timestamp, String rioSeq, String userId, String userName, String extData) {
 
         String builder = timestamp
-                + key + rioSeq + COMMA
+                + appToken + rioSeq + COMMA
                 + userId + COMMA + userName + COMMA
                 + extData + timestamp;
         return Hashing.sha256().hashString(builder, StandardCharsets.UTF_8).toString();

@@ -30,7 +30,6 @@ import org.apache.inlong.manager.pojo.tencent.ups.UPSOperateResult;
 import org.apache.inlong.manager.pojo.tencent.ups.UpsTableInfo;
 import org.apache.inlong.manager.pojo.tencent.ups.UpsTablePrivilege;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -41,9 +40,6 @@ import org.springframework.stereotype.Component;
 public class UPSOperator {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Value("${inlong.cmkDir:inlong/manager/cmk}")
-    private String cmkDir;
 
     @Autowired
     private UPSConfiguration upsConfiguration;
@@ -170,7 +166,7 @@ public class UPSOperator {
                     upsConfiguration.getSecurityCenterUrl());
             hiveImpl.setProxyUser(originalUser);
             hiveImpl.setUser("tdm");
-            hiveImpl.setCMKDir(cmkDir);
+            hiveImpl.setCMKDir(upsConfiguration.getCmkDir());
             return hiveImpl;
         } else if (hiveType == TencentConstants.THIVE_TYPE) {
             TdwUps tdwUps = TdwUpsFactory.getInstance("com.tencent.tdw.ups.client.impl.TdwUpsImpl",
@@ -178,7 +174,7 @@ public class UPSOperator {
             tdwUps.setServer("http://tdwopen.oa.com/tdwprivapi");
             tdwUps.setProxyUser(originalUser);
             tdwUps.setUser("tdm");
-            tdwUps.setCMKDir(cmkDir);
+            tdwUps.setCMKDir(upsConfiguration.getCmkDir());
 
             return tdwUps;
         } else {

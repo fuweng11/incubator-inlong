@@ -18,9 +18,9 @@
 package org.apache.inlong.manager.plugin.auth.web;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.inlong.manager.service.tencentauth.bean.AuthConfig;
-import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.pojo.user.UserInfo;
+import org.apache.inlong.manager.service.tencentauth.SmartGateService;
+import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
 import org.apache.inlong.manager.service.user.UserService;
 import org.apache.shiro.authc.AuthenticationException;
@@ -41,15 +41,13 @@ public class WebAuthorizingRealm extends AuthorizingRealm {
     private final MockAuthenticator mockAuthenticator;
 
     public WebAuthorizingRealm(UserService userService, SmartGateService smartGateService, AuthConfig authConfig) {
-        this.tofAuthenticator = new TofAuthenticator(userService, smartGateService,
-                authConfig.getTofKey());
+        this.tofAuthenticator = new TofAuthenticator(userService, smartGateService, authConfig.getAppToken());
         this.mockAuthenticator = new MockAuthenticator(userService, smartGateService);
     }
 
     @Override
     public boolean supports(AuthenticationToken token) {
-        return token instanceof MockAuthenticationToken
-                || token instanceof TofAuthenticationToken;
+        return token instanceof MockAuthenticationToken || token instanceof TofAuthenticationToken;
     }
 
     /**

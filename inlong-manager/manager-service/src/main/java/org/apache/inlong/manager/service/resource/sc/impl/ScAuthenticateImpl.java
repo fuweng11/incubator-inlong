@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.service.resource.sc.ScAuthenticate;
-import org.apache.inlong.manager.service.tencentauth.bean.AuthConfig;
+import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

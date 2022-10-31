@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.service.tencentauth.bean;
+package org.apache.inlong.manager.service.tencentauth.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

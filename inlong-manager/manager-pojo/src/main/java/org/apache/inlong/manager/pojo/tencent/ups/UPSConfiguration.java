@@ -32,4 +32,5 @@ public class UPSConfiguration {
     private String hiveServerUrl;
     private String metaStoreUrl;
     private String securityCenterUrl;
+    private String cmkDir;
 }

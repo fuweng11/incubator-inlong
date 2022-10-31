@@ -19,7 +19,7 @@ package org.apache.inlong.manager.service.tencentauth;
 
 import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.inlong.manager.service.tencentauth.bean.SmartGateConfig;
+import org.apache.inlong.manager.service.tencentauth.config.SmartGateConfig;
 import org.apache.inlong.manager.common.util.HttpUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;

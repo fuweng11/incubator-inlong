@@ -17,8 +17,9 @@
   -->
 
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="http://maven.apache.org/POM/4.0.0"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -35,6 +36,12 @@
             <groupId>org.apache.inlong</groupId>
             <artifactId>manager-common</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>security-common</artifactId>
+                    <groupId>com.tencent.tdw</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.inlong</groupId>
@@ -507,15 +514,14 @@
         <dependency>
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-client</artifactId>
-            <version>${curator.version}</version>
         </dependency>
         <dependency>
             <groupId>com.tencent.tdw</groupId>
             <artifactId>tdw-api-client</artifactId>
             <exclusions>
                 <exclusion>
-                    <artifactId>security-common</artifactId>
                     <groupId>com.tencent.tdw</groupId>
+                    <artifactId>security-common</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -529,68 +535,68 @@
                     <artifactId>flink-formats-bon</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.apache.curator</groupId>
                     <artifactId>curator-framework</artifactId>
-                    <groupId>org.apache.curator</groupId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.apache.curator</groupId>
                     <artifactId>curator-recipes</artifactId>
-                    <groupId>org.apache.curator</groupId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>jackson-databind</artifactId>
                     <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>junit</artifactId>
                     <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>log4j</artifactId>
                     <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-api</artifactId>
-                    <groupId>org.slf4j</groupId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
                 </exclusion>
                 <exclusion>
+                    <groupId>com.tencent.tdbank</groupId>
                     <artifactId>tdbank-commons</artifactId>
-                   <groupId>com.tencent.tdbank</groupId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>elasticsearch-rest-client-sniffer</artifactId>
                     <groupId>org.elasticsearch.client</groupId>
+                    <artifactId>elasticsearch-rest-client-sniffer</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>guava</artifactId>
                     <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-to-slf4j</artifactId>
-                    <groupId>org.apache.logging.log4j</groupId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>joda-time</artifactId>
                     <groupId>joda-time</groupId>
+                    <artifactId>joda-time</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>force-shading</artifactId>
                     <groupId>org.apache.flink</groupId>
+                    <artifactId>force-shading</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-1.2-api</artifactId>
-                    <groupId>org.apache.logging.log4j</groupId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-api</artifactId>
-                    <groupId>org.apache.logging.log4j</groupId>
                 </exclusion>
                 <exclusion>
+                    <groupId>com.tencent.tdbank</groupId>
                     <artifactId>TDBusSDK</artifactId>
-                   <groupId>com.tencent.tdbank</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -599,28 +605,28 @@
             <artifactId>oceanus-etl-api</artifactId>
             <exclusions>
                 <exclusion>
+                    <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>curator-framework</artifactId>
                     <groupId>org.apache.curator</groupId>
+                    <artifactId>curator-framework</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>jsr305</artifactId>
                     <groupId>com.google.code.findbugs</groupId>
+                    <artifactId>jsr305</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>log4j-1.2-api</artifactId>
                     <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-1.2-api</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>oceanus-etl-shaded</artifactId>
                     <groupId>com.tencent.oceanus.etl</groupId>
+                    <artifactId>oceanus-etl-shaded</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>slf4j-api</artifactId>
                     <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

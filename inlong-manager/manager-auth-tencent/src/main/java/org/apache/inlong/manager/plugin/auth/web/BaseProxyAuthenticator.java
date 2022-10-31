@@ -25,12 +25,12 @@ import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
-import org.apache.inlong.manager.service.tencentauth.StaffBaseInfo;
 import org.apache.inlong.manager.plugin.common.pojo.user.StaffDTO;
 import org.apache.inlong.manager.plugin.common.utils.SmallTools;
-import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.pojo.user.UserRequest;
+import org.apache.inlong.manager.service.tencentauth.SmartGateService;
+import org.apache.inlong.manager.service.tencentauth.StaffBaseInfo;
 import org.apache.inlong.manager.service.user.UserService;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -45,15 +45,15 @@ import java.util.Date;
 /**
  * Base proxy authenticator
  */
-@Service
 @Slf4j
+@Service
 public abstract class BaseProxyAuthenticator implements Authenticator {
 
     private static final String DUMMY_PASSWORD = "******";
     private static final Integer DEFAULT_VALID_DAYS = 30 * 6;
 
     private final UserService userService;
-    private SmartGateService smartGateService;
+    private final SmartGateService smartGateService;
 
     public BaseProxyAuthenticator(UserService userService, SmartGateService smartGateService) {
         this.userService = userService;

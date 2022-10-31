@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.service.tencentauth.bean;
+package org.apache.inlong.manager.service.tencentauth.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -33,7 +33,9 @@ public class AuthConfig {
     private String smk;
     private String account;
     private String cmk;
-    private String tofKey;
+
+    // used for ioa
+    private String appToken;
 
     public String getService() {
         return service;
@@ -71,12 +73,12 @@ public class AuthConfig {
         return this;
     }
 
-    public String getTofKey() {
-        return tofKey;
+    public String getAppToken() {
+        return appToken;
     }
 
-    public AuthConfig setTofKey(String tofKey) {
-        this.tofKey = tofKey;
+    public AuthConfig setAppToken(String appToken) {
+        this.appToken = appToken;
         return this;
     }
 }
