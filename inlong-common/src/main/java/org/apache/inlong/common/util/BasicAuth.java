@@ -43,16 +43,16 @@ public class BasicAuth {
             return BASIC_AUTH_EMPTY;
         }
         String credential = String.join(BASIC_AUTH_JOINER, secretId, secretKey);
-        return BASIC_AUTH_PREFIX + BASIC_AUTH_SEPARATOR + Base64.getEncoder()
-                .encodeToString(credential.getBytes(StandardCharsets.UTF_8));
+        return BASIC_AUTH_PREFIX + BASIC_AUTH_SEPARATOR
+                + Base64.getEncoder().encodeToString(credential.getBytes(StandardCharsets.UTF_8));
     }
 
-    public static String getSecureAuthCredential(String userName, String userKey, String serviceName)
+    public static String getSecureAuthCredential(String username, String userKey, String serviceName)
             throws SecureException {
-        if (StringUtils.isBlank(userName) || StringUtils.isBlank(userKey) || StringUtils.isBlank(serviceName)) {
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(userKey) || StringUtils.isBlank(serviceName)) {
             return BASIC_AUTH_EMPTY;
         }
-        TauthClient tauthClient = new TauthClient(userName, userKey);
+        TauthClient tauthClient = new TauthClient(username, userKey);
         return tauthClient.getAuthentication(serviceName);
     }
 }
