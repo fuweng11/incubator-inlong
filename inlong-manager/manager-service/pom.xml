@@ -518,17 +518,10 @@
         <dependency>
             <groupId>com.tencent.tdw</groupId>
             <artifactId>tdw-api-client</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.tencent.tdw</groupId>
-                    <artifactId>security-common</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.tencent.oceanus.etl</groupId>
             <artifactId>oceanus-etl-common</artifactId>
-            <version>2.1.1-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.flink</groupId>
@@ -536,15 +529,11 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.apache.curator</groupId>
-                    <artifactId>curator-framework</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.curator</groupId>
-                    <artifactId>curator-recipes</artifactId>
+                    <artifactId>*</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
+                    <artifactId>*</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>junit</groupId>
@@ -556,15 +545,11 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
+                    <artifactId>*</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.tencent.tdbank</groupId>
-                    <artifactId>tdbank-commons</artifactId>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>*</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.elasticsearch.client</groupId>
@@ -575,10 +560,6 @@
                     <artifactId>guava</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-to-slf4j</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>joda-time</groupId>
                     <artifactId>joda-time</artifactId>
                 </exclusion>
@@ -587,16 +568,12 @@
                     <artifactId>force-shading</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-1.2-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-api</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>com.tencent.tdbank</groupId>
-                    <artifactId>TDBusSDK</artifactId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.tencent.oceanus.etl</groupId>
+                    <artifactId>oceanus-etl-shaded-calcite</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -619,10 +596,6 @@
                 <exclusion>
                     <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-1.2-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.tencent.oceanus.etl</groupId>
-                    <artifactId>oceanus-etl-shaded</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.slf4j</groupId>

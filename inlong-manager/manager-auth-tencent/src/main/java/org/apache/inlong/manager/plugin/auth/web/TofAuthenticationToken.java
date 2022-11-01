@@ -73,11 +73,9 @@ public class TofAuthenticationToken implements ProxyUserAuthenticationToken {
     }
 
     public boolean isEmpty() {
-        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(signature)
-                || StringUtils.isEmpty(timestamp)) {
-            return true;
-        }
-        return false;
+        return StringUtils.isEmpty(username)
+                || StringUtils.isEmpty(signature)
+                || StringUtils.isEmpty(timestamp);
     }
 
     public String getUserId() {
@@ -107,16 +105,12 @@ public class TofAuthenticationToken implements ProxyUserAuthenticationToken {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder();
-
-        str.append("TofAuthenticationToken: userId = " + userId);
-        str.append(", userName = " + username);
-        str.append(", timestamp = " + timestamp);
-        str.append(", x_rio_seq = " + rioSeq);
-        str.append(", x_ext_data = " + extData);
-        str.append(", signature = " + signature);
-
-        return str.toString();
+        return "TofAuthenticationToken: userId = " + userId
+                + ", userName = " + username
+                + ", timestamp = " + timestamp
+                + ", x_rio_seq = " + rioSeq
+                + ", x_ext_data = " + extData
+                + ", signature = " + signature;
     }
 
     @Override

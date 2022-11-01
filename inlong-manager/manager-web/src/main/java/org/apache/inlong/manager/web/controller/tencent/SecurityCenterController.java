@@ -78,8 +78,8 @@ public class SecurityCenterController {
     @ApiOperation(value = "Product list - current user (only fuzzy name is supported temporarily)")
     @ApiImplicitParam(name = "productName", value = "Product Name:", dataTypeClass = String.class, required = false)
     public Response<List<Product>> listProduct(@RequestParam(required = false) String productName) {
-        String userName = LoginUserUtils.getLoginUser().getName();
-        return Response.success(securityService.listProduct(userName, productName));
+        String username = LoginUserUtils.getLoginUser().getName();
+        return Response.success(securityService.listProduct(username, productName));
     }
 
     @ApiOperation(value = "Application group details - ID query")

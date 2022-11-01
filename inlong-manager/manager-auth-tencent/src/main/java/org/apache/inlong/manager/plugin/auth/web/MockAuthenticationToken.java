@@ -29,29 +29,29 @@ public class MockAuthenticationToken implements ProxyUserAuthenticationToken {
 
     public static final String HEADER_AUTHENTICATION = "authentication";
 
-    private String userName;
+    private String username;
 
     private String proxyUser;
 
     public MockAuthenticationToken(HttpServletRequest httpServletRequest) {
-        userName = httpServletRequest.getHeader(HEADER_AUTHENTICATION);
-        if (userName == null) {
-            userName = httpServletRequest.getParameter(HEADER_AUTHENTICATION);
+        username = httpServletRequest.getHeader(HEADER_AUTHENTICATION);
+        if (username == null) {
+            username = httpServletRequest.getParameter(HEADER_AUTHENTICATION);
         }
         proxyUser = getProxyUserFromHeader(httpServletRequest);
     }
 
-    public MockAuthenticationToken(String userName) {
-        this.userName = userName;
+    public MockAuthenticationToken(String username) {
+        this.username = username;
     }
 
     public boolean isEmpty() {
-        return StringUtils.isEmpty(userName);
+        return StringUtils.isEmpty(username);
     }
 
     @Override
     public Object getPrincipal() {
-        return userName;
+        return username;
     }
 
     @Override
@@ -61,11 +61,11 @@ public class MockAuthenticationToken implements ProxyUserAuthenticationToken {
 
     @Override
     public String getUsername() {
-        return userName;
+        return username;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     @Override
