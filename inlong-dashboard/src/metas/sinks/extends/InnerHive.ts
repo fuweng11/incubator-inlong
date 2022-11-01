@@ -21,7 +21,6 @@ import { DataWithBackend } from '@/metas/DataWithBackend';
 import i18n from '@/i18n';
 import EditableTable from '@/components/EditableTable';
 import ProductSelect from '@/components/ProductSelect';
-import UserSelect from '@/components/UserSelect';
 import { SinkInfo } from '../common/SinkInfo';
 import { sourceFields } from '../common/sourceFields';
 
@@ -152,7 +151,8 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
       name: 'partitionUnit',
       initialValue: 'D',
       rules: [{ required: true }],
-      props: {
+      props: values => ({
+        disabled: [110, 130].includes(values?.status),
         options: [
           {
             label: i18n.t('meta.Sinks.InnerHive.Day'),
@@ -163,7 +163,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
             value: 'H',
           },
         ],
-      },
+      }),
     },
   })
   @I18n('meta.Sinks.InnerHive.PartitionType')
@@ -307,20 +307,19 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   dataSeparator: string;
 
   @FormField({
-    type: UserSelect,
-    props: {
-      mode: 'multiple',
-      currentUserClosable: false,
-    },
+    type: 'input',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
   })
   @I18n('meta.Sinks.InnerHive.DefaultSelectors')
   defaultSelectors: string;
 
   @FormField({
-    type: UserSelect,
-    props: {
-      currentUserClosable: false,
-    },
+    type: 'input',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
   })
   @I18n('meta.Sinks.InnerHive.Responsible')
   virtualUser: string;
