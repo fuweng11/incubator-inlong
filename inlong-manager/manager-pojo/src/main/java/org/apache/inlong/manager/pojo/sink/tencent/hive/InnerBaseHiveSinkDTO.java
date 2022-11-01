@@ -94,8 +94,8 @@ public class InnerBaseHiveSinkDTO {
     @ApiModelProperty("data encoding")
     private String dataEncoding;
 
-    @ApiModelProperty("target separator")
-    private String targetSeparator;
+    @ApiModelProperty("data separator")
+    private String dataSeparator;
 
     @ApiModelProperty("status")
     private Integer status;
@@ -176,7 +176,7 @@ public class InnerBaseHiveSinkDTO {
                 .appGroupName(request.getAppGroupName())
                 .dataConsistency(request.getDataConsistency())
                 .dataEncoding(request.getDataEncoding())
-                .targetSeparator(request.getDataSeparator())
+                .dataSeparator(request.getDataSeparator())
                 .fileFormat(request.getFileFormat())
                 .partitionType(request.getPartitionType())
                 .partitionCreationStrategy(request.getPartitionCreationStrategy())
@@ -224,7 +224,7 @@ public class InnerBaseHiveSinkDTO {
                 .partitionCreationStrategy(innerHiveDTO.getPartitionCreationStrategy())
                 .fileFormat(innerHiveDTO.getFileFormat())
                 .dataEncoding(innerHiveDTO.getDataEncoding())
-                .targetSeparator(innerHiveDTO.getTargetSeparator())
+                .targetSeparator(innerHiveDTO.getDataSeparator())
                 .virtualUser(innerHiveDTO.getVirtualUser())
                 .dataConsistency(innerHiveDTO.getDataConsistency())
                 .checkAbsolute(innerHiveDTO.getCheckAbsolute())
