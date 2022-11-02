@@ -140,17 +140,17 @@ public class AbstractInnerSortConfigService {
         String streamId = streamInfo.getInlongStreamId();
         char separator = (char) Integer.parseInt(streamInfo.getDataSeparator());
         switch (dataType) {
-            case TencentConstants.DATA_TYPE_INLONG_MSG_BINLOG:
+            case TencentConstants.DATA_TYPE_BINLOG:
                 deserializationInfo = new InlongMsgBinlogDeserializationInfo(streamId);
                 break;
-            case TencentConstants.DATA_TYPE_INLONG_CSV:
+            case TencentConstants.DATA_TYPE_CSV:
                 // need to delete the first separator? default is false
                 deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
                 break;
             case TencentConstants.DATA_TYPE_RAW_CSV:
                 deserializationInfo = new CsvDeserializationInfo(separator, escape);
                 break;
-            case TencentConstants.DATA_TYPE_INLONG_KV:
+            case TencentConstants.DATA_TYPE_KV:
                 // KV pair separator, which must be the field separator in the data flow
                 // TODO should get from the user defined
                 char kvSeparator = '&';

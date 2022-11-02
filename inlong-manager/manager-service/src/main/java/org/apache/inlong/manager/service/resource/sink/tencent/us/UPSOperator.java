@@ -17,13 +17,13 @@
 
 package org.apache.inlong.manager.service.resource.sink.tencent.us;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.tdw.ups.client.TdwUps;
 import com.tencent.tdw.ups.client.TdwUpsFactory;
 import com.tencent.tdw.ups.client.impl.HiveImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.TencentConstants;
+import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.pojo.tencent.ups.UPSConfiguration;
 import org.apache.inlong.manager.pojo.tencent.ups.UPSCreateTableInfo;
 import org.apache.inlong.manager.pojo.tencent.ups.UPSOperateResult;
@@ -38,8 +38,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class UPSOperator {
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private UPSConfiguration upsConfiguration;
@@ -58,18 +56,19 @@ public class UPSOperator {
             throw new Exception("failed to query hive/thive table, the result is null");
         }
 
-        UpsTableInfo resultInfo = objectMapper.readValue(queryResult, UpsTableInfo.class);
-        if (resultInfo.getCode().equalsIgnoreCase("0")) {
-            // return table structure
-            return resultInfo.getTableInfo();
-        } else if (resultInfo.getCode().equalsIgnoreCase("70004")) {
-            // table does not exist
-            return null;
-        } else if (resultInfo.getCode().equalsIgnoreCase("70002")) {
-            // database does not exist
-            throw new Exception("database [" + dbName + "] not exists");
-        } else {
-            throw new Exception(resultInfo.getMessage());
+        UpsTableInfo resultInfo = JsonUtils.parseObject(queryResult, UpsTableInfo.class);
+        switch (resultInfo.getCode()) {
+            case "0":
+                // return table structure
+                return resultInfo.getTableInfo();
+            case "70004":
+                // table does not exist
+                return null;
+            case "70002":
+                // database does not exist
+                throw new Exception("database [" + dbName + "] not exists");
+            default:
+                throw new Exception(resultInfo.getMessage());
         }
     }
 
@@ -77,7 +76,7 @@ public class UPSOperator {
      * creat table
      */
     public UPSOperateResult createTable(int hiveType, UPSCreateTableInfo tableInfo) throws Exception {
-        log.debug("try to create table use ups: {}", objectMapper.writeValueAsString(tableInfo));
+        log.debug("try to create table use ups: {}", JsonUtils.toJsonString(tableInfo));
 
         try {
             TdwUps tdwUps = this.getTdwUps(hiveType, tableInfo.getUserName());
@@ -92,7 +91,7 @@ public class UPSOperator {
 
             if (StringUtils.isNotEmpty(result)) {
                 log.info("create table from ups, result: {}", result);
-                return objectMapper.readValue(result, UPSOperateResult.class);
+                return JsonUtils.parseObject(result, UPSOperateResult.class);
             } else {
                 throw new Exception("create table from ups, result is 'null'");
             }
@@ -112,7 +111,7 @@ public class UPSOperator {
 
         log.info("modify table result {}", result);
         if (StringUtils.isNotEmpty(result)) {
-            return objectMapper.readValue(result, UPSOperateResult.class);
+            return JsonUtils.parseObject(result, UPSOperateResult.class);
         } else {
             throw new Exception("failed to modify hive table " + result);
         }
@@ -137,7 +136,7 @@ public class UPSOperator {
      * apply for library table permission
      */
     public UPSOperateResult applyTablePrivilege(int hiveType, UpsTablePrivilege privilege) throws Exception {
-        log.debug("try to table privilege use ups {}", objectMapper.writeValueAsString(privilege));
+        log.debug("try to table privilege use ups {}", JsonUtils.toJsonString(privilege));
 
         String queryResult;
         TdwUps tdwUps = getTdwUps(hiveType, privilege.getUserName());
@@ -150,7 +149,7 @@ public class UPSOperator {
         log.info("apply table privilege result {}", queryResult);
 
         if (StringUtils.isNotEmpty(queryResult)) {
-            return objectMapper.readValue(queryResult, UPSOperateResult.class);
+            return JsonUtils.parseObject(queryResult, UPSOperateResult.class);
         } else {
             throw new Exception("fail to apply table privilege " + queryResult);
         }
