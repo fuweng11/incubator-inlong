@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.message;
+package org.apache.inlong.agent.plugin.message;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.inlong.agent.entites.WaitAckDataInfo;
+import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.message.BatchProxyMessage;
+import org.apache.inlong.agent.message.ProxyMessage;
+import org.apache.inlong.agent.utils.AgentUtils;
+import org.apache.inlong.common.msg.AttributeConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +32,13 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_STREAM_ID_QUEUE_MAX_NUMBER;
+import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_PACKAGE_MAX_SIZE;
+import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_PACKAGE_MAX_TIMEOUT_MS;
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID_QUEUE_MAX_NUMBER;
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_PACKAGE_MAX_SIZE;
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_PACKAGE_MAX_TIMEOUT_MS;
+
 /**
  * Handle List of BusMessage, which belong to the same stream id.
  */
@@ -36,7 +46,9 @@ public class PackProxyMessage {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PackProxyMessage.class);
 
+    private final String groupId;
     private final String streamId;
+    private final String jobId;
     private final int maxPackSize;
     private final int maxQueueNumber;
     // ms
@@ -44,6 +56,7 @@ public class PackProxyMessage {
     // streamId -> list of proxyMessage
     private final LinkedBlockingQueue<ProxyMessage> messageQueue;
     private final AtomicLong queueSize = new AtomicLong(0);
+    private boolean syncSend;
     private int currentSize;
     /**
      * extra map used when sending to dataproxy
@@ -51,29 +64,23 @@ public class PackProxyMessage {
     private Map<String, String> extraMap = new HashMap<>();
     private volatile long currentCacheTime = System.currentTimeMillis();
 
-    //for position ack, used by dbsync
-    private final WaitAckDataInfo waitAckDataInfo;
-
     /**
      * Init PackBusMessage
-     *
-     * @param maxPackSize max pack size for one inlongGroupId
-     * @param cacheTimeout cache timeout for one proxy message
-     * @param streamId streamId
      */
-    public PackProxyMessage(int maxPackSize, int maxQueueNumber, int cacheTimeout, String streamId) {
-        this.maxPackSize = maxPackSize;
-        this.maxQueueNumber = maxPackSize * 10;
-        this.cacheTimeout = cacheTimeout;
+    public PackProxyMessage(String jobId, JobProfile jobConf, String groupId, String streamId) {
+        this.jobId = jobId;
+        this.maxPackSize = jobConf.getInt(PROXY_PACKAGE_MAX_SIZE, DEFAULT_PROXY_PACKAGE_MAX_SIZE);
+        this.maxQueueNumber = jobConf.getInt(PROXY_INLONG_STREAM_ID_QUEUE_MAX_NUMBER,
+                DEFAULT_PROXY_INLONG_STREAM_ID_QUEUE_MAX_NUMBER);
+        this.cacheTimeout = jobConf.getInt(PROXY_PACKAGE_MAX_TIMEOUT_MS, DEFAULT_PROXY_PACKAGE_MAX_TIMEOUT_MS);
         // double size of package
         this.messageQueue = new LinkedBlockingQueue<>(maxQueueNumber);
+        this.groupId = groupId;
         this.streamId = streamId;
-        waitAckDataInfo = new WaitAckDataInfo(this);
     }
 
-    public void generateExtraMap(boolean syncSend, String dataKey) {
-        this.extraMap.put("syncSend", String.valueOf(syncSend));
-        this.extraMap.put("partitionKey", dataKey);
+    public void generateExtraMap(String dataKey) {
+        this.extraMap.put(AttributeConstants.MESSAGE_PARTITION_KEY, dataKey);
     }
 
     /**
@@ -97,16 +104,9 @@ public class PackProxyMessage {
             }
             messageQueue.put(message);
             queueSize.addAndGet(message.getBody().length);
-
-            //TODO:update position?
-//            waitAckDataInfo.updateLogPosition();
         } catch (Exception ex) {
             LOGGER.error("exception caught", ex);
         }
-    }
-
-    private void updateDBSyncWaitAckPos(){
-
     }
 
     /**
@@ -121,7 +121,7 @@ public class PackProxyMessage {
      *
      * @return map of message list, key is stream id for the batch; return null if there are no valid messages.
      */
-    public Pair<String, List<byte[]>> fetchBatch() {
+    public BatchProxyMessage fetchBatch() {
         // if queue is nearly full or package size is satisfied or timeout
         long currentTime = System.currentTimeMillis();
         if (queueSize.get() > maxPackSize || queueIsFull()
@@ -148,7 +148,8 @@ public class PackProxyMessage {
             }
             // make sure result is not empty.
             if (!result.isEmpty()) {
-                return Pair.of(streamId, result);
+                return new BatchProxyMessage(jobId, groupId, streamId, result, AgentUtils.getCurrentTime(), extraMap,
+                        syncSend);
             }
         }
         return null;

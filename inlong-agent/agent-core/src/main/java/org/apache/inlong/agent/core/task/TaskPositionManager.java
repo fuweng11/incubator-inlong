@@ -26,7 +26,7 @@ import org.apache.inlong.agent.core.job.DBSyncJob;
 import org.apache.inlong.agent.core.job.JobManager;
 import org.apache.inlong.agent.db.JobProfileDb;
 import org.apache.inlong.agent.entites.WaitAckDataInfo;
-import org.apache.inlong.agent.message.PackProxyMessage;
+import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.utils.ThreadUtils;
 import org.apache.inlong.common.monitor.LogCounter;
@@ -200,7 +200,7 @@ public class TaskPositionManager extends AbstractDaemon {
     }
 
     //TODO:use?
-    public void addRecodeLogPosition(PackProxyMessage pkgData) {
+    public void addRecodeLogPosition(BatchProxyMessage pkgData) {
         logMapQueue.add(new WaitAckDataInfo(pkgData));
     }
 

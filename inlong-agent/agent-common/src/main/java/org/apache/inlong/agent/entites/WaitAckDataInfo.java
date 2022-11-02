@@ -18,8 +18,8 @@
 package org.apache.inlong.agent.entites;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.message.DBSyncMessage;
-import org.apache.inlong.agent.message.PackProxyMessage;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 
 import java.util.ArrayList;
@@ -30,12 +30,10 @@ public class WaitAckDataInfo {
     private HashMap<String, ArrayList<Pair<LogPosition, Long>>> positionMap;
     private HashMap<String, Integer> instCntMap;
     private LogPosition latestLogPosition;
-    private PackProxyMessage pkgData;
 
-    public WaitAckDataInfo(PackProxyMessage pkgData) {
+    public WaitAckDataInfo(BatchProxyMessage pkgData) {
         this.positionMap = new HashMap<>();
         this.instCntMap = new HashMap<>();
-        this.pkgData = pkgData;
     }
 
     public void updateLogPosition(DBSyncMessage data) {
