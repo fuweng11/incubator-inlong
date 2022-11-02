@@ -22,7 +22,7 @@ import { NodeInfo } from '../common/NodeInfo';
 
 const { I18n, FormField } = DataWithBackend;
 
-export default class InnerClickhouseNode extends NodeInfo implements DataWithBackend {
+export default class InnerClickHouseNode extends NodeInfo implements DataWithBackend {
   @FormField({
     type: 'input',
     rules: [{ required: true }],

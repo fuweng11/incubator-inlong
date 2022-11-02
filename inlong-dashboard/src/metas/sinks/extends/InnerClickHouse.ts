@@ -25,7 +25,7 @@ import { sourceFields } from '../common/sourceFields';
 
 const { I18n, FormField, TableColumn } = DataWithBackend;
 
-const innerClickhouseFieldTypes = [
+const innerClickHouseFieldTypes = [
   'String',
   'boolean',
   'byte',
@@ -40,7 +40,7 @@ const innerClickhouseFieldTypes = [
   value: item,
 }));
 
-export default class InnerClickhouseSink extends SinkInfo implements DataWithBackend {
+export default class InnerClickHouseSink extends SinkInfo implements DataWithBackend {
   @FormField({
     type: 'select',
     rules: [{ required: true }],
@@ -68,7 +68,7 @@ export default class InnerClickhouseSink extends SinkInfo implements DataWithBac
     }),
   })
   @TableColumn()
-  @I18n('meta.Sinks.InnerClickhouse.DataNodeName')
+  @I18n('meta.Sinks.InnerClickHouse.DataNodeName')
   dataNodeName: string;
 
   @FormField({
@@ -79,7 +79,7 @@ export default class InnerClickhouseSink extends SinkInfo implements DataWithBac
     }),
   })
   @TableColumn()
-  @I18n('meta.Sinks.InnerClickhouse.DbName')
+  @I18n('meta.Sinks.InnerClickHouse.DbName')
   dbName: string;
 
   @FormField({
@@ -90,7 +90,7 @@ export default class InnerClickhouseSink extends SinkInfo implements DataWithBac
     }),
   })
   @TableColumn()
-  @I18n('meta.Sinks.InnerClickhouse.TableName')
+  @I18n('meta.Sinks.InnerClickHouse.TableName')
   tableName: string;
 
   @FormField({
@@ -101,9 +101,9 @@ export default class InnerClickhouseSink extends SinkInfo implements DataWithBac
       min: 1,
     }),
     rules: [{ required: true }],
-    suffix: i18n.t('meta.Sinks.InnerClickhouse.FlushIntervalUnit'),
+    suffix: i18n.t('meta.Sinks.InnerClickHouse.FlushIntervalUnit'),
   })
-  @I18n('meta.Sinks.InnerClickhouse.FlushInterval')
+  @I18n('meta.Sinks.InnerClickHouse.FlushInterval')
   flushInterval: number;
 
   @FormField({
@@ -114,9 +114,9 @@ export default class InnerClickhouseSink extends SinkInfo implements DataWithBac
       min: 1,
     }),
     rules: [{ required: true }],
-    suffix: i18n.t('meta.Sinks.InnerClickhouse.PackageSizeUnit'),
+    suffix: i18n.t('meta.Sinks.InnerClickHouse.PackageSizeUnit'),
   })
-  @I18n('meta.Sinks.InnerClickhouse.PackageSize')
+  @I18n('meta.Sinks.InnerClickHouse.PackageSize')
   packageSize: number;
 
   @FormField({
@@ -127,9 +127,9 @@ export default class InnerClickhouseSink extends SinkInfo implements DataWithBac
       min: 1,
     }),
     rules: [{ required: true }],
-    suffix: i18n.t('meta.Sinks.InnerClickhouse.RetryTimesUnit'),
+    suffix: i18n.t('meta.Sinks.InnerClickHouse.RetryTimesUnit'),
   })
-  @I18n('meta.Sinks.InnerClickhouse.RetryTimes')
+  @I18n('meta.Sinks.InnerClickHouse.RetryTimes')
   retryTime: number;
 
   @FormField({
@@ -140,18 +140,18 @@ export default class InnerClickhouseSink extends SinkInfo implements DataWithBac
       disabled: [110, 130].includes(values?.status),
       options: [
         {
-          label: i18n.t('meta.Sinks.InnerClickhouse.Yes'),
+          label: i18n.t('meta.Sinks.InnerClickHouse.Yes'),
           value: 1,
         },
         {
-          label: i18n.t('meta.Sinks.InnerClickhouse.No'),
+          label: i18n.t('meta.Sinks.InnerClickHouse.No'),
           value: 0,
         },
       ],
     }),
     rules: [{ required: true }],
   })
-  @I18n('meta.Sinks.InnerClickhouse.IsDistributed')
+  @I18n('meta.Sinks.InnerClickHouse.IsDistributed')
   isDistribute: 0 | 1;
 
   @FormField({
@@ -177,7 +177,7 @@ export default class InnerClickhouseSink extends SinkInfo implements DataWithBac
     }),
     visible: values => values.isDistributed,
   })
-  @I18n('meta.Sinks.InnerClickhouse.PartitionStrategy')
+  @I18n('meta.Sinks.InnerClickHouse.PartitionStrategy')
   partitionStrategy: string;
 
   @FormField({
@@ -198,7 +198,7 @@ export default class InnerClickhouseSink extends SinkInfo implements DataWithBac
     }),
     isPro: true,
   })
-  @I18n('meta.Sinks.InnerClickhouse.DataConsistency')
+  @I18n('meta.Sinks.InnerClickHouse.DataConsistency')
   dataConsistency: string;
 
   @FormField({
@@ -216,13 +216,13 @@ const getFieldListColumns = sinkValues => {
   return [
     ...sourceFields,
     {
-      title: `ClickHouse${i18n.t('meta.Sinks.InnerClickhouse.FieldName')}`,
+      title: `ClickHouse${i18n.t('meta.Sinks.InnerClickHouse.FieldName')}`,
       dataIndex: 'fieldName',
       rules: [
         { required: true },
         {
           pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
-          message: i18n.t('meta.Sinks.InnerClickhouse.FieldNameRule'),
+          message: i18n.t('meta.Sinks.InnerClickHouse.FieldNameRule'),
         },
       ],
       props: (text, record, idx, isNew) => ({
@@ -230,18 +230,18 @@ const getFieldListColumns = sinkValues => {
       }),
     },
     {
-      title: `ClickHouse${i18n.t('meta.Sinks.InnerClickhouse.FieldType')}`,
+      title: `ClickHouse${i18n.t('meta.Sinks.InnerClickHouse.FieldType')}`,
       dataIndex: 'fieldType',
-      initialValue: innerClickhouseFieldTypes[0].value,
+      initialValue: innerClickHouseFieldTypes[0].value,
       type: 'select',
       props: (text, record, idx, isNew) => ({
         disabled: [110, 130].includes(sinkValues?.status as number) && !isNew,
-        options: innerClickhouseFieldTypes,
+        options: innerClickHouseFieldTypes,
       }),
       rules: [{ required: true }],
     },
     {
-      title: `ClickHouse${i18n.t('meta.Sinks.InnerClickhouse.FieldDescription')}`,
+      title: `ClickHouse${i18n.t('meta.Sinks.InnerClickHouse.FieldDescription')}`,
       dataIndex: 'fieldComment',
       props: (text, record, idx, isNew) => ({
         disabled: [110, 130].includes(sinkValues?.status as number) && !isNew,

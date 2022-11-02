@@ -21,6 +21,7 @@ import { DataWithBackend } from '@/metas/DataWithBackend';
 import i18n from '@/i18n';
 import EditableTable from '@/components/EditableTable';
 import ProductSelect from '@/components/ProductSelect';
+import UserSelect from '@/components/UserSelect';
 import { SinkInfo } from '../common/SinkInfo';
 import { sourceFields } from '../common/sourceFields';
 
@@ -172,8 +173,7 @@ export default class InnerThiveSink extends SinkInfo implements DataWithBackend 
       name: 'partitionUnit',
       initialValue: 'D',
       rules: [{ required: true }],
-      props: values => ({
-        disabled: [110, 130].includes(values?.status),
+      props: {
         options: [
           {
             label: i18n.t('meta.Sinks.THive.Day'),
@@ -184,7 +184,8 @@ export default class InnerThiveSink extends SinkInfo implements DataWithBackend 
             value: 'H',
           },
         ],
-      }),
+      },
+      _renderTable: true,
     },
   })
   @I18n('meta.Sinks.THive.PartitionInterval')
@@ -318,10 +319,11 @@ export default class InnerThiveSink extends SinkInfo implements DataWithBackend 
   dataSeparator: string;
 
   @FormField({
-    type: 'input',
-    props: values => ({
-      disabled: [110, 130].includes(values?.status),
-    }),
+    type: UserSelect,
+    props: {
+      mode: 'multiple',
+      currentUserClosable: false,
+    },
   })
   @I18n('meta.Sinks.THive.DefaultSelectors')
   defaultSelectors: string;

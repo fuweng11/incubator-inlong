@@ -18,7 +18,36 @@
  */
 
 import { StreamDefaultInfo } from './StreamDefaultInfo';
+import { DataWithBackend } from '@/metas/DataWithBackend';
+import i18n from '@/i18n';
+
+const { I18n, FormField } = DataWithBackend;
 
 export class StreamInfo extends StreamDefaultInfo {
-  // You can extends StreamInfo at here...
+  // You can extend StreamInfo at here...
+
+  @FormField({
+    type: 'radio',
+    initialValue: 'CSV',
+    tooltip: i18n.t('meta.Stream.DataTypeHelp'),
+    props: {
+      options: [
+        {
+          label: 'CSV',
+          value: 'CSV',
+        },
+        {
+          label: 'Raw-CSV',
+          value: 'RAW_CSV',
+        },
+        {
+          label: 'BinLog',
+          value: 'BINLOG',
+        },
+      ],
+    },
+    rules: [{ required: true }],
+  })
+  @I18n('meta.Stream.DataType')
+  dataType: string;
 }

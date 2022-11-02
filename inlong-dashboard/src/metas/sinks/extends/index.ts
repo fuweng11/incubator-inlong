@@ -22,18 +22,18 @@ import type { MetaExportWithBackendList } from '@/metas/types';
 export const allExtendsSinks: MetaExportWithBackendList = [
   // You can extends at here...
   {
-    label: 'Clickhouse',
+    label: 'InnerCK',
     value: 'INNER_CK',
-    LoadEntity: () => import('./InnerClickhouse'),
+    LoadEntity: () => import('./InnerClickHouse'),
   },
   {
-    label: 'Hive',
+    label: 'InnerHive',
     value: 'INNER_HIVE',
     LoadEntity: () => import('./InnerHive'),
   },
   {
-    label: 'THive',
+    label: 'InnerTHive',
     value: 'INNER_THIVE',
-    LoadEntity: () => import('./InnerThive'),
+    LoadEntity: () => import('./InnerTHive'),
   },
 ];
