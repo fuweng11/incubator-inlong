@@ -804,5 +804,23 @@ CREATE TABLE IF NOT EXISTS `bg_info`
     DEFAULT CHARSET = utf8mb4 COMMENT ='BG info table';
 
 -- ----------------------------
+-- Create bg info
+-- ----------------------------
+INSERT INTO `bg_info`(`id`, `name`, `abbrev_name`, `us_bg_id`)
+VALUES (5, 'SNG社交网络事业群', 'SNG', 5),
+       (7, 'ECC腾讯电商控股公司', 'ECC', 7),
+       (12, 'INTERLINKENTERPRISE互联网企业', 'INTERLINKENTERPRISE', 12),
+       (78, 'S1职能系统－职能线', 'S1', 9),
+       (953, 'CDG企业发展事业群', 'CDG', 1),
+       (954, 'MIG移动互联网事业群', 'MIG', 3),
+       (956, 'IEG互动娱乐事业群', 'IEG', 2),
+       (957, 'OMG网络媒体事业群', 'OMG', 4),
+       (958, 'TEG技术工程事业群', 'TEG', 6),
+       (2233, 'S2职能系统－财经线', 'S2', 10),
+       (2234, 'S3职能系统－HR与管理线', 'S3', 11),
+       (14129, 'WXG微信事业群', 'WXG', 8),
+       (29292, 'PCG平台与内容事业群', 'PCG', 13),
+       (29294, 'CSIG云与智慧产业事业群', 'CSIG', 14);
+-- ----------------------------
 
 SET FOREIGN_KEY_CHECKS = 1;
