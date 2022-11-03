@@ -26,8 +26,6 @@ sed -i "s/agent.fetcher.interval=.*$/agent.fetcher.interval=${AGENT_FETCH_INTERV
 sed -i "s/agent.heartbeat.interval=.*$/agent.heartbeat.interval=${AGENT_HEARTBEAT_INTERVAL}/g" "${conf_file}"
 sed -i "s/agent.manager.vip.http.host=.*$/agent.manager.vip.http.host=${MANAGER_OPENAPI_IP}/g" "${conf_file}"
 sed -i "s/agent.manager.vip.http.port=.*$/agent.manager.vip.http.port=${MANAGER_OPENAPI_PORT}/g" "${conf_file}"
-sed -i "s/agent.dataproxy.http.host=.*$/agent.dataproxy.http.host=${DATAPROXY_IP}/g" "${conf_file}"
-sed -i "s/agent.dataproxy.http.port=.*$/agent.dataproxy.http.port=${DATAPROXY_PORT}/g" "${conf_file}"
 sed -i "s/agent.http.port=.*$/agent.http.port=8008/g" "${conf_file}"
 sed -i "s/agent.http.enable=.*$/agent.http.enable=true/g" "${conf_file}"
 sed -i "s/agent.domainListeners=.*$/agent.domainListeners=org.apache.inlong.agent.metrics.AgentPrometheusMetricListener/g" "${conf_file}"
