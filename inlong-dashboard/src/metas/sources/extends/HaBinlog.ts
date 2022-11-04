@@ -18,14 +18,20 @@
  */
 
 import { DataWithBackend } from '@/metas/DataWithBackend';
+import { RenderRow } from '@/metas/RenderRow';
+import { RenderList } from '@/metas/RenderList';
 import i18n from '@/i18n';
-import rulesPattern from '@/utils/pattern';
 import { SourceInfo } from '../common/SourceInfo';
 
-const { I18n, FormField, TableColumn } = DataWithBackend;
+const { I18n } = DataWithBackend;
+const { FieldDecorator } = RenderRow;
+const { ColumnDecorator } = RenderList;
 
-export default class PulsarSource extends SourceInfo implements DataWithBackend {
-  @FormField({
+export default class PulsarSource
+  extends SourceInfo
+  implements DataWithBackend, RenderRow, RenderList
+{
+  @FieldDecorator({
     type: 'select',
     rules: [{ required: true }],
     props: values => ({
@@ -54,11 +60,11 @@ export default class PulsarSource extends SourceInfo implements DataWithBackend 
       },
     }),
   })
-  @TableColumn()
+  @ColumnDecorator()
   @I18n('meta.Sources.HaBinlog.Cluster')
   inlongClusterName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'select',
     rules: [{ required: true }],
     props: values => ({
@@ -86,18 +92,18 @@ export default class PulsarSource extends SourceInfo implements DataWithBackend 
       },
     }),
   })
-  @TableColumn()
+  @ColumnDecorator()
   @I18n('meta.Sources.HaBinlog.DataNode')
   dataNodeName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
   })
   @I18n('meta.Sources.HaBinlog.DBName')
   dbName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
     props: {
@@ -107,7 +113,7 @@ export default class PulsarSource extends SourceInfo implements DataWithBackend 
   @I18n('meta.Sources.HaBinlog.TableName')
   tableName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'select',
     rules: [{ required: true }],
     initialValue: 'UTF-8',
@@ -127,7 +133,7 @@ export default class PulsarSource extends SourceInfo implements DataWithBackend 
   @I18n('meta.Sources.HaBinlog.Encoding')
   charset: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'radio',
     rules: [{ required: true }],
     initialValue: 1,
@@ -147,13 +153,13 @@ export default class PulsarSource extends SourceInfo implements DataWithBackend 
   @I18n('meta.Sources.HaBinlog.SkipDelete')
   skipDelete: number;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
   })
   @I18n('meta.Sources.HaBinlog.FileName')
   'startDumpPosition.entryPosition.journalName': string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'inputnumber',
     props: {
       min: 1,

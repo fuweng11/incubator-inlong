@@ -18,18 +18,14 @@
  */
 
 import { StreamDefaultInfo } from './StreamDefaultInfo';
-import { DataWithBackend } from '@/metas/DataWithBackend';
-import i18n from '@/i18n';
+import { RenderRow } from '@/metas/RenderRow';
 
-const { I18n, FormField } = DataWithBackend;
+const { FieldDecorator } = RenderRow;
 
 export class StreamInfo extends StreamDefaultInfo {
   // You can extend StreamInfo at here...
-
-  @FormField({
+  @FieldDecorator({
     type: 'radio',
-    initialValue: 'CSV',
-    tooltip: i18n.t('meta.Stream.DataTypeHelp'),
     props: {
       options: [
         {
@@ -46,8 +42,6 @@ export class StreamInfo extends StreamDefaultInfo {
         },
       ],
     },
-    rules: [{ required: true }],
   })
-  @I18n('meta.Stream.DataType')
   dataType: string;
 }

@@ -18,40 +18,46 @@
  */
 
 import { DataWithBackend } from '@/metas/DataWithBackend';
+import { RenderRow } from '@/metas/RenderRow';
+import { RenderList } from '@/metas/RenderList';
 import { NodeInfo } from '../common/NodeInfo';
 
-const { I18n, FormField } = DataWithBackend;
+const { I18n } = DataWithBackend;
+const { FieldDecorator } = RenderRow;
 
-export default class InnerThiveNode extends NodeInfo implements DataWithBackend {
-  @FormField({
+export default class InnerThiveNode
+  extends NodeInfo
+  implements DataWithBackend, RenderRow, RenderList
+{
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
   })
   @I18n('hiveAddress')
   hiveAddress: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
   })
   @I18n('username')
   username: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
   })
   @I18n('token')
   token: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
   })
   @I18n('clusterTag')
   clusterTag: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     initialValue: '/user/tdw/warehouse',
     rules: [{ required: true }],
@@ -59,7 +65,7 @@ export default class InnerThiveNode extends NodeInfo implements DataWithBackend 
   @I18n('warehouseDir')
   warehouseDir: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     initialValue: 'hdfs:',
     rules: [{ required: true }],
@@ -67,7 +73,7 @@ export default class InnerThiveNode extends NodeInfo implements DataWithBackend 
   @I18n('hdfsDefaultFs')
   hdfsDefaultFs: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     initialValue: 'tdwadmin:',
     rules: [{ required: true }],

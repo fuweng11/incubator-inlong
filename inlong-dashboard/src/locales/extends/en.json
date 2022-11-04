@@ -3,7 +3,6 @@
   "meta.Group.Bg": "BG",
   "meta.Group.Product": "Product",
   "meta.Group.AppGroupName": "AppGroupName",
-  "meta.Group.EnableZookeeper": "EnableZookeeper",
   "meta.Sinks.THive.DbName": "DbName",
   "meta.Sinks.THive.TableName": "TableName",
   "meta.Sinks.THive.FieldNameRule": "At the beginning of lowercase letters, only lowercase letters, numbers, and underscores",

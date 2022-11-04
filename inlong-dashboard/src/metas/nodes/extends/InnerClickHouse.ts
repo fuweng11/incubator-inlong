@@ -18,26 +18,32 @@
  */
 
 import { DataWithBackend } from '@/metas/DataWithBackend';
+import { RenderRow } from '@/metas/RenderRow';
+import { RenderList } from '@/metas/RenderList';
 import { NodeInfo } from '../common/NodeInfo';
 
-const { I18n, FormField } = DataWithBackend;
+const { I18n } = DataWithBackend;
+const { FieldDecorator } = RenderRow;
 
-export default class InnerClickHouseNode extends NodeInfo implements DataWithBackend {
-  @FormField({
+export default class InnerClickHouseNode
+  extends NodeInfo
+  implements DataWithBackend, RenderRow, RenderList
+{
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
   })
   @I18n('url')
   url: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
   })
   @I18n('username')
   username: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
   })

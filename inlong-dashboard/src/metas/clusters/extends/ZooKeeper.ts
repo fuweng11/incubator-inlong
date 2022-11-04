@@ -18,12 +18,18 @@
  */
 
 import { DataWithBackend } from '@/metas/DataWithBackend';
+import { RenderRow } from '@/metas/RenderRow';
+import { RenderList } from '@/metas/RenderList';
 import { ClusterInfo } from '../common/ClusterInfo';
 
-const { I18n, FormField } = DataWithBackend;
+const { I18n } = DataWithBackend;
+const { FieldDecorator } = RenderRow;
 
-export default class ZooKeeperCluster extends ClusterInfo implements DataWithBackend {
-  @FormField({
+export default class ZooKeeperCluster
+  extends ClusterInfo
+  implements DataWithBackend, RenderRow, RenderList
+{
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
     initialValue: '127.0.0.1:9092',
@@ -31,13 +37,13 @@ export default class ZooKeeperCluster extends ClusterInfo implements DataWithBac
   @I18n('URL')
   url: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
   })
   @I18n('tubeRoot')
   tubeRoot: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
   })
   @I18n('pulsarRoot')

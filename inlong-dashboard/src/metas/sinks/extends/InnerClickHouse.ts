@@ -18,12 +18,16 @@
  */
 
 import { DataWithBackend } from '@/metas/DataWithBackend';
+import { RenderRow } from '@/metas/RenderRow';
+import { RenderList } from '@/metas/RenderList';
 import i18n from '@/i18n';
 import EditableTable from '@/components/EditableTable';
 import { SinkInfo } from '../common/SinkInfo';
 import { sourceFields } from '../common/sourceFields';
 
-const { I18n, FormField, TableColumn } = DataWithBackend;
+const { I18n } = DataWithBackend;
+const { FieldDecorator } = RenderRow;
+const { ColumnDecorator } = RenderList;
 
 const innerClickHouseFieldTypes = [
   'String',
@@ -40,8 +44,11 @@ const innerClickHouseFieldTypes = [
   value: item,
 }));
 
-export default class InnerClickHouseSink extends SinkInfo implements DataWithBackend {
-  @FormField({
+export default class InnerClickHouseSink
+  extends SinkInfo
+  implements DataWithBackend, RenderRow, RenderList
+{
+  @FieldDecorator({
     type: 'select',
     rules: [{ required: true }],
     props: values => ({
@@ -67,33 +74,33 @@ export default class InnerClickHouseSink extends SinkInfo implements DataWithBac
       },
     }),
   })
-  @TableColumn()
+  @ColumnDecorator()
   @I18n('meta.Sinks.InnerClickHouse.DataNodeName')
   dataNodeName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
     props: values => ({
       disabled: [110, 130].includes(values?.status),
     }),
   })
-  @TableColumn()
+  @ColumnDecorator()
   @I18n('meta.Sinks.InnerClickHouse.DbName')
   dbName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
     props: values => ({
       disabled: [110, 130].includes(values?.status),
     }),
   })
-  @TableColumn()
+  @ColumnDecorator()
   @I18n('meta.Sinks.InnerClickHouse.TableName')
   tableName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'inputnumber',
     initialValue: 1,
     props: values => ({
@@ -106,7 +113,7 @@ export default class InnerClickHouseSink extends SinkInfo implements DataWithBac
   @I18n('meta.Sinks.InnerClickHouse.FlushInterval')
   flushInterval: number;
 
-  @FormField({
+  @FieldDecorator({
     type: 'inputnumber',
     initialValue: 1000,
     props: values => ({
@@ -119,7 +126,7 @@ export default class InnerClickHouseSink extends SinkInfo implements DataWithBac
   @I18n('meta.Sinks.InnerClickHouse.PackageSize')
   packageSize: number;
 
-  @FormField({
+  @FieldDecorator({
     type: 'inputnumber',
     initialValue: 3,
     props: values => ({
@@ -132,7 +139,7 @@ export default class InnerClickHouseSink extends SinkInfo implements DataWithBac
   @I18n('meta.Sinks.InnerClickHouse.RetryTimes')
   retryTime: number;
 
-  @FormField({
+  @FieldDecorator({
     name: 'isDistribute',
     type: 'radio',
     initialValue: 0,
@@ -154,7 +161,7 @@ export default class InnerClickHouseSink extends SinkInfo implements DataWithBac
   @I18n('meta.Sinks.InnerClickHouse.IsDistributed')
   isDistribute: 0 | 1;
 
-  @FormField({
+  @FieldDecorator({
     type: 'select',
     initialValue: 'BALANCE',
     rules: [{ required: true }],
@@ -180,7 +187,7 @@ export default class InnerClickHouseSink extends SinkInfo implements DataWithBac
   @I18n('meta.Sinks.InnerClickHouse.PartitionStrategy')
   partitionStrategy: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'select',
     initialValue: 'EXACTLY_ONCE',
     props: values => ({
@@ -201,7 +208,7 @@ export default class InnerClickHouseSink extends SinkInfo implements DataWithBac
   @I18n('meta.Sinks.InnerClickHouse.DataConsistency')
   dataConsistency: string;
 
-  @FormField({
+  @FieldDecorator({
     type: EditableTable,
     props: values => ({
       size: 'small',

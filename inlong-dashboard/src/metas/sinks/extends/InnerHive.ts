@@ -18,13 +18,17 @@
  */
 
 import { DataWithBackend } from '@/metas/DataWithBackend';
+import { RenderRow } from '@/metas/RenderRow';
+import { RenderList } from '@/metas/RenderList';
 import i18n from '@/i18n';
 import EditableTable from '@/components/EditableTable';
 import ProductSelect from '@/components/ProductSelect';
 import { SinkInfo } from '../common/SinkInfo';
 import { sourceFields } from '../common/sourceFields';
 
-const { I18n, FormField, TableColumn } = DataWithBackend;
+const { I18n } = DataWithBackend;
+const { FieldDecorator } = RenderRow;
+const { ColumnDecorator } = RenderList;
 
 const innerHiveFieldTypes = [
   'string',
@@ -47,8 +51,11 @@ const innerHiveFieldTypes = [
   value: item,
 }));
 
-export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
-  @FormField({
+export default class InnerHiveSink
+  extends SinkInfo
+  implements DataWithBackend, RenderRow, RenderList
+{
+  @FieldDecorator({
     type: ProductSelect,
     extraNames: ['productName'],
     rules: [{ required: true }],
@@ -61,11 +68,11 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
       }),
     }),
   })
-  @TableColumn()
+  @ColumnDecorator()
   @I18n('meta.Group.Product')
   productId: string | number;
 
-  @FormField({
+  @FieldDecorator({
     type: 'select',
     rules: [{ required: true }],
     props: values => ({
@@ -91,7 +98,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Group.AppGroupName')
   appGroupName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'select',
     rules: [{ required: true }],
     props: values => ({
@@ -120,7 +127,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.DataNodeName')
   dataNodeName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
     props: values => ({
@@ -130,7 +137,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.DbName')
   dbName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
     props: values => ({
@@ -140,7 +147,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.TableName')
   tableName: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
     props: values => ({
@@ -169,7 +176,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.PartitionType')
   partitionType: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
     props: values => ({
@@ -179,7 +186,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.PrimaryPartition')
   primaryPartition: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'select',
     initialValue: 'ARRIVED',
     rules: [{ required: true }],
@@ -208,7 +215,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.PartitionCreationStrategy')
   partitionCreationStrategy: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'radio',
     initialValue: 'TextFile',
     rules: [{ required: true }],
@@ -233,7 +240,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.FieldFormat')
   fileFormat: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'radio',
     initialValue: 'UTF-8',
     props: values => ({
@@ -254,7 +261,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.DataEncoding')
   dataEncoding: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'select',
     initialValue: '124',
     props: values => ({
@@ -306,7 +313,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.DataSeparator')
   dataSeparator: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -315,7 +322,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.DefaultSelectors')
   defaultSelectors: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -324,7 +331,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.Responsible')
   virtualUser: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -334,7 +341,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.SecondaryPartition')
   secondaryPartition: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'select',
     initialValue: 'EXACTLY_ONCE',
     props: values => ({
@@ -355,7 +362,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.DataConsistency')
   dataConsistency: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -366,7 +373,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.CheckAbsolute')
   checkAbsolute: string;
 
-  @FormField({
+  @FieldDecorator({
     type: 'input',
     props: values => ({
       disabled: [110, 130].includes(values?.status),
@@ -377,7 +384,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   @I18n('meta.Sinks.InnerHive.CheckRelative')
   checkRelative: string;
 
-  @FormField({
+  @FieldDecorator({
     type: EditableTable,
     props: values => ({
       size: 'small',
@@ -387,7 +394,7 @@ export default class InnerHiveSink extends SinkInfo implements DataWithBackend {
   })
   sinkFieldList: Record<string, unknown>[];
 
-  @FormField({
+  @FieldDecorator({
     type: EditableTable,
     tooltip: i18n.t('meta.Sinks.Hive.PartitionFieldListHelp'),
     col: 24,

@@ -3,7 +3,6 @@
   "meta.Group.Bg": "所属BG",
   "meta.Group.Product": "产品",
   "meta.Group.AppGroupName": "应用组",
-  "meta.Group.EnableZookeeper": "开启 Zookeeper",
   "meta.Sinks.THive.DbName": "目标库",
   "meta.Sinks.THive.TableName": "目标表",
   "meta.Sinks.THive.FieldNameRule": "以小写英文字母开头，只能包含小写英文字母、数字、下划线",
