@@ -89,5 +89,5 @@ public interface AttributeConstants {
 
     // error message, add by receiver
     String MESSAGE_PROCESS_ERRMSG = "errMsg";
-    String MESSAGE_PARTITION_KEY = "partitionKey";
+
 }
