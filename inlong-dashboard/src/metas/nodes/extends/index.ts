@@ -18,8 +18,9 @@
  */
 
 import type { MetaExportWithBackendList } from '@/metas/types';
+import type { NodeMetaType } from '../types';
 
-export const allExtendsNodes: MetaExportWithBackendList = [
+export const allExtendsNodes: MetaExportWithBackendList<NodeMetaType> = [
   // You can extends at here...
   {
     label: 'InnerCK',
