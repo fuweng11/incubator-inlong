@@ -40,7 +40,7 @@ import javax.validation.constraints.NotNull;
 public class AgentClusterDTO {
 
     @ApiModelProperty(value = "Version number of the server list collected by the cluster")
-    private Integer serverVersion;
+    private Integer serverVersion = 1;
 
     /**
      * Get the dto instance from the request

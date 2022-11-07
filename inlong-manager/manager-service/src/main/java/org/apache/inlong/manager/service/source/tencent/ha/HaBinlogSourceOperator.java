@@ -39,6 +39,7 @@ import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSourceDTO;
 import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSourceRequest;
 import org.apache.inlong.manager.pojo.stream.StreamField;
 import org.apache.inlong.manager.service.source.AbstractSourceOperator;
+import org.apache.pulsar.shade.org.eclipse.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -242,8 +243,13 @@ public class HaBinlogSourceOperator extends AbstractSourceOperator {
             InlongClusterEntity clusterEntity = inlongClusterMapper.selectByNameAndType(
                     clusterName, ClusterType.AGENT);
             try {
-                AgentClusterDTO agentClusterDTO = AgentClusterDTO.getFromJson(clusterEntity.getExtParams());
-                agentClusterDTO.setServerVersion(agentClusterDTO.getServerVersion() + 1);
+                AgentClusterDTO agentClusterDTO;
+                if (StringUtil.isBlank(clusterEntity.getExtParams())) {
+                    agentClusterDTO = new AgentClusterDTO();
+                } else {
+                    agentClusterDTO = AgentClusterDTO.getFromJson(clusterEntity.getExtParams());
+                    agentClusterDTO.setServerVersion(agentClusterDTO.getServerVersion() + 1);
+                }
                 clusterEntity.setExtParams(objectMapper.writeValueAsString(agentClusterDTO));
                 inlongClusterMapper.updateByIdSelective(clusterEntity);
             } catch (Exception e) {
