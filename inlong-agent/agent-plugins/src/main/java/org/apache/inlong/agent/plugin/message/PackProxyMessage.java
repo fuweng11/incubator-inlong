@@ -17,9 +17,12 @@
 
 package org.apache.inlong.agent.plugin.message;
 
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.message.ProxyMessage;
+import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.slf4j.Logger;
@@ -49,6 +52,7 @@ public class PackProxyMessage {
 
     private final String groupId;
     private final String streamId;
+    // if it's dbsync-job, jobId is jobName
     private final String jobId;
     private final int maxPackSize;
     private final int maxQueueNumber;
@@ -57,12 +61,12 @@ public class PackProxyMessage {
     // streamId -> list of proxyMessage
     private final LinkedBlockingQueue<ProxyMessage> messageQueue;
     private final AtomicLong queueSize = new AtomicLong(0);
-    private boolean syncSend;
-    private int currentSize;
+    private final boolean syncSend;
     /**
      * extra map used when sending to dataproxy
      */
-    private Map<String, String> extraMap = new HashMap<>();
+    private final Map<String, String> extraMap = new HashMap<>();
+    private int currentSize;
     private volatile long currentCacheTime = System.currentTimeMillis();
 
     /**
@@ -134,6 +138,10 @@ public class PackProxyMessage {
             currentCacheTime = currentTime;
             long resultBatchSize = 0;
             List<byte[]> result = new ArrayList<>();
+
+            //record dbsync pos; LogPosition<->msgId
+            List<Pair<LogPosition, Long>> positions = new ArrayList<>();
+
             while (!messageQueue.isEmpty()) {
                 // pre check message size
                 ProxyMessage peekMessage = messageQueue.peek();
@@ -148,12 +156,16 @@ public class PackProxyMessage {
                     // decrease queue size.
                     queueSize.addAndGet(-bodySize);
                     result.add(message.getBody());
+                    // add dbsync logPos
+                    if (ObjectUtils.isNotEmpty(message.getLogPosition())) {
+                        positions.add(Pair.of(message.getLogPosition(), message.getMsgId()));
+                    }
                 }
             }
             // make sure result is not empty.
             if (!result.isEmpty()) {
                 return new BatchProxyMessage(jobId, groupId, streamId, result, AgentUtils.getCurrentTime(), extraMap,
-                        syncSend);
+                        syncSend, positions);
             }
         }
         return null;

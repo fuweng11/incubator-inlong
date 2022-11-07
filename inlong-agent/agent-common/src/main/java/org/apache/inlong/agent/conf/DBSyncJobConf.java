@@ -20,6 +20,7 @@ package org.apache.inlong.agent.conf;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.inlong.agent.mysql.filter.CanalEventFilter;
 import org.apache.inlong.agent.mysql.filter.exception.CanalFilterException;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
@@ -315,6 +316,10 @@ public class DBSyncJobConf {
         return jobName;
     }
 
+    public String getBakJobName() {
+        return getBakMysqlIp() + ":" + getBakMysqlPort() + ":" + getServerId();
+    }
+
     private InetSocketAddress getAddress(String instName) {
         if (instName == null) {
             LOGGER.error("instName is null");
@@ -405,6 +410,15 @@ public class DBSyncJobConf {
     public int getBakMysqlPort() {
         int index = (dbIndex.get() + 1) % dbAddrList.size();
         return dbAddrList.get(index).getPort();
+    }
+
+    public String getBakMysqlUrl() {
+        int index = (dbIndex.get() + 1) % dbAddrList.size();
+        InetSocketAddress bkAddr = dbAddrList.get(index);
+        if (ObjectUtils.isNotEmpty(bkAddr) && StringUtils.isNotBlank(bkAddr.getHostString())) {
+            return bkAddr.getHostString() + ":" + bkAddr.getPort();
+        }
+        return null;
     }
 
     private void validateAddr(String host, int port) throws IllegalArgumentException {

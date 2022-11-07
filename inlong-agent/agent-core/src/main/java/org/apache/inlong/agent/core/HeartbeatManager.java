@@ -22,15 +22,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
-import org.apache.inlong.agent.core.job.DBSyncJob;
 import org.apache.inlong.agent.core.job.Job;
 import org.apache.inlong.agent.core.job.JobManager;
 import org.apache.inlong.agent.core.job.JobWrapper;
-import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
+import org.apache.inlong.agent.plugin.Reader;
 import org.apache.inlong.agent.state.State;
 import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.HttpManager;
-import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import org.apache.inlong.agent.utils.ThreadUtils;
 import org.apache.inlong.common.enums.ComponentTypeEnum;
 import org.apache.inlong.common.heartbeat.AbstractHeartbeatManager;
@@ -79,8 +77,7 @@ import static org.apache.inlong.agent.constant.JobConstants.JOB_STREAM_ID;
 public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbeatManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatManager.class);
-
-    private final AgentManager agentManager;
+    private static HeartbeatManager heartbeatManager = null;
     private final JobManager jobmanager;
     private final AgentConfiguration conf;
     private final HttpManager httpManager;
@@ -89,22 +86,16 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
     private final String reportHeartbeatUrl;
     private final String dbSyncReportUrl;
     private final Pattern numberPattern = Pattern.compile("^[-+]?[\\d]*$");
-
-    private LinkedBlockingQueue<JobAlarmMsg> alarmMsg;
-    private LinkedBlockingQueue<JSONObject> holdHeartbeats;
-    private ConcurrentHashMap<String, DBSyncJob> monitorJobs;
-    private ConcurrentHashMap<String, Long> jobHb;
-    private ConcurrentHashMap<String, LogPosition> jobSenderPosition;
-    private ConcurrentHashMap<String, LogPosition> jobNewestPosition;
-    private long connInterval;
-    private Random random = new Random();
+    private final long connInterval;
+    private final Random random = new Random();
+    private final LinkedBlockingQueue<DbSyncHeartbeat> stoppedReaderHb = new LinkedBlockingQueue<>();
+    private final ConcurrentHashMap<String, Reader> monitorReaders = new ConcurrentHashMap<>();
 
     /**
      * Init heartbeat manager.
      */
-    public HeartbeatManager(AgentManager agentManager) {
+    private HeartbeatManager(AgentManager agentManager) {
         this.conf = AgentConfiguration.getAgentConf();
-        this.agentManager = agentManager;
         connInterval = conf.getLong(DBSYNC_HEART_INTERVAL, DEFAULT_DBSYNC_HEART_INTERVAL);
         jobmanager = agentManager.getJobManager();
         httpManager = new HttpManager(conf);
@@ -112,6 +103,47 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
         reportSnapshotUrl = buildReportSnapShotUrl(baseManagerUrl);
         reportHeartbeatUrl = buildReportHeartbeatUrl(baseManagerUrl);
         dbSyncReportUrl = buildDBSyncHbUrl();
+    }
+
+    public static HeartbeatManager getInstance(AgentManager agentManager) {
+        if (heartbeatManager == null) {
+            synchronized (HeartbeatManager.class) {
+                if (heartbeatManager == null) {
+                    heartbeatManager = new HeartbeatManager(agentManager);
+                }
+            }
+        }
+        return heartbeatManager;
+    }
+
+    public static HeartbeatManager getInstance() {
+        if (heartbeatManager == null) {
+            throw new RuntimeException("HeartbeatManager has not been initialized by agentManager");
+        }
+        return heartbeatManager;
+    }
+
+    public void addStoppedHeartbeat(DbSyncHeartbeat stopHb) {
+        if (stopHb != null) {
+            stoppedReaderHb.offer(stopHb);
+            LOGGER.debug("stopHb: {}", stopHb);
+        }
+    }
+
+    public DbSyncHeartbeat getLastHbInfo(String jobName) {
+        Reader reader = monitorReaders.get(jobName);
+        LOGGER.info("all monitor dbsync-jobs {}", monitorReaders.keySet());
+        return reader.genHeartBeat(true);
+    }
+
+    public void addMonitorReader(String jobName, Reader reader) {
+        LOGGER.info("monitor add dbsync-reader {}", jobName);
+        monitorReaders.put(jobName, reader);
+    }
+
+    public void removeMonitorReader(String jobName) {
+        LOGGER.info("monitor remove dbsync-reader{}", jobName);
+        monitorReaders.remove(jobName);
     }
 
     @Override
@@ -192,31 +224,35 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
     }
 
     public DbSyncHeartbeatRequest getDbSyncHeartbeat() {
-        List<DbSyncHeartbeat> hbList = new ArrayList<>();
         DbSyncHeartbeatRequest hbRequest = new DbSyncHeartbeatRequest();
-        hbRequest.setIp(AgentUtils.fetchLocalIp());
-
-        //TODO:add stopJob hbInfo
-
-        //TODO: add runningjob hbInfo
-
         hbRequest.setIp(AgentUtils.getLocalIp());
-        hbRequest.setHeartbeats(hbList);
+        List<DbSyncHeartbeat> allHb = new ArrayList<>();
+        // get stopped job hb
+        if (!stoppedReaderHb.isEmpty()) {
+            DbSyncHeartbeat stopHb;
+            do {
+                try {
+                    stopHb = stoppedReaderHb.poll(1, TimeUnit.MILLISECONDS);
+                    if (stopHb != null) {
+                        allHb.add(stopHb);
+                    }
+                } catch (InterruptedException e) {
+                    LOGGER.error("get hold stopped heartbeat exception", e);
+                    break;
+                }
+            } while (stopHb != null);
+        }
+        // get running job hb
+        for (Reader reader : monitorReaders.values()) {
+            DbSyncHeartbeat runningJobHb = reader.genHeartBeat(false);
+            if (runningJobHb != null) {
+                allHb.add(runningJobHb);
+            }
+        }
+
+        hbRequest.setHeartbeats(allHb);
 
         return hbRequest;
-    }
-
-    public void initMonitor(String jobName, long hbTimeStample, DBSyncJob job) {
-        LOGGER.info("Monitor job add {}", jobName);
-        monitorJobs.put(jobName, job);
-        jobHb.put(jobName, hbTimeStample);
-    }
-
-    public void removeJobMonitor(String jobName) {
-        LOGGER.info("remove job monitor {}", jobName);
-        monitorJobs.remove(jobName);
-        jobHb.remove(jobName);
-        jobSenderPosition.remove(jobName);
     }
 
     /**

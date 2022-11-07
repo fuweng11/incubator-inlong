@@ -17,17 +17,17 @@
 
 package org.apache.inlong.agent.plugin.sources.reader.dbsync;
 
-import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.EntryType;
-import org.apache.inlong.agent.common.protocol.CanalEntry.RowChange;
-import org.apache.inlong.agent.common.protocol.DBSyncMsg.Column;
-import org.apache.inlong.agent.common.protocol.DBSyncMsg.RowData;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.core.HeartbeatManager;
+import org.apache.inlong.agent.core.job.PositionControl;
+import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.except.DBSyncServerException.JobInResetStatus;
 import org.apache.inlong.agent.except.DataSourceConfigException;
 import org.apache.inlong.agent.message.DBSyncMessage;
@@ -67,10 +67,10 @@ import org.apache.inlong.agent.state.JobStat.TaskStat;
 import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.ErrorCode;
-import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import org.apache.inlong.agent.utils.MonitorLogUtils;
 import org.apache.inlong.agent.utils.countmap.UpdaterMap;
 import org.apache.inlong.agent.utils.countmap.UpdaterMapFactory;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,35 +82,29 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_ACK_THREAD_NUM;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_BINLOG_START_OFFEST;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_IS_DEBUG_MODE;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_IS_NEED_TRANSACTION;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_IS_READ_FROM_FIRST_BINLOG_IF_MISS;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_JOB_BLOCK_TIME_MSEC;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_JOB_DO_SWITCH_CNT;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_JOB_RECV_BUFFER_KB;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_RELAY_LOG_MEM_SZIE;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_RELAY_LOG_ROOT;
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_RELAY_LOG_WAY;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_ACK_THREAD_NUM;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_IS_DEBUG_MODE;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_IS_READ_FROM_FIRST_BINLOG_IF_MISS;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_JOB_BLOCK_TIME_MSEC;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_JOB_DO_SWITCH_CNT;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_JOB_RECV_BUFFER_KB;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_RELAY_LOG_ROOT;
@@ -131,10 +125,12 @@ public class DBSyncReader extends AbstractReader {
     private static final String KEY_MYSQL_ADDRESS = "mysqlAddress";
     private static final String KEY_DBSYNC_JOB_NAME = "dbsyncJobName";
     private static final String KEY_SERVER_ID = "serverId";
-    private static AtomicLong randomIndex = new AtomicLong(0);
     private final AgentConfiguration agentConf;
     private final Object syncObject = new Object();
     private final LinkedBlockingQueue<DBSyncMessage> messageQueue;
+    private final HeartbeatManager heartbeatManager;
+    private final long jobBlockTime;
+    private final PositionControl positionControl;
     protected DBSyncJobConf jobconf;
     protected int debugCnt = 0;
     protected AtomicBoolean needTransactionPosition = new AtomicBoolean(false);
@@ -151,7 +147,6 @@ public class DBSyncReader extends AbstractReader {
     protected int fallbackIntervalInSeconds = 10;
     protected CanalEventFilter<String> eventFilter;
     protected BinlogParser binlogParser;
-    protected AtomicLong waitAckCnt;
     protected volatile boolean running = false;
     protected volatile long heartBeat = 0;
     private boolean isDebug;
@@ -166,9 +161,8 @@ public class DBSyncReader extends AbstractReader {
     private int doSwitchCnt = 0;
     private RelayLog relayLog;
     private LogPosition parseLastLog;
-    private LogPosition minEventLogPosition;
     private JobStat.State parseDisptcherStatus;
-    private JSONObject stopHb = null;
+    private DbSyncHeartbeat stopHb = null;
     private TableMetaCache tableMetaCache;
     private AtomicBoolean needReset = new AtomicBoolean(false);
     private CompletableFuture<Void> resetFuture = null;
@@ -179,20 +173,12 @@ public class DBSyncReader extends AbstractReader {
     private Thread dispatcherThread = null;
     private Thread dumpThread = null;
     private String currentDbInfo = "";
-    private Semaphore semaphore;
-    private Long lastTimeStamp;
     private long slaveId = -1;
-    private long printStatIntervalMs = 60 * 1000 * 2;
-    private LinkedBlockingQueue<LogPosition> ackLogPositionList = new LinkedBlockingQueue();
-    private List<Thread> handleAckLogPositionThreadList = new LinkedList<>();
-    private ConcurrentSkipListSet<LogPosition> sendLogPositionCache = new ConcurrentSkipListSet();
-    private ConcurrentSkipListSet<LogPosition> eventLogPositionCache = new ConcurrentSkipListSet();
     private volatile JobStat.State status;
     private String errorMsg = "";
-
-    public volatile long pkgIndexId = 0L;
     private volatile long oldSecStamp = 0L;
     private volatile long oldTimeStampler = 10000L;
+    private long lastDiffTime = -1;
 
     public DBSyncReader(JobProfile profile) {
         // agent conf
@@ -205,14 +191,13 @@ public class DBSyncReader extends AbstractReader {
             needTransactionPosition.compareAndSet(false, true);
             LOGGER.info("set need transaction position to true");
         }
+        jobBlockTime = agentConf.getLong(DBSYNC_JOB_BLOCK_TIME_MSEC, DEFAULT_DBSYNC_JOB_BLOCK_TIME_MSEC);
         doSwitchCnt = agentConf.getInt(DBSYNC_JOB_DO_SWITCH_CNT, DEFAULT_DBSYNC_JOB_DO_SWITCH_CNT);
         messageQueue = new LinkedBlockingQueue<>(5000);//TODO:configurable in agent.properties
         // job conf
         jobconf = profile.getDbSyncJobConf();
         jobName = jobconf.getJobName();
         lastLog = jobconf.getStartPos();
-        int maxUnackedLogPositionsUnackedMessages = jobconf.getMaxUnackedLogPositions();
-        semaphore = new Semaphore(maxUnackedLogPositionsUnackedMessages);
         mysqlAddress = jobconf.getCurMysqlIp();
         mysqlPort = jobconf.getCurMysqlPort();
         userName = jobconf.getMysqlUserName();
@@ -221,11 +206,11 @@ public class DBSyncReader extends AbstractReader {
         eventFilter = jobconf.getFilter();
         // prepare work
         binlogParser = buildParser();
-        waitAckCnt = new AtomicLong(0); //TODO:update
         relayLog = mkRelayLog();
-        slaveId = generateSlaveId();
+        slaveId = DBSyncUtils.generateSlaveId(jobName, jobconf.getServerId());
         parseThreadList = new ConcurrentHashMap<>();
-        lastTimeStamp = Instant.now().toEpochMilli();
+        heartbeatManager = HeartbeatManager.getInstance();
+        positionControl = new PositionControl(jobconf, this);
     }
 
     public DBSyncJobConf getJobconf() {
@@ -248,22 +233,15 @@ public class DBSyncReader extends AbstractReader {
         running = true;
         setState(State.INIT); //TODO: move to abstractReader init?
         MonitorLogUtils.printJobStat(this.getCurrentDbInfo(), MonitorLogUtils.JOB_STAT_INIT);
-        int ackThreadNum = agentConf.getInt(DBSYNC_ACK_THREAD_NUM, DEFAULT_ACK_THREAD_NUM);
-        for (int i = 0; i < ackThreadNum; i++) {
-            AckLogPositionThread thread = new AckLogPositionThread();
-            thread.setName("AckLogPosition-" + i + "-" + this.jobName);
-            thread.start();
-            handleAckLogPositionThreadList.add(thread);
-        }
+        positionControl.start();
         dispatchRunning = true;
         dispatcherThread = mkDispatcher();
         dumpThread = mkDumpThread();
         dumpThread.start();
         dispatcherThread.start();
 
-        //TODO:add to monitor
-//        monitor.initMonitor(this.jobName, System.currentTimeMillis(), this);
-
+        heartbeatManager.addMonitorReader(this.jobName, this);
+        TaskPositionManager.getInstance().addRunningJobPos(jobName, positionControl);
         setState(State.RUN);
         MonitorLogUtils.printJobStat(this.getCurrentDbInfo(), MonitorLogUtils.JOB_STAT_START_RUN);
     }
@@ -280,7 +258,7 @@ public class DBSyncReader extends AbstractReader {
         try {
             readerMetric.pluginReadCount.incrementAndGet();
             messageQueue.put(message);
-            waitAckCnt.incrementAndGet();
+            positionControl.updateWaitAckCnt(1);
             AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_READ_SUCCESS, inlongGroupId, inlongStreamId,
                     System.currentTimeMillis(), 1, message.getBody().length);
             readerMetric.pluginReadSuccessCount.incrementAndGet();
@@ -381,19 +359,15 @@ public class DBSyncReader extends AbstractReader {
 
     public synchronized void stop() {
         running = false;
-        //TODO:stop from monitor
-//        JSONObject lastHbInfo = .getLastHbInfo(this.jobName);
-//        if (lastHbInfo != null) {
-//            monitor.putStopHeartbeat(lastHbInfo);
-//        }
-//        monitor.removeJobMonitor(this.jobName);
+
+        DbSyncHeartbeat stopHb = genHeartBeat(true);
+        if (stopHb != null) {
+            heartbeatManager.addStoppedHeartbeat(stopHb);
+        }
+        heartbeatManager.removeMonitorReader(this.jobName);
 
         // stop acklog
-        for (Thread thread : handleAckLogPositionThreadList) {
-            if (thread != null) {
-                thread.interrupt();
-            }
-        }
+        positionControl.stop();
         // stop dispatch
         dispatchRunning = false;
         if (dispatcherThread != null) {
@@ -416,42 +390,7 @@ public class DBSyncReader extends AbstractReader {
                 parseThreadList = null;
             }
         }
-    }
-
-    private long generateSlaveId() {
-        long result = 0;
-        String ip = AgentUtils.getLocalIp();
-        try {
-            if (Objects.equals(ip, "127.0.0.1") || Objects.equals(ip, "0.0.0.0")) {
-                throw new Exception("conflict address");
-            } else {
-                result = DBSyncUtils.ipStr2Int(ip);
-            }
-        } catch (Exception e) {
-            LOGGER.warn("invalid local ip: {}, slave_id will use a random number.", ip, e);
-            Random r = new Random();
-            result = 1000L + r.nextInt(1024);
-        }
-        if (StringUtils.isNotEmpty(jobconf.getServerId())) {
-            try {
-                result += DBSyncUtils.serverId2Int(jobconf.getServerId());
-                result += randomIndex.addAndGet(1);
-            } catch (Exception e) {
-                LOGGER.warn("invalid server Id: {}, slave_id will use a random number.", jobconf.getServerId(), e);
-                Random r = new Random();
-                result += r.nextInt(1024);
-            }
-        } else {
-            Random r = new Random();
-            result += r.nextInt(1024);
-        }
-        LOGGER.info("{} create mysql slave_id is {}", jobName, slaveId);
-        return result;
-    }
-
-    //TODO: jobMonitor use
-    public long getHeartBeat() {
-        return heartBeat;
+        TaskPositionManager.getInstance().removeRunningJobPos(jobName);
     }
 
     public void setHeartBeat(long heartBeat) {
@@ -517,7 +456,7 @@ public class DBSyncReader extends AbstractReader {
     public LogPosition getMaxLogPosition() {
         LogPosition logPosition = null;
         if (metaConnection != null) {
-            MysqlConnection maxCon = (MysqlConnection) metaConnection;
+            MysqlConnection maxCon = metaConnection;
             try {
                 EntryPosition maxEntryPos = findEndPosition(maxCon);
                 logPosition = new LogPosition();
@@ -585,15 +524,6 @@ public class DBSyncReader extends AbstractReader {
         return tmpParsePos;
     }
 
-    @Override
-    public long ackJobData(int cnt) {
-        long ackResult = waitAckCnt.addAndGet(-cnt);
-        if (ackResult < 0) {
-            LOGGER.debug("ackCnt is: {}, ackResult is: {}", cnt, ackResult);
-        }
-        return ackResult;
-    }
-
     //TODO: use, updateConnectionCharset
     public void updateConnectionCharset() {
         for (ParseThread parser : parseThreadList.values()) {
@@ -601,6 +531,7 @@ public class DBSyncReader extends AbstractReader {
         }
     }
 
+    @Override
     public LogPosition getMaxProcessedPosition() {
         LogPosition tmpProcessedPos = null;
         try {
@@ -625,9 +556,101 @@ public class DBSyncReader extends AbstractReader {
         return null;
     }
 
-    //TODO:use
-    public long waitAckCnt() {
-        return waitAckCnt.get();
+    public DbSyncHeartbeat genHeartBeat(boolean markToStop) {
+
+        DbSyncHeartbeat hbInfo = new DbSyncHeartbeat();
+        hbInfo.setServerId(jobconf.getServerId());
+        hbInfo.setTaskIds(jobconf.getTaskIdList());
+        hbInfo.setCurrentDb(jobconf.getCurMysqlIp());
+        hbInfo.setUrl(jobconf.getCurMysqlUrl());
+        hbInfo.setBackupUrl(jobconf.getBakMysqlUrl());
+
+        if (status == JobStat.State.RUN || markToStop) {
+            if (markToStop) {
+                hbInfo.setAgentStatus("STOPPED");
+            } else {
+                hbInfo.setAgentStatus(jobconf.getStatus().name());
+            }
+            hbInfo.setDumpIndex(getPkgIndexId());
+
+            LogPosition jobPosition = positionControl.getSenderPosition();
+            if (jobPosition != null) {
+                hbInfo.setDumpPosition(jobPosition.genDumpPosition());
+            }
+
+            LogPosition sendPosition = positionControl.getStorePositionFirstFromCache();
+            if (sendPosition == null) {
+                sendPosition = jobconf.getStartPos();
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("jobName = {} position = {} get sendPosition from start position!",
+                            jobconf.getJobName(), sendPosition);
+                }
+            }
+            if (sendPosition != null) {
+                hbInfo.setSendPosition(sendPosition.genDumpPosition());
+            }
+            LogPosition maxLogPosition = checkBlockAndGetMaxLogPosition();
+            if (maxLogPosition != null) {
+                hbInfo.setMaxLogPosition(maxLogPosition.genDumpPosition());
+            }
+
+        } else {
+            LOGGER.error("Detected job :{} is in wrong state :{}", jobconf.getJobName(), status);
+            if (heartbeatManager != null && heartbeatManager.isRunnable() && (status == JobStat.State.STOP
+                    || status == JobStat.State.INIT)) {
+                //use job Manager start the job
+                LOGGER.error("restart job : {}", jobconf.getJobName());
+                restart();
+            }
+            hbInfo.setErrorMsg(getErrorMsg());
+        }
+
+        return hbInfo;
+
+    }
+
+    private LogPosition checkBlockAndGetMaxLogPosition() {
+        LogPosition result = null;
+        LogPosition maxLogPosition = getMaxLogPosition();
+        // max log position null when db cannot connect, maxLogPosition set to parsePosition when such situation happens
+        if (maxLogPosition == null) {
+            maxLogPosition = getLogPosition();
+        }
+
+        //TODO: add recordMaxPosition & sendMaxPositionRecord later, using for send metrics to bus and pulsar
+
+        long nowTime = System.currentTimeMillis();
+        LogPosition tmpLogPos = getLogPosition();
+        if (tmpLogPos != null) {
+            if (tmpLogPos.getPosition().getTimestamp() != null) {
+                long dumpTime = tmpLogPos.getPosition().getTimestamp();
+                long nowDiffTime = nowTime - dumpTime;
+                if (lastDiffTime != -1 && nowDiffTime > jobBlockTime && nowDiffTime > lastDiffTime) {
+                    if (maxLogPosition == null) {
+                        // need send alarm
+                        String msg = jobconf.getJobName() + " may be Blocking, Msg from " + AgentUtils.getLocalIp()
+                                + "!\n" + "now time : " + nowTime + " , position time : " + dumpTime;
+                        LOGGER.error("Detected job :{} may be blocking, last HeartBeat time {}, now {}. msg {}",
+                                jobconf.getJobName(), heartBeat, nowTime, msg);
+                    } else {
+                        result = maxLogPosition;
+                        String maxFileName = maxLogPosition.getPosition().getJournalName();
+                        String logFileName = tmpLogPos.getPosition().getJournalName();
+                        long maxPos = maxLogPosition.getPosition().getPosition();
+                        long logPos = tmpLogPos.getPosition().getPosition();
+                        if (!maxFileName.equalsIgnoreCase(logFileName) || Math.abs(maxPos - logPos) > 1000) {
+                            // need send alarm
+                            String msg = jobconf.getJobName() + " may be Blocking, Msg from " + AgentUtils.getLocalIp()
+                                    + "!\n" + "now time : " + nowTime + " , position time : " + dumpTime;
+                            LOGGER.error("Detected job :{} may be blocking, last HeartBeat time {}, now {}, msg {}",
+                                    jobconf.getJobName(), heartBeat, nowTime, msg);
+                        }
+                    }
+                }
+                lastDiffTime = nowDiffTime;
+            }
+        }
+        return result;
     }
 
     protected void preDump(MysqlConnection connection) {
@@ -676,7 +699,7 @@ public class DBSyncReader extends AbstractReader {
 
             tableMetaCache = new TableMetaCache(metaConnection);
             ((LogEventConvert) binlogParser).setTableMetaCache(tableMetaCache);
-            clearCache();
+            positionControl.clearCache();
             if (dispatcherThread != null && parseThreadList.size() <= 0) {
                 LOGGER.info("{} build binlog parser!", this.jobName);
                 for (int i = 0; i < 20; i++) {
@@ -695,11 +718,6 @@ public class DBSyncReader extends AbstractReader {
             }
             LOGGER.info("TableMetaCache use MysqlConnection port : {} : {}", jobName, metaConnection.getLocalPort());
         }
-    }
-
-    public void clearCache() {
-        sendLogPositionCache.clear();
-        eventLogPositionCache.clear();
     }
 
     private RelayLog mkRelayLog() {
@@ -813,9 +831,9 @@ public class DBSyncReader extends AbstractReader {
                                 }
                             } while (parser != null && parser.bParseQueueIsFull() && dispatchRunning);
 
-                            pkgIndexId = genIndexOrder(eventTmStp, bufferList.size() + 1);
+                            positionControl.pkgIndexId = genIndexOrder(eventTmStp, bufferList.size() + 1);
                             if (parser != null) {
-                                parser.putEvents(new PkgEvent(bufferList, pkgIndexId, true));
+                                parser.putEvents(new PkgEvent(bufferList, positionControl.pkgIndexId, true));
                             }
                             //pkgIndexId = pkgIndexId + bufferList.size();
                             bufferList = new ArrayList<>();
@@ -833,8 +851,8 @@ public class DBSyncReader extends AbstractReader {
                             ArrayList<LogEvent> tmpEvenList = new ArrayList<>();
                             tmpEvenList.add(event);
                             for (ParseThread parser : parseThreadList.values()) {
-                                pkgIndexId = genIndexOrder(eventTmStp, 1);
-                                parser.putEvents(new PkgEvent(tmpEvenList, pkgIndexId, true));
+                                positionControl.pkgIndexId = genIndexOrder(eventTmStp, 1);
+                                parser.putEvents(new PkgEvent(tmpEvenList, positionControl.pkgIndexId, true));
                             }
                             //pkgIndexId = pkgIndexId + parseThreadList.size();
                         }
@@ -863,9 +881,9 @@ public class DBSyncReader extends AbstractReader {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug("{} dispatcher lock send data to {} parser!", jobName, index);
                             }
-                            pkgIndexId = genIndexOrder(eventTmStp, bufferList.size() + 1);
+                            positionControl.pkgIndexId = genIndexOrder(eventTmStp, bufferList.size() + 1);
                             if (parser != null) {
-                                parser.putEvents(new PkgEvent(bufferList, pkgIndexId, false));
+                                parser.putEvents(new PkgEvent(bufferList, positionControl.pkgIndexId, false));
                             }
                             //pkgIndexId = pkgIndexId + bufferList.size();
                             bufferList = new ArrayList<LogEvent>();
@@ -876,8 +894,8 @@ public class DBSyncReader extends AbstractReader {
                         ArrayList<LogEvent> tmpEvenList = new ArrayList<LogEvent>();
                         tmpEvenList.add(event);
                         for (ParseThread parser : parseThreadList.values()) {
-                            pkgIndexId = genIndexOrder(eventTmStp, 1);
-                            parser.putEvents(new PkgEvent(tmpEvenList, pkgIndexId, true));
+                            positionControl.pkgIndexId = genIndexOrder(eventTmStp, 1);
+                            parser.putEvents(new PkgEvent(tmpEvenList, positionControl.pkgIndexId, true));
                         }
                     }
                 } catch (InterruptedException e) {
@@ -913,6 +931,10 @@ public class DBSyncReader extends AbstractReader {
         return dispatcher;
     }
 
+    public PositionControl getPositionControl() {
+        return positionControl;
+    }
+
     public String getErrorMsg() {
         return errorMsg;
     }
@@ -921,68 +943,9 @@ public class DBSyncReader extends AbstractReader {
         this.errorMsg = errorMsg;
     }
 
-    public void ackSendPosition(LogPosition logPosition) {
-        if (logPosition != null) {
-            try {
-                ackLogPositionList.put(logPosition);
-            } catch (InterruptedException e) {
-                LOGGER.error("ackLogPositionList has exception e = {}", e);
-            }
-        } else {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("ackSendPosition is null");
-            }
-        }
-    }
-
-    public void addEventLogPosition(LogPosition eventLogPosition) {
-        eventLogPositionCache.add(eventLogPosition);
-    }
-
-    public void removeEventLogPosition(LogPosition eventLogPosition) {
-        eventLogPositionCache.remove(eventLogPosition);
-    }
-
     protected Entry parseAndProfilingIfNecessary(LogEvent bod, DBSyncJobConf jobconf) throws Exception {
         Entry event = binlogParser.parse(bod, jobconf);
         return event;
-    }
-
-    public LogPosition getMinCacheEventLogPosition() {
-        if (status != State.RUN) {
-            return null;
-        }
-        minEventLogPosition = getMaxProcessedPosition();
-        try {
-            minEventLogPosition = eventLogPositionCache.first();
-        } catch (Exception e) {
-            if (!(e instanceof NoSuchElementException)) {
-                LOGGER.warn("getMinCacheEventLogPosition has exception e = {}", e);
-            } else {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("getMinCacheEventLogPosition has exception e = {}", e);
-                }
-            }
-        }
-        return minEventLogPosition;
-    }
-
-    public LogPosition getMinCacheSendLogPosition() {
-        if (status != State.RUN) {
-            return null;
-        }
-        if (sendLogPositionCache.size() > 0) {
-            LogPosition logPosition = null;
-            try {
-                logPosition = sendLogPositionCache.first();
-            } catch (Exception e) {
-                LOGGER.error("getMinCacheLogPosition has exception e = {}", e);
-            }
-            if (logPosition != null) {
-                return new LogPosition(logPosition);
-            }
-        }
-        return null;
     }
 
     public BinlogParser getBinlogParser() {
@@ -991,28 +954,6 @@ public class DBSyncReader extends AbstractReader {
 
     public String getJobName() {
         return jobName;
-    }
-
-    protected void addLogPositionToCache(LogPosition logPosition) {
-        try {
-            long currentTimeStamp = Instant.now().toEpochMilli();
-            semaphore.acquire();
-            boolean result = sendLogPositionCache.add(logPosition);
-            if (LOGGER.isDebugEnabled()
-                    && ((currentTimeStamp - lastTimeStamp) > printStatIntervalMs)) {
-                LOGGER.debug(
-                        "[{}], logPosition {}, cacheLogPosition position in cache [{}], cache availablePermits = {}",
-                        jobName, logPosition, sendLogPositionCache.size(), semaphore.availablePermits());
-                lastTimeStamp = currentTimeStamp;
-            }
-            if (!result) {
-                LOGGER.warn(
-                        "[{}], logPosition {}, cacheLogPosition position in cache [{}], cache availablePermits = {}",
-                        jobName, logPosition, sendLogPositionCache.size(), semaphore.availablePermits());
-            }
-        } catch (Exception e) {
-            LOGGER.error("cacheLogPosition has exception e = ", e);
-        }
     }
 
     private Thread mkDumpThread() {
@@ -1123,7 +1064,7 @@ public class DBSyncReader extends AbstractReader {
                     final LogPosition lastPosition = new LogPosition();
                     lastPosition.setPosition(startPosition);
                     lastPosition.setIdentity(new LogIdentity(dbConnectionAddress, -1L));
-                    minEventLogPosition = new LogPosition(lastPosition);
+                    positionControl.setMinEventLogPosition(new LogPosition(lastPosition));
                     if (parseLastLog == null) {
                         parseLastLog = new LogPosition(lastPosition);
                     }
@@ -1164,12 +1105,12 @@ public class DBSyncReader extends AbstractReader {
                     // success connection, reset conn num
                     reConnectCnt = 0;
                     setState(State.RUN);
-                    MonitorLogUtils.printJobStat(this.getCurrentDbInfo(),
-                            MonitorLogUtils.JOB_STAT_DUMP_RUN);
-                    if (stopHb != null) {
-                        JSONObject tmpHb = new JSONObject(stopHb);
+                    MonitorLogUtils.printJobStat(this.getCurrentDbInfo(), MonitorLogUtils.JOB_STAT_DUMP_RUN);
+                    if (stopHb != null && heartbeatManager.isRunnable()) {
+                        DbSyncHeartbeat tmpHb = new DbSyncHeartbeat();
+                        BeanUtils.copyProperties(tmpHb, stopHb);
                         stopHb = null;
-//                        monitor.putStopHeartbeat(tmpHb); //TODO: add stophb to jobmonitor
+                        heartbeatManager.addStoppedHeartbeat(tmpHb);
                     }
                     // 2. predump operation
                     preDump(erosaConnection);
@@ -1298,9 +1239,9 @@ public class DBSyncReader extends AbstractReader {
         this.mysqlAddress = dbIp;
         this.mysqlPort = dbPort;
 
-        //TODO: monitor operate
-//        this.stopHb = monitor.getLastHbInfo(this.jobName);
+        this.stopHb = heartbeatManager.getLastHbInfo(this.jobName);
         this.jobconf.doReset();
+        //TODO
 //        this.manager.updateJob(jobconf.getJobName(), this.jobName, TaskStat.NORMAL);
 //        this.monitor.doSwitchMonitor(jobconf.getJobName(), this.jobName);
         this.jobName = jobconf.getJobName();
@@ -1359,7 +1300,7 @@ public class DBSyncReader extends AbstractReader {
 
         this.mysqlAddress = bakIp;
         this.mysqlPort = bakPort;
-//        this.stopHb = monitor.getLastHbInfo(this.jobName);
+        this.stopHb = heartbeatManager.getLastHbInfo(this.jobName);
         this.jobconf.doSwitch();
 //        this.manager.updateJob(jobconf.getJobName(), this.jobName, TaskStat.SWITCHED);
 //        this.monitor.doSwitchMonitor(jobconf.getJobName(), this.jobName);
@@ -1498,7 +1439,7 @@ public class DBSyncReader extends AbstractReader {
                                                         return false;
                                                     }
                                                     if (compareEventCnt < lastEntryList.size()
-                                                            && compareEntry(entry,
+                                                            && DBSyncUtils.compareEntry(entry,
                                                             lastEntryList.get(compareEventCnt))) {
                                                         compareEventCnt++;
                                                     } else {
@@ -1546,62 +1487,6 @@ public class DBSyncReader extends AbstractReader {
         }
 
         return firstPosition;
-    }
-
-    protected boolean compareEntry(Entry entry1,
-            Entry entry2) {
-
-        if (!entry1.getHeader().getSchemaName().equals(entry2.getHeader().getSchemaName())) {
-            return false;
-        }
-
-        if (!entry1.getHeader().getTableName().equals(entry2.getHeader().getTableName())) {
-            return false;
-        }
-
-        try {
-            RowChange rowChage1 = RowChange.parseFrom(entry1.getStoreValue());
-            RowChange rowChage2 = RowChange.parseFrom(entry2.getStoreValue());
-            if (rowChage1.getEventType() != rowChage2.getEventType()
-                    || rowChage1.getRowDatasList().size() != rowChage2.getRowDatasList().size()) {
-                return false;
-            }
-
-            // rowChage1.get
-            for (int i = 0; i < rowChage1.getRowDatasList().size(); i++) {
-                RowData row1 = rowChage1.getRowDatasList().get(i);
-                RowData row2 = rowChage2.getRowDatasList().get(i);
-                List<Column> beforCloum1 = row1.getBeforeColumnsList();
-                List<Column> afterCloum1 = row1.getAfterColumnsList();
-
-                List<Column> beforCloum2 = row2.getBeforeColumnsList();
-                List<Column> afterCloum2 = row2.getAfterColumnsList();
-
-                if (beforCloum1.size() != beforCloum2.size()) {
-                    return false;
-                }
-
-                for (int j = 0; j < beforCloum1.size(); j++) {
-                    if (!Objects.equals(beforCloum1.get(j), beforCloum2.get(j))) {
-                        return false;
-                    }
-                }
-
-                if (afterCloum1.size() != afterCloum2.size()) {
-                    return false;
-                }
-
-                for (int k = 0; k < afterCloum1.size(); k++) {
-                    if (!Objects
-                            .equals(afterCloum1.get(k).getValue(), afterCloum2.get(k).getValue())) {
-                        return false;
-                    }
-                }
-            }
-        } catch (InvalidProtocolBufferException e) {
-            LOGGER.error("parse rowdata exception: ", e);
-        }
-        return true;
     }
 
     private LogPosition checkHAStartFileName(MysqlConnection connection) {
@@ -1725,7 +1610,8 @@ public class DBSyncReader extends AbstractReader {
         return null;
     }
 
-    public CompletableFuture<Void> resetJob() {
+    @Override
+    public CompletableFuture<Void> resetReader() {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
         if (!needReset.compareAndSet(false, true)) {
@@ -2245,38 +2131,4 @@ public class DBSyncReader extends AbstractReader {
         boolean bFound = false;
     }
 
-    private class AckLogPositionThread extends Thread {
-
-        public void run() {
-            Long lastTimeStamp = Instant.now().toEpochMilli();
-            LOGGER.info("AckLogPositionThread started!");
-            while (running) {
-                try {
-                    boolean hasRemoved = false;
-                    LogPosition logPosition = ackLogPositionList.poll(1, TimeUnit.SECONDS);
-                    if (logPosition != null) {
-                        hasRemoved = sendLogPositionCache.remove(logPosition);
-                        if (hasRemoved) {
-                            semaphore.release();
-                        } else {
-                            LOGGER.warn("[{}] ack log position is not exist in cache may has "
-                                    + "error! Position = {}", jobName, logPosition);
-                        }
-                    }
-                    long currentTimeStamp = Instant.now().toEpochMilli();
-                    if (LOGGER.isDebugEnabled()
-                            && (currentTimeStamp - lastTimeStamp) > printStatIntervalMs) {
-                        LOGGER.debug("[{}], AckLogPositionThread position in cache [{}],"
-                                        + " logPosition {}, cache size = {}",
-                                jobName, hasRemoved, logPosition, sendLogPositionCache.size());
-                        lastTimeStamp = currentTimeStamp;
-                    }
-                } catch (Throwable e) {
-                    if (running) {
-                        LOGGER.error("AckLogPositionThread has exception e = ", e);
-                    }
-                }
-            }
-        }
-    }
 }

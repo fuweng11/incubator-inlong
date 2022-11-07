@@ -19,6 +19,9 @@ package org.apache.inlong.agent.plugin;
 
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.state.JobStat;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Reader reads data and provides condition whether the reading action is finished. It's called at
@@ -73,7 +76,9 @@ public interface Reader extends Stage {
 
     void setState(JobStat.State state);
 
-    long ackJobData(int cnt);
+    LogPosition getMaxProcessedPosition();
 
-    void ackSendPosition(LogPosition ackPosition);
+    CompletableFuture<Void> resetReader();
+
+    DbSyncHeartbeat genHeartBeat(boolean markToStop);
 }

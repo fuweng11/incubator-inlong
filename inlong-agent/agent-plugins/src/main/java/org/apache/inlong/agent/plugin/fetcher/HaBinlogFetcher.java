@@ -99,7 +99,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
         this.taskRegisterResults = new ConcurrentHashMap<>();
         this.newJobs = new ArrayList<>();
         this.jobConfManager = new JobConfManager();
-        this.jobHaDispatcher = new JobHaDispatcherImpl(jobManager, this);
+        this.jobHaDispatcher = JobHaDispatcherImpl.getInstance(jobManager, this);
     }
 
     private String buildGetInitInfoUrl() {

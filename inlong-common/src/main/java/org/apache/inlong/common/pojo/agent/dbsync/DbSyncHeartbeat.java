@@ -20,7 +20,9 @@ package org.apache.inlong.common.pojo.agent.dbsync;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -28,6 +30,8 @@ import java.util.List;
  * DbSync heartbeat info
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @ApiModel("DbSync heartbeat info")
 public class DbSyncHeartbeat {
 
@@ -50,13 +54,15 @@ public class DbSyncHeartbeat {
     private String agentStatus;
 
     @ApiModelProperty(value = "Task IDs being collected by DbSync, is the ID of stream_source table")
-    private List<String> taskIds;
+    private List<Integer> taskIds;
 
     @ApiModelProperty(value = "BinLog index currently collected")
     private Long dumpIndex;
 
     @ApiModelProperty(value = "BinLog position currently collected, will be saved as JSON string")
     private DbSyncDumpPosition dumpPosition;
+
+    private DbSyncDumpPosition sendPosition;
 
     @ApiModelProperty(value = "BinLog maximum position of the current DB, will be saved as a JSON string")
     private DbSyncDumpPosition maxLogPosition;

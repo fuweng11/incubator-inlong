@@ -76,7 +76,7 @@ public class ProxySink extends AbstractSink {
                 message.getHeader().put(CommonConstants.PROXY_KEY_STREAM_ID, inlongStreamId);
                 extractStreamFromMessage(message, fieldSplitter);
                 if (!(message instanceof EndMessage)) {
-                    ProxyMessage proxyMessage = ProxyMessage.parse(message);
+                    ProxyMessage proxyMessage = new ProxyMessage(message);
                     // add proxy message to cache.
                     cache.compute(proxyMessage.getBatchKey(),
                             (s, packProxyMessage) -> {

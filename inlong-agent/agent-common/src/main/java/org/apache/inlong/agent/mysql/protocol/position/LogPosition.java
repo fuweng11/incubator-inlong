@@ -19,6 +19,7 @@ package org.apache.inlong.agent.mysql.protocol.position;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncDumpPosition;
 
 public class LogPosition extends Position implements Comparable<LogPosition> {
 
@@ -100,6 +101,12 @@ public class LogPosition extends Position implements Comparable<LogPosition> {
         obj.put("pkgIndex", this.getPkgIndex());
         obj.put("parseJobName", this.getParseThreadName());
         return obj;
+    }
+
+    public DbSyncDumpPosition genDumpPosition() {
+        DbSyncDumpPosition.LogIdentity logIdentity = identity.genLogIdentity();
+        DbSyncDumpPosition.EntryPosition logEntryPos = position.genEntryPosition();
+        return new DbSyncDumpPosition(logIdentity, logEntryPos);
     }
 
     @Override

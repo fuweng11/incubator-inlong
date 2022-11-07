@@ -26,7 +26,7 @@ public class DBSyncMessage extends DefaultMessage {
     private LogPosition logPosition;
     /*the binlog time stample is second, use msgId for same time stample*/
     private long msgId;
-    private String instName;
+    private String instName; //namely jobName
 
     public DBSyncMessage(byte[] body, Map<String, String> header) {
         super(body, header);

@@ -253,4 +253,8 @@ public class AgentConstants {
             + ",multipolygon,geometrycollection,json";
 
     public static final String NULL_STRING = "NULL";
+
+    public static final String DBSYNC_JOB_BLOCK_TIME_MSEC = "agent.dbsync.job.block.time.msec";
+    public static final long DEFAULT_DBSYNC_JOB_BLOCK_TIME_MSEC = 1000 * 60 * 5L;
+
 }

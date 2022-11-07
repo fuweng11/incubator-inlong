@@ -192,13 +192,12 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             Set<Integer> taskIdSet = new HashSet<>();
             // according to the reported task ID and status, modify the stream_source status
             for (DbSyncHeartbeat heartbeat : heartbeatList) {
-                List<String> taskIds = heartbeat.getTaskIds();
+                List<Integer> taskIds = heartbeat.getTaskIds();
                 if (taskIds == null || taskIds.size() == 0) {
                     continue;
                 }
 
-                for (String idStr : taskIds) {
-                    Integer id = Integer.parseInt(idStr);
+                for (Integer id : taskIds) {
                     taskIdSet.add(id);
                     Integer status = idStatusMap.get(id);
                     // Change the starting / unfrozen status to the normal status(101)
@@ -256,7 +255,9 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         message.setBackupUrl(entity.getBackupUrl());
         message.setAgentStatus(entity.getAgentStatus());
         if (entity.getTaskIds() != null) {
-            message.setTaskIds(Arrays.asList(entity.getTaskIds().split(InlongConstants.COMMA)));
+            List<Integer> taskIds = Arrays.stream(entity.getTaskIds().split(InlongConstants.COMMA))
+                    .map(Integer::parseInt).collect(Collectors.toList());
+            message.setTaskIds(taskIds);
         }
         message.setDumpIndex(entity.getDbDumpIndex());
         if (StringUtils.isNotBlank(entity.getDumpPosition())) {

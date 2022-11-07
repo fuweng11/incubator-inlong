@@ -28,6 +28,7 @@ import org.apache.inlong.agent.common.protocol.DBSyncMsg.RowData;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.MysqlTableConf;
 import org.apache.inlong.agent.core.FieldManager;
+import org.apache.inlong.agent.core.job.PositionControl;
 import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.mysql.connector.MysqlConnection;
 import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
@@ -77,6 +78,7 @@ public class ParseThread extends Thread {
     private char ipSep = '@';
     private char sep = ',';
     private SnowFlakeManager snowFlakeManager = new SnowFlakeManager();
+    private final PositionControl positionControl;
 
     public ParseThread(String parserName, MysqlConnection parseMetaConnection, DBSyncReader dbSyncReader) {
         this.parseMetaConnection = parseMetaConnection;
@@ -93,6 +95,7 @@ public class ParseThread extends Thread {
                     jobName, parserJobName, DBSyncUtils.getExceptionStack(e));
         });
         parseStatus = JobStat.State.INIT;
+        positionControl = dbSyncReader.getPositionControl();
     }
 
     public void start() {
@@ -174,7 +177,7 @@ public class ParseThread extends Thread {
                         }
                         if (entry != null) {
                             this.lastParsePosition = dbSyncReader.buildLastPosition(entry, dbAddress);
-                            dbSyncReader.addEventLogPosition(lastParsePosition);
+                            positionControl.addEventLogPosition(lastParsePosition);
                             if ((entry.getEntryType() != EntryType.TRANSACTIONBEGIN)
                                     && (entry.getEntryType() != EntryType.TRANSACTIONEND)) {
                                 bNeedFlush = true;
@@ -185,7 +188,7 @@ public class ParseThread extends Thread {
                                 constructMessage(entry, parseMsgId);
                             }
                             lastProcessedPosition = lastParsePosition;
-                            dbSyncReader.removeEventLogPosition(lastParsePosition);
+                            positionControl.removeEventLogPosition(lastParsePosition);
                         } else if (event.getHeader().getType() == LogEvent.HEARTBEAT_LOG_EVENT) {
                             String binlogFilename = ((HeartbeatLogEvent) event).getLogIdent();
                             long timeStamp = event.getWhen() * 1000;
@@ -279,12 +282,14 @@ public class ParseThread extends Thread {
                     }
                     continue;
                 } else {
+                    positionControl.addLogPositionToCache(sendPosition);
+
                     boolean putResult = genSendDataByPbProtoc(rowChange, entry, dbName, tbName, myConf,
                             sendPosition, parseMsgId, dbSyncReader.jobconf.getServerId());
-                    if (putResult) {
-                        //TODO:puting data first is ok?
-                        dbSyncReader.addLogPositionToCache(sendPosition);
-                    }
+//                    if (putResult) {
+//                        //TODO:puting data first is ok?
+//                        dbSyncReader.addLogPositionToCache(sendPosition);
+//                    }
                 }
                 sendIndex++;
             }

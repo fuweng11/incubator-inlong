@@ -20,6 +20,7 @@ package org.apache.inlong.agent.mysql.protocol.position;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.inlong.agent.mysql.utils.CanalToStringStyle;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncDumpPosition;
 
 import java.net.InetSocketAddress;
 
@@ -27,7 +28,8 @@ public class LogIdentity extends Position implements Comparable<LogIdentity> {
 
     private static final long serialVersionUID = 5530225131455662581L;
     private InetSocketAddress sourceAddress; //serverAddr
-    private Long slaveId;
+    private Long slaveId; //TODO:change as int
+    private String servername; //TODO:init
 
     public LogIdentity() {
     }
@@ -70,6 +72,11 @@ public class LogIdentity extends Position implements Comparable<LogIdentity> {
         obj.put("sourcePort", sourceAddress.getPort());
         obj.put("slaveId", slaveId);
         return obj;
+    }
+
+    public DbSyncDumpPosition.LogIdentity genLogIdentity() {
+        return new DbSyncDumpPosition.LogIdentity(sourceAddress.getAddress().getHostAddress(), sourceAddress.getPort(),
+                Math.toIntExact(slaveId), servername);
     }
 
     @Override

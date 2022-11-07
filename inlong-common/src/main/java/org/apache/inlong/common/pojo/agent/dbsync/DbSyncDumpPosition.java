@@ -19,13 +19,17 @@ package org.apache.inlong.common.pojo.agent.dbsync;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * DbSync backup information, is part of the heartbeat information
  */
 @Data
 @ApiModel("DbSync backup information")
+@AllArgsConstructor
+@NoArgsConstructor
 public class DbSyncDumpPosition {
 
     @ApiModelProperty(value = "Database to which BinLog belongs")
@@ -36,6 +40,8 @@ public class DbSyncDumpPosition {
 
     @Data
     @ApiModel("DB info to which BinLog belongs")
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class LogIdentity {
 
         @ApiModelProperty(value = "DB IP")
@@ -53,13 +59,15 @@ public class DbSyncDumpPosition {
 
     @Data
     @ApiModel("BinLog position info")
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class EntryPosition {
 
         @ApiModelProperty(value = "BinLog file name")
         private String journalName;
 
         @ApiModelProperty(value = "Position in BinLog file")
-        private String position;
+        private String position; //TODO: check string or int
 
         @ApiModelProperty(value = "Whether to include the current position")
         private Boolean included;

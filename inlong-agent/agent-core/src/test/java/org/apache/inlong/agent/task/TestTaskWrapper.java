@@ -30,6 +30,7 @@ import org.apache.inlong.agent.plugin.MessageFilter;
 import org.apache.inlong.agent.plugin.Reader;
 import org.apache.inlong.agent.plugin.Sink;
 import org.apache.inlong.agent.state.JobStat.State;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -38,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -170,13 +172,18 @@ public class TestTaskWrapper {
         }
 
         @Override
-        public long ackJobData(int cnt) {
-            return 0;
+        public LogPosition getMaxProcessedPosition() {
+            return null;
         }
 
         @Override
-        public void ackSendPosition(LogPosition ackPosition) {
+        public CompletableFuture<Void> resetReader() {
+            return null;
+        }
 
+        @Override
+        public DbSyncHeartbeat genHeartBeat(boolean markToStop) {
+            return null;
         }
 
         public int getCount() {

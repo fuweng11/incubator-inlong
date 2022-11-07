@@ -90,6 +90,7 @@ import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_DBSYNC_G
 public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JobHaDispatcherImpl.class);
+    private static JobHaDispatcherImpl jobHaDispatcher = null;
     /*
      * error task info for addTask,  taskId, errorMsg
      */
@@ -146,7 +147,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
     private HttpManager httpManager;
     private Gson gson = new Gson();
 
-    public JobHaDispatcherImpl(JobManager jobManager, ProfileFetcher fetcher) {
+    private JobHaDispatcherImpl(JobManager jobManager, ProfileFetcher fetcher) {
         this.getTaskConfigByIpAndServerIdUrl = buildGetRunningTaskUrl();
         this.localIp = AgentUtils.getLocalIp();
         this.isSkipZkPositionEnable = agentConf.getBoolean(DBSYNC_SKIP_ZK_POSITION_ENABLE,
@@ -182,6 +183,24 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                 interval, interval, TimeUnit.MILLISECONDS);
         this.httpManager = new HttpManager(agentConf);
 
+    }
+
+    public static JobHaDispatcherImpl getInstance(JobManager jobManager, ProfileFetcher fetcher) {
+        if (jobHaDispatcher == null) {
+            synchronized (JobHaDispatcherImpl.class) {
+                if (jobHaDispatcher == null) {
+                    jobHaDispatcher = new JobHaDispatcherImpl(jobManager, fetcher);
+                }
+            }
+        }
+        return jobHaDispatcher;
+    }
+
+    public static JobHaDispatcherImpl getInstance() {
+        if (jobHaDispatcher == null) {
+            throw new RuntimeException("jobHaDispatcher has not been initialized by HaBinlogFetcher");
+        }
+        return jobHaDispatcher;
     }
 
     private String buildGetRunningTaskUrl() {

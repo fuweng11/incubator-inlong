@@ -92,7 +92,6 @@ public class SenderManager {
     private final String inlongGroupId;
     private final int maxSenderPerGroup;
     private final String sourcePath;
-
     // metric
     private AgentMetricItemSet metricItemSet;
     private Map<String, String> dimensions;
@@ -102,7 +101,6 @@ public class SenderManager {
     private Semaphore semaphore;
     private String authSecretId;
     private String authSecretKey;
-
     // internal secure-auth
     private String secureAuthUserName;
     private String secureAuthUserKey;
@@ -134,7 +132,7 @@ public class SenderManager {
         retrySleepTime = jobConf.getLong(
                 CommonConstants.PROXY_RETRY_SLEEP, CommonConstants.DEFAULT_PROXY_RETRY_SLEEP);
         isFile = jobConf.getBoolean(CommonConstants.PROXY_IS_FILE, CommonConstants.DEFAULT_IS_FILE);
-        taskPositionManager = TaskPositionManager.getTaskPositionManager();
+        taskPositionManager = TaskPositionManager.getInstance();
         semaphore = new Semaphore(jobConf.getInt(CommonConstants.PROXY_MESSAGE_SEMAPHORE,
                 CommonConstants.DEFAULT_PROXY_MESSAGE_SEMAPHORE));
         ioThreadNum = jobConf.getInt(CommonConstants.PROXY_CLIENT_IO_THREAD_NUM,
@@ -300,7 +298,7 @@ public class SenderManager {
                 long totalSize = batchMessage.getDataList().stream().mapToLong(body -> body.length).sum();
                 AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_SEND_SUCCESS, groupId, streamId, dataTime, msgCnt, totalSize);
                 if (sourcePath != null) {
-                    taskPositionManager.updateSinkPosition(batchMessage.getJobId(), sourcePath, msgCnt);
+                    taskPositionManager.updateSinkPosition(batchMessage, sourcePath, msgCnt);
                 }
             } else {
                 metricItem.pluginSendFailCount.addAndGet(msgCnt);
@@ -355,7 +353,7 @@ public class SenderManager {
             AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_SEND_SUCCESS, groupId, streamId, dataTime, msgCnt, totalSize);
             getMetricItem(groupId, streamId).pluginSendSuccessCount.addAndGet(msgCnt);
             if (sourcePath != null) {
-                taskPositionManager.updateSinkPosition(jobId, sourcePath, msgCnt);
+                taskPositionManager.updateSinkPosition(batchMessage, sourcePath, msgCnt);
             }
         }
 

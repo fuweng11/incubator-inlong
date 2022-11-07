@@ -112,9 +112,8 @@ public class JobManager extends AbstractDaemon {
     private final JobConfManager jobConfManager;
     private final ConcurrentHashMap<String, DBSyncJob> allJobs; //TODO:merge to jobs
     private final ArrayList<JobProfile> newJobs;
-    private final ConcurrentHashMap<String, LogPosition> runningJobsLastStorePositionMap;
     private final ReentrantReadWriteLock.WriteLock wLock;
-    private ConcurrentHashMap<String, DBSyncJob> runningJobs;
+    private final ConcurrentHashMap<String, DBSyncJob> runningJobs;
 
     /**
      * init job manager
@@ -136,7 +135,6 @@ public class JobManager extends AbstractDaemon {
         this.maxConDbSize = agentConf.getDbSyncMaxConDbSize();
         ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
         this.wLock = lock.writeLock();
-        this.runningJobsLastStorePositionMap = new ConcurrentHashMap<>();
         this.pendingJobs = new ConcurrentHashMap<>();
         this.monitorInterval = agentConf
                 .getInt(
@@ -164,10 +162,6 @@ public class JobManager extends AbstractDaemon {
 
     public ConcurrentHashMap<String, DBSyncJob> getRunningJobs() {
         return runningJobs;
-    }
-
-    public ConcurrentHashMap<String, LogPosition> getRunningJobsLastStorePositionMap() {
-        return runningJobsLastStorePositionMap;
     }
 
     public ConcurrentHashMap<String, DBSyncJob> getAllJobs() {
@@ -299,7 +293,6 @@ public class JobManager extends AbstractDaemon {
         }
 
         runningJobs.remove(jobName);
-        runningJobsLastStorePositionMap.remove(jobName);
         allJobs.remove(jobName);
         jobConfManager.removeConf(job.getJobConf());
         LOGGER.info("delete {} task!", jobName);
@@ -520,8 +513,7 @@ public class JobManager extends AbstractDaemon {
             LOGGER.info("start new jobs {}", newJobs.size());
             for (DBSyncJob job : newJobs) {
                 String jobName = job.getDBSyncJobConf() == null ? "" : job.getDBSyncJobConf().getJobName();
-                JSONArray taskIds = job.getDBSyncJobConf() == null ? null :
-                        job.getDBSyncJobConf().getTasksJson();
+                JSONArray taskIds = job.getDBSyncJobConf() == null ? null : job.getDBSyncJobConf().getTasksJson();
                 if (StringUtils.isNotEmpty(jobName)) {
                     runningJobs.compute(jobName, (k, v) -> {
                         if (v == null) {

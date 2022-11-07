@@ -20,6 +20,8 @@ package org.apache.inlong.agent.message;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 
 import java.util.List;
 import java.util.Map;
@@ -39,4 +41,6 @@ public class BatchProxyMessage {
     private long dataTime;
     private Map<String, String> extraMap;
     private boolean isSyncSend;
+    //dbsync ack LogPosition
+    private List<Pair<LogPosition, Long>> positions;
 }

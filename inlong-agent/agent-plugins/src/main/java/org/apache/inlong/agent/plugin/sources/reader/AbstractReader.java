@@ -24,11 +24,13 @@ import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.plugin.Reader;
 import org.apache.inlong.agent.state.JobStat.State;
 import org.apache.inlong.common.metric.MetricRegister;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
+import org.apache.inlong.common.util.NetworkUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.inlong.common.util.NetworkUtils;
 
 import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_GROUP_ID;
 import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_STREAM_ID;
@@ -87,12 +89,17 @@ public abstract class AbstractReader implements Reader {
     }
 
     @Override
-    public long ackJobData(int cnt) {
-        return 0;
+    public LogPosition getMaxProcessedPosition() {
+        return null;
     }
 
     @Override
-    public void ackSendPosition(LogPosition ackPosition) {
+    public DbSyncHeartbeat genHeartBeat(boolean markToStop) {
+        return null;
+    }
 
+    @Override
+    public CompletableFuture<Void> resetReader() {
+        return null;
     }
 }

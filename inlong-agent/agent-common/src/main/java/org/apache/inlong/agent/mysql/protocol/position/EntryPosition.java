@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.mysql.protocol.position;
 
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncDumpPosition;
 
 import java.util.Objects;
 
@@ -112,6 +113,10 @@ public class EntryPosition extends TimePosition implements Comparable<EntryPosit
         obj.put("timestamp", this.timestamp);
         obj.put("serverId", this.serverId);
         return obj;
+    }
+
+    public DbSyncDumpPosition.EntryPosition genEntryPosition() {
+        return new DbSyncDumpPosition.EntryPosition(journalName, String.valueOf(position), included, timestamp);
     }
 
     @Override

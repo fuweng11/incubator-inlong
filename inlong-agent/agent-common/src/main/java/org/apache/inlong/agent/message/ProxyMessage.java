@@ -17,6 +17,7 @@
 
 package org.apache.inlong.agent.message;
 
+import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.plugin.Message;
 
 import java.util.Map;
@@ -38,7 +39,11 @@ public class ProxyMessage implements Message {
     private final String inlongStreamId;
     // determine the group key when making batch
     private final String batchKey;
-    private String dataKey;
+    private final String dataKey;
+
+    //dbsync logposition
+    private LogPosition logPosition;
+    private long msgId;
 
     public ProxyMessage(byte[] body, Map<String, String> header) {
         this.body = body;
@@ -50,14 +55,20 @@ public class ProxyMessage implements Message {
         this.batchKey = dataKey + inlongStreamId;
     }
 
-    /**
-     * Transform Message to ProxyMessage
-     *
-     * @param message Message
-     * @return ProxyMessage
-     */
-    public static ProxyMessage parse(Message message) {
-        return new ProxyMessage(message.getBody(), message.getHeader());
+    public ProxyMessage(Message message) {
+        this(message.getBody(), message.getHeader());
+        if (message instanceof DBSyncMessage) {
+            this.logPosition = ((DBSyncMessage) message).getLogPosition();
+            this.msgId = ((DBSyncMessage) message).getMsgId();
+        }
+    }
+
+    public LogPosition getLogPosition() {
+        return logPosition;
+    }
+
+    public long getMsgId() {
+        return msgId;
     }
 
     public String getDataKey() {

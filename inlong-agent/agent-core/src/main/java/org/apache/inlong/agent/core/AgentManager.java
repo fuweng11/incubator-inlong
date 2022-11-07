@@ -25,7 +25,6 @@ import org.apache.inlong.agent.conf.TriggerProfile;
 import org.apache.inlong.agent.constant.AgentConstants;
 import org.apache.inlong.agent.core.conf.ConfigJetty;
 import org.apache.inlong.agent.core.job.JobManager;
-import org.apache.inlong.agent.core.monitor.JobMonitor;
 import org.apache.inlong.agent.core.task.TaskManager;
 import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.core.trigger.TriggerManager;
@@ -52,7 +51,6 @@ public class AgentManager extends AbstractDaemon {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AgentManager.class);
     // dbsync
-    private static JobMonitor jobMonitor;
     private final JobManager jobManager;
     private final TaskManager taskManager;
     private final TriggerManager triggerManager;
@@ -80,9 +78,9 @@ public class AgentManager extends AbstractDaemon {
         triggerManager = new TriggerManager(this, new TriggerProfileDb(db));
         jobManager = new JobManager(this, jobProfileDb);
         taskManager = new TaskManager(this);
-        heartbeatManager = new HeartbeatManager(this);
-        taskPositionManager = TaskPositionManager.getTaskPositionManager(this);
         fetcher = initFetcher(this);
+        heartbeatManager = HeartbeatManager.getInstance(this);
+        taskPositionManager = TaskPositionManager.getInstance(this);
         // need to be an option.
         if (conf.getBoolean(
                 AgentConstants.AGENT_ENABLE_HTTP, AgentConstants.DEFAULT_AGENT_ENABLE_HTTP)) {
@@ -93,15 +91,10 @@ public class AgentManager extends AbstractDaemon {
         this.enableReportFiledChange = conf.getBoolean(AgentConstants.DBSYNC_FILED_CHANGED_REPORT_ENABLE,
                 AgentConstants.DEFAULT_DBSYNC_FILED_CHANGED_REPORT_ENABLE);
         if (enableDBSync) {
-            jobMonitor = new JobMonitor(this);
             if (enableReportFiledChange) {
                 this.fieldManager = FieldManager.getInstance();
             }
         }
-    }
-
-    public static JobMonitor getJobMonitor() {
-        return jobMonitor;
     }
 
     /**
@@ -207,9 +200,7 @@ public class AgentManager extends AbstractDaemon {
         if (fetcher != null) {
             fetcher.start();
         }
-        if (jobMonitor != null) {
-            jobMonitor.start();
-        }
+
         if (fieldManager != null) {
             fieldManager.start();
         }
@@ -227,9 +218,6 @@ public class AgentManager extends AbstractDaemon {
         }
         if (fetcher != null) {
             fetcher.stop();
-        }
-        if (jobMonitor != null) {
-            jobMonitor.stop();
         }
         // TODO: change job state which is in running state.
         LOGGER.info("stopping agent manager");
