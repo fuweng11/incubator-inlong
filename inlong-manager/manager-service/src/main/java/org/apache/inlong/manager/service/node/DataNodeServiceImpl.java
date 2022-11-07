@@ -93,7 +93,9 @@ public class DataNodeServiceImpl implements DataNodeService {
     public DataNodeInfo get(String name, String type) {
         DataNodeEntity entity = dataNodeMapper.selectByUniqueKey(name, type);
         if (entity == null) {
-            throw new BusinessException(String.format("data node not found by name=%s, type=%s", name, type));
+            String errMsg = String.format("data node not found by name=%s, type=%s", name, type);
+            LOGGER.error(errMsg);
+            throw new BusinessException(errMsg);
         }
 
         DataNodeOperator dataNodeOperator = operatorFactory.getInstance(type);
