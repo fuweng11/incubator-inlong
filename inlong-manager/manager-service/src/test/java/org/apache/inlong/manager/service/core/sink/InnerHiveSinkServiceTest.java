@@ -117,7 +117,7 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
         Integer id = this.saveSink(dataNodeId);
         Assertions.assertNotNull(id);
 
-        boolean result = sinkService.delete(id, globalOperator);
+        boolean result = sinkService.delete(id, false, globalOperator);
         Assertions.assertTrue(result);
         boolean deleteDataNodeResult = dataNodeService.delete(dataNodeId, globalOperator);
         Assertions.assertTrue(deleteDataNodeResult);
@@ -152,7 +152,7 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
         StreamSink sink = sinkService.get(id);
         Assertions.assertEquals(globalGroupId, sink.getInlongGroupId());
 
-        sinkService.delete(id, globalOperator);
+        sinkService.delete(id, false, globalOperator);
         boolean deleteDataNodeResult = dataNodeService.delete(dataNodeId, globalOperator);
         Assertions.assertTrue(deleteDataNodeResult);
     }
@@ -170,7 +170,7 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
         boolean result = sinkService.update(request, globalOperator);
         Assertions.assertTrue(result);
 
-        sinkService.delete(sinkId, globalOperator);
+        sinkService.delete(sinkId, false, globalOperator);
         boolean deleteDataNodeResult = dataNodeService.delete(dataNodeId, globalOperator);
         Assertions.assertTrue(deleteDataNodeResult);
     }
