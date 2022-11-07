@@ -186,11 +186,13 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                     sink.getDataNodeName(), sink.getSinkType());
 
             // get bg id
+            InlongGroupInfo groupInfo = groupService.get(groupId);
             Integer clusterId = scService.getClusterIdByIdentifier(dataNodeInfo.getClusterTag());
-            AppGroup appGroup = scService.getAppGroup(clusterId, hiveInfo.getAppGroupName());
+            AppGroup appGroup = scService.getAppGroup(clusterId, groupInfo.getAppGroupName());
             hiveInfo.setBgId(appGroup.getBgId());
 
-            InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(hiveInfo, sinkInfo, dataNodeInfo);
+            InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo, hiveInfo, sinkInfo,
+                    dataNodeInfo);
             String dbName = hiveFullInfo.getDbName();
             String tbName = hiveFullInfo.getTableName();
             TableInfoBean existTable = upsOperator.queryTableInfo(hiveFullInfo.getIsThive(),

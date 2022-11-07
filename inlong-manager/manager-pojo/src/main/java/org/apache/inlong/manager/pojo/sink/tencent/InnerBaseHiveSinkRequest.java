@@ -35,20 +35,11 @@ import javax.validation.constraints.NotNull;
 @ApiModel(value = "Inner base hive sink request")
 public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
 
-    @ApiModelProperty("product id")
-    private Integer productId;
-
-    @ApiModelProperty("product name")
-    private String productName;
-
     @ApiModelProperty("us task id")
     private String usTaskId;
 
     @ApiModelProperty(value = "verified task id", notes = "subtasks of the above tasks")
     private String verifiedTaskId;
-
-    @ApiModelProperty("app group name")
-    private String appGroupName;
 
     @ApiModelProperty("user with select permission by default, multiple are separated by half width commas")
     private String defaultSelectors;

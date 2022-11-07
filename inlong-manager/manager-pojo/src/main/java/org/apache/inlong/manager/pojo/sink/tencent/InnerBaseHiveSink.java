@@ -36,20 +36,11 @@ import org.apache.inlong.manager.pojo.sink.StreamSink;
 @ApiModel(value = "Base hive sink info")
 public abstract class InnerBaseHiveSink extends StreamSink {
 
-    @ApiModelProperty("product id")
-    private Integer productId;
-
-    @ApiModelProperty("product name")
-    private String productName;
-
     @ApiModelProperty("us task id")
     private String usTaskId;
 
     @ApiModelProperty("verified task id")
     private String verifiedTaskId; // the US task of verifying data is a sub task of the above task
-
-    @ApiModelProperty("app group name")
-    private String appGroupName;
 
     @ApiModelProperty("default selectors")
     private String defaultSelectors;

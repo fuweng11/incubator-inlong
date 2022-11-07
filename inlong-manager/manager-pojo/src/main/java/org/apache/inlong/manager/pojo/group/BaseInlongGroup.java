@@ -18,17 +18,28 @@
 package org.apache.inlong.manager.pojo.group;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * The base parameter class of InlongGroup, support user extend their own business params.
  */
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @ApiModel("Base info of inlong group")
 public class BaseInlongGroup {
 
     // you can add extend parameters in this class
+    @ApiModelProperty("product id")
+    private Integer productId;
+
+    @ApiModelProperty("product name")
+    private String productName;
+
+    @ApiModelProperty("app group name")
+    private String appGroupName;
 
 }

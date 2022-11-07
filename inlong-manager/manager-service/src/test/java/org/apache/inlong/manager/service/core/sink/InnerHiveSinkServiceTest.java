@@ -86,7 +86,6 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
         sinkInfo.setSinkType(SinkType.INNER_HIVE);
         sinkInfo.setEnableCreateResource(InlongConstants.DISABLE_CREATE_RESOURCE);
         sinkInfo.setSinkName(sinkName);
-        sinkInfo.setAppGroupName("g_test_thirty");
         sinkInfo.setDataConsistency("EXACTLY_ONCE");
         sinkInfo.setDataEncoding("UTF-8");
         sinkInfo.setDataSeparator("9");

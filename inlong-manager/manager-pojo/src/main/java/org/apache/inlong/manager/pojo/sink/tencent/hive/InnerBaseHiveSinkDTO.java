@@ -25,7 +25,9 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.util.AESUtils;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonUtils;
+import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
@@ -46,20 +48,11 @@ public class InnerBaseHiveSinkDTO {
     @ApiModelProperty("bg id")
     private Integer bgId;
 
-    @ApiModelProperty("product id")
-    private Integer productId;
-
-    @ApiModelProperty("product name")
-    private String productName;
-
     @ApiModelProperty("us task id")
     private String usTaskId;
 
     @ApiModelProperty("verified task id")
     private String verifiedTaskId; // the US task of verifying data is a sub-task of the above task
-
-    @ApiModelProperty("app group name")
-    private String appGroupName;
 
     @ApiModelProperty("default selectors")
     private String defaultSelectors;
@@ -165,27 +158,7 @@ public class InnerBaseHiveSinkDTO {
      * Get the dto instance from the request
      */
     public static InnerBaseHiveSinkDTO getFromRequest(InnerBaseHiveSinkRequest request) throws Exception {
-        Integer encryptVersion = AESUtils.getCurrentVersion(null);
-        return InnerBaseHiveSinkDTO.builder()
-                .productId(request.getProductId())
-                .productName(request.getProductName())
-                .defaultSelectors(request.getDefaultSelectors())
-                .dbName(request.getDbName())
-                .tableName(request.getTableName())
-                .virtualUser(request.getVirtualUser())
-                .appGroupName(request.getAppGroupName())
-                .dataConsistency(request.getDataConsistency())
-                .dataEncoding(request.getDataEncoding())
-                .dataSeparator(request.getDataSeparator())
-                .fileFormat(request.getFileFormat())
-                .partitionType(request.getPartitionType())
-                .partitionCreationStrategy(request.getPartitionCreationStrategy())
-                .partitionInterval(request.getPartitionInterval())
-                .partitionUnit(request.getPartitionUnit())
-                .primaryPartition(request.getPrimaryPartition())
-                .secondaryPartition(request.getSecondaryPartition())
-                .encryptVersion(encryptVersion)
-                .build();
+        return  CommonBeanUtils.copyProperties(request, InnerBaseHiveSinkDTO::new, true);
     }
 
     /**
@@ -198,21 +171,20 @@ public class InnerBaseHiveSinkDTO {
     /**
      * Get Hive table info
      */
-    public static InnerHiveFullInfo getFullInfo(InnerBaseHiveSinkDTO innerHiveDTO, SinkInfo sinkInfo,
-            InnerBaseHiveDataNodeInfo hiveDataNode) {
+    public static InnerHiveFullInfo getFullInfo(InlongGroupInfo groupInfo, InnerBaseHiveSinkDTO innerHiveDTO,
+            SinkInfo sinkInfo, InnerBaseHiveDataNodeInfo hiveDataNode) {
         Integer isThive = Objects.equals(sinkInfo.getSinkType(), SinkType.INNER_THIVE) ? 1 : 0;
         return InnerHiveFullInfo.builder()
                 .sinkId(sinkInfo.getId())
+                .productId(groupInfo.getProductId())
+                .productName(groupInfo.getProductName())
+                .appGroupName(groupInfo.getAppGroupName())
                 .bgId(innerHiveDTO.getBgId())
-                .productId(innerHiveDTO.getProductId())
-                .productName(innerHiveDTO.getProductName())
-                .appGroupName(innerHiveDTO.getAppGroupName())
                 .inlongGroupId(sinkInfo.getInlongGroupId())
                 .inlongStreamId(sinkInfo.getInlongStreamId())
                 .isThive(isThive)
                 .usTaskId(innerHiveDTO.getUsTaskId())
                 .verifiedTaskId(innerHiveDTO.getVerifiedTaskId())
-                .appGroupName(innerHiveDTO.getAppGroupName())
                 .defaultSelectors(innerHiveDTO.getDefaultSelectors())
                 .dbName(innerHiveDTO.getDbName())
                 .tableName(innerHiveDTO.getTableName())
