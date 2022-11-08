@@ -279,14 +279,14 @@
     <select id="selectNodeNames" resultType="java.lang.String">
         select distinct(data_node_name)
         from stream_source
-        where status not in (99, 102, 103, 200)
+        where status not in (99, 102, 103, 110)
           and source_type = #{sourceType, jdbcType=VARCHAR}
           and inlong_cluster_name = #{clusterName, jdbcType=VARCHAR}
     </select>
     <select id="selectValidIds" resultType="java.lang.Integer">
         select distinct id
         from stream_source
-        where status not in (99, 102, 103, 200)
+        where status not in (99, 102, 103, 110)
         and source_type = #{sourceType, jdbcType=VARCHAR}
         and inlong_cluster_name = #{clusterName, jdbcType=VARCHAR}
         <if test="nodeNames != null and nodeNames.size() > 0">
@@ -318,7 +318,7 @@
         from stream_source
         <where>
             is_deleted = 0
-            and status not in (99, 200)
+            and status not in (99, 110)
             <if test="clusterName != null">
                 and inlong_cluster_name = #{clusterName, jdbcType=VARCHAR}
             </if>
