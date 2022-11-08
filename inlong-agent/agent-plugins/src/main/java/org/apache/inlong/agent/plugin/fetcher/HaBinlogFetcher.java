@@ -34,6 +34,7 @@ import org.apache.inlong.agent.entites.CommonResponse;
 import org.apache.inlong.agent.except.DataSourceConfigException.InvalidCharsetNameException;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.HttpManager;
+import org.apache.inlong.common.enums.ManagerOpEnum;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncClusterInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncInitInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskFullInfo;
@@ -337,36 +338,36 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
             final Integer version = taskConf.getVersion();
             CompletableFuture<Void> future = new CompletableFuture<>();
             try {
-                // 1 add; 2 stop; 3 run; 4 del; 5 modify
-                if (status == 1) {
+                // 0 add; 4 stop; 5 run; 1 del; 2 modify
+                if (status == ManagerOpEnum.ADD.getType()) {
                     if (isHaEnable && checkTaskConfig(taskConf, future)) {
                         jobHaDispatcher.addJob(taskConf);
                         changeTaskList.add(taskConf);
                     } else {
                         dbJob = jobManager.addDbSyncTask(taskConf, future);
                     }
-                } else if (status == 2) {
+                } else if (status == ManagerOpEnum.FROZEN.getType()) {
                     if (isHaEnable) {
                         jobHaDispatcher.stopJob(taskConf.getServerName(), taskConf.getId());
                         future.complete(null);
                     } else {
                         deleteTask(taskConf, future);
                     }
-                } else if (status == 3) {
+                } else if (status == ManagerOpEnum.ACTIVE.getType()) {
                     if (isHaEnable && checkTaskConfig(taskConf, future)) {
                         jobHaDispatcher.startJob(taskConf);
                         changeTaskList.add(taskConf);
                     } else {
                         dbJob = jobManager.addDbSyncTask(taskConf, future);
                     }
-                } else if (status == 4) {
+                } else if (status == ManagerOpEnum.DEL.getType()) {
                     if (isHaEnable) {
                         jobHaDispatcher.deleteJob(taskConf.getServerName(), taskConf.getId(), taskConf);
                         future.complete(null);
                     } else {
                         stopTask(taskConf, future);
                     }
-                } else if (status == 5) {
+                } else if (status == ManagerOpEnum.RETRY.getType()) {
                     if (isHaEnable && checkTaskConfig(taskConf, future)) {
                         jobHaDispatcher.updateJob(taskConf);
                         changeTaskList.add(taskConf);
