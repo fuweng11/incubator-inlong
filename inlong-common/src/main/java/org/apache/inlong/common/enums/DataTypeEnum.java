@@ -31,8 +31,6 @@ public enum DataTypeEnum {
     DEBEZIUM_JSON("debezium_json"),
     RAW("raw"),
     KV("kv"),
-    INLONG_CSV("inlong_csv"),
-    INLONG_KV("inlong_kv"),
 
     ;
 

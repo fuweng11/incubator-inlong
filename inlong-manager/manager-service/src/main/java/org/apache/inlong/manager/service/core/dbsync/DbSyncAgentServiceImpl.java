@@ -201,10 +201,10 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                     taskIdSet.add(id);
                     Integer status = idStatusMap.get(id);
                     // Change the starting / unfrozen status to the normal status(101)
-                    boolean isNewStatus = (status != null) && (status.equals(SourceStatus.AGENT_ISSUED_CREATE.getCode())
-                            || status.equals(SourceStatus.AGENT_ISSUED_START.getCode()));
+                    boolean isNewStatus = (status != null) && (status.equals(SourceStatus.BEEN_ISSUED_ADD.getCode())
+                            || status.equals(SourceStatus.BEEN_ISSUED_ACTIVE.getCode()));
                     if (isNewStatus) {
-                        sourceMapper.updateStatus(id, SourceStatus.AGENT_NORMAL.getCode(), null, null);
+                        sourceMapper.updateStatus(id, SourceStatus.SOURCE_NORMAL.getCode(), null, null);
                     }
                 }
             }
@@ -217,11 +217,11 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 Integer localTaskStatus = entry.getValue();
                 if (!taskIdSet.contains(localTaskId)) {
                     // change the to be frozen to frozen(102)
-                    if (Objects.equals(localTaskStatus, SourceStatus.AGENT_ISSUED_STOP.getCode())) {
-                        sourceMapper.updateStatus(localTaskId, SourceStatus.AGENT_FREEZE.getCode(), null, null);
-                    } else if (Objects.equals(localTaskStatus, SourceStatus.AGENT_ISSUED_DELETE.getCode())) {
+                    if (Objects.equals(localTaskStatus, SourceStatus.BEEN_ISSUED_FROZEN.getCode())) {
+                        sourceMapper.updateStatus(localTaskId, SourceStatus.SOURCE_FROZEN.getCode(), null, null);
+                    } else if (Objects.equals(localTaskStatus, SourceStatus.BEEN_ISSUED_DELETE.getCode())) {
                         // change the to be deleted to disabled(99)
-                        sourceMapper.updateStatus(localTaskId, SourceStatus.AGENT_DISABLE.getCode(), null, null);
+                        sourceMapper.updateStatus(localTaskId, SourceStatus.SOURCE_DISABLE.getCode(), null, null);
                     }
                 }
             }
@@ -483,12 +483,12 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         for (StreamSourceEntity sourceEntity : sourceEntities) {
             DbSyncTaskInfo taskInfo = fulfillTaskInfo(sourceEntity);
             int id = sourceEntity.getId();
-            int status = taskInfo.getStatus();
+            int status = sourceEntity.getStatus();
             // 1. to be issued status(20x) - after modifying the task / DB server, status will change to intermediate
             // 2. been issued status(30x)
             if (status / 100 == UNISSUED_STATUS || status / 100 == ISSUED_STATUS) {
                 taskInfo.setStatus(status % 100);
-            } else if (SourceStatus.AGENT_NORMAL.getCode() == status) {
+            } else if (SourceStatus.SOURCE_NORMAL.getCode() == status) {
                 // if not restart / first time start, ignore the normal tasks(status=101),
                 // otherwise pull the normal tasks
                 if (!OP_INIT.equals(opType)) {
@@ -554,7 +554,6 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 .inlongGroupId(groupId)
                 .inlongStreamId(streamId)
                 .serverName(sourceEntity.getDataNodeName())
-                .status(sourceEntity.getStatus())
                 .version(sourceEntity.getVersion())
                 .build();
 
@@ -662,21 +661,21 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                         // Starting 301 / Unfreezing 303 / Update been issued 305, will change to normal(101)
                         // ignore
                     } else*/
-                    if (previousStatus == SourceStatus.AGENT_ISSUED_STOP.getCode()) {
-                        nextStatus = SourceStatus.AGENT_FREEZE.getCode();
-                    } else if (previousStatus == SourceStatus.AGENT_ISSUED_DELETE.getCode()) {
-                        nextStatus = SourceStatus.AGENT_DISABLE.getCode();
+                    if (previousStatus == SourceStatus.BEEN_ISSUED_FROZEN.getCode()) {
+                        nextStatus = SourceStatus.SOURCE_FROZEN.getCode();
+                    } else if (previousStatus == SourceStatus.BEEN_ISSUED_DELETE.getCode()) {
+                        nextStatus = SourceStatus.SOURCE_DISABLE.getCode();
                     }
                 } else if (result == TASK_FAILED) {
                     // agent process failed
-                    nextStatus = SourceStatus.AGENT_FAILURE.getCode();
+                    nextStatus = SourceStatus.SOURCE_FAILED.getCode();
                 } else if (result == TASK_NOT_SCHEDULE) {
                     // agent scheduling fails, reset to the original 30x status and publish to agent again
                     nextStatus = previousStatus;
                 }
-            } else if (result == TASK_NOT_SCHEDULE && previousStatus == SourceStatus.AGENT_NORMAL.getCode()) {
+            } else if (result == TASK_NOT_SCHEDULE && previousStatus == SourceStatus.SOURCE_NORMAL.getCode()) {
                 // change the normal task that failed to be scheduled to be wait created
-                nextStatus = SourceStatus.AGENT_WAIT_CREATE.getCode();
+                nextStatus = SourceStatus.TO_BE_ISSUED_ADD.getCode();
             }
             // other task status of 20x will be changed to 30x when the next task is pulled
             sourceMapper.updateStatus(taskId, nextStatus, taskInfo.getMessage(), false);

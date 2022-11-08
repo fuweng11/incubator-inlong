@@ -61,28 +61,6 @@ public enum SourceStatus {
     BEEN_ISSUED_REDO_METRIC(307, "been issued redo metric"),
     BEEN_ISSUED_MAKEUP(308, "been issued makeup"),
 
-    AGENT_DISABLE(99, "unavailable"), // that is deleted
-    AGENT_NORMAL(101, "normal"),
-    AGENT_FREEZE(102, "stopped"),
-    AGENT_FAILURE(103, "failed"),
-    // If the current heartbeat is more than 10 minutes away from last heartbeat, it is interrupted
-    AGENT_INTERRUPT(104, "collection interrupted"),
-
-    AGENT_NEW(200, "New, to be approved"),
-
-    // 1-increase, 2-stop, 3-start, 4-delete, 5-change
-    AGENT_WAIT_CREATE(201, "waiting to be issued add"),
-    AGENT_WAIT_STOP(202, "waiting to be issued stopped"),
-    AGENT_WAIT_START(203, "waiting to be issued started"),
-    AGENT_WAIT_DELETE(204, "waiting to be issued deleted"),
-    AGENT_WAIT_UPDATE(205, "waiting to be issued updated"),
-
-    AGENT_ISSUED_CREATE(301, "been issued added"),
-    AGENT_ISSUED_STOP(302, "been issued stopped"),
-    AGENT_ISSUED_START(303, "been issued started"),
-    AGENT_ISSUED_DELETE(304, "been issued deleted"),
-    AGENT_ISSUED_UPDATE(305, "been issued updated"),
-
     ;
 
     /**
