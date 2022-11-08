@@ -484,17 +484,17 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             DbSyncTaskInfo taskInfo = fulfillTaskInfo(sourceEntity);
             int id = sourceEntity.getId();
             int status = sourceEntity.getStatus();
-            // 1. to be issued status(20x) - after modifying the task / DB server, status will change to intermediate
-            // 2. been issued status(30x)
-            if (status / 100 == UNISSUED_STATUS || status / 100 == ISSUED_STATUS) {
-                taskInfo.setStatus(status % 100);
-            } else if (SourceStatus.SOURCE_NORMAL.getCode() == status) {
-                // if not restart / first time start, ignore the normal tasks(status=101),
+            if (SourceStatus.SOURCE_NORMAL.getCode() == status) {
+                // if not restart / first start, ignore the normal tasks (status=101),
                 // otherwise pull the normal tasks
                 if (!OP_INIT.equals(opType)) {
                     skipTaskIds.add(id);
                     continue;
                 }
+            } else if (status / 100 == UNISSUED_STATUS || status / 100 == ISSUED_STATUS) {
+                // to be issued status(20x) - after modifying the source, status will change to intermediate
+                // been issued status(30x)
+                taskInfo.setStatus(status % 100);
             } else {
                 // ignore tasks that with other status
                 LOGGER.info("skip un-normal task, id={}", id);
@@ -554,6 +554,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 .inlongGroupId(groupId)
                 .inlongStreamId(streamId)
                 .serverName(sourceEntity.getDataNodeName())
+                .status(sourceEntity.getStatus())
                 .version(sourceEntity.getVersion())
                 .build();
 
