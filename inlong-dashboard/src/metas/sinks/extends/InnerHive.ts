@@ -22,13 +22,11 @@ import { RenderRow } from '@/metas/RenderRow';
 import { RenderList } from '@/metas/RenderList';
 import i18n from '@/i18n';
 import EditableTable from '@/components/EditableTable';
-import ProductSelect from '@/components/ProductSelect';
 import { SinkInfo } from '../common/SinkInfo';
 import { sourceFields } from '../common/sourceFields';
 
 const { I18n } = DataWithBackend;
 const { FieldDecorator } = RenderRow;
-const { ColumnDecorator } = RenderList;
 
 const innerHiveFieldTypes = [
   'string',
@@ -55,49 +53,6 @@ export default class InnerHiveSink
   extends SinkInfo
   implements DataWithBackend, RenderRow, RenderList
 {
-  @FieldDecorator({
-    type: ProductSelect,
-    extraNames: ['productName'],
-    rules: [{ required: true }],
-    props: values => ({
-      asyncValueLabel: values.productName,
-      disabled: [110, 130].includes(values?.status),
-      onChange: (value, record) => ({
-        appGroupName: undefined,
-        productName: record.name,
-      }),
-    }),
-  })
-  @ColumnDecorator()
-  @I18n('meta.Group.Product')
-  productId: string | number;
-
-  @FieldDecorator({
-    type: 'select',
-    rules: [{ required: true }],
-    props: values => ({
-      allowClear: true,
-      disabled: [110, 130].includes(values?.status),
-      options: {
-        requestService: {
-          url: '/sc/appgroup/my',
-          params: {
-            productId: values.productId,
-          },
-        },
-        requestParams: {
-          formatResult: result =>
-            result?.map(item => ({
-              label: item,
-              value: item,
-            })),
-        },
-      },
-    }),
-  })
-  @I18n('meta.Group.AppGroupName')
-  appGroupName: string;
-
   @FieldDecorator({
     type: 'select',
     rules: [{ required: true }],

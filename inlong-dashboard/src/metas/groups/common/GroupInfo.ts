@@ -18,7 +18,57 @@
  */
 
 import { GroupDefaultInfo } from './GroupDefaultInfo';
+import { DataWithBackend } from '@/metas/DataWithBackend';
+import { RenderRow } from '@/metas/RenderRow';
+import { RenderList } from '@/metas/RenderList';
+import ProductSelect from '@/components/ProductSelect';
+
+const { I18n } = DataWithBackend;
+const { FieldDecorator } = RenderRow;
+const { ColumnDecorator } = RenderList;
 
 export class GroupInfo extends GroupDefaultInfo {
   // You can extends GroupInfo at here...
+  @FieldDecorator({
+    type: ProductSelect,
+    extraNames: ['productName'],
+    rules: [{ required: true }],
+    props: values => ({
+      asyncValueLabel: values.productName,
+      disabled: [110, 130].includes(values?.status),
+      onChange: (value, record) => ({
+        appGroupName: undefined,
+        productName: record.name,
+      }),
+    }),
+  })
+  @ColumnDecorator()
+  @I18n('meta.Group.Product')
+  productId: string | number;
+
+  @FieldDecorator({
+    type: 'select',
+    rules: [{ required: true }],
+    props: values => ({
+      allowClear: true,
+      disabled: [110, 130].includes(values?.status),
+      options: {
+        requestService: {
+          url: '/sc/appgroup/my',
+          params: {
+            productId: values.productId,
+          },
+        },
+        requestParams: {
+          formatResult: result =>
+            result?.map(item => ({
+              label: item,
+              value: item,
+            })),
+        },
+      },
+    }),
+  })
+  @I18n('meta.Group.AppGroupName')
+  appGroupName: string;
 }
