@@ -297,6 +297,10 @@ public class TaskPositionManager extends AbstractDaemon {
      * @param size add this size to beforePosition
      */
     public void updateSinkPosition(BatchProxyMessage batchMsg, String sourcePath, long size) {
+        if (conf.enableHA()) {
+            logMapQueue.add(batchMsg);
+            return;
+        }
         ConcurrentHashMap<String, Long> positionTemp = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Long> position = jobTaskPositionMap.putIfAbsent(batchMsg.getJobId(), positionTemp);
         if (position == null) {
@@ -306,10 +310,6 @@ public class TaskPositionManager extends AbstractDaemon {
         }
         Long beforePosition = position.getOrDefault(sourcePath, 0L);
         position.put(sourcePath, beforePosition + size);
-
-        if (conf.enableHA()) {
-            logMapQueue.add(batchMsg);
-        }
     }
 
     public ConcurrentHashMap<String, Long> getTaskPositionMap(String jobId) {

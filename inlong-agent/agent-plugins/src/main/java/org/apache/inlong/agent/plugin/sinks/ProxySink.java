@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.plugin.sinks;
 
 import org.apache.inlong.agent.common.AgentThreadFactory;
+import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.CommonConstants;
 import org.apache.inlong.agent.message.BatchProxyMessage;
@@ -155,6 +156,9 @@ public class ProxySink extends AbstractSink {
     public void init(JobProfile jobConf) {
         super.init(jobConf);
         jobInstanceId = jobConf.get(JOB_INSTANCE_ID);
+        if (AgentConfiguration.getAgentConf().enableHA()) {
+            jobInstanceId = jobConf.getDbSyncJobConf().getJobName();
+        }
         batchFlushInterval = jobConf.getInt(PROXY_BATCH_FLUSH_INTERVAL,
                 DEFAULT_PROXY_BATCH_FLUSH_INTERVAL);
         cache = new ConcurrentHashMap<>(10);

@@ -559,6 +559,7 @@ public class DBSyncReader extends AbstractReader {
     public DbSyncHeartbeat genHeartBeat(boolean markToStop) {
 
         DbSyncHeartbeat hbInfo = new DbSyncHeartbeat();
+        hbInfo.setInstance(AgentUtils.getLocalIp());
         hbInfo.setServerId(jobconf.getServerId());
         hbInfo.setTaskIds(jobconf.getTaskIdList());
         hbInfo.setCurrentDb(jobconf.getCurMysqlIp());
@@ -1893,8 +1894,7 @@ public class DBSyncReader extends AbstractReader {
                                     return true;
                                 }
 
-                                Entry entry = parseAndProfilingIfNecessary(
-                                        event, jobconf);
+                                Entry entry = parseAndProfilingIfNecessary(event, jobconf);
                                 if (entry == null) {
                                     return true;
                                 }

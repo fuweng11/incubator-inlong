@@ -475,8 +475,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                         taskConf.getServerName(), isSkipZkPositionEnable, startPositionFromZk);
             }
         } else {
-            LOGGER.info("[{}] startPositionFromConf = {}", taskConf.getServerName(),
-                    startPosStr);
+            LOGGER.info("[{}] startPositionFromConf = {}", taskConf.getServerName(), startPosStr);
         }
         return true;
     }

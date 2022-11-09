@@ -398,7 +398,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
                             });
                 }
             } catch (Exception e) {
-                LOGGER.error("op task {} getException {}", taskConf.getId(), e);
+                LOGGER.error("op-{} task {} getException", status, taskConf.getId(), e);
             }
             try {
                 Thread.sleep(500);
