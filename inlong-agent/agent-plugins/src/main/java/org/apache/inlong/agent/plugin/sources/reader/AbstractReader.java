@@ -22,11 +22,17 @@ import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.plugin.Reader;
+import org.apache.inlong.agent.pojo.DebeziumOffset;
 import org.apache.inlong.agent.state.JobStat.State;
+import org.apache.inlong.agent.utils.DebeziumOffsetSerializer;
 import org.apache.inlong.common.metric.MetricRegister;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.inlong.common.util.NetworkUtils;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -56,6 +62,8 @@ public abstract class AbstractReader implements Reader {
     protected String metricName;
     protected Map<String, String> dimensions;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReader.class);
+
     @Override
     public void init(JobProfile jobConf) {
         inlongGroupId = jobConf.get(PROXY_INLONG_GROUP_ID, DEFAULT_PROXY_INLONG_GROUP_ID);
@@ -76,6 +84,33 @@ public abstract class AbstractReader implements Reader {
 
     public String getInlongGroupId() {
         return inlongGroupId;
+    }
+
+    /**
+     * specific offsets
+     *
+     * @param server specific server
+     * @param file specific offset file
+     * @param pos specific offset pos
+     * @return
+     */
+    public String serializeOffset(final String server, final String file,
+            final String pos) {
+        Map<String, Object> sourceOffset = new HashMap<>();
+        sourceOffset.put("file", file);
+        sourceOffset.put("pos", pos);
+        DebeziumOffset specificOffset = new DebeziumOffset();
+        specificOffset.setSourceOffset(sourceOffset);
+        Map<String, String> sourcePartition = new HashMap<>();
+        sourcePartition.put("server", server);
+        specificOffset.setSourcePartition(sourcePartition);
+        byte[] serializedOffset = new byte[0];
+        try {
+            serializedOffset = DebeziumOffsetSerializer.INSTANCE.serialize(specificOffset);
+        } catch (IOException e) {
+            LOGGER.error("serialize offset message error", e);
+        }
+        return new String(serializedOffset, StandardCharsets.UTF_8);
     }
 
     @Override
