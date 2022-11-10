@@ -42,7 +42,6 @@ export class GroupInfo extends GroupDefaultInfo {
       }),
     }),
   })
-  @ColumnDecorator()
   @I18n('meta.Group.Product')
   productId: string | number;
 
