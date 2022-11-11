@@ -789,6 +789,31 @@ CREATE TABLE IF NOT EXISTS `stream_heartbeat`
   DEFAULT CHARSET = utf8 COMMENT ='Inlong stream heartbeat';
 
 -- ----------------------------
+-- Table structure for dbsync heartbeat
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `dbsync_heartbeat`
+(
+    `id`               int(11)      NOT NULL AUTO_INCREMENT COMMENT 'Incremental primary key',
+    `instance`         varchar(64)  NOT NULL DEFAULT '' COMMENT 'Component instance, can be ip, name...',
+    `server_id`        varchar(64)  NOT NULL DEFAULT '' COMMENT 'ServerId of the task, is the ID of data_node table',
+    `current_db`       varchar(256) NOT NULL DEFAULT '' COMMENT 'Currently collected DB',
+    `url`              varchar(256) NOT NULL DEFAULT '' COMMENT 'URL of the DB server, such as 127.0.0.1:3306',
+    `backup_url`       varchar(256) NOT NULL DEFAULT '' COMMENT 'URL of the standby DB server',
+    `agent_status`     varchar(256) NOT NULL DEFAULT '' COMMENT 'Agent running status, NORMAL, STOPPED, SWITCHED...',
+    `task_ids`         text                  DEFAULT NULL COMMENT 'Task IDs being collected by DbSync, is the ID of stream_source table',
+    `db_dump_index`    bigint(20)   NOT NULL COMMENT 'BinLog index currently collected',
+    `dump_position`    varchar(256) NOT NULL DEFAULT '' COMMENT 'BinLog position currently collected, will be saved as JSON string',
+    `max_log_position` text                  DEFAULT NULL COMMENT 'BinLog maximum position of the current DB, will be saved as a JSON string',
+    `error_msg`        text                  DEFAULT NULL COMMENT 'Error message',
+    `report_time`      bigint(20)   NOT NULL COMMENT 'Report time',
+    `create_time`      timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    `modify_time`      timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Modify time',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_dbsync_heartbeat` (`instance`, `server_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8 COMMENT ='Dbsync_heartbeat';
+
+-- ----------------------------
 -- Table structure for bg_info
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `bg_info`

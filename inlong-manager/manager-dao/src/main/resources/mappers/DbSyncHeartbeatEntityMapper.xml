@@ -28,7 +28,7 @@
         <result column="url" jdbcType="VARCHAR" property="url"/>
         <result column="backup_url" jdbcType="VARCHAR" property="backupUrl"/>
         <result column="agent_status" jdbcType="VARCHAR" property="agentStatus"/>
-        <result column="task_ids" jdbcType="INTEGER" property="taskIds"/>
+        <result column="task_ids" jdbcType="LONGVARCHAR" property="taskIds"/>
         <result column="db_dump_index" jdbcType="BIGINT" property="dbDumpIndex"/>
         <result column="dump_position" jdbcType="VARCHAR" property="dumpPosition"/>
         <result column="max_log_position" jdbcType="LONGVARCHAR" property="maxLogPosition"/>
