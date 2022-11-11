@@ -293,6 +293,7 @@ public class JobManager extends AbstractDaemon {
         }
 
         runningJobs.remove(jobName);
+        agentManager.getTaskManager().removeTask(job.getTaskId());
         allJobs.remove(jobName);
         jobConfManager.removeConf(job.getJobConf());
         LOGGER.info("delete {} task!", jobName);

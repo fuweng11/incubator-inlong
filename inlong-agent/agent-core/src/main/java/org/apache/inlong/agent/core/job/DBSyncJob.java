@@ -53,6 +53,13 @@ public class DBSyncJob extends Job {
         }
     }
 
+    public String getTaskId() {
+        if (task != null) {
+            return task.getTaskId();
+        }
+        return null;
+    }
+
     public JobStat.State getJobStat() {
         if (task == null) {
             LOGGER.error("dbsync job {} is null", jobName);
