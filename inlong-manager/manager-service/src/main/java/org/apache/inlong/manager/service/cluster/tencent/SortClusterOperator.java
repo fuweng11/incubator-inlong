@@ -32,6 +32,7 @@ import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterRequest;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.ck.SortClickHouseClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.hive.SortHiveClusterInfo;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.iceberg.SortIcebergClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.thive.SortThiveClusterInfo;
 import org.apache.inlong.manager.service.cluster.AbstractClusterOperator;
 import org.slf4j.Logger;
@@ -42,10 +43,22 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Service
 public class SortClusterOperator extends AbstractClusterOperator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SortClusterOperator.class);
+
+    private static final Set<String> SORT_CLUSTER_SET = new HashSet<String>() {
+        {
+            add(ClusterType.SORT_HIVE);
+            add(ClusterType.SORT_THIVE);
+            add(ClusterType.SORT_CK);
+            add(ClusterType.SORT_ICEBERG);
+        }
+    };
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -54,8 +67,7 @@ public class SortClusterOperator extends AbstractClusterOperator {
 
     @Override
     public Boolean accept(String clusterType) {
-        return getClusterType().equals(clusterType) || ClusterType.SORT_THIVE.equals(clusterType)
-                || ClusterType.SORT_CK.equals(clusterType);
+        return SORT_CLUSTER_SET.contains(clusterType);
     }
 
     @Override
@@ -101,6 +113,9 @@ public class SortClusterOperator extends AbstractClusterOperator {
             case ClusterType.SORT_CK:
                 sortClusterInfo = new SortClickHouseClusterInfo();
                 break;
+            case ClusterType.SORT_ICEBERG:
+                sortClusterInfo = new SortIcebergClusterInfo();
+                break;
             default:
                 throw new BusinessException("unsupported cluster type " + entity.getType());
         }
@@ -112,4 +127,5 @@ public class SortClusterOperator extends AbstractClusterOperator {
         }
         return sortClusterInfo;
     }
+
 }

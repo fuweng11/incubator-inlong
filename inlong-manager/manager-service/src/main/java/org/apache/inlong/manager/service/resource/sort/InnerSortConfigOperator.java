@@ -18,8 +18,8 @@
 package org.apache.inlong.manager.service.resource.sort;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
+import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
@@ -28,10 +28,12 @@ import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
+import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.resource.sort.tencent.ck.SortCkConfigService;
 import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
+import org.apache.inlong.manager.service.resource.sort.tencent.iceberg.SortIcebergConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +63,8 @@ public class InnerSortConfigOperator implements SortConfigOperator {
     private SortCkConfigService ckConfigService;
     @Autowired
     private SortHiveConfigService hiveConfigService;
+    @Autowired
+    private SortIcebergConfigService icebergConfigService;
 
     @Override
     public Boolean accept(Integer enableZk) {
@@ -80,10 +84,11 @@ public class InnerSortConfigOperator implements SortConfigOperator {
         List<SinkInfo> configList = sinkMapper.selectAllConfig(groupId, streamIds);
         List<InnerHiveFullInfo> hiveInfos = new ArrayList<>();
         List<InnerClickHouseSink> clickHouseSinkList = new ArrayList<>();
+        List<InnerIcebergSink> icebergSinkList = new ArrayList<>();
         for (SinkInfo sinkInfo : configList) {
             switch (sinkInfo.getSinkType()) {
-                case DataNodeType.INNER_HIVE:
-                case DataNodeType.INNER_THIVE:
+                case SinkType.INNER_HIVE:
+                case SinkType.INNER_THIVE:
                     InnerBaseHiveSinkDTO hiveInfo = InnerBaseHiveSinkDTO.getFromJson(sinkInfo.getExtParams());
                     StreamSinkEntity sink = sinkMapper.selectByPrimaryKey(sinkInfo.getId());
                     InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) dataNodeService.get(
@@ -92,9 +97,13 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                             dataNodeInfo);
                     hiveInfos.add(hiveFullInfo);
                     break;
-                case DataNodeType.INNER_CK:
+                case SinkType.INNER_CK:
                     InnerClickHouseSink clickHouseSink = (InnerClickHouseSink) sinkService.get(sinkInfo.getId());
                     clickHouseSinkList.add(clickHouseSink);
+                    break;
+                case SinkType.INNER_ICEBERG:
+                    InnerIcebergSink icebergSink = (InnerIcebergSink) sinkService.get(sinkInfo.getId());
+                    icebergSinkList.add(icebergSink);
                     break;
                 default:
                     LOGGER.warn("skip to push sort config for sink id={}, as no sort config info", sinkInfo.getId());
@@ -102,6 +111,7 @@ public class InnerSortConfigOperator implements SortConfigOperator {
         }
         hiveConfigService.buildHiveConfig(groupInfo, hiveInfos);
         ckConfigService.buildCkConfig(groupInfo, clickHouseSinkList);
+        icebergConfigService.buildIcebergConfig(groupInfo, icebergSinkList);
     }
 
 }
