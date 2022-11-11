@@ -26,7 +26,8 @@ export class StreamInfo extends StreamDefaultInfo {
   // You can extend StreamInfo at here...
   @FieldDecorator({
     type: 'radio',
-    props: {
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
       options: [
         {
           label: 'CSV',
@@ -41,7 +42,7 @@ export class StreamInfo extends StreamDefaultInfo {
           value: 'BINLOG',
         },
       ],
-    },
+    }),
   })
   dataType: string;
 }
