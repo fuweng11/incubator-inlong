@@ -41,6 +41,11 @@ sed -i "s/zhiyan.appMark=.*$/zhiyan.appMark=${ZHIYAN_APPMARK}/g" "${conf_file}"
 sed -i "s/zhiyan.metricGroup=.*$/zhiyan.metricGroup=${ZHIYAN_METRICGROUP}/g" "${conf_file}"
 sed -i "s/zhiyan.env=.*$/zhiyan.env=${ZHIYAN_ENV}/g" "${conf_file}"
 sed -i "s/zhiyan.instanceMark=.*$/zhiyan.instanceMark=${local_ip}/g" "${conf_file}"
+sed -i "s/agent.dbsync.enable=.*$/agent.dbsync.enable=${DBSYNC_ENABLE}/g" "${conf_file}"
+# shellcheck disable=SC2039
+if [[ "${DBSYNC_ENABLE}" = "true" ]]; then
+  sed -i "s/agent.fetcher.classname=.*$/agent.fetcher.classname=org.apache.inlong.agent.plugin.fetcher.HaBinlogFetcher/g" "${conf_file}"
+fi
 
 # start
 bash +x ${file_path}/bin/agent.sh start
