@@ -18,8 +18,12 @@
 package org.apache.inlong.manager.plugin.auth.openapi;
 
 import com.google.common.collect.Sets;
-import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.inlong.manager.pojo.user.UserInfo;
+import org.apache.inlong.manager.pojo.user.UserRoleCode;
 import org.apache.inlong.manager.service.core.RoleService;
+import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -30,9 +34,12 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 
+import java.util.List;
+
 /**
  * Open api authorizing realm
  */
+@Slf4j
 public class OpenAPIAuthorizingRealm extends AuthorizingRealm {
 
     private final TAuthAuthenticator tAuthAuthenticator;
@@ -53,13 +60,30 @@ public class OpenAPIAuthorizingRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
-        SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
-        String username = (String) getAvailablePrincipal(principalCollection);
-        if (username != null) {
-            info.setRoles(Sets.newHashSet(roleService.listByUser(username)));
-            LoginUserUtils.getLoginUser().setRoles(info.getRoles());
+        SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
+        Object principal = getAvailablePrincipal(principalCollection);
+        if (principal == null) {
+            log.warn("null principal");
+            return authorizationInfo;
         }
-        return info;
+        if (principal instanceof UserInfo) {
+            UserInfo userInfo = (UserInfo) principal;
+            authorizationInfo.setRoles(userInfo.getRoles());
+            LoginUserUtils.getLoginUser().setRoles(authorizationInfo.getRoles());
+            return authorizationInfo;
+        }
+        if (principal instanceof String) {
+            List<String> roles = roleService.listByUser((String) principal);
+            if (CollectionUtils.isEmpty(roles)) {
+                authorizationInfo.setRoles(Sets.newHashSet(UserRoleCode.OPERATOR));
+            } else {
+                authorizationInfo.setRoles(Sets.newHashSet(roles));
+            }
+            LoginUserUtils.getLoginUser().setRoles(authorizationInfo.getRoles());
+        }
+
+        log.warn("principal {} not instance of UserInfo nor String, ignored", principal);
+        return authorizationInfo;
     }
 
     /**

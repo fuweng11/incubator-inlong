@@ -56,6 +56,11 @@ public class WebAuthorizingRealm extends AuthorizingRealm {
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
         SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
+        Object principal = getAvailablePrincipal(principalCollection);
+        if (!(principal instanceof UserInfo)) {
+            log.warn("principal {} not instance of UserInfo, ignored", principal);
+            return authorizationInfo;
+        }
         UserInfo userInfo = (UserInfo) getAvailablePrincipal(principalCollection);
         if (userInfo != null) {
             authorizationInfo.setRoles(userInfo.getRoles());

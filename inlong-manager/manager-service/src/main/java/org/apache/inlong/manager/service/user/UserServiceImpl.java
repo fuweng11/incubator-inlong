@@ -182,16 +182,16 @@ public class UserServiceImpl implements UserService {
                 && Objects.equals(currentUser, updateName);
         Preconditions.checkFalse(managerToOrdinary, "You are a manager and you cannot change to an ordinary user");
 
-        // target username must not exist
         UserEntity updateUserEntity = userMapper.selectById(request.getId());
         Preconditions.checkNotNull(updateUserEntity, "User not exists with id=" + request.getId());
-        String errMsg = String.format("user has already updated with username=%s, curVersion=%s",
-                updateName, request.getVersion());
+        String errMsg = String.format("user has already updated with username=%s, reqVersion=%s, storedVersion=%s",
+                updateName, request.getVersion(), updateUserEntity.getVersion());
         if (!Objects.equals(updateUserEntity.getVersion(), request.getVersion())) {
             LOGGER.error(errMsg);
             throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
         }
 
+        // target username must not exist
         UserEntity targetUserEntity = userMapper.selectByName(updateName);
         Preconditions.checkTrue(Objects.isNull(targetUserEntity)
                         || Objects.equals(targetUserEntity.getName(), updateUserEntity.getName()),

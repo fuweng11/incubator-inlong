@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.plugin.auth.web;
 
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
@@ -41,6 +42,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Base proxy authenticator
@@ -54,6 +56,8 @@ public abstract class BaseProxyAuthenticator implements Authenticator {
 
     private final UserService userService;
     private final SmartGateService smartGateService;
+
+    private final Map<String, Object> lockMap = Maps.newConcurrentMap();
 
     public BaseProxyAuthenticator(UserService userService, SmartGateService smartGateService) {
         this.userService = userService;
@@ -116,34 +120,37 @@ public abstract class BaseProxyAuthenticator implements Authenticator {
     private UserInfo createOrUpdateUser(String username, String proxyUser) {
         StaffDTO staffInfo = getStaffInfo(username, proxyUser);
         UserInfo userInfo = userService.getByName(username);
-        if (userInfo != null) {
-            // update with the latest staff info
-            userInfo.setExtParams(StaffDTO.convertToJson(staffInfo));
-            UserRequest request = CommonBeanUtils.copyProperties(userInfo, UserRequest::new);
-            request.setPassword(DUMMY_PASSWORD);
-            try {
-                userService.update(request, username);
-                userInfo.setRoles(Collections.singleton(UserTypeEnum.name(userInfo.getAccountType())));
-            } catch (BusinessException e) {
-                if (e.getCode() == ErrorCodeEnum.CONFIG_EXPIRED.getCode()) {
-                    // ignore concurrent update because very likely no data needs to update
-                    log.warn("user info {} might be out of date", userInfo);
+        lockMap.putIfAbsent(username, username);
+        synchronized (lockMap.get(username)) {
+            if (userInfo != null) {
+                // update with the latest staff info
+                userInfo.setExtParams(StaffDTO.convertToJson(staffInfo));
+                UserRequest request = CommonBeanUtils.copyProperties(userInfo, UserRequest::new);
+                request.setPassword(DUMMY_PASSWORD);
+                try {
+                    userService.update(request, username);
+                } catch (BusinessException e) {
+                    if (e.getCode() == ErrorCodeEnum.CONFIG_EXPIRED.getCode()) {
+                        // ignore concurrent update because very likely no data needs to update
+                        log.warn("{} user info might be out of date", userInfo.getName());
+                    }
                 }
+                userInfo.setRoles(Collections.singleton(UserTypeEnum.name(userInfo.getAccountType())));
+                return userInfo;
             }
-            return userInfo;
+            // or create with staff info
+            UserRequest request = UserRequest.builder()
+                    .name(username)
+                    .password(DUMMY_PASSWORD)
+                    .validDays(DEFAULT_VALID_DAYS)
+                    .accountType(UserTypeEnum.OPERATOR.getCode())
+                    .extParams(StaffDTO.convertToJson(staffInfo))
+                    .build();
+            int userId = userService.save(request, username);
+            userInfo = CommonBeanUtils.copyProperties(request, UserInfo::new);
+            userInfo.setId(userId);
+            userInfo.setRoles(Collections.singleton(UserTypeEnum.name(userInfo.getAccountType())));
         }
-        // or create with staff info
-        UserRequest request = UserRequest.builder()
-                .name(username)
-                .password(DUMMY_PASSWORD)
-                .validDays(DEFAULT_VALID_DAYS)
-                .accountType(UserTypeEnum.OPERATOR.getCode())
-                .extParams(StaffDTO.convertToJson(staffInfo))
-                .build();
-        int userId = userService.save(request, username);
-        userInfo = CommonBeanUtils.copyProperties(request, UserInfo::new);
-        userInfo.setId(userId);
-        userInfo.setRoles(Collections.singleton(UserTypeEnum.name(userInfo.getAccountType())));
         return userInfo;
     }
 
