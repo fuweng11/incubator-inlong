@@ -56,8 +56,8 @@
             <artifactId>jetty-util</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.tencent.teg.monitor</groupId>
-            <artifactId>java-sdk</artifactId>
+            <groupId>org.fusesource</groupId>
+            <artifactId>sigar</artifactId>
         </dependency>
     </dependencies>
 </project>

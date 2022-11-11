@@ -257,6 +257,7 @@
         <caffeine.version>2.9.3</caffeine.version>
         <kafka.clients.version>3.0.0</kafka.clients.version>
         <paho.client.version>1.2.5</paho.client.version>
+        <sigar.version>1.6.4</sigar.version>
 
         <kubernetes.client.version>6.0.0</kubernetes.client.version>
 
@@ -318,6 +319,12 @@
                         <artifactId>spotbugs-annotations</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fusesource</groupId>
+                <artifactId>sigar</artifactId>
+                <version>${sigar.version}</version>
             </dependency>
 
             <dependency>

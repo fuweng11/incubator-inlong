@@ -160,6 +160,10 @@ public class ConfigConstants {
     public static final String KEY_MEMORYLIMIT = "memoryLimit";
     public static final String KEY_CONNECTIONSPERBROKER = "connectionsPerBroker";
 
+    public static final String KEY_LOAD_NETWORK = "loadMonNetworkName";
+    public static final String KEY_LOAD_COLLECT_INTERVALMS = "loadMonCollectIntervalMs";
+    public static final String KEY_LOAD_MAX_ACC_PRINT = "loadMonMaxAccPrintCnt";
+
     public static final String INTER_MANAGER_SECURE_AUTH = "manager.internal.secure.auth";
     public static final String DEFAULT_INTER_MANAGER_SECURE_AUTH = "secure-authentication";
 

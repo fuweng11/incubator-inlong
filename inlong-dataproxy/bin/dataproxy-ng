@@ -226,6 +226,7 @@ run_flume() {
 
 # set default params
 DATAPROXY_CLASSPATH=""
+FLUME_JAVA_LIBRARY_PATH="/data/inlong/thirdlibs/lib"
 
 # Extra options to be passed to the jvm
 if [ -z "$DATAPROXY_JVM_HEAP_OPTS" ]; then

@@ -37,6 +37,7 @@ import org.apache.inlong.common.heartbeat.StreamHeartbeat;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.config.holder.SourceReportInfo;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
+import org.apache.inlong.dataproxy.loadmonitor.LoadMonitor;
 import org.apache.inlong.dataproxy.utils.HttpUtils;
 
 import java.util.ArrayList;
@@ -125,6 +126,11 @@ public class HeartbeatManager implements AbstractHeartbeatManager {
         if (!validReportInfo(reportInfo)) {
             return null;
         }
+        // check load value
+        int loadValue = LoadMonitor.getInstance().getLoadValue();
+        if (loadValue == 0 || loadValue == (-1)) {
+            loadValue = 0xffff;
+        }
         heartbeatMsg.setNodeSrvStatus(ConfigManager.getInstance().isMqClusterReady()
                 ? NodeSrvStatus.OK : NodeSrvStatus.SERVICE_UNREADY);
         heartbeatMsg.setIp(reportInfo.getIp());
@@ -132,7 +138,7 @@ public class HeartbeatManager implements AbstractHeartbeatManager {
         heartbeatMsg.setProtocolType(reportInfo.getProtocolType());
         heartbeatMsg.setComponentType(ComponentTypeEnum.DataProxy.getType());
         heartbeatMsg.setReportTime(System.currentTimeMillis());
-        heartbeatMsg.setLoad(0xffff);
+        heartbeatMsg.setLoad(loadValue);
         Map<String, String> commonProperties = configManager.getCommonProperties();
         heartbeatMsg.setClusterTag(commonProperties.getOrDefault(
                 ConfigConstants.PROXY_CLUSTER_TAG, DEFAULT_CLUSTER_TAG));

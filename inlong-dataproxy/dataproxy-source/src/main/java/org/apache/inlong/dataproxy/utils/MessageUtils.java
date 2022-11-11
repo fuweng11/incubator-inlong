@@ -33,6 +33,7 @@ import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.util.NetworkUtils;
 import org.apache.inlong.dataproxy.base.SinkRspEvent;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
+import org.apache.inlong.dataproxy.loadmonitor.LoadMonitor;
 import org.apache.inlong.dataproxy.source.MsgType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,7 +156,8 @@ public class MessageUtils {
                         commonAttrMap.get(AttributeConstants.UNIQ_ID));
             } else if (MsgType.MSG_BIN_HEARTBEAT.equals(msgType)) {
                 binBuffer = buildHBRspPackage(destAttrs,
-                        (Byte)resultMap.get(ConfigConstants.VERSION_TYPE), 0);
+                        (Byte)resultMap.get(ConfigConstants.VERSION_TYPE),
+                        LoadMonitor.getInstance().getLoadValue());
             } else {
                 // MsgType.MSG_ACK_SERVICE.equals(msgType)
                 // MsgType.MSG_ORIGINAL_RETURN.equals(msgType)
