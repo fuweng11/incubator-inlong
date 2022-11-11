@@ -58,17 +58,18 @@
                                    source_type, source_name, template_id,
                                    agent_ip, uuid, data_node_name,
                                    inlong_cluster_name, serialization_type,
-                                   snapshot, start_position, report_time,
-                                   ext_params, operate_log, status,
+                                   snapshot, start_position,
+                                   report_time, ext_params,
+                                   operate_log, status,
                                    previous_status, creator, modifier)
         values (#{inlongGroupId,jdbcType=VARCHAR}, #{inlongStreamId,jdbcType=VARCHAR},
                 #{sourceType,jdbcType=VARCHAR}, #{sourceName,jdbcType=VARCHAR}, #{templateId,jdbcType=INTEGER},
                 #{agentIp,jdbcType=VARCHAR}, #{uuid,jdbcType=VARCHAR}, #{dataNodeName,jdbcType=VARCHAR},
                 #{inlongClusterName,jdbcType=VARCHAR}, #{serializationType,jdbcType=VARCHAR},
                 #{snapshot,jdbcType=LONGVARCHAR}, #{startPosition,jdbcType=LONGVARCHAR},
-                #{modifyTime,jdbcType=TIMESTAMP}, #{extParams,jdbcType=LONGVARCHAR},
-                #{operateLog,jdbcType=LONGVARCHAR}, #{status,jdbcType=INTEGER},
-                #{previousStatus,jdbcType=INTEGER}, #{creator,jdbcType=VARCHAR}, #{modifier,jdbcType=VARCHAR})
+                #{reportTime,jdbcType=TIMESTAMP}, #{extParams,jdbcType=LONGVARCHAR}, #{operateLog,jdbcType=LONGVARCHAR},
+                #{status,jdbcType=INTEGER}, #{previousStatus,jdbcType=INTEGER},
+                #{creator,jdbcType=VARCHAR}, #{modifier,jdbcType=VARCHAR})
     </insert>
 
     <select id="selectById" resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
@@ -114,8 +115,8 @@
         </where>
     </select>
     <select id="selectByCondition"
-        parameterType="org.apache.inlong.manager.pojo.source.SourcePageRequest"
-        resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
+            parameterType="org.apache.inlong.manager.pojo.source.SourcePageRequest"
+            resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
         select
         <include refid="Base_Column_List"/>
         from stream_source
@@ -330,6 +331,19 @@
             </if>
         </where>
     </select>
+
+    <update id="updateByRelatedId">
+        update stream_source
+        <set>
+            is_deleted = id,
+            previous_status = status,
+            status = #{status, jdbcType=INTEGER},
+            version = version + 1
+        </set>
+        where is_deleted = 0
+        and inlong_group_id = #{groupId, jdbcType=VARCHAR}
+        and inlong_stream_id = #{streamId, jdbcType=VARCHAR}
+    </update>
 
     <update id="updateByPrimaryKeySelective" parameterType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
         update stream_source

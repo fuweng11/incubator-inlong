@@ -15,24 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.common.enums;
+package org.apache.inlong.manager.client.api;
 
-/**
- * Status enum of cluster
- */
-public enum ClusterStatus {
+public interface StreamSource {
 
-    NORMAL(1),
-
-    INITING(2);
-
-    final int status;
-
-    ClusterStatus(int status) {
-        this.status = status;
-    }
-
-    public int getStatus() {
-        return status;
-    }
+    /**
+     * Force deletes the stream source by groupId and streamId
+     *
+     * @param groupId The belongs group id.
+     * @param streamId The belongs stream id.
+     * @return Whether succeed
+     */
+    Boolean forceDelete(String groupId, String streamId);
 }
