@@ -113,6 +113,10 @@
             <artifactId>kafka-clients</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.tencent.teg.monitor</groupId>
+            <artifactId>java-sdk</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.fusesource</groupId>
             <artifactId>sigar</artifactId>
         </dependency>
