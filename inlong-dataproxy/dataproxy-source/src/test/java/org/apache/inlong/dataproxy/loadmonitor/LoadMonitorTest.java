@@ -27,10 +27,10 @@ public class LoadMonitorTest {
     @Test
     public void testLoadMonitor() throws Exception {
         System.out.println(System.getProperty("java.library.path"));
-        for (int count = 0; count < 100; count++) {
-            System.out.println("Load is " + LoadMonitor.getInstance().getLoadValue());
-            Thread.sleep(20000);
-        }
+        System.out.println("Load1 is " + LoadMonitor.getInstance().getLoadValue());
+        Thread.sleep(2000);
+        System.out.println("Load2 is " + LoadMonitor.getInstance().getLoadValue());
+        LoadMonitor.getInstance().stop();
     }
 
 }
