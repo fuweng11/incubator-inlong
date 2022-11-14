@@ -20,22 +20,19 @@ package org.apache.inlong.agent.plugin.sources.reader;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
-import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
+import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.Reader;
 import org.apache.inlong.agent.pojo.DebeziumOffset;
-import org.apache.inlong.agent.state.JobStat.State;
 import org.apache.inlong.agent.utils.DebeziumOffsetSerializer;
 import org.apache.inlong.common.metric.MetricRegister;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
+import org.apache.inlong.common.util.NetworkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.inlong.common.util.NetworkUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_GROUP_ID;
@@ -54,6 +51,7 @@ import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_PLUGIN_INIT_TI
 public abstract class AbstractReader implements Reader {
 
     protected static final AtomicLong METRIC_INDEX = new AtomicLong(0);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReader.class);
     protected String inlongGroupId;
     protected String inlongStreamId;
     //metric
@@ -61,8 +59,6 @@ public abstract class AbstractReader implements Reader {
     protected AgentMetricItem readerMetric;
     protected String metricName;
     protected Map<String, String> dimensions;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReader.class);
 
     @Override
     public void init(JobProfile jobConf) {
@@ -114,27 +110,7 @@ public abstract class AbstractReader implements Reader {
     }
 
     @Override
-    public State getState() {
-        return null;
-    }
+    public void addMessage(Message message) {
 
-    @Override
-    public void setState(State state) {
-
-    }
-
-    @Override
-    public LogPosition getMaxProcessedPosition() {
-        return null;
-    }
-
-    @Override
-    public DbSyncHeartbeat genHeartBeat(boolean markToStop) {
-        return null;
-    }
-
-    @Override
-    public CompletableFuture<Void> resetReader() {
-        return null;
     }
 }

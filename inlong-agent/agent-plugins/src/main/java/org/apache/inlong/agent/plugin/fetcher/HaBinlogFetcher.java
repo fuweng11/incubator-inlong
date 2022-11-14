@@ -435,16 +435,15 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
         LOGGER.debug("Get taskId :{}, dbName:{}, tbName:{} to delete task!",
                 taskId, dbName, tableName);
 
-        JobProfile conf = jobConfManager.getConfByTaskId(taskId);
+        DBSyncJobConf conf = jobConfManager.getConfByTaskId(taskId);
         if (conf == null) {
             LOGGER.warn("can't find task_id {} ", taskId);
             // not exist, delete ok!
             future.complete(null);
         } else {
-            DBSyncJobConf dbSyncJobConf = conf.getDbSyncJobConf();
-            String jobName = dbSyncJobConf.getJobName();
-            dbSyncJobConf.removeTable(taskId);
-            if (dbSyncJobConf.bNoNeedDb()) {
+            String jobName = conf.getJobName();
+            conf.removeTable(taskId);
+            if (conf.bNoNeedDb()) {
                 jobManager.stopJob(jobName);
             }
             future.complete(null);

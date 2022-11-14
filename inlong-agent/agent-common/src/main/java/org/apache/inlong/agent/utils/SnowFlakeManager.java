@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.plugin.utils;
-
-import org.apache.inlong.agent.utils.SnowFlake;
+package org.apache.inlong.agent.utils;
 
 import java.util.concurrent.ConcurrentHashMap;
 

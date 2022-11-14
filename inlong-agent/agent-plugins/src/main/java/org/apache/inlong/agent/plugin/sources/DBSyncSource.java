@@ -19,7 +19,7 @@ package org.apache.inlong.agent.plugin.sources;
 
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.plugin.Reader;
-import org.apache.inlong.agent.plugin.sources.reader.dbsync.DBSyncReader;
+import org.apache.inlong.agent.plugin.sources.reader.DBSyncReader;
 
 import java.util.ArrayList;
 import java.util.List;

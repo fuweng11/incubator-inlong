@@ -23,13 +23,11 @@ import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-//TODO: is it ok to directly use DBSyncTaskConf?
 public class MysqlTableConf {
 
     public static final String INST_NAME = "inst.name";
     public static final String DATABASE_NAME = "database.name";
     public static final String TABLE_NAME = "table.name";
-    public static final String TOPIC = "topic";
     public static final String TASK_ID = "task.id";
     public static final String TASK_STREAMID = "task.streamId";
     public static final String TASK_GROUPID = "task.groupId";
@@ -37,7 +35,7 @@ public class MysqlTableConf {
     public static final String TASK_STATUS = "task.status";
     public static final String TASK_CHARSET_NAME = "task.charset.name";
 
-    private String instName;
+    private String jobName;
     private String dbName;
     private String tbName;
     private ArrayList<String> fields;
@@ -49,9 +47,9 @@ public class MysqlTableConf {
     private boolean skipDelete = false;
     private Charset charset;
 
-    public MysqlTableConf(String instName, String databaseName, String tableName, String groupId, String streamId,
+    public MysqlTableConf(String jobName, String databaseName, String tableName, String groupId, String streamId,
             Integer taskId, Charset charset, boolean skipDelete) {
-        this.instName = instName;
+        this.jobName = jobName;
         this.dbName = databaseName;
         this.tbName = tableName;
         this.groupId = groupId;
@@ -68,6 +66,10 @@ public class MysqlTableConf {
 
     public String getGroupId() {
         return groupId;
+    }
+
+    public String getJobName() {
+        return jobName;
     }
 
     public String getTableName() {
@@ -96,7 +98,7 @@ public class MysqlTableConf {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("In instance : ").append(instName)
+        sb.append("In instance : ").append(jobName)
                 .append(" taskId : ").append(taskId)
                 .append(" Database : ").append(dbName)
                 .append(" Table : ").append(tbName).append("\n");
@@ -111,7 +113,7 @@ public class MysqlTableConf {
 
     public JSONObject getJsonObj() {
         JSONObject obj = new JSONObject();
-        obj.put(INST_NAME, this.instName);
+        obj.put(INST_NAME, this.jobName);
         obj.put(DATABASE_NAME, this.dbName);
         obj.put(TABLE_NAME, this.tbName);
         obj.put(TASK_GROUPID, this.groupId);

@@ -21,6 +21,11 @@ import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 
 import java.util.Map;
 
+import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_GROUP_ID;
+import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_STREAM_ID;
+import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_GROUP_ID;
+import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_STREAM_ID;
+
 public class DBSyncMessage extends DefaultMessage {
 
     private LogPosition logPosition;
@@ -58,5 +63,13 @@ public class DBSyncMessage extends DefaultMessage {
 
     public void setInstName(String instName) {
         this.instName = instName;
+    }
+
+    public String getGroupId() {
+        return header.getOrDefault(KEY_INLONG_GROUP_ID, DEFAULT_PROXY_INLONG_GROUP_ID);
+    }
+
+    public String getStreamId() {
+        return header.getOrDefault(KEY_INLONG_STREAM_ID, DEFAULT_PROXY_INLONG_STREAM_ID);
     }
 }

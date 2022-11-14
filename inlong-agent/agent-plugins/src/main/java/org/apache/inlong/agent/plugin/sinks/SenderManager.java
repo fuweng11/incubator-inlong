@@ -165,7 +165,6 @@ public class SenderManager {
 
     private AgentMetricItem getMetricItem(String groupId, String streamId) {
         Map<String, String> dims = new HashMap<>();
-        dims.put(KEY_PLUGIN_ID, this.getClass().getSimpleName());
         dims.put(KEY_INLONG_GROUP_ID, groupId);
         dims.put(KEY_INLONG_STREAM_ID, streamId);
         return getMetricItem(dims);

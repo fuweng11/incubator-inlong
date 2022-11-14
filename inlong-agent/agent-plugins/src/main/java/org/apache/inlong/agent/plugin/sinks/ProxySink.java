@@ -18,7 +18,6 @@
 package org.apache.inlong.agent.plugin.sinks;
 
 import org.apache.inlong.agent.common.AgentThreadFactory;
-import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.CommonConstants;
 import org.apache.inlong.agent.message.BatchProxyMessage;
@@ -26,7 +25,7 @@ import org.apache.inlong.agent.message.EndMessage;
 import org.apache.inlong.agent.message.ProxyMessage;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.MessageFilter;
-import org.apache.inlong.agent.plugin.message.PackProxyMessage;
+import org.apache.inlong.agent.message.PackProxyMessage;
 import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.ThreadUtils;
 import org.slf4j.Logger;
@@ -83,7 +82,7 @@ public class ProxySink extends AbstractSink {
                             (s, packProxyMessage) -> {
                                 if (packProxyMessage == null) {
                                     packProxyMessage = new PackProxyMessage(jobInstanceId, jobConf, inlongGroupId,
-                                            proxyMessage.getInlongStreamId());
+                                            proxyMessage.getInlongStreamId());//use proxyMessage.getInlongGroupId
                                     packProxyMessage.generateExtraMap(proxyMessage.getDataKey());
                                 }
                                 // add message to package proxy
@@ -156,9 +155,6 @@ public class ProxySink extends AbstractSink {
     public void init(JobProfile jobConf) {
         super.init(jobConf);
         jobInstanceId = jobConf.get(JOB_INSTANCE_ID);
-        if (AgentConfiguration.getAgentConf().enableHA()) {
-            jobInstanceId = jobConf.getDbSyncJobConf().getJobName();
-        }
         batchFlushInterval = jobConf.getInt(PROXY_BATCH_FLUSH_INTERVAL,
                 DEFAULT_PROXY_BATCH_FLUSH_INTERVAL);
         cache = new ConcurrentHashMap<>(10);

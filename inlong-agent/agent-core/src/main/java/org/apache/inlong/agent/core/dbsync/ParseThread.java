@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.plugin.sources.reader.dbsync;
+package org.apache.inlong.agent.core.dbsync;
 
 import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
@@ -28,7 +28,6 @@ import org.apache.inlong.agent.common.protocol.DBSyncMsg.RowData;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.MysqlTableConf;
 import org.apache.inlong.agent.core.FieldManager;
-import org.apache.inlong.agent.core.job.PositionControl;
 import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.mysql.connector.MysqlConnection;
 import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
@@ -41,11 +40,11 @@ import org.apache.inlong.agent.mysql.connector.exception.TableMapEventMissExcept
 import org.apache.inlong.agent.mysql.protocol.position.EntryPosition;
 import org.apache.inlong.agent.mysql.protocol.position.LogIdentity;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
-import org.apache.inlong.agent.plugin.utils.SnowFlakeManager;
 import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.MonitorLogUtils;
+import org.apache.inlong.agent.utils.SnowFlakeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +64,9 @@ public class ParseThread extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseThread.class);
     private final String parserJobName;
-    private LinkedBlockingQueue<PkgEvent> queue;
+    private final LinkedBlockingQueue<PkgEvent> queue;
+    private final SnowFlakeManager snowFlakeManager = new SnowFlakeManager();
+    private final PositionControl positionControl;
     private LogPosition lastParsePosition;
     private LogPosition lastProcessedPosition;
     @SuppressWarnings("rawtypes")
@@ -73,21 +74,19 @@ public class ParseThread extends Thread {
     private volatile boolean bParseRunning = false;
     private JobStat.State parseStatus;
     private InetSocketAddress dbAddress;
-    private DBSyncReader dbSyncReader;
+    private final DBSyncReadOperator dbSyncReadOperator;
     private String jobName;
     private char ipSep = '@';
     private char sep = ',';
-    private SnowFlakeManager snowFlakeManager = new SnowFlakeManager();
-    private final PositionControl positionControl;
 
-    public ParseThread(String parserName, MysqlConnection parseMetaConnection, DBSyncReader dbSyncReader) {
+    public ParseThread(String parserName, MysqlConnection parseMetaConnection, DBSyncReadOperator dbSyncReadOperator) {
         this.parseMetaConnection = parseMetaConnection;
         this.parserJobName = parserName;
         this.dbAddress = parseMetaConnection.getConnector().getAddress();
-        this.dbSyncReader = dbSyncReader;
-        this.jobName = dbSyncReader.getJobName();
+        this.dbSyncReadOperator = dbSyncReadOperator;
+        this.jobName = dbSyncReadOperator.getJobName();
         TableMetaCache tableMetaCache = new TableMetaCache(this.parseMetaConnection);
-        ((LogEventConvert) dbSyncReader.getBinlogParser()).setTableMetaCache(tableMetaCache);
+        ((LogEventConvert) dbSyncReadOperator.getBinlogParser()).setTableMetaCache(tableMetaCache);
         queue = new LinkedBlockingQueue<>();
         super.setUncaughtExceptionHandler((t, e) -> {
             parseStatus = JobStat.State.STOP;
@@ -95,7 +94,7 @@ public class ParseThread extends Thread {
                     jobName, parserJobName, DBSyncUtils.getExceptionStack(e));
         });
         parseStatus = JobStat.State.INIT;
-        positionControl = dbSyncReader.getPositionControl();
+        positionControl = dbSyncReadOperator.getPositionControl();
     }
 
     public void start() {
@@ -117,7 +116,7 @@ public class ParseThread extends Thread {
                 pkgEvent = queue.poll(1, TimeUnit.SECONDS);
 
                 if (pkgEvent == null) {
-                    if (!bParseRunning && dbSyncReader.getParseDisptcherStatus() == JobStat.State.STOP
+                    if (!bParseRunning && dbSyncReadOperator.getParseDisptcherStatus() == JobStat.State.STOP
                             && queue.isEmpty() && !bInTransEnd) {
                         bInTransEnd = true;
                         LOGGER.error("{}, {} stopped occure trans end event missing!!!",
@@ -134,7 +133,7 @@ public class ParseThread extends Thread {
 
                 LogPosition firstEventPos = null;
                 for (LogEvent event : eventList) {
-                    dbSyncReader.setHeartBeat(System.currentTimeMillis());
+                    dbSyncReadOperator.setHeartBeat(System.currentTimeMillis());
                     Entry entry = null;
                     // Query -> Rows_query -> Table_map -> Update_rows -> Xid
                     if (!bParseRunning) {
@@ -147,16 +146,16 @@ public class ParseThread extends Thread {
                                 if (retryCnt > 10 || !bParseRunning) {
                                     LOGGER.error("{}, {} retry 10, now skip an event, pos {} !",
                                             jobName, parserJobName, event.getLogPos());
-                                    MonitorLogUtils.printEventDiscard(dbSyncReader.getCurrentDbInfo(),
+                                    MonitorLogUtils.printEventDiscard(dbSyncReadOperator.getCurrentDbInfo(),
                                             MonitorLogUtils.EVENT_DISCARD_EXCEED_RETRY_CNT, "");
                                     break;
                                 }
-                                entry = dbSyncReader.getBinlogParser().parse(event, dbSyncReader.jobconf);
+                                entry = dbSyncReadOperator.getBinlogParser().parse(event, dbSyncReadOperator.jobconf);
 
                             } catch (TableIdNotFoundException | TableMapEventMissException tie) {
                                 // need redump, refind the beginning of transaction and parse
                                 LOGGER.error("async parse binlog error: ", tie);
-                                MonitorLogUtils.printEventDiscard(dbSyncReader.getCurrentDbInfo(),
+                                MonitorLogUtils.printEventDiscard(dbSyncReadOperator.getCurrentDbInfo(),
                                         MonitorLogUtils.EVENT_DISCARD_TABLE_ID_NOT_FOUND, "");
                                 throw tie;
                             } catch (CanalParseException te) {
@@ -176,7 +175,7 @@ public class ParseThread extends Thread {
                             break;
                         }
                         if (entry != null) {
-                            this.lastParsePosition = dbSyncReader.buildLastPosition(entry, dbAddress);
+                            this.lastParsePosition = dbSyncReadOperator.buildLastPosition(entry, dbAddress);
                             positionControl.addEventLogPosition(lastParsePosition);
                             if ((entry.getEntryType() != EntryType.TRANSACTIONBEGIN)
                                     && (entry.getEntryType() != EntryType.TRANSACTIONEND)) {
@@ -244,10 +243,11 @@ public class ParseThread extends Thread {
 
     private synchronized void flushLastPkgEvent(PkgEvent pkgEvent, ArrayList<CanalEntry.Entry> entryList,
             LogPosition parsePos) {
-        if (dbSyncReader.lastPkgEvent == null || dbSyncReader.lastPkgEvent.getIndex() < pkgEvent.getIndex()) {
-            dbSyncReader.lastPkgEvent = pkgEvent;
-            dbSyncReader.lastEntryList = entryList;
-            dbSyncReader.lastParsePos = new LogPosition(parsePos);
+        if (dbSyncReadOperator.lastPkgEvent == null
+                || dbSyncReadOperator.lastPkgEvent.getIndex() < pkgEvent.getIndex()) {
+            dbSyncReadOperator.lastPkgEvent = pkgEvent;
+            dbSyncReadOperator.lastEntryList = entryList;
+            dbSyncReadOperator.lastParsePos = new LogPosition(parsePos);
         }
     }
 
@@ -257,8 +257,8 @@ public class ParseThread extends Thread {
         String tbName = entry.getHeader().getTableName();
 
         List<MysqlTableConf> myConfList = null;
-        if (dbSyncReader.jobconf.bInNeedTable(dbName, tbName)
-                && (myConfList = dbSyncReader.jobconf.getMysqlTableConfList(dbName, tbName)) != null) {
+        if (dbSyncReadOperator.jobconf.bInNeedTable(dbName, tbName)
+                && (myConfList = dbSyncReadOperator.jobconf.getMysqlTableConfList(dbName, tbName)) != null) {
             int sendIndex = 0;
             for (MysqlTableConf myConf : myConfList) {
                 //multi business report
@@ -285,10 +285,10 @@ public class ParseThread extends Thread {
                     positionControl.addLogPositionToCache(sendPosition);
 
                     boolean putResult = genSendDataByPbProtoc(rowChange, entry, dbName, tbName, myConf,
-                            sendPosition, parseMsgId, dbSyncReader.jobconf.getServerId());
+                            sendPosition, parseMsgId, dbSyncReadOperator.jobconf.getServerId());
 //                    if (putResult) {
 //                        //TODO:puting data first is ok?
-//                        dbSyncReader.addLogPositionToCache(sendPosition);
+//                        dbSyncReadOperator.addLogPositionToCache(sendPosition);
 //                    }
                 }
                 sendIndex++;
@@ -319,7 +319,7 @@ public class ParseThread extends Thread {
         if (needSize > 0) {
             for (RowData rowData : rowChange.getRowDatasList()) {
                 parsePbData(rowData, dbName, tbName, entry.getHeader().getExecuteTime(),
-                        eventType, parseMsgId, serverId, logPosition);
+                        eventType, parseMsgId, serverId, logPosition, myConf.getTaskId());
             }
             //TODO: is need?
 //            if (isDebug) {
@@ -337,10 +337,10 @@ public class ParseThread extends Thread {
     }
 
     private void parsePbData(RowData rowData, String dbName, String tbName, long execTime,
-            EventType eventType, long msgIdIndex, String serverId, LogPosition logPosition) {
+            EventType eventType, long msgIdIndex, String serverId, LogPosition logPosition, Integer taskId) {
         RowData.Builder rowDataOrBuilder = rowData.toBuilder();
 
-        String jobName = dbSyncReader.getJobconf().getJobName();
+        String jobName = dbSyncReadOperator.getJobconf().getJobName();
         String pbInstName = jobName.substring(0, jobName.lastIndexOf(":"));
         String schemaName = Joiner.on(ipSep)
                 .join(dbName, AgentUtils.getLocalIp(),
@@ -355,11 +355,11 @@ public class ParseThread extends Thread {
         String key = dbName + sep + tbName;
 
 //        logData.addData(rowDataOrBuilder.build().toByteArray(), key, execTime);
-        DBSyncMessage message = new DBSyncMessage(rowDataOrBuilder.build().toByteArray());
+        DBSyncMessage message = new DBSyncMessage(rowDataOrBuilder.build().toByteArray()); //add groupId-streamId
         message.setInstName(pbInstName);
         message.setLogPosition(logPosition);
         message.setMsgId(msgIdIndex);
-        dbSyncReader.addMessage(message);
+        dbSyncReadOperator.addMessage(taskId, message);
     }
 
     public void putEvents(PkgEvent events) {
@@ -392,6 +392,6 @@ public class ParseThread extends Thread {
     }
 
     public void updateCharSet(Charset charSet) {
-        ((LogEventConvert) dbSyncReader.getBinlogParser()).setCharset(charSet);
+        ((LogEventConvert) dbSyncReadOperator.getBinlogParser()).setCharset(charSet);
     }
 }

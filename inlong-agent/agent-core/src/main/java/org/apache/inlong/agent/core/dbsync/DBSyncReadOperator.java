@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.plugin.sources.reader.dbsync;
+package org.apache.inlong.agent.core.dbsync;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
@@ -24,14 +24,13 @@ import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.EntryType;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.DBSyncJobConf;
-import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.core.HeartbeatManager;
-import org.apache.inlong.agent.core.job.PositionControl;
+import org.apache.inlong.agent.core.job.DBSyncJob;
+import org.apache.inlong.agent.core.task.Task;
 import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.except.DBSyncServerException.JobInResetStatus;
 import org.apache.inlong.agent.except.DataSourceConfigException;
 import org.apache.inlong.agent.message.DBSyncMessage;
-import org.apache.inlong.agent.metrics.audit.AuditUtils;
 import org.apache.inlong.agent.mysql.connector.AuthenticationInfo;
 import org.apache.inlong.agent.mysql.connector.MysqlConnection;
 import org.apache.inlong.agent.mysql.connector.MysqlConnection.BinlogFormat;
@@ -59,8 +58,6 @@ import org.apache.inlong.agent.mysql.relaylog.AsyncRelayLogImpl;
 import org.apache.inlong.agent.mysql.relaylog.MemRelayLogImpl;
 import org.apache.inlong.agent.mysql.relaylog.RelayLog;
 import org.apache.inlong.agent.mysql.relaylog.exception.RelayLogPosErrorException;
-import org.apache.inlong.agent.plugin.Message;
-import org.apache.inlong.agent.plugin.sources.reader.AbstractReader;
 import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.state.JobStat.State;
 import org.apache.inlong.agent.state.JobStat.TaskStat;
@@ -83,11 +80,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -115,22 +110,19 @@ import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_RELAY_LOG_
 /**
  * Refactor from AsyncParseMysqlJob in DBSync
  */
-public class DBSyncReader extends AbstractReader {
+public class DBSyncReadOperator {
 
     protected static final long SECOND_MV_BIT = 1000000000L;
-    private static final Logger LOGGER = LoggerFactory.getLogger(DBSyncReader.class);
-    private static final AtomicReferenceFieldUpdater<DBSyncReader, State> STATUS_UPDATER =
-            AtomicReferenceFieldUpdater.newUpdater(DBSyncReader.class, JobStat.State.class, "status");
+    private static final Logger LOGGER = LoggerFactory.getLogger(DBSyncReadOperator.class);
+    private static final AtomicReferenceFieldUpdater<DBSyncReadOperator, State> STATUS_UPDATER =
+            AtomicReferenceFieldUpdater.newUpdater(DBSyncReadOperator.class, JobStat.State.class, "status");
     private static final long MAX_SECOND = 9999999999L;
-    private static final String KEY_MYSQL_ADDRESS = "mysqlAddress";
-    private static final String KEY_DBSYNC_JOB_NAME = "dbsyncJobName";
-    private static final String KEY_SERVER_ID = "serverId";
     private final AgentConfiguration agentConf;
     private final Object syncObject = new Object();
-    private final LinkedBlockingQueue<DBSyncMessage> messageQueue;
     private final HeartbeatManager heartbeatManager;
     private final long jobBlockTime;
     private final PositionControl positionControl;
+    private final DBSyncJob job;
     protected DBSyncJobConf jobconf;
     protected int debugCnt = 0;
     protected AtomicBoolean needTransactionPosition = new AtomicBoolean(false);
@@ -180,7 +172,8 @@ public class DBSyncReader extends AbstractReader {
     private volatile long oldTimeStampler = 10000L;
     private long lastDiffTime = -1;
 
-    public DBSyncReader(JobProfile profile) {
+    public DBSyncReadOperator(DBSyncJob job) {
+        this.job = job;
         // agent conf
         agentConf = AgentConfiguration.getAgentConf();
         isDebug = agentConf.getBoolean(DBSYNC_IS_DEBUG_MODE, DEFAULT_DBSYNC_IS_DEBUG_MODE);
@@ -193,9 +186,8 @@ public class DBSyncReader extends AbstractReader {
         }
         jobBlockTime = agentConf.getLong(DBSYNC_JOB_BLOCK_TIME_MSEC, DEFAULT_DBSYNC_JOB_BLOCK_TIME_MSEC);
         doSwitchCnt = agentConf.getInt(DBSYNC_JOB_DO_SWITCH_CNT, DEFAULT_DBSYNC_JOB_DO_SWITCH_CNT);
-        messageQueue = new LinkedBlockingQueue<>(5000);//TODO:configurable in agent.properties
         // job conf
-        jobconf = profile.getDbSyncJobConf();
+        jobconf = job.getDBSyncJobConf();
         jobName = jobconf.getJobName();
         lastLog = jobconf.getStartPos();
         mysqlAddress = jobconf.getCurMysqlIp();
@@ -217,21 +209,9 @@ public class DBSyncReader extends AbstractReader {
         return jobconf;
     }
 
-    @Override
-    public void init(JobProfile jobConf) {
-        super.init(jobConf);
-        // add metric dimensions after readerMetric is created
-        Map<String, String> readerMetricDimensions = readerMetric.getDimensions();
-        readerMetricDimensions.put(KEY_MYSQL_ADDRESS, mysqlAddress);
-        readerMetricDimensions.put(KEY_DBSYNC_JOB_NAME, jobName);
-        readerMetricDimensions.put(KEY_SERVER_ID, jobconf.getServerId());
-
-        start();
-    }
-
-    private void start() {
+    public void start() {
         running = true;
-        setState(State.INIT); //TODO: move to abstractReader init?
+        setState(State.INIT);
         MonitorLogUtils.printJobStat(this.getCurrentDbInfo(), MonitorLogUtils.JOB_STAT_INIT);
         positionControl.start();
         dispatchRunning = true;
@@ -240,87 +220,34 @@ public class DBSyncReader extends AbstractReader {
         dumpThread.start();
         dispatcherThread.start();
 
-        heartbeatManager.addMonitorReader(this.jobName, this);
+        heartbeatManager.addMonitorJob(this.jobName, this);
         TaskPositionManager.getInstance().addRunningJobPos(jobName, positionControl);
         setState(State.RUN);
         MonitorLogUtils.printJobStat(this.getCurrentDbInfo(), MonitorLogUtils.JOB_STAT_START_RUN);
     }
 
-    @Override
-    public Message read() {
-        if (!messageQueue.isEmpty()) {
-            return messageQueue.poll();
+    public void addMessage(Integer taskId, DBSyncMessage message) {
+        Task task = job.getTaskById(taskId);
+        if (task == null || task.getReader() == null) {
+            LOGGER.warn("fail to get task[{}] or reader from dbsyncReaderOperator [{}]", taskId, jobName);
+            return;
         }
-        return null;
+        task.getReader().addMessage(message);
+        positionControl.updateWaitAckCnt(1);
     }
 
-    public void addMessage(DBSyncMessage message) {
-        try {
-            readerMetric.pluginReadCount.incrementAndGet();
-            messageQueue.put(message);
-            positionControl.updateWaitAckCnt(1);
-            AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_READ_SUCCESS, inlongGroupId, inlongStreamId,
-                    System.currentTimeMillis(), 1, message.getBody().length);
-            readerMetric.pluginReadSuccessCount.incrementAndGet();
-        } catch (InterruptedException e) {
-            LOGGER.error("put message to dbsyncReader queue error", e);
-            readerMetric.pluginReadFailCount.incrementAndGet();
-        }
-    }
-
-    @Override
     public boolean isFinished() {
         return !running;
     }
 
-    @Override
-    public String getReadSource() {
-        return jobName;
-    }
-
-    @Override
-    public void setReadTimeout(long mill) {
-
-    }
-
-    @Override
-    public void setWaitMillisecond(long millis) {
-
-    }
-
-    @Override
-    public String getSnapshot() {
-        return null;
-    }
-
-    @Override
-    public void finishRead() {
-        stop();
-    }
-
-    //TODO
-    @Override
-    public boolean isSourceExist() {
-        return true;
-    }
-
-    @Override
     public State getState() {
         return status;
     }
 
-    @Override
-    public void setState(State state) {
-        STATUS_UPDATER.set(DBSyncReader.this, state);
+    private void setState(State state) {
+        STATUS_UPDATER.set(DBSyncReadOperator.this, state);
     }
 
-    //TODO: is ok?
-    @Override
-    public void destroy() {
-        finishRead();
-    }
-
-    //TODO:move to job level?
     public synchronized void restart() {
         if (getState() == JobStat.State.RUN) {
             return;
@@ -358,13 +285,14 @@ public class DBSyncReader extends AbstractReader {
     }
 
     public synchronized void stop() {
+        //TODO: first check running?
         running = false;
 
         DbSyncHeartbeat stopHb = genHeartBeat(true);
         if (stopHb != null) {
             heartbeatManager.addStoppedHeartbeat(stopHb);
         }
-        heartbeatManager.removeMonitorReader(this.jobName);
+        heartbeatManager.removeMonitorJob(this.jobName);
 
         // stop acklog
         positionControl.stop();
@@ -531,7 +459,6 @@ public class DBSyncReader extends AbstractReader {
         }
     }
 
-    @Override
     public LogPosition getMaxProcessedPosition() {
         LogPosition tmpProcessedPos = null;
         try {
@@ -656,7 +583,7 @@ public class DBSyncReader extends AbstractReader {
 
     protected void preDump(MysqlConnection connection) {
         if (binlogParser != null && binlogParser instanceof LogEventConvert) {
-            metaConnection = (MysqlConnection) connection.fork();
+            metaConnection = connection.fork();
             try {
                 metaConnection.connect();
             } catch (IOException e) {
@@ -680,7 +607,7 @@ public class DBSyncReader extends AbstractReader {
 
             BinlogImage[] supportBinlogImages = agentConf.getDbSyncBinlogImages();
             if (supportBinlogImages != null && supportBinlogImages.length > 0) {
-                BinlogImage image = ((MysqlConnection) metaConnection).getBinlogImage();
+                BinlogImage image = metaConnection.getBinlogImage();
                 boolean found = false;
                 for (BinlogImage supportImage : supportBinlogImages) {
                     if (supportImage != null && image == supportImage) {
@@ -1611,8 +1538,7 @@ public class DBSyncReader extends AbstractReader {
         return null;
     }
 
-    @Override
-    public CompletableFuture<Void> resetReader() {
+    public CompletableFuture<Void> resetRead() {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
         if (!needReset.compareAndSet(false, true)) {

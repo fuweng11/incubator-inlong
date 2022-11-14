@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.core.job;
+package org.apache.inlong.agent.core.dbsync;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,7 +24,6 @@ import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
-import org.apache.inlong.agent.plugin.Reader;
 import org.apache.inlong.agent.state.JobStat.State;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import org.slf4j.Logger;
@@ -45,7 +44,7 @@ import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MSG_INDEX_K
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_ACK_THREAD_NUM;
 
 /**
- * Each DBSyncReader using a PositionControl to record and manage its positions info
+ * Each DBSyncReadOperator using a PositionControl to record and manage its positions info
  */
 public class PositionControl {
 
@@ -53,7 +52,7 @@ public class PositionControl {
     private final List<Thread> handleAckLogPositionThreadList = new LinkedList<>();
     //flow control: maximum unacked message
     private final Semaphore semaphore;
-    private final Reader reader;
+    private final DBSyncReadOperator readOperator;
     public volatile long pkgIndexId = 0L; // dbsync reader dump pkgIndexId
     protected volatile boolean running = false;
     //store successful sink-sent positions
@@ -71,10 +70,10 @@ public class PositionControl {
     //record eventLog positions while parseThread parsing eventLog
     private final ConcurrentSkipListSet<LogPosition> eventLogPositionCache = new ConcurrentSkipListSet();
 
-    public PositionControl(DBSyncJobConf jobConf, Reader reader) {
+    public PositionControl(DBSyncJobConf jobConf, DBSyncReadOperator readOperator) {
         this.jobConf = jobConf;
         this.jobName = jobConf.getJobName();
-        this.reader = reader;
+        this.readOperator = readOperator;
         this.waitAckCnt = new AtomicLong(0);
         int maxUnackedLogPositionsUnackedMessages = jobConf.getMaxUnackedLogPositions();
         semaphore = new Semaphore(maxUnackedLogPositionsUnackedMessages);
@@ -119,7 +118,7 @@ public class PositionControl {
     }
 
     private LogPosition getMinCacheSendLogPosition() {
-        if (reader.getState() != State.RUN) {
+        if (readOperator.getState() != State.RUN) {
             return null;
         }
         if (sendLogPositionCache.size() > 0) {
@@ -137,10 +136,10 @@ public class PositionControl {
     }
 
     private LogPosition getMinCacheEventLogPosition() {
-        if (reader.getState() != State.RUN) {
+        if (readOperator.getState() != State.RUN) {
             return null;
         }
-        minEventLogPosition = reader.getMaxProcessedPosition();
+        minEventLogPosition = readOperator.getMaxProcessedPosition();
         try {
             minEventLogPosition = eventLogPositionCache.first();
         } catch (Exception e) {
@@ -267,7 +266,7 @@ public class PositionControl {
     }
 
     public boolean isReaderRunning() {
-        return reader != null && reader.getState() == State.RUN;
+        return readOperator != null && readOperator.getState() == State.RUN;
     }
 
     /**

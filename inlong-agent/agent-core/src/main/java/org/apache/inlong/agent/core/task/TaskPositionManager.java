@@ -24,7 +24,7 @@ import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.core.job.JobManager;
-import org.apache.inlong.agent.core.job.PositionControl;
+import org.apache.inlong.agent.core.dbsync.PositionControl;
 import org.apache.inlong.agent.db.JobProfileDb;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;

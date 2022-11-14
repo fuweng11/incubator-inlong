@@ -174,15 +174,10 @@ public class DBSyncJobConf {
         return lruCache.containsKey(fullName) || namePatternMap.containsKey(fullName);
     }
 
-    public void addTable(String dbName, String tableName, String groupId, String streamId, Integer taskId,
-            boolean skipDelete, Charset charset) {
-        String namePatternStr = dbName + "." + tableName;
+    public void addTable(MysqlTableConf tableConf) {
+        String namePatternStr = tableConf.getDataBaseName() + "." + tableConf.getTableName();
         Pattern pattern = Pattern.compile(namePatternStr, Pattern.CASE_INSENSITIVE);
-
-        MysqlTableConf tbConf = new MysqlTableConf(getJobName(), dbName, tableName, groupId, streamId, taskId,
-                charset, skipDelete);
-
-        addMysqlTableConf(namePatternStr, pattern, tbConf);
+        addMysqlTableConf(namePatternStr, pattern, tableConf);
     }
 
     public MysqlTableConf getMysqlTableConf(String dbName, String tbName) {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.plugin.sources.reader.dbsync;
+package org.apache.inlong.agent.core.dbsync;
 
 import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
 

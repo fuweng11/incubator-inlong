@@ -20,6 +20,13 @@ package org.apache.inlong.agent.conf;
 import com.google.gson.Gson;
 import org.apache.inlong.agent.constant.JobConstants;
 
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_GROUP_ID;
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID;
+import static org.apache.inlong.agent.constant.JobConstants.JOB_INSTANCE_ID;
+import static org.apache.inlong.agent.pojo.JobProfileDto.DBSYNC_SOURCE;
+import static org.apache.inlong.agent.pojo.JobProfileDto.DEFAULT_CHANNEL;
+import static org.apache.inlong.agent.pojo.JobProfileDto.DEFAULT_DATAPROXY_SINK;
+
 /**
  * job profile which contains details describing properties of one job.
  */
@@ -27,14 +34,15 @@ public class JobProfile extends AbstractConfiguration {
 
     private final Gson gson = new Gson();
 
-    private DBSyncJobConf dbSyncJobConf;
-
-    public DBSyncJobConf getDbSyncJobConf() {
-        return dbSyncJobConf;
-    }
-
-    public void setDbSyncJobConf(DBSyncJobConf dbSyncJobConf) {
-        this.dbSyncJobConf = dbSyncJobConf;
+    public static JobProfile parseDbSyncTaskInfo(MysqlTableConf taskInfo) {
+        JobProfile conf = new JobProfile();
+        conf.set(JobConstants.JOB_SOURCE_CLASS, DBSYNC_SOURCE);
+        conf.set(JobConstants.JOB_SINK, DEFAULT_DATAPROXY_SINK);
+        conf.set(JobConstants.JOB_CHANNEL, DEFAULT_CHANNEL);
+        conf.set(PROXY_INLONG_GROUP_ID, taskInfo.getGroupId());
+        conf.set(PROXY_INLONG_STREAM_ID, taskInfo.getStreamId());
+        conf.set(JOB_INSTANCE_ID, taskInfo.getJobName());
+        return conf;
     }
 
     /**

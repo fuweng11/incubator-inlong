@@ -23,14 +23,11 @@ import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.core.task.Task;
 import org.apache.inlong.agent.core.task.TaskWrapper;
 import org.apache.inlong.agent.message.DefaultMessage;
-import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.plugin.Channel;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.MessageFilter;
 import org.apache.inlong.agent.plugin.Reader;
 import org.apache.inlong.agent.plugin.Sink;
-import org.apache.inlong.agent.state.JobStat.State;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -39,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -162,28 +158,8 @@ public class TestTaskWrapper {
         }
 
         @Override
-        public State getState() {
-            return null;
-        }
+        public void addMessage(Message message) {
 
-        @Override
-        public void setState(State state) {
-
-        }
-
-        @Override
-        public LogPosition getMaxProcessedPosition() {
-            return null;
-        }
-
-        @Override
-        public CompletableFuture<Void> resetReader() {
-            return null;
-        }
-
-        @Override
-        public DbSyncHeartbeat genHeartBeat(boolean markToStop) {
-            return null;
         }
 
         public int getCount() {

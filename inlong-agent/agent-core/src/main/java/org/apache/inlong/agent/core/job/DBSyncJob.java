@@ -17,67 +17,108 @@
 
 package org.apache.inlong.agent.core.job;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.conf.MysqlTableConf;
+import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.core.AgentManager;
+import org.apache.inlong.agent.core.dbsync.DBSyncReadOperator;
 import org.apache.inlong.agent.core.task.Task;
+import org.apache.inlong.agent.plugin.Channel;
+import org.apache.inlong.agent.plugin.Reader;
+import org.apache.inlong.agent.plugin.Sink;
+import org.apache.inlong.agent.plugin.Source;
 import org.apache.inlong.agent.state.JobStat;
-import org.apache.inlong.agent.state.JobStat.State;
+import org.apache.inlong.agent.utils.ThreadUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
-public class DBSyncJob extends Job {
+public class DBSyncJob {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DBSyncJob.class);
     private final AgentManager agentManager;
+    private final ConcurrentHashMap<Integer, Task> dbSyncTasks;
     protected DBSyncJobConf dbSyncJobConf;
     protected String jobName;
-    private Task task;
+    private DBSyncReadOperator readOperator;
 
-    public DBSyncJob(AgentManager agentManager, JobProfile dbSyncJobConf) {
-        super(dbSyncJobConf);
-        this.dbSyncJobConf = dbSyncJobConf.getDbSyncJobConf();
+    public DBSyncJob(AgentManager agentManager, DBSyncJobConf dbSyncJobConf) {
+        this.dbSyncJobConf = dbSyncJobConf;
         this.agentManager = agentManager;
+        dbSyncTasks = new ConcurrentHashMap<>();
         jobName = this.dbSyncJobConf.getJobName();
+        readOperator = new DBSyncReadOperator(this);
+    }
+
+    public Task getTaskById(Integer taskId) {
+        return dbSyncTasks.get(taskId);
     }
 
     public DBSyncJobConf getDBSyncJobConf() {
         return dbSyncJobConf;
     }
 
-    public void stop() {
-        if (task != null) {
-            task.getReader().finishRead();
-        }
+    //TODO: when task is delete
+    public void removeDBSyncTask(Integer taskId) {
+        dbSyncTasks.remove(taskId);
     }
 
-    public String getTaskId() {
-        if (task != null) {
-            return task.getTaskId();
-        }
-        return null;
+    public void stop() {
+        readOperator.stop();
+    }
+
+    public Set<String> getTaskId() {
+        return dbSyncTasks.keySet().stream().map(String::valueOf).collect(Collectors.toSet());
     }
 
     public JobStat.State getJobStat() {
-        if (task == null) {
-            LOGGER.error("dbsync job {} is null", jobName);
-            return State.ERROR;
-        }
-        return task.getReader().getState();
+        return readOperator.getState();
     }
 
     public void start() {
-        task = super.createTask(jobConf);
-        if (task != null) {
-            agentManager.getTaskManager().submitTask(task);
+        //create tasks and submit
+        for (MysqlTableConf taskConf : dbSyncJobConf.getMysqlTableConfList()) {
+            createAndAddTask(taskConf);
         }
+
+        readOperator.start();
+    }
+
+    public void createAndAddTask(MysqlTableConf taskConf) {
+        JobProfile taskProfile = JobProfile.parseDbSyncTaskInfo(taskConf);
+        Integer taskId = taskConf.getTaskId();
+        LOGGER.info("job id: {}, create task id {}, source: {}, channel: {}, sink: {}", taskProfile.getInstanceId(),
+                taskId, taskProfile.get(JobConstants.JOB_SOURCE_CLASS),
+                taskProfile.get(JobConstants.JOB_CHANNEL), taskProfile.get(JobConstants.JOB_SINK));
+        try {
+            Source source = (Source) Class.forName(taskProfile.get(JobConstants.JOB_SOURCE_CLASS)).newInstance();
+            for (Reader reader : source.split(taskProfile)) {
+                Sink writer = (Sink) Class.forName(taskProfile.get(JobConstants.JOB_SINK)).newInstance();
+                writer.setSourceName(reader.getReadSource());
+                Channel channel = (Channel) Class.forName(taskProfile.get(JobConstants.JOB_CHANNEL)).newInstance();
+                taskProfile.set(reader.getReadSource(), DigestUtils.md5Hex(reader.getReadSource()));
+                Task task = new Task(String.valueOf(taskId), reader, writer, channel, taskProfile);
+                dbSyncTasks.put(taskId, task);
+                agentManager.getTaskManager().submitTask(task);
+                LOGGER.info("task [{}-{}] create and start success", jobName, taskId);
+            }
+        } catch (Throwable e) {
+            LOGGER.error("create task[{}-{}] failed", jobName, taskId, e);
+            ThreadUtils.threadThrowableHandler(Thread.currentThread(), e);
+            throw new RuntimeException(e);
+        }
+
     }
 
     public CompletableFuture<Void> resetJob() {
-        if (task != null && task.getReader() != null) {
-            return task.getReader().resetReader();
+        if (readOperator != null) {
+            return readOperator.resetRead();
         }
         return null;
     }

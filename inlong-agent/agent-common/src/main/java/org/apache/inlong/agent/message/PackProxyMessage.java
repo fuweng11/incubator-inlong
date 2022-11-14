@@ -15,13 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.plugin.message;
+package org.apache.inlong.agent.message;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.inlong.agent.conf.JobProfile;
-import org.apache.inlong.agent.message.BatchProxyMessage;
-import org.apache.inlong.agent.message.ProxyMessage;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.common.msg.AttributeConstants;
@@ -105,6 +103,7 @@ public class PackProxyMessage {
      */
     public void addProxyMessage(ProxyMessage message) {
         assert streamId.equals(message.getInlongStreamId());
+        assert groupId.equals(message.getInlongGroupId());
         try {
             if (queueIsFull()) {
                 LOGGER.warn("message queue is greater than {}, stop adding message, "

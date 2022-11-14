@@ -25,7 +25,6 @@ import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.conf.MysqlTableConf;
 import org.apache.inlong.agent.constant.AgentConstants;
-import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.db.JobProfileDb;
 import org.apache.inlong.agent.db.StateSearchKey;
@@ -72,16 +71,11 @@ import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_RESETTING_
 import static org.apache.inlong.agent.constant.AgentConstants.JOB_DB_CACHE_CHECK_INTERVAL;
 import static org.apache.inlong.agent.constant.AgentConstants.JOB_DB_CACHE_TIME;
 import static org.apache.inlong.agent.constant.AgentConstants.JOB_NUMBER_LIMIT;
-import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_GROUP_ID;
-import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_ID;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_ID_PREFIX;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_INSTANCE_ID;
 import static org.apache.inlong.agent.constant.JobConstants.SQL_JOB_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_COMPONENT_NAME;
-import static org.apache.inlong.agent.pojo.JobProfileDto.DBSYNC_SOURCE;
-import static org.apache.inlong.agent.pojo.JobProfileDto.DEFAULT_CHANNEL;
-import static org.apache.inlong.agent.pojo.JobProfileDto.DEFAULT_DATAPROXY_SINK;
 
 /**
  * JobManager maintains lots of jobs, and communicate between server and task manager.
@@ -111,7 +105,7 @@ public class JobManager extends AbstractDaemon {
     private final int maxConDbSize;
     private final JobConfManager jobConfManager;
     private final ConcurrentHashMap<String, DBSyncJob> allJobs; //TODO:merge to jobs
-    private final ArrayList<JobProfile> newJobs;
+    private final ArrayList<DBSyncJobConf> newJobs;
     private final ReentrantReadWriteLock.WriteLock wLock;
     private final ConcurrentHashMap<String, DBSyncJob> runningJobs;
 
@@ -293,9 +287,11 @@ public class JobManager extends AbstractDaemon {
         }
 
         runningJobs.remove(jobName);
-        agentManager.getTaskManager().removeTask(job.getTaskId());
+        for (String taskId : job.getTaskId()) {
+            agentManager.getTaskManager().removeTask(taskId);
+        }
         allJobs.remove(jobName);
-        jobConfManager.removeConf(job.getJobConf());
+        jobConfManager.removeConf(job.getDBSyncJobConf());
         LOGGER.info("delete {} task!", jobName);
     }
 
@@ -305,7 +301,6 @@ public class JobManager extends AbstractDaemon {
      * @param taskConf config
      * @param future future
      */
-    //TODO:addTask refactor as addDBSyncTask
     public synchronized DBSyncJob addDbSyncTask(DbSyncTaskInfo taskConf, CompletableFuture<Void> future) {
         LOGGER.info("DbSyncTaskInfo is {}", taskConf);
         if (!DBSyncUtils.checkValidateDbInfo(taskConf, future)) {
@@ -354,8 +349,7 @@ public class JobManager extends AbstractDaemon {
         }
 
         boolean isFound = false;
-        JobProfile conf = jobConfManager.getConfByTaskId(taskConf.getId());
-        DBSyncJobConf dbsyncJobConf = null;
+        DBSyncJobConf conf = jobConfManager.getConfByTaskId(taskConf.getId());
         if (conf == null) {
             conf = jobConfManager.getConfigByDatabase(taskConf.getDbServerInfo().getUrl(), taskConf.getServerName());
             if (conf == null) {
@@ -379,23 +373,14 @@ public class JobManager extends AbstractDaemon {
                 }
 
                 String tmpUrl = taskConf.getDbServerInfo().getUrl();
-                dbsyncJobConf = new DBSyncJobConf(DBSyncUtils.getHost(tmpUrl), DBSyncUtils.getPort(tmpUrl),
+                conf = new DBSyncJobConf(DBSyncUtils.getHost(tmpUrl), DBSyncUtils.getPort(tmpUrl),
                         taskConf.getDbServerInfo().getUsername(), taskConf.getDbServerInfo().getPassword(), charset,
                         startPosition, taskConf.getServerName());
-                dbsyncJobConf.setMaxUnackedLogPositions(agentConf.getInt(DBSYNC_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD,
+                conf.setMaxUnackedLogPositions(agentConf.getInt(DBSYNC_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD,
                         DEFAULT_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD));
                 if (bakDbUrl != null) {
-                    dbsyncJobConf.setBakMysqlInfo(DBSyncUtils.getHost(bakDbUrl), DBSyncUtils.getPort(bakDbUrl));
+                    conf.setBakMysqlInfo(DBSyncUtils.getHost(bakDbUrl), DBSyncUtils.getPort(bakDbUrl));
                 }
-                conf = new JobProfile();
-                //TODO:improve, move to jobProfileDto
-                conf.set(JobConstants.JOB_SOURCE_CLASS, DBSYNC_SOURCE);
-                conf.set(JobConstants.JOB_SINK, DEFAULT_DATAPROXY_SINK);
-                conf.set(JobConstants.JOB_CHANNEL, DEFAULT_CHANNEL);
-                conf.set(PROXY_INLONG_GROUP_ID, taskConf.getInlongGroupId());
-                conf.set(PROXY_INLONG_STREAM_ID, taskConf.getInlongStreamId());
-                conf.set(JOB_INSTANCE_ID, String.valueOf(taskConf.getId()));
-                conf.setDbSyncJobConf(dbsyncJobConf);
                 newJobs.add(conf);
                 jobConfManager.putConf(instName, conf);
             } else {
@@ -407,45 +392,52 @@ public class JobManager extends AbstractDaemon {
 
         if (isFound) {
             // update conf
-            dbsyncJobConf = conf.getDbSyncJobConf();
-            dbsyncJobConf.updateUserPasswd(taskConf.getDbServerInfo().getUsername(),
+            conf.updateUserPasswd(taskConf.getDbServerInfo().getUsername(),
                     taskConf.getDbServerInfo().getPassword());
-            dbsyncJobConf.updateCharset(charset, taskConf.getId());
+            conf.updateCharset(charset, taskConf.getId());
 //            allJobs.get(dbsyncJobConf.getJobName()).updateJobConf();//TODO:update charset
             String dbUrl = taskConf.getDbServerInfo().getUrl();
             try {
-                dbsyncJobConf.resetDbInfo(dbUrl, bakDbUrl);
+                conf.resetDbInfo(dbUrl, bakDbUrl);
             } catch (Exception e) {
                 LOGGER.error("exception occurred when reset: ", e);
             }
         }
 
-        if (!dbsyncJobConf.containsTask(taskConf.getId())) {
-            dbsyncJobConf.addTable(taskConf.getDbName(), taskConf.getTableName(), taskConf.getInlongGroupId(),
-                    taskConf.getInlongStreamId(), taskConf.getId(), skipDelete, charset);
-            dbsyncJobConf.getMysqlTableConfList(taskConf.getDbName(), taskConf.getTableName())
+        Integer taskId = taskConf.getId();
+        String dbName = taskConf.getDbName();
+        String tableName = taskConf.getTableName();
+        if (!conf.containsTask(taskId)) {
+            MysqlTableConf tbConf = new MysqlTableConf(conf.getJobName(), dbName, tableName,
+                    taskConf.getInlongGroupId(), taskConf.getInlongStreamId(), taskId, charset, skipDelete);
+            conf.addTable(tbConf);
+            conf.getMysqlTableConfList(dbName, taskConf.getTableName())
                     .forEach(myconf -> myconf.updateJobStatus(TaskStat.NORMAL));
+            if (runningJobs.containsKey(conf.getJobName())) {
+                runningJobs.get(conf.getJobName()).createAndAddTask(tbConf);
+            }
         } else {
-            MysqlTableConf mysqlTableConf = dbsyncJobConf.getMysqlTableConf(taskConf.getId());
+            //TODO:improve, update other info, such as table change
+            MysqlTableConf mysqlTableConf = conf.getMysqlTableConf(taskConf.getId());
             if (mysqlTableConf != null) {
                 mysqlTableConf.setSkipDelete(skipDelete);
             }
             LOGGER.warn("dbName {}, tableName {} already in conf, taskId {}",
-                    taskConf.getDbName(), taskConf.getTableName(), taskConf.getId());
+                    dbName, tableName, taskConf.getId());
         }
 
-        final JobProfile finalConf = conf;
-        allJobs.computeIfAbsent(dbsyncJobConf.getJobName(), (key) -> new DBSyncJob(agentManager, finalConf));
+        final DBSyncJobConf finalConf = conf;
+        allJobs.computeIfAbsent(conf.getJobName(), (key) -> new DBSyncJob(agentManager, finalConf));
 
         future.complete(null);
-        return allJobs.get(dbsyncJobConf.getJobName());
+        return allJobs.get(conf.getJobName());
     }
 
     public synchronized void updateJob(String newJobName, String oldJobName, TaskStat stat) {
         try {
             //lock jobMap
             wLock.lock();
-            DBSyncJobConf tmpJobConf = jobConfManager.getParsingConfigByInstName(newJobName).getDbSyncJobConf();
+            DBSyncJobConf tmpJobConf = jobConfManager.getParsingConfigByInstName(newJobName);
             if (tmpJobConf == null) {
                 LOGGER.error("find newJobName {}, old job Name {} null, pls check",
                         newJobName, oldJobName);
@@ -470,7 +462,7 @@ public class JobManager extends AbstractDaemon {
         LOGGER.debug("Get taskId :{}, dbName:{}, tbName:{} to delete task!",
                 taskId, dbName, tableName);
 
-        DBSyncJobConf conf = jobConfManager.getConfByTaskId(taskId).getDbSyncJobConf();
+        DBSyncJobConf conf = jobConfManager.getConfByTaskId(taskId);
         if (conf == null) {
             LOGGER.warn("can't find task_id {} ", taskId);
             // not exist, delete ok!
@@ -486,7 +478,7 @@ public class JobManager extends AbstractDaemon {
     }
 
     public String getJobNameByTaskId(Integer taskId) {
-        DBSyncJobConf conf = jobConfManager.getConfByTaskId(taskId).getDbSyncJobConf();
+        DBSyncJobConf conf = jobConfManager.getConfByTaskId(taskId);
         if (conf != null) {
             return conf.getJobName();
         }
@@ -609,8 +601,7 @@ public class JobManager extends AbstractDaemon {
                 try {
                     for (Map.Entry<String, DBSyncJob> runningJob : runningJobs.entrySet()) {
                         DBSyncJob job = runningJob.getValue();
-                        DBSyncJobConf jobConf = jobConfManager.getParsingConfigByInstName(runningJob.getKey())
-                                .getDbSyncJobConf();
+                        DBSyncJobConf jobConf = jobConfManager.getParsingConfigByInstName(runningJob.getKey());
                         if (jobConf != null) {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug("current mysql Ip = {}/{} ,contain = {}", jobConf.getCurMysqlIp(),

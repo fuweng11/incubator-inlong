@@ -18,7 +18,7 @@
 package org.apache.inlong.agent.core.job;
 
 import com.google.common.collect.Sets;
-import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.conf.DBSyncJobConf;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -26,19 +26,19 @@ import java.util.Set;
 
 public class JobConfManager {
 
-    private final Set<JobProfile> delegate;
+    private final Set<DBSyncJobConf> delegate;
 
     public JobConfManager() {
         delegate = Sets.newConcurrentHashSet();
     }
 
-    public synchronized void putConf(String instName, JobProfile conf) {
+    public synchronized void putConf(String instName, DBSyncJobConf conf) {
         delegate.add(conf);
     }
 
     public synchronized boolean isParsing(String instName) {
 //        return inst2ConfMap.containsKey(instName);
-        return delegate.stream().anyMatch(conf -> Objects.equals(instName, conf.getDbSyncJobConf().getJobName()));
+        return delegate.stream().anyMatch(conf -> Objects.equals(instName, conf.getJobName()));
     }
 
     /**
@@ -47,43 +47,43 @@ public class JobConfManager {
      * @param instName
      * @return if not exist, return null
      */
-    public synchronized JobProfile getParsingConfigByInstName(String instName) {
+    public synchronized DBSyncJobConf getParsingConfigByInstName(String instName) {
         return delegate.stream()
-                .filter(conf -> Objects.equals(instName, conf.getDbSyncJobConf().getJobName()))
+                .filter(conf -> Objects.equals(instName, conf.getJobName()))
                 .findFirst()
                 .orElse(null);
     }
 
     public synchronized boolean containsDatabase(String url) {
-        return delegate.stream().anyMatch(conf -> conf.getDbSyncJobConf().containsDatabase(url));
+        return delegate.stream().anyMatch(conf -> conf.containsDatabase(url));
     }
 
-    public synchronized JobProfile getConfigByDatabase(String url, String serverId) {
+    public synchronized DBSyncJobConf getConfigByDatabase(String url, String serverId) {
         return delegate.stream()
-                .filter(conf -> (conf.getDbSyncJobConf().containsDatabase(url) && (serverId.equals(
-                        conf.getDbSyncJobConf().getServerId()))))
+                .filter(conf -> (conf.containsDatabase(url) && (serverId.equals(
+                        conf.getServerId()))))
                 .findFirst()
                 .orElse(null);
     }
 
     public synchronized boolean containsTaskId(String taskId) {
 //        return taskId2ConfMap.containsKey(taskId);
-        return delegate.stream().anyMatch(conf -> conf.getDbSyncJobConf().getTaskIdList().contains(taskId));
+        return delegate.stream().anyMatch(conf -> conf.getTaskIdList().contains(taskId));
     }
 
-    public synchronized JobProfile getConfByTaskId(Integer taskId) {
+    public synchronized DBSyncJobConf getConfByTaskId(Integer taskId) {
         return delegate.stream()
-                .filter(conf -> conf.getDbSyncJobConf().getTaskIdList().contains(taskId))
+                .filter(conf -> conf.getTaskIdList().contains(taskId))
                 .findFirst()
                 .orElse(null);
     }
 
     public synchronized void removeConfByInst(String instName) {
 
-        delegate.removeIf(conf -> Objects.equals(instName, conf.getDbSyncJobConf().getJobName()));
+        delegate.removeIf(conf -> Objects.equals(instName, conf.getJobName()));
     }
 
-    public synchronized void removeConf(JobProfile conf) {
+    public synchronized void removeConf(DBSyncJobConf conf) {
         delegate.remove(conf);
     }
 
