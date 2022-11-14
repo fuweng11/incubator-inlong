@@ -17,7 +17,6 @@
 
 package org.apache.inlong.common.pojo.agent.dbsync;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -70,7 +69,7 @@ public class DbSyncHeartbeat {
     @ApiModelProperty(value = "Error message")
     private String errorMsg;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "Report Time")
     private Long reportTime;
 
 }

@@ -531,6 +531,7 @@ public class DBSyncReadOperator {
                 restart();
             }
             hbInfo.setErrorMsg(getErrorMsg());
+            hbInfo.setReportTime(System.currentTimeMillis());
         }
 
         return hbInfo;
