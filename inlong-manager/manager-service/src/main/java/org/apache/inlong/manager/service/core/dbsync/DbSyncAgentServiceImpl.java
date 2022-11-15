@@ -640,8 +640,15 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             Integer taskId = taskInfo.getId();
             StreamSourceEntity entity = sourceMapper.selectById(taskId);
             if (entity == null) {
+                LOGGER.warn("dbsync source not exist for id {}, skip to deal its status", taskId);
                 continue;
             }
+
+            if (SourceStatus.SOURCE_DISABLE.getCode().equals(entity.getStatus())) {
+                LOGGER.warn("dbsync source status is disable-99 for id {}, skip to deal its status", taskId);
+                continue;
+            }
+
             // if the user has modified the task after publishing, this result should be ignored
             if (!Objects.equals(entity.getVersion(), taskInfo.getVersion())) {
                 LOGGER.warn("task={} version={} != newest version={}, skip it",
