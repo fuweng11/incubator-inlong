@@ -638,7 +638,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
 
         for (TaskInfoBean taskInfo : taskInfoList) {
             Integer taskId = taskInfo.getId();
-            StreamSourceEntity entity = sourceMapper.selectById(taskId);
+            StreamSourceEntity entity = sourceMapper.selectForAgentTask(taskId);
             if (entity == null) {
                 LOGGER.warn("dbsync source not exist for id {}, skip to deal its status", taskId);
                 continue;
