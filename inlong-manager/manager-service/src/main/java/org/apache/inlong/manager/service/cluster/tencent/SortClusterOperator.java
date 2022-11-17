@@ -25,6 +25,7 @@ import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
+import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
@@ -38,6 +39,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Objects;
+
 @Service
 public class SortClusterOperator extends AbstractClusterOperator {
 
@@ -45,6 +49,8 @@ public class SortClusterOperator extends AbstractClusterOperator {
 
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private InlongClusterEntityMapper clusterEntityMapper;
 
     @Override
     public Boolean accept(String clusterType) {
@@ -62,6 +68,16 @@ public class SortClusterOperator extends AbstractClusterOperator {
         BaseSortClusterRequest clusterRequest = (BaseSortClusterRequest) request;
         CommonBeanUtils.copyProperties(clusterRequest, targetEntity, true);
         try {
+            List<InlongClusterEntity> clusterList = clusterEntityMapper.selectByKey(request.getClusterTags(), null,
+                    request.getType());
+            for (InlongClusterEntity cluster : clusterList) {
+                if (!Objects.equals(request.getId(), cluster.getId())) {
+                    String errMsg = String.format("sort task name already exists for clusterTag=%s, clusterType=%s",
+                            request.getClusterTags(), request.getType());
+                    LOGGER.error(errMsg);
+                    throw new BusinessException(errMsg);
+                }
+            }
             BaseSortClusterDTO dto = BaseSortClusterDTO.getFromRequest(clusterRequest);
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
             LOGGER.info("success to set entity for sort cluster");
