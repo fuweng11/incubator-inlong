@@ -37,4 +37,9 @@ export const allExtendsSinks: MetaExportWithBackendList<SinkMetaType> = [
     value: 'INNER_THIVE',
     LoadEntity: () => import('./InnerTHive'),
   },
+  {
+    label: 'InnerIceberg',
+    value: 'INNER_ICEBERG',
+    LoadEntity: () => import('./InnerIceberg'),
+  },
 ];
