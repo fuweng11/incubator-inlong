@@ -32,6 +32,7 @@ public class ClusterType {
     public static final String PULSAR = "PULSAR";
     public static final String DATAPROXY = "DATAPROXY";
     public static final String KAFKA = "KAFKA";
+    public static final String ELASTICSEARCH = "ELASTICSEARCH";
 
     // --------------------------------------------------------------------------------------------
     // Inner parameters
@@ -50,6 +51,7 @@ public class ClusterType {
             add(ClusterType.PULSAR);
             add(ClusterType.DATAPROXY);
             add(ClusterType.KAFKA);
+            add(ClusterType.ELASTICSEARCH);
         }
     };
 
