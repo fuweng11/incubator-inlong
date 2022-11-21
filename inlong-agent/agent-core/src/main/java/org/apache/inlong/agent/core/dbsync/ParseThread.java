@@ -282,7 +282,7 @@ public class ParseThread extends Thread {
                     }
                     continue;
                 } else {
-                    positionControl.addLogPositionToCache(sendPosition);
+                    positionControl.addLogPositionToSendCache(sendPosition);
 
                     boolean putResult = genSendDataByPbProtoc(rowChange, entry, dbName, tbName, myConf,
                             sendPosition, parseMsgId, dbSyncReadOperator.jobconf.getServerId());

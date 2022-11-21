@@ -22,6 +22,7 @@ import org.apache.inlong.agent.constant.JobConstants;
 
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_GROUP_ID;
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID;
+import static org.apache.inlong.agent.constant.JobConstants.DBSYNC_TASK_ID;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_INSTANCE_ID;
 import static org.apache.inlong.agent.pojo.JobProfileDto.DBSYNC_SOURCE;
 import static org.apache.inlong.agent.pojo.JobProfileDto.DEFAULT_CHANNEL;
@@ -42,6 +43,7 @@ public class JobProfile extends AbstractConfiguration {
         conf.set(PROXY_INLONG_GROUP_ID, taskInfo.getGroupId());
         conf.set(PROXY_INLONG_STREAM_ID, taskInfo.getStreamId());
         conf.set(JOB_INSTANCE_ID, taskInfo.getJobName());
+        conf.set(DBSYNC_TASK_ID, String.valueOf(taskInfo.getTaskId()));
         return conf;
     }
 

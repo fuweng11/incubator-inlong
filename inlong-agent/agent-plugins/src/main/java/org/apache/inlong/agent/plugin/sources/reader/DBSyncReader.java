@@ -27,15 +27,18 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static org.apache.inlong.agent.constant.JobConstants.DBSYNC_TASK_ID;
+
 public class DBSyncReader extends AbstractReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DBSyncReader.class);
     private final LinkedBlockingQueue<DBSyncMessage> messageQueue;
+    private String taskId = "-1";
     private volatile boolean finished = false;
 
     public DBSyncReader(JobProfile taskConf) {
         messageQueue = new LinkedBlockingQueue<>(5000);//TODO:configurable in agent.properties
-
+        taskId = taskConf.get(DBSYNC_TASK_ID, "-1");
     }
 
     @Override
@@ -57,7 +60,7 @@ public class DBSyncReader extends AbstractReader {
             AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_READ_SUCCESS, inlongGroupId, inlongStreamId,
                     System.currentTimeMillis(), 1, message.getBody().length);
             readerMetric.pluginReadSuccessCount.incrementAndGet();
-        } catch (InterruptedException e) {
+        } catch (Throwable e) {
             LOGGER.error("put message to dbsyncReader queue error", e);
             readerMetric.pluginReadFailCount.incrementAndGet();
         }
@@ -66,6 +69,8 @@ public class DBSyncReader extends AbstractReader {
     @Override
     public void init(JobProfile jobConf) {
         super.init(jobConf);
+        LOGGER.info("dbsync-reader init finished, groupId[{}], streamId[{}], taskId[{}]", inlongGroupId, inlongStreamId,
+                taskId);
     }
 
     @Override
@@ -75,7 +80,7 @@ public class DBSyncReader extends AbstractReader {
 
     @Override
     public String getReadSource() {
-        return inlongGroupId + inlongStreamId;
+        return taskId;
     }
 
     @Override

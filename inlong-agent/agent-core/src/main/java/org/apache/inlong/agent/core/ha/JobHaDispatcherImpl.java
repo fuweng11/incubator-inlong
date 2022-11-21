@@ -214,7 +214,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      */
     @Override
     public void addJob(DbSyncTaskInfo taskConf) {
-        LOGGER.info("add job syncId = {}, taskId = {}", taskConf.getServerName(), taskConf.getId());
+        LOGGER.info("add job syncId[{}], taskId[{}]", taskConf.getServerName(), taskConf.getId());
         this.updateJob(taskConf);
     }
 
@@ -225,7 +225,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      */
     @Override
     public void startJob(DbSyncTaskInfo taskConf) {
-        LOGGER.info("start job syncId = {}, taskId = {}",
+        LOGGER.info("start job syncId[{}], taskId[{}]",
                 taskConf.getServerName(),
                 taskConf.getId());
         this.updateJob(taskConf);
@@ -238,7 +238,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      */
     @Override
     public void updateJob(DbSyncTaskInfo taskConf) {
-        LOGGER.info("update job syncId = {}, taskId = {}",
+        LOGGER.info("update job syncId[{}], taskId[{}]",
                 taskConf.getServerName(), taskConf.getId());
         /*
          * check haInfo is or not exist
@@ -259,7 +259,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
              */
             jobHaInfo.addTaskConf(taskConf);
         } else {
-            LOGGER.error("Task conf is error taskId = {}, syncId = {}", taskConf.getId(),
+            LOGGER.error("Task conf is error taskId[{}], syncId[{}]", taskConf.getId(),
                     taskConf.getServerName());
         }
     }
@@ -271,7 +271,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      */
     @Override
     public void stopJob(String syncId, Integer taskId) {
-        LOGGER.info("stop job syncId = {}, taskId = {}", syncId, taskId);
+        LOGGER.info("stop job syncId[{}], taskId[{}]", syncId, taskId);
         deleteJob(syncId, taskId, null);
     }
 
@@ -304,7 +304,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                 updatePositionToZk(jobHaInfo, jobHaInfo.getSyncPosition());
             }
             jobHaInfo.getTaskConfMap().clear();
-            LOGGER.info("Job syncId = {} JobName = {} is stopped!", jobHaInfo.getSyncId(), jobName);
+            LOGGER.info("Job syncId[{}] JobName = {} is stopped!", jobHaInfo.getSyncId(), jobName);
         } catch (Throwable e) {
             LOGGER.error("checkAndStopJobForce has error e = {}", e);
         }
@@ -317,7 +317,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      */
     @Override
     public void deleteJob(String syncId, Integer taskId, DbSyncTaskInfo taskConfFromTdm) {
-        LOGGER.info("delete job syncId = {}, taskId = {}",
+        LOGGER.info("delete job syncId[{}], taskId[{}]",
                 syncId, taskId);
         JobHaInfo jobHaInfo = jobHaInfoMap.get(syncId);
         if (jobHaInfo != null) {
@@ -332,13 +332,20 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                             errorTaskInfoList.add(taskConf);
                         }
                     } else {
-                        LOGGER.info("stop task has completed! syncId = {}, taskId = {}",
+                        LOGGER.info("stop task has completed! syncId[{}], taskId[{}]",
                                 syncId, taskId);
                         synchronized (correctTaskInfoList) {
                             correctTaskInfoList.add(taskConf);
                         }
                     }
                 });
+            } else {
+                LOGGER.error("fail to find local taskId[{}], current taskList{}", taskId,
+                        jobHaInfo.getTaskConfMap().keys());
+                synchronized (errorTaskInfoList) {
+                    errorTaskInfoList.add(taskConfFromTdm);
+                }
+
             }
             /*
              * delete when there is not any task
@@ -371,7 +378,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                     jobGroupMap.put(conf.getServerName(), list);
                 }
                 list.add(conf);
-                LOGGER.info("startAllJobOnce change task syncId = {} , taskId = {}",
+                LOGGER.info("startAllJobOnce change task syncId[{}] , taskId[{}]",
                         conf.getServerName(), conf.getId());
             }
             Set<Map.Entry<String, List<DbSyncTaskInfo>>> entrySet = jobGroupMap.entrySet();
@@ -379,15 +386,15 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                 JobHaInfo value = jobHaInfoMap.computeIfPresent(entry.getKey(), (k, jobHaInfo) -> {
                     if (jobHaInfo != null) {
                         List<DbSyncTaskInfo> confList = entry.getValue();
-                        LOGGER.info("startJobWithAllTaskOnce syncId = {}, taskSize = {}", jobHaInfo.getSyncId(),
+                        LOGGER.info("startJobWithAllTaskOnce syncId[{}], taskSize = {}", jobHaInfo.getSyncId(),
                                 (confList == null ? 0 : confList.size()));
                         if (!checkValidConfig(entry, jobHaInfo, confList)) {
                             return jobHaInfo;
                         }
                         String startPositionFromZk = getStartPositionFromZk(jobHaInfo);
                         for (DbSyncTaskInfo taskConf : confList) {
-                            LOGGER.info("startJobWithAllTaskOnce add task syncId = {} "
-                                            + ", taskId = {}",
+                            LOGGER.info("startJobWithAllTaskOnce add task syncId[{}] "
+                                            + ", taskId[{}]",
                                     taskConf.getServerName(), taskConf.getId());
                             CompletableFuture<Void> opFuture = new CompletableFuture<>();
                             initStartPosition(startPositionFromZk, taskConf);
@@ -396,8 +403,8 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                             if (dbJob != null) {
                                 dbJobsMap.putIfAbsent(jobHaInfo.getSyncId(), dbJob);
                             }
-                            LOGGER.info("startJobWithAllTaskOnce add task syncId = {} "
-                                            + ", taskId = {} finished!",
+                            LOGGER.info("startJobWithAllTaskOnce add task syncId[{}] "
+                                            + ", taskId[{}] finished!",
                                     taskConf.getServerName(), taskConf.getId());
                             opFuture.whenComplete((v, e) -> {
                                 if (e != null && !isJobExceedException(e)) {
@@ -411,7 +418,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                                         exceedTaskInfoList.add(taskConf);
                                     }
                                 } else {
-                                    LOGGER.info("update task has completed! syncId = {}, taskId = {}",
+                                    LOGGER.info("update task has completed! syncId[{}], taskId[{}]",
                                             jobHaInfo.getSyncId(), taskConf.getId());
                                     synchronized (correctTaskInfoList) {
                                         correctTaskInfoList.add(taskConf);
@@ -538,19 +545,19 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         try {
             jobManager.deleteTask(taskConf, opFuture);
         } catch (Throwable e) {
-            LOGGER.error("stop task has error {} SyncId = {}, taskId = {}", e,
+            LOGGER.error("stop task has error {} syncId[{}], taskId[{}]", e,
                     jobHaInfo.getSyncId(), taskConf.getId());
         }
         try {
             opFuture.get(1, TimeUnit.MINUTES);
         } catch (TimeoutException e) {
-            LOGGER.error("stop task has TimeoutException e = {}, SyncId = {}, taskId = {}", e,
+            LOGGER.error("stop task has TimeoutException e = {}, syncId[{}], taskId[{}]", e,
                     jobHaInfo.getSyncId(), taskConf.getId());
         } catch (InterruptedException e) {
-            LOGGER.error("stop task has InterruptedException e = {}, SyncId = {}, taskId = {}", e,
+            LOGGER.error("stop task has InterruptedException e = {}, syncId[{}], taskId[{}]", e,
                     jobHaInfo.getSyncId(), taskConf.getId());
         } catch (ExecutionException e) {
-            LOGGER.error("stop task has ExecutionException e = {}, SyncId = {}, taskId = {}", e,
+            LOGGER.error("stop task has ExecutionException e = {}, syncId[{}], taskId[{}]", e,
                     jobHaInfo.getSyncId(), taskConf.getId());
         }
     }
@@ -989,13 +996,13 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
             try {
                 initTaskInfoByServerId(syncId);
             } catch (Exception e) {
-                LOGGER.error("initTaskInfoByServerId SyncId = {} has exception", syncId, e);
+                LOGGER.error("initTaskInfoByServerId syncId[{}] has exception", syncId, e);
             }
             return true;
         }).thenAccept(u -> {
-            LOGGER.info("addSyncIdAsync SyncId = {} finished", syncId);
+            LOGGER.info("addSyncIdAsync syncId[{}] finished", syncId);
         }).exceptionally(ex -> {
-            LOGGER.error("addSyncIdAsync SyncId = {} finished has exception", syncId, ex);
+            LOGGER.error("addSyncIdAsync syncId[{}] finished has exception", syncId, ex);
             return null;
         });
     }
@@ -1023,7 +1030,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         if (data != null) {
             taskConfigSize = data.size();
         }
-        LOGGER.info("change run node Id  syncID = {} , [{}], taskConfigSize = {}", syncId,
+        LOGGER.info("change run node Id  syncId[{}] , [{}], taskConfigSize = {}", syncId,
                 getTaskConfigByIpAndServerIdUrl, taskConfigSize);
         return taskConfigSize;
     }
@@ -1036,15 +1043,15 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
             try {
                 stopJob(jobHaInfo);
             } catch (Exception e) {
-                LOGGER.error("stop job by SyncId = {} has exception e = {}", jobHaInfo.getSyncId(), e);
+                LOGGER.error("stop job by syncId[{}] has exception e = {}", jobHaInfo.getSyncId(), e);
             }
             return true;
         }).thenAccept(u -> {
             needToStopJobHaInfo.remove(jobHaInfo);
             jobHaInfoMap.remove(jobHaInfo.getSyncId());
-            LOGGER.info("stop job SyncId = {} finished!", jobHaInfo.getSyncId());
+            LOGGER.info("stop job syncId[{}] finished!", jobHaInfo.getSyncId());
         }).exceptionally(ex -> {
-            LOGGER.error("stop job SyncId = {} finished has exception e = {}", jobHaInfo.getSyncId(), ex);
+            LOGGER.error("stop job syncId[{}] finished has exception e = {}", jobHaInfo.getSyncId(), ex);
             return null;
         });
     }
@@ -1132,9 +1139,9 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                  * start stop
                  */
                 List<CompletableFuture> futures = needToStopJobHaInfo.stream().map((jobHaInfo) -> {
-                    LOGGER.info("Monitor stop syncId = {}!", jobHaInfo.getSyncId());
+                    LOGGER.info("Monitor stop syncId[{}]!", jobHaInfo.getSyncId());
                     CompletableFuture re = removeSyncIdAsync(jobHaInfo);
-                    LOGGER.info("Monitor old syncId = {} is stopped!", jobHaInfo.getSyncId());
+                    LOGGER.info("Monitor old syncId[{}] is stopped!", jobHaInfo.getSyncId());
                     return re;
                 }).collect(Collectors.toList());
                 CompletableFuture allOf =
@@ -1147,13 +1154,13 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                 futures = needToRunSyncIdSet.stream().map((syncId) -> {
                     JobHaInfo jobHaInfo = jobHaInfoMap.get(syncId);
                     if (jobHaInfo == null || !jobManager.isRunningJob(syncId)) {
-                        LOGGER.info("Monitor start new syncId = {}", syncId);
+                        LOGGER.info("Monitor start new syncId[{}]", syncId);
                         CompletableFuture re = addSyncIdAsync(syncId);
-                        LOGGER.info("Monitor new syncId = {} is started", syncId);
+                        LOGGER.info("Monitor new syncId[{}] is started", syncId);
                         return re;
                     } else {
                         if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Monitor syncId = {} is running now!", syncId);
+                            LOGGER.debug("Monitor syncId[{}] is running now!", syncId);
                         }
                     }
                     return null;

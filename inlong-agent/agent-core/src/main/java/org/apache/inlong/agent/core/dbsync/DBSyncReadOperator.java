@@ -459,6 +459,9 @@ public class DBSyncReadOperator {
         }
     }
 
+    /**
+     * Get the max processed position among all parseThreads
+     */
     public LogPosition getMaxProcessedPosition() {
         LogPosition tmpProcessedPos = null;
         try {
@@ -1608,8 +1611,7 @@ public class DBSyncReadOperator {
         return buildLastPosition(entry, masterInfo.getAddress());
     }
 
-    protected LogPosition buildLastPosition(Entry entry,
-            InetSocketAddress address) {
+    protected LogPosition buildLastPosition(Entry entry, InetSocketAddress address) {
         EntryPosition position = new EntryPosition();
         position.setJournalName(entry.getHeader().getLogfileName());
         position.setPosition(entry.getHeader().getLogfileOffset());

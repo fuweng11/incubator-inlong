@@ -98,18 +98,19 @@ public class FieldManager {
     public void addAlterFieldString(String bid, Integer taskId, String alterQueryString) {
         if (running) {
             if (StringUtils.isEmpty(bid) || ObjectUtils.isNotEmpty(taskId) || StringUtils.isEmpty(alterQueryString)) {
-                logger.warn("addAlterFieldString has argument error bid = {}, taskId = {}, "
+                logger.warn("addAlterFieldString has argument error groupId[{}], taskId[{}], "
                         + "alterQueryString = {}", bid, taskId, alterQueryString);
                 return;
             }
             String setStr = bid + taskId + alterQueryString;
             if (currentChangedSet.add(setStr)) {
                 alterQueue.add(new FieldChangedEntry(bid, taskId, alterQueryString));
-                logger.info("addAlterFieldString bid = {}, taskId = {}, alterString = {}", bid, taskId,
+                logger.info("addAlterFieldString groupId[{}], taskId[{}], alterString[{}]", bid, taskId,
                         alterQueryString);
             } else {
-                logger.warn("alterQueue is full!, message will be discard addAlterFieldString bid = "
-                        + "{}, taskId = {}, alterString = {}", bid, taskId, alterQueryString);
+                logger.warn(
+                        "alterQueue is full!, message will be discard addAlterFieldString "
+                                + "groupId[{}], taskId[{}], alterString[{}]", bid, taskId, alterQueryString);
             }
         }
     }
@@ -265,7 +266,7 @@ public class FieldManager {
                 clearChangedSet(fieldChangedEntry.getGroupId(), fieldChangedEntry.getTaskId(),
                         fieldChangedEntry.getAlterQueryString());
                 logger.warn("alterQueue is full!, message will be discard! addAlterFieldString "
-                                + "bid = {}, taskId = {}, alterString = {}", fieldChangedEntry.getGroupId(),
+                                + "groupId[{}], taskId[{}], alterString[{}]", fieldChangedEntry.getGroupId(),
                         fieldChangedEntry.getTaskId(), fieldChangedEntry.getAlterQueryString());
             }
         }

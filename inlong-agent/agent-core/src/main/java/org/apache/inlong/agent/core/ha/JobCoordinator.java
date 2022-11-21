@@ -528,8 +528,7 @@ public class JobCoordinator {
                 try {
                     runNodeInfo = GSON.fromJson(new String(data), JobRunNodeInfo.class);
                 } catch (Exception e) {
-                    LOGGER.error("GetJobRunNodeInfo parseObject exception SyncId = {}, e = {}",
-                            syncId, e);
+                    LOGGER.error("GetJobRunNodeInfo parseObject exception syncId[{}]", syncId, e);
                 }
             } else {
                 LOGGER.warn("SyncId [{}] getRunNodeInfo info is null", syncId);

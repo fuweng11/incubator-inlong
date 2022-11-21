@@ -292,7 +292,7 @@ public class JobManager extends AbstractDaemon {
         }
         allJobs.remove(jobName);
         jobConfManager.removeConf(job.getDBSyncJobConf());
-        LOGGER.info("delete {} task!", jobName);
+        LOGGER.info("delete job[{}] complete success!", jobName);
     }
 
     /**
@@ -327,8 +327,8 @@ public class JobManager extends AbstractDaemon {
         }
 
         String instName = taskConf.getDbServerInfo() + ":" + taskConf.getServerName();
-        LOGGER.debug("Get instance name :{}, dbName:{}, tbName:{}  to add task!", instName, taskConf.getDbName(),
-                taskConf.getTableName());
+        LOGGER.debug("taskId[{}], add instance name :{}, dbName:{}, tbName:{}", taskConf.getId(), instName,
+                taskConf.getDbName(), taskConf.getTableName());
 
         boolean skipDelete = false;
         if (taskConf.getSkipDelete() != null) {
@@ -342,7 +342,7 @@ public class JobManager extends AbstractDaemon {
             try {
                 JSONObject obj = JSONObject.parseObject(taskConf.getStartPosition());
                 startPosition = new LogPosition(obj);
-                LOGGER.info("startPosition set to: " + startPosition);
+                LOGGER.info("taskId[{}]startPosition set to {} ", taskConf.getId(), startPosition);
             } catch (Throwable t) {
                 LOGGER.error("parse start position error, startPosition set to null.", t);
             }
@@ -459,8 +459,7 @@ public class JobManager extends AbstractDaemon {
         String dbName = taskConf.getDbName();
         String tableName = taskConf.getTableName();
 
-        LOGGER.debug("Get taskId :{}, dbName:{}, tbName:{} to delete task!",
-                taskId, dbName, tableName);
+        LOGGER.debug("Get taskId :{}, dbName:{}, tbName:{} to delete task!", taskId, dbName, tableName);
 
         DBSyncJobConf conf = jobConfManager.getConfByTaskId(taskId);
         if (conf == null) {
@@ -470,6 +469,7 @@ public class JobManager extends AbstractDaemon {
         } else {
             String jobName = conf.getJobName();
             conf.removeTable(taskId);
+            agentManager.getTaskManager().removeTask(String.valueOf(taskId));
             if (conf.bNoNeedDb()) {
                 stopJob(jobName);
             }

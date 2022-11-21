@@ -104,8 +104,7 @@ public class DBSyncJobConf {
         STATUS_UPDATER.set(DBSyncJobConf.this, TaskStat.NORMAL);
     }
 
-    private void addMysqlTableConf(String key, Pattern pattern,
-            MysqlTableConf mysqlTableConf) {
+    private void addMysqlTableConf(String key, Pattern pattern, MysqlTableConf mysqlTableConf) {
         namePatternMap.put(key, pattern);
         table2MysqlConf.compute(key, (k, v) -> {
             if (v == null) {
@@ -501,22 +500,22 @@ public class DBSyncJobConf {
             boolean bFind = false;
             List<String> findEvents = new ArrayList<>();
 
+            boolean lruCacheFound = false;
             if (lruCache.containsKey(event)) {
                 // confirm get table conf
                 List<String> pattern = lruCache.get(event);
-                return pattern.stream().anyMatch(table2MysqlConf::containsKey);
-            } else {
-                for (Map.Entry<String, Pattern> e : namePatternMap.entrySet()) {
-                    if (e.getValue().matcher(event).matches()) {
-                        bFind = true;
-                        findEvents.add(e.getKey());
-                    }
+                lruCacheFound = pattern.stream().anyMatch(table2MysqlConf::containsKey);
+            }
+            for (Map.Entry<String, Pattern> e : namePatternMap.entrySet()) {
+                if (e.getValue().matcher(event).matches()) {
+                    bFind = true;
+                    findEvents.add(e.getKey());
                 }
                 if (bFind) {
                     lruCache.put(event, findEvents);
                 }
             }
-            return bFind;
+            return lruCacheFound || bFind;
         }
 
     }

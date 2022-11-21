@@ -146,7 +146,7 @@ public class AgentZhiyanMetricListener implements MetricListener {
                 reporter.sumMetric(M_PLUGIN_SEND_SUCCESS_COUNT,
                         (double) metricMap.getOrDefault(M_PLUGIN_SEND_SUCCESS_COUNT, ZERO).value);
                 int result = reporter.report();
-                LOGGER.info("agent-zhiyan,dimensions:{},values:{},result:{}", dimensionMap, gson.toJson(metricMap),
+                LOGGER.debug("agent-zhiyan,dimensions:{},values:{},result:{}", dimensionMap, gson.toJson(metricMap),
                         result);
             }
         } catch (Exception e) {

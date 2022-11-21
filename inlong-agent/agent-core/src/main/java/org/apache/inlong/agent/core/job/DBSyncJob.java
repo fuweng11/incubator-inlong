@@ -30,6 +30,7 @@ import org.apache.inlong.agent.plugin.Reader;
 import org.apache.inlong.agent.plugin.Sink;
 import org.apache.inlong.agent.plugin.Source;
 import org.apache.inlong.agent.state.JobStat;
+import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.ThreadUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,13 +88,19 @@ public class DBSyncJob {
             createAndAddTask(taskConf);
         }
 
+        //make sure all tasks are inited finished before starting dbsyncReadOperator
+        do {
+            DBSyncUtils.sleep(1000);
+        } while (!dbSyncTasks.values().stream().allMatch(Task::isTaskFinishInit));
+
+        LOGGER.info("task{} init finished, start dbsyncReadOperator", dbSyncTasks.keySet());
         readOperator.start();
     }
 
     public void createAndAddTask(MysqlTableConf taskConf) {
         JobProfile taskProfile = JobProfile.parseDbSyncTaskInfo(taskConf);
         Integer taskId = taskConf.getTaskId();
-        LOGGER.info("job id: {}, create task id {}, source: {}, channel: {}, sink: {}", taskProfile.getInstanceId(),
+        LOGGER.info("job id: {}, create new taskId[{}], source: {}, channel: {}, sink: {}", taskProfile.getInstanceId(),
                 taskId, taskProfile.get(JobConstants.JOB_SOURCE_CLASS),
                 taskProfile.get(JobConstants.JOB_CHANNEL), taskProfile.get(JobConstants.JOB_SINK));
         try {

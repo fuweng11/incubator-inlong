@@ -56,7 +56,7 @@ public class PositionControl {
     public volatile long pkgIndexId = 0L; // dbsync reader dump pkgIndexId
     protected volatile boolean running = false;
     //store successful sink-sent positions
-    protected LinkedBlockingQueue<LogPosition> ackLogPositionList = new LinkedBlockingQueue();
+    protected LinkedBlockingQueue<LogPosition> ackLogPositionList = new LinkedBlockingQueue<>();
     protected AtomicLong waitAckCnt;
     private String jobName;
     private DBSyncJobConf jobConf;
@@ -66,9 +66,9 @@ public class PositionControl {
     private LogPosition senderPosition = null;
     private LogPosition lastStorePosition = null;
     //record sending positions, and remove position after ack (from ackLogPositionList)
-    private final ConcurrentSkipListSet<LogPosition> sendLogPositionCache = new ConcurrentSkipListSet();
+    private final ConcurrentSkipListSet<LogPosition> sendLogPositionCache = new ConcurrentSkipListSet<>();
     //record eventLog positions while parseThread parsing eventLog
-    private final ConcurrentSkipListSet<LogPosition> eventLogPositionCache = new ConcurrentSkipListSet();
+    private final ConcurrentSkipListSet<LogPosition> eventLogPositionCache = new ConcurrentSkipListSet<>();
 
     public PositionControl(DBSyncJobConf jobConf, DBSyncReadOperator readOperator) {
         this.jobConf = jobConf;
@@ -139,6 +139,7 @@ public class PositionControl {
         if (readOperator.getState() != State.RUN) {
             return null;
         }
+        // if eventLogPositionCache is empty, use max processed position
         minEventLogPosition = readOperator.getMaxProcessedPosition();
         try {
             minEventLogPosition = eventLogPositionCache.first();
@@ -230,7 +231,7 @@ public class PositionControl {
     /**
      * Before ParseThread sending data, add the data position to sendLogPositionCache.
      */
-    public void addLogPositionToCache(LogPosition logPosition) {
+    public void addLogPositionToSendCache(LogPosition logPosition) {
         try {
             long currentTimeStamp = Instant.now().toEpochMilli();
             semaphore.acquire();

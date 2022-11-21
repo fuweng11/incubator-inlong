@@ -131,8 +131,7 @@ public class PackProxyMessage {
     public BatchProxyMessage fetchBatch() {
         // if queue is nearly full or package size is satisfied or timeout
         long currentTime = System.currentTimeMillis();
-        if (queueSize.get() > maxPackSize || queueIsFull()
-                || currentTime - currentCacheTime > cacheTimeout) {
+        if (queueSize.get() > maxPackSize || queueIsFull() || currentTime - currentCacheTime > cacheTimeout) {
             // refresh cache time.
             currentCacheTime = currentTime;
             long resultBatchSize = 0;
