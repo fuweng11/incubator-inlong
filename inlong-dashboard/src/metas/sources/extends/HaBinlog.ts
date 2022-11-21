@@ -99,6 +99,9 @@ export default class PulsarSource
   @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
+    props: values => ({
+      disabled: values?.status === 101,
+    }),
   })
   @I18n('meta.Sources.HaBinlog.DBName')
   dbName: string;
@@ -106,9 +109,9 @@ export default class PulsarSource
   @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
-    props: {
-      placeholder: i18n.t('meta.Sources.HaBinlog.TableNameHint'),
-    },
+    props: values => ({
+      disabled: values?.status === 101,
+    }),
   })
   @I18n('meta.Sources.HaBinlog.TableName')
   tableName: string;
@@ -117,7 +120,8 @@ export default class PulsarSource
     type: 'select',
     rules: [{ required: true }],
     initialValue: 'UTF-8',
-    props: {
+    props: values => ({
+      disabled: values?.status === 101,
       options: [
         {
           label: 'UTF-8',
@@ -128,7 +132,7 @@ export default class PulsarSource
           value: 'GBK',
         },
       ],
-    },
+    }),
   })
   @I18n('meta.Sources.HaBinlog.Encoding')
   charset: string;
@@ -137,7 +141,8 @@ export default class PulsarSource
     type: 'radio',
     rules: [{ required: true }],
     initialValue: 1,
-    props: {
+    props: values => ({
+      disabled: values?.status === 101,
       options: [
         {
           label: i18n.t('basic.Yes'),
@@ -148,24 +153,28 @@ export default class PulsarSource
           value: 0,
         },
       ],
-    },
+    }),
   })
   @I18n('meta.Sources.HaBinlog.SkipDelete')
   skipDelete: number;
 
   @FieldDecorator({
     type: 'input',
+    props: values => ({
+      disabled: values?.status === 101,
+    }),
   })
   @I18n('meta.Sources.HaBinlog.FileName')
   'startDumpPosition.entryPosition.journalName': string;
 
   @FieldDecorator({
     type: 'inputnumber',
-    props: {
+    props: values => ({
+      disabled: values?.status === 101,
       min: 1,
       max: 1000000000,
       precision: 0,
-    },
+    }),
   })
   @I18n('meta.Sources.HaBinlog.FileLocation')
   'startDumpPosition.entryPosition.position': number;

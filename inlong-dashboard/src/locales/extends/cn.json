@@ -89,7 +89,6 @@
   "meta.Sources.HaBinlog.DBServer": "数据库服务器",
   "meta.Sources.HaBinlog.DBName": "DB名称",
   "meta.Sources.HaBinlog.TableName": "表名称",
-  "meta.Sources.HaBinlog.TableNameHint": "多张表用（,）分隔，注意：多表的结构须完全一致",
   "meta.Sources.HaBinlog.Encoding": "字符编码",
   "meta.Sources.HaBinlog.SkipDelete": "跳过delete事件",
   "meta.Sources.HaBinlog.IPMessage": "请正确输入Ip地址",
