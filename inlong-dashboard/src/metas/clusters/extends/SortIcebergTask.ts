@@ -17,34 +17,31 @@
  * under the License.
  */
 
-import type { MetaExportWithBackendList } from '@/metas/types';
-import type { ClusterMetaType } from '../types';
+import { DataWithBackend } from '@/metas/DataWithBackend';
+import { RenderRow } from '@/metas/RenderRow';
+import { RenderList } from '@/metas/RenderList';
+import UserSelect from '@/components/UserSelect';
+import { ClusterInfo } from '../common/ClusterInfo';
 
-export const allExtendsClusters: MetaExportWithBackendList<ClusterMetaType> = [
-  // You can extends at here...
-  {
-    label: 'ZooKeeper',
-    value: 'ZOOKEEPER',
-    LoadEntity: () => import('./ZooKeeper'),
-  },
-  {
-    label: 'SortCKTask',
-    value: 'SORT_CK',
-    LoadEntity: () => import('./SortCKTask'),
-  },
-  {
-    label: 'SortHiveTask',
-    value: 'SORT_HIVE',
-    LoadEntity: () => import('./SortHiveTask'),
-  },
-  {
-    label: 'SortTHiveTask',
-    value: 'SORT_THIVE',
-    LoadEntity: () => import('./SortTHiveTask'),
-  },
-  {
-    label: 'SortIcebergTask',
-    value: 'SORT_ICEBERG',
-    LoadEntity: () => import('./SortIcebergTask'),
-  },
-];
+const { I18n } = DataWithBackend;
+const { FieldDecorator } = RenderRow;
+
+export default class SortIcebergCluster
+  extends ClusterInfo
+  implements DataWithBackend, RenderRow, RenderList
+{
+  @FieldDecorator({
+    type: 'input',
+    props: {
+      placeholder: 'hdfs://xx-xxx-xx/xxx/xxx',
+    },
+  })
+  @I18n('meta.Clusters.Sort.BackupDataPath')
+  backupDataPath: string;
+
+  @FieldDecorator({
+    type: UserSelect,
+  })
+  @I18n('meta.Clusters.Sort.BackupHadoopProxyUser')
+  backupHadoopProxyUser: string;
+}
