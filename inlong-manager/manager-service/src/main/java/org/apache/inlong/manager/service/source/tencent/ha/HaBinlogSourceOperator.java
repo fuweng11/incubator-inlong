@@ -194,11 +194,11 @@ public class HaBinlogSourceOperator extends AbstractSourceOperator {
         // re-issue task if necessary
         if (InlongConstants.STANDARD_MODE.equals(groupMode)) {
             if (GroupStatus.forCode(groupStatus).equals(GroupStatus.CONFIG_SUCCESSFUL)) {
-                entity.setStatus(SourceStatus.TO_BE_ISSUED_ADD.getCode());
+                entity.setStatus(SourceStatus.TO_BE_ISSUED_RETRY.getCode());
             } else {
                 switch (SourceStatus.forCode(entity.getStatus())) {
                     case SOURCE_NORMAL:
-                        entity.setStatus(SourceStatus.TO_BE_ISSUED_ADD.getCode());
+                        entity.setStatus(SourceStatus.TO_BE_ISSUED_RETRY.getCode());
                         break;
                     case SOURCE_FAILED:
                         entity.setStatus(SourceStatus.SOURCE_NEW.getCode());
