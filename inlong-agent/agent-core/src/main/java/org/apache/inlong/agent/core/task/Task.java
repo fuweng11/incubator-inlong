@@ -35,6 +35,8 @@ public class Task {
     private volatile boolean isInited = false;
 
     public Task(String taskId, Reader reader, Sink sink, Channel channel, JobProfile jobConf) {
+    public Task(String taskId, Reader reader, Sink sink, Channel channel,
+            JobProfile jobConf) {
         this.reader = reader;
         this.sink = sink;
         this.taskId = taskId;

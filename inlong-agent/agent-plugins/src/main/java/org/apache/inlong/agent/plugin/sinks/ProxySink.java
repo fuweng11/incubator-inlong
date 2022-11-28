@@ -134,8 +134,8 @@ public class ProxySink extends AbstractSink {
                         BatchProxyMessage batchProxyMessage = packProxyMessage.fetchBatch();
                         if (batchProxyMessage != null) {
                             senderManager.sendBatch(batchProxyMessage);
-                            LOGGER.info("send {}/{}, message key {}, message count {}, jobId[{}], "
-                                            + "read source[{}], sendTime[{}]", inlongGroupId, inlongStreamId, batchKey,
+                            LOGGER.info("send group id {}, message key {},with message size {}, the job id is {}, "
+                                    + "read source is {} sendTime is {}", inlongGroupId, batchKey,
                                     batchProxyMessage.getDataList().size(), jobInstanceId, sourceName,
                                     batchProxyMessage.getDataTime());
                         }

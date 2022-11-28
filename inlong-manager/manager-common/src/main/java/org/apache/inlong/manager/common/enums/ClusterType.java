@@ -46,6 +46,7 @@ public class ClusterType {
 
 
     private static final Set<String> TYPE_SET = new HashSet<String>() {
+
         {
             add(ClusterType.AGENT);
             add(ClusterType.TUBEMQ);

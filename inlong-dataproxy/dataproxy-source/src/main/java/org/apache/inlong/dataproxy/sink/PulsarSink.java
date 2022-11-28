@@ -122,6 +122,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
     private static final LoadingCache<String, Long> AGENT_ID_CACHE = CacheBuilder.newBuilder()
             .concurrencyLevel(4 * 8).initialCapacity(500).expireAfterAccess(30, TimeUnit.SECONDS)
             .build(new CacheLoader<String, Long>() {
+
                 @Nonnull
                 @Override
                 public Long load(@Nonnull String key) {
@@ -174,7 +175,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
     private MonitorIndexExt monitorIndexExt;
 
     /*
-     *  metric
+     * metric
      */
     private DataProxyMetricItemSet metricItemSet;
     private ConfigManager configManager;
@@ -198,7 +199,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
         configManager = ConfigManager.getInstance();
         topicProperties = configManager.getTopicProperties();
         pulsarCluster = configManager.getMqClusterUrl2Token();
-        pulsarConfig = configManager.getMqClusterConfig(); //pulsar common config
+        pulsarConfig = configManager.getMqClusterConfig(); // pulsar common config
         sinkThreadPoolSize = pulsarConfig.getThreadNum();
         if (sinkThreadPoolSize <= 0) {
             sinkThreadPoolSize = 1;
@@ -206,6 +207,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
         pulsarClientService = new PulsarClientService(pulsarConfig, sinkThreadPoolSize);
 
         configManager.getTopicConfig().addUpdateCallback(new ConfigUpdateCallback() {
+
             @Override
             public void update() {
                 if (pulsarClientService != null) {
@@ -215,6 +217,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
             }
         });
         configManager.getMqClusterHolder().addUpdateCallback(new ConfigUpdateCallback() {
+
             @Override
             public void update() {
                 if (pulsarClientService != null) {
@@ -251,7 +254,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
      * When topic.properties is re-enabled, the producer update is triggered
      */
     public void diffSetPublish(PulsarClientService pulsarClientService,
-                               Set<String> curTopicSet, Set<String> newTopicSet) {
+            Set<String> curTopicSet, Set<String> newTopicSet) {
         boolean changed = false;
         // create producers for new topics
         for (String newTopic : newTopicSet) {
@@ -299,7 +302,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
         Map<String, MapDifference.ValueDifference<String>> differentToken = mapDifference.entriesDiffering();
         for (String url : differentToken.keySet()) {
             needToClose.put(url, originalCluster.get(url));
-            needToStart.put(url, endCluster.get(url));//token changed
+            needToStart.put(url, endCluster.get(url));// token changed
         }
 
         pulsarClientService.updatePulsarClients(this, needToClose, needToStart,
@@ -460,14 +463,14 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
 
     @Override
     public void handleMessageSendSuccess(String topic, Object result,
-                                         EventStat eventStat, long startTime) {
+            EventStat eventStat, long startTime) {
         /*
          * Statistics pulsar performance
          */
         TOTAL_PULSAR_SUCC_SEND_CNT.incrementAndGet();
         TOTAL_PULSAR_SUCC_SEND_SIZE.addAndGet(eventStat.getEvent().getBody().length);
         /*
-         *add to sinkCounter
+         * add to sinkCounter
          */
         sinkCounter.incrementEventDrainSuccessCount();
         currentInFlightCount.decrementAndGet();
@@ -493,7 +496,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
 
     @Override
     public void handleMessageSendException(String topic, EventStat eventStat,
-                                           Object e, DataProxyErrCode errCode, String errMsg) {
+            Object e, DataProxyErrCode errCode, String errMsg) {
         // decrease inflight count
         currentInFlightCount.decrementAndGet();
         // check whether retry send message
@@ -526,7 +529,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
 
     @Override
     public void handleRequestProcError(String topic, EventStat eventStat, boolean needRetry,
-                                       DataProxyErrCode errCode, String errMsg) {
+            DataProxyErrCode errCode, String errMsg) {
         if (logPrinterB.shouldPrint()) {
             logger.error(errMsg);
         }
@@ -628,8 +631,7 @@ public class PulsarSink extends AbstractSink implements Configurable, SendMessag
                 return;
             }
             /*
-             * If the failure requires retransmission to pulsar,
-             * the sid needs to be removed before retransmission.
+             * If the failure requires retransmission to pulsar, the sid needs to be removed before retransmission.
              */
             if (pulsarConfig.getClientIdCache()) {
                 String clientId = eventStat.getEvent().getHeaders().get(ConfigConstants.SEQUENCE_ID);

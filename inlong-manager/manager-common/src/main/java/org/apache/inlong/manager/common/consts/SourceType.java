@@ -48,6 +48,7 @@ public class SourceType {
     public static final String HA_BINLOG = "HA_BINLOG";
 
     public static final Map<String, TaskTypeEnum> SOURCE_TASK_MAP = new HashMap<String, TaskTypeEnum>() {
+
         {
             put(AUTO_PUSH, null);
             put(TUBEMQ, TaskTypeEnum.TUBEMQ);
@@ -61,7 +62,7 @@ public class SourceType {
             put(ORACLE, TaskTypeEnum.ORACLE);
             put(SQLSERVER, TaskTypeEnum.SQLSERVER);
             put(MONGODB, TaskTypeEnum.MONGODB);
-            put(REDIS,TaskTypeEnum.REDIS);
+            put(REDIS, TaskTypeEnum.REDIS);
 
             // --------------------------------------------------------------------------------------------
             // inner method

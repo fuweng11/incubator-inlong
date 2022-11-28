@@ -281,7 +281,6 @@ public abstract class AbstractConfiguration {
         return configStorage;
     }
 
-
     /**
      * get configStorage list, item format: "key=value"
      */

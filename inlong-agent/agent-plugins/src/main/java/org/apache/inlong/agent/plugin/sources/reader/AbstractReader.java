@@ -54,7 +54,7 @@ public abstract class AbstractReader implements Reader {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReader.class);
     protected String inlongGroupId;
     protected String inlongStreamId;
-    //metric
+    // metric
     protected AgentMetricItemSet metricItemSet;
     protected AgentMetricItem readerMetric;
     protected String metricName;

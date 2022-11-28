@@ -106,8 +106,7 @@ public class AgentManager extends AbstractDaemon {
                     Class.forName(conf.get(AgentConstants.AGENT_FETCHER_CLASSNAME))
                             .getDeclaredConstructor(AgentManager.class);
             constructor.setAccessible(true);
-            return
-                    (ProfileFetcher) constructor.newInstance(agentManager);
+            return (ProfileFetcher) constructor.newInstance(agentManager);
         } catch (Exception ex) {
             LOGGER.warn("cannot find fetcher: ", ex);
         }

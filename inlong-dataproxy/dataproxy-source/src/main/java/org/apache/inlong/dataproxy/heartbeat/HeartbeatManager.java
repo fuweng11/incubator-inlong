@@ -132,7 +132,8 @@ public class HeartbeatManager implements AbstractHeartbeatManager {
             loadValue = 0xffff;
         }
         heartbeatMsg.setNodeSrvStatus(ConfigManager.getInstance().isMqClusterReady()
-                ? NodeSrvStatus.OK : NodeSrvStatus.SERVICE_UNREADY);
+                ? NodeSrvStatus.OK
+                : NodeSrvStatus.SERVICE_UNREADY);
         heartbeatMsg.setIp(reportInfo.getIp());
         heartbeatMsg.setPort(reportInfo.getPort());
         heartbeatMsg.setProtocolType(reportInfo.getProtocolType());

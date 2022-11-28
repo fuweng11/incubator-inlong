@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MessageUtils {
+
     // log print count
     private static final LogCounter logCounter =
             new LogCounter(10, 100000, 30 * 1000);
@@ -94,9 +95,9 @@ public class MessageUtils {
      * @param msgType       the message type
      */
     public static void sourceReturnRspPackage(Map<String, String> commonAttrMap,
-                                              Map<String, Object> resultMap,
-                                              Channel remoteChannel,
-                                              MsgType msgType) throws Exception {
+            Map<String, Object> resultMap,
+            Channel remoteChannel,
+            MsgType msgType) throws Exception {
         ByteBuf binBuffer;
         String origAttrs = null;
         final StringBuilder strBuff = new StringBuilder(512);
@@ -189,8 +190,8 @@ public class MessageUtils {
      * @param errMsg   error message
      */
     public static void sinkReturnRspPackage(SinkRspEvent event,
-                                            DataProxyErrCode errCode,
-                                            String errMsg) {
+            DataProxyErrCode errCode,
+            String errMsg) {
         ByteBuf binBuffer;
         final StringBuilder strBuff = new StringBuilder(512);
         // get and check channel context
