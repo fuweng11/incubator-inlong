@@ -33,8 +33,11 @@ import org.apache.inlong.common.pojo.agent.dbsync.InitTaskRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.ReportTaskRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.ReportTaskRequest.TaskInfoBean;
 import org.apache.inlong.common.pojo.agent.dbsync.RunningTaskRequest;
+import org.apache.inlong.common.pojo.dataproxy.DataProxyTopicInfo;
+import org.apache.inlong.common.pojo.dataproxy.MQClusterInfo;
 import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
+import org.apache.inlong.manager.common.consts.MQType;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.SourceStatus;
@@ -44,15 +47,18 @@ import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterNodeEntity;
 import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
 import org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSourceEntityMapper;
 import org.apache.inlong.manager.dao.mapper.tencent.DbSyncHeartbeatEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.agent.AgentClusterInfo;
+import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.node.mysql.MySQLDataNodeInfo;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
@@ -70,6 +76,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -145,6 +152,8 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     private InlongClusterService clusterService;
     @Autowired
     private InlongGroupEntityMapper groupMapper;
+    @Autowired
+    private InlongStreamEntityMapper streamMapper;
     @Autowired
     private StreamSourceEntityMapper sourceMapper;
     @Autowired
@@ -531,6 +540,60 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                     }
                 } catch (Exception e) {
                     LOGGER.error("start position is invalid for id={}, skip to parse and issue", id);
+                }
+            }
+            // get data report-to information
+            InlongGroupEntity groupEntity =
+                    groupMapper.selectByGroupId(sourceEntity.getInlongGroupId());
+            if (groupEntity == null) {
+                throw new BusinessException(String.format("inlong group not found for groupId=%s",
+                        sourceEntity.getInlongGroupId()));
+            }
+            InlongStreamEntity streamEntity =
+                    streamMapper.selectByIdentifier(sourceEntity.getInlongGroupId(), sourceEntity.getInlongStreamId());
+            if (streamEntity == null) {
+                throw new BusinessException(
+                        String.format("inlong stream not found for groupId=%s streamId=%s",
+                                sourceEntity.getInlongGroupId(), sourceEntity.getInlongStreamId()));
+            }
+            int dataReportType = groupEntity.getDataReportType();
+            taskInfo.setDataReportType(dataReportType);
+            if (InlongConstants.REPORT_TO_MQ_RECEIVED == dataReportType) {
+                // add mq cluster setting
+                List<MQClusterInfo> mqSet = new ArrayList<>();
+                List<InlongClusterEntity> mqClusterList =
+                        clusterMapper.selectByClusterTag(groupEntity.getInlongClusterTag());
+                for (InlongClusterEntity cluster : mqClusterList) {
+                    MQClusterInfo clusterInfo = new MQClusterInfo();
+                    clusterInfo.setUrl(cluster.getUrl());
+                    clusterInfo.setToken(cluster.getToken());
+                    clusterInfo.setMqType(cluster.getType());
+                    clusterInfo.setParams(JsonUtils.parseObject(cluster.getExtParams(), HashMap.class));
+                    mqSet.add(clusterInfo);
+                }
+                taskInfo.setMqClusters(mqSet);
+                // add topic setting
+                InlongClusterEntity cluster = mqClusterList.get(0);
+                String mqResource = groupEntity.getMqResource();
+                String mqType = groupEntity.getMqType();
+                if (MQType.PULSAR.equals(mqType) || MQType.TDMQ_PULSAR.equals(mqType)) {
+                    PulsarClusterDTO pulsarCluster = PulsarClusterDTO.getFromJson(cluster.getExtParams());
+                    String tenant = pulsarCluster.getTenant();
+                    if (StringUtils.isBlank(tenant)) {
+                        tenant = InlongConstants.DEFAULT_PULSAR_TENANT;
+                    }
+                    String topic = String.format(InlongConstants.PULSAR_TOPIC_FORMAT,
+                            tenant, mqResource, streamEntity.getMqResource());
+                    DataProxyTopicInfo topicConfig = new DataProxyTopicInfo();
+                    topicConfig.setInlongGroupId(sourceEntity.getInlongGroupId()
+                            + "/" +  sourceEntity.getInlongStreamId());
+                    topicConfig.setTopic(topic);
+                    taskInfo.setTopicInfo(topicConfig);
+                } else if (MQType.TUBEMQ.equals(mqType)) {
+                    DataProxyTopicInfo topicConfig = new DataProxyTopicInfo();
+                    topicConfig.setInlongGroupId(sourceEntity.getInlongGroupId());
+                    topicConfig.setTopic(mqResource);
+                    taskInfo.setTopicInfo(topicConfig);
                 }
             }
 

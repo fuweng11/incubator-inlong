@@ -17,6 +17,9 @@
 
 package org.apache.inlong.common.pojo.agent.dbsync;
 
+import org.apache.inlong.common.pojo.dataproxy.DataProxyTopicInfo;
+import org.apache.inlong.common.pojo.dataproxy.MQClusterInfo;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -57,8 +60,7 @@ public class DbSyncTaskInfo {
     @ApiModelProperty(value = "Database name")
     private String dbName;
 
-    @ApiModelProperty(value = "Table name, support regular, such as: order_[0-9]{8}$",
-            notes = "All table schemas must be the same")
+    @ApiModelProperty(value = "Table name, support regular, such as: order_[0-9]{8}$", notes = "All table schemas must be the same")
     private String tableName;
 
     @ApiModelProperty(value = "Binlog data code name, default is UTF-8")
@@ -67,8 +69,7 @@ public class DbSyncTaskInfo {
     @ApiModelProperty(value = "Whether to skip the deletion event in binlog, default: 1, skip")
     private Integer skipDelete;
 
-    @ApiModelProperty(value = "Collect from the specified binlog position",
-            notes = "Modify it after publishing, and return an empty string if empty")
+    @ApiModelProperty(value = "Collect from the specified binlog position", notes = "Modify it after publishing, and return an empty string if empty")
     private String startPosition;
 
     @ApiModelProperty(value = "Operate status")
@@ -79,5 +80,34 @@ public class DbSyncTaskInfo {
 
     @ApiModelProperty(value = "DB server info")
     private DBServerInfo dbServerInfo;
+
+    /**
+     * Data report type.
+     * The current constraint is that all InLong Agents under one InlongGroup use the same type.
+     * <p/>
+     * This constraint is not applicable to InlongStream or StreamSource, which avoids the configuration
+     * granularity and reduces the operation and maintenance costs.
+     * <p/>
+     * Supported type:
+     * <pre>
+     *     0: report to DataProxy and respond when the DataProxy received data.
+     *     1: report to DataProxy and respond after DataProxy sends data.
+     *     2: report to MQ and respond when the MQ received data.
+     * </pre>
+     */
+    @ApiModelProperty(value = "Data report type")
+    private Integer dataReportType = 0;
+
+    /**
+     * MQ cluster information, valid when reportDataTo is 2.
+     */
+    @ApiModelProperty(value = "mq cluster information")
+    private List<MQClusterInfo> mqClusters;
+
+    /**
+     * MQ's topic information, valid when reportDataTo is 2.
+     */
+    @ApiModelProperty(value = "mq topic information")
+    private DataProxyTopicInfo topicInfo;
 
 }
