@@ -52,6 +52,7 @@ public class SortClusterOperator extends AbstractClusterOperator {
     private static final Logger LOGGER = LoggerFactory.getLogger(SortClusterOperator.class);
 
     private static final Set<String> SORT_CLUSTER_SET = new HashSet<String>() {
+
         {
             add(ClusterType.SORT_HIVE);
             add(ClusterType.SORT_THIVE);

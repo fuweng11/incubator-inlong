@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LoadMonitor implements Runnable {
+
     private static final Logger logger = LoggerFactory.getLogger(LoadMonitor.class);
     private static final AtomicBoolean started = new AtomicBoolean(false);
     private static LoadMonitor instance = null;
@@ -49,7 +50,7 @@ public class LoadMonitor implements Runnable {
     private final double[] propertiesValue = {1, 0.5, 0.5, 0};
     private final ScheduledExecutorService executorService;
 
-    public static LoadMonitor getInstance()  {
+    public static LoadMonitor getInstance() {
         if (started.get() && instance != null) {
             return instance;
         }
@@ -90,6 +91,7 @@ public class LoadMonitor implements Runnable {
         }
         this.executorService =
                 Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+
                     @Override
                     public Thread newThread(Runnable r) {
                         Thread t = new Thread(r, "LoadMonitor-Thread");
@@ -121,12 +123,12 @@ public class LoadMonitor implements Runnable {
             SysInfoItem probeEnd = new SysInfoItem();
             readSysInfo(probeEnd);
             // third, calculate each indicator in schedule time
-            //used cpu in this interval time
+            // used cpu in this interval time
             double cpuUsed = (double) (probeEnd.cpuTotal - probeEnd.cpuIdle)
                     - (probeStart.cpuTotal - probeStart.cpuIdle);
             final double cpuPercent = cpuUsed / (probeEnd.cpuTotal - probeStart.cpuTotal) * 100;
             // memory
-            double memUsed = probeEnd.memUsed / 1048576.0; //GB
+            double memUsed = probeEnd.memUsed / 1048576.0; // GB
             double memPercent = probeEnd.memUsed / 1.0 / probeEnd.memTotal * 100;
             // network
             final double netIn = (probeEnd.netIn - probeStart.netIn) / 1024.0

@@ -37,7 +37,7 @@ public class JobConfManager {
     }
 
     public synchronized boolean isParsing(String instName) {
-//        return inst2ConfMap.containsKey(instName);
+        // return inst2ConfMap.containsKey(instName);
         return delegate.stream().anyMatch(conf -> Objects.equals(instName, conf.getJobName()));
     }
 
@@ -67,7 +67,7 @@ public class JobConfManager {
     }
 
     public synchronized boolean containsTaskId(String taskId) {
-//        return taskId2ConfMap.containsKey(taskId);
+        // return taskId2ConfMap.containsKey(taskId);
         return delegate.stream().anyMatch(conf -> conf.getTaskIdList().contains(taskId));
     }
 

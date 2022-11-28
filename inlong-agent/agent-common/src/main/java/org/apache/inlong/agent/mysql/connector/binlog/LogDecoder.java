@@ -319,23 +319,23 @@ public final class LogDecoder {
                 GtidLogEvent event = new GtidLogEvent(header, buffer, descriptionEvent);
                 /* updating position in context */
                 logPosition.position = header.getLogPos();
-//                GTIDSet gtidSet = context.getGtidSet();
-//                if (gtidSet != null) {
-//                    gtidSet.update(event.getGtidStr());
-//                }
+                // GTIDSet gtidSet = context.getGtidSet();
+                // if (gtidSet != null) {
+                // gtidSet.update(event.getGtidStr());
+                // }
                 return event;
             }
             case LogEvent.PREVIOUS_GTIDS_LOG_EVENT: {
                 PreviousGtidsLogEvent event = new PreviousGtidsLogEvent(header, buffer, descriptionEvent);
-//                logger.debug("PreviousGtidsLogEvent: {}", event.toString());
+                // logger.debug("PreviousGtidsLogEvent: {}", event.toString());
                 /* updating position in context */
                 logPosition.position = header.getLogPos();
                 return event;
             }
             default:
 
-//                Create an object of Ignorable_log_event for unrecognized sub-class.
-//                So that SLAVE SQL THREAD will only update the position and continue.
+                // Create an object of Ignorable_log_event for unrecognized sub-class.
+                // So that SLAVE SQL THREAD will only update the position and continue.
                 if ((buffer.getUint16(LogEvent.FLAGS_OFFSET) & LogEvent.LOG_EVENT_IGNORABLE_F) > 0) {
                     IgnorableLogEvent event = new IgnorableLogEvent(header, buffer, descriptionEvent);
                     /* updating position in context */

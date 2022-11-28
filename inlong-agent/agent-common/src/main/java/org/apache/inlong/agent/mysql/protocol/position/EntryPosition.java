@@ -31,7 +31,7 @@ public class EntryPosition extends TimePosition implements Comparable<EntryPosit
     private String journalName;
     private Long position;
     private Long serverId;
-//    private String gtid;
+    // private String gtid;
 
     public EntryPosition() {
         super(null);
@@ -56,7 +56,7 @@ public class EntryPosition extends TimePosition implements Comparable<EntryPosit
         this.serverId = serverId;
     }
 
-    /*add deep copy*/
+    /* add deep copy */
     public EntryPosition(EntryPosition other) {
         super(other.timestamp);
         this.journalName = other.journalName;

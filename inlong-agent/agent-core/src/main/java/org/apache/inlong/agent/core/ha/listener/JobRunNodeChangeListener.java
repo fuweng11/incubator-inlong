@@ -32,7 +32,8 @@ import org.apache.logging.log4j.Logger;
  * description: job ha
  */
 public class JobRunNodeChangeListener
-        implements TreeCacheListener {
+        implements
+            TreeCacheListener {
 
     private Logger logger = LogManager.getLogger(JobRunNodeChangeListener.class);
 

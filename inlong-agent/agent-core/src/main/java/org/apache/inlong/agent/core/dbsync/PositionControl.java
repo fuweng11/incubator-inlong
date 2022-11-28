@@ -50,12 +50,12 @@ public class PositionControl {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PositionControl.class);
     private final List<Thread> handleAckLogPositionThreadList = new LinkedList<>();
-    //flow control: maximum unacked message
+    // flow control: maximum unacked message
     private final Semaphore semaphore;
     private final DBSyncReadOperator readOperator;
     public volatile long pkgIndexId = 0L; // dbsync reader dump pkgIndexId
     protected volatile boolean running = false;
-    //store successful sink-sent positions
+    // store successful sink-sent positions
     protected LinkedBlockingQueue<LogPosition> ackLogPositionList = new LinkedBlockingQueue<>();
     protected AtomicLong waitAckCnt;
     private String jobName;
@@ -65,9 +65,9 @@ public class PositionControl {
     private LogPosition minEventLogPosition;
     private LogPosition senderPosition = null;
     private LogPosition lastStorePosition = null;
-    //record sending positions, and remove position after ack (from ackLogPositionList)
+    // record sending positions, and remove position after ack (from ackLogPositionList)
     private final ConcurrentSkipListSet<LogPosition> sendLogPositionCache = new ConcurrentSkipListSet<>();
-    //record eventLog positions while parseThread parsing eventLog
+    // record eventLog positions while parseThread parsing eventLog
     private final ConcurrentSkipListSet<LogPosition> eventLogPositionCache = new ConcurrentSkipListSet<>();
 
     public PositionControl(DBSyncJobConf jobConf, DBSyncReadOperator readOperator) {
@@ -166,7 +166,7 @@ public class PositionControl {
         senderPosition = ackedPos;
         lastStorePosition = ackedPos;
 
-        //flush JobHa pos
+        // flush JobHa pos
         JSONObject jsonObject = ackedPos.getJsonObj();
         jsonObject.put(DBSYNC_MSG_INDEX_KEY, pkgIndexId);
         JobHaDispatcherImpl.getInstance().updatePosition(getSyncIdFromInstanceName(jobName), jsonObject.toJSONString());

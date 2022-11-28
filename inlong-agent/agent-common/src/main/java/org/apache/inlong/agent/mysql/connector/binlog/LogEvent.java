@@ -72,34 +72,19 @@ import org.apache.inlong.agent.mysql.connector.binlog.event.LogHeader;
 public abstract class LogEvent {
 
     /*
-     * 3 is MySQL 4.x; 4 is MySQL 5.0.0.
-     * Compared to version 3, version 4 has:
-     * - a different Start_log_event, which includes info about the binary log
-     * (sizes of headers); this info is included for better compatibility if the
-     * master's MySQL version is different from the slave's.
-     * - all events have a unique ID (the triplet (server_id, timestamp at server
-     * start, other) to be sure an event is not executed more than once in a
-     * multimaster setup, example:
-     *              M1
-     *            /   \
-     *           v     v
-     *           M2    M3
-     *           \     /
-     *            v   v
-     *              S
-     * if a query is run on M1, it will arrive twice on S, so we need that S
-     * remembers the last unique ID it has processed, to compare and know if the
-     * event should be skipped or not. Example of ID: we already have the server id
-     * (4 bytes), plus:
-     * timestamp_when_the_master_started (4 bytes), a counter (a sequence number
-     * which increments every time we write an event to the binlog) (3 bytes).
-     * Q: how do we handle when the counter is overflowed and restarts from 0 ?
+     * 3 is MySQL 4.x; 4 is MySQL 5.0.0. Compared to version 3, version 4 has: - a different Start_log_event, which
+     * includes info about the binary log (sizes of headers); this info is included for better compatibility if the
+     * master's MySQL version is different from the slave's. - all events have a unique ID (the triplet (server_id,
+     * timestamp at server start, other) to be sure an event is not executed more than once in a multimaster setup,
+     * example: M1 / \ v v M2 M3 \ / v v S if a query is run on M1, it will arrive twice on S, so we need that S
+     * remembers the last unique ID it has processed, to compare and know if the event should be skipped or not. Example
+     * of ID: we already have the server id (4 bytes), plus: timestamp_when_the_master_started (4 bytes), a counter (a
+     * sequence number which increments every time we write an event to the binlog) (3 bytes). Q: how do we handle when
+     * the counter is overflowed and restarts from 0 ?
      *
-     * - Query and Load (Create or Execute) events may have a more precise
-     *   timestamp (with microseconds), number of matched/affected/warnings rows
-     * and fields of session variables: SQL_MODE,
-     * FOREIGN_KEY_CHECKS, UNIQUE_CHECKS, SQL_AUTO_IS_NULL, the collations and
-     * charsets, the PASSWORD() version (old/new/...).
+     * - Query and Load (Create or Execute) events may have a more precise timestamp (with microseconds), number of
+     * matched/affected/warnings rows and fields of session variables: SQL_MODE, FOREIGN_KEY_CHECKS, UNIQUE_CHECKS,
+     * SQL_AUTO_IS_NULL, the collations and charsets, the PASSWORD() version (old/new/...).
      */
     public static final int BINLOG_VERSION = 4;
 
@@ -227,7 +212,6 @@ public abstract class LogEvent {
      */
     public static final int BINLOG_CHECKSUM_LEN = CHECKSUM_CRC32_SIGNATURE_LEN;
 
-
     /**
      * For an event, 'e', carrying a type code, that a slave,
      * 's', does not recognize, 's' will check 'e' for
@@ -261,7 +245,7 @@ public abstract class LogEvent {
     public static final int MYSQL_TYPE_DATETIME2 = 18;
     public static final int MYSQL_TYPE_TIME2 = 19;
 
-    //lynd add for mysql 5.7.13
+    // lynd add for mysql 5.7.13
     public static final int MYSQL_TYPE_JSON = 245;
 
     public static final int MYSQL_TYPE_NEWDECIMAL = 246;

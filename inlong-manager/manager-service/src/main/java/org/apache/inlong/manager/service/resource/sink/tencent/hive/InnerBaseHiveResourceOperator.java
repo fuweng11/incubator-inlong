@@ -504,7 +504,8 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         String[] accounts = selectors.split(",");
 
         String hiveType = (hiveInfo.getIsThive() == TencentConstants.HIVE_TYPE
-                ? ScHiveResource.TYPE_HIVE : ScHiveResource.TYPE_THIVE);
+                ? ScHiveResource.TYPE_HIVE
+                : ScHiveResource.TYPE_THIVE);
 
         DealResult dealResult = new DealResult();
         try {

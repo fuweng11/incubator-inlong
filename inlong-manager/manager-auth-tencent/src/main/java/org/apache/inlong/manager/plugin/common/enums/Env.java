@@ -27,6 +27,7 @@ import java.util.Map;
  * Environment enums
  */
 public enum Env {
+
     DEV,
     TEST,
     PROD;

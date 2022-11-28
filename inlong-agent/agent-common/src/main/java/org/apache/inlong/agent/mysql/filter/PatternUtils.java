@@ -31,6 +31,7 @@ public class PatternUtils {
             .newBuilder()
             .softValues()
             .build(new CacheLoader<String, Pattern>() {
+
                 @Override
                 public Pattern load(String pattern) throws Exception {
                     try {

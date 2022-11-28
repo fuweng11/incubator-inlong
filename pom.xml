@@ -1851,73 +1851,73 @@
 
     <repositories>
         <repository>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
             <id>tianqiong-releases-repo</id>
             <name>tianqiong release repo</name>
             <url>https://mirrors.tencent.com/repository/maven/tianqiong-releases</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
         </repository>
         <repository>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
             <id>tianqiong-snapshot-repo</id>
             <name>tianqiong snapshot repo</name>
             <url>https://mirrors.tencent.com/repository/maven/tianqiong-snapshots/</url>
+        </repository>
+        <repository>
             <releases>
                 <enabled>false</enabled>
             </releases>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>
-        <repository>
             <id>snapshots-repo</id>
             <name>snapshots repo</name>
             <url>https://mirrors.tencent.com/repository/maven/snapshots/</url>
+        </repository>
+        <repository>
             <releases>
                 <enabled>false</enabled>
             </releases>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>
-        <repository>
             <id>tencent_public</id>
             <name>tencent_public</name>
             <url>https://mirrors.tencent.com/repository/maven/tencent_public/</url>
             <layout>default</layout>
+        </repository>
+        <repository>
             <releases>
                 <enabled>false</enabled>
             </releases>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>
-        <repository>
             <id>tencent_public_snapshots</id>
             <name>tencent_public_snapshots</name>
             <url>https://mirrors.tencent.com/repository/maven/tencent_public_snapshots/</url>
             <layout>default</layout>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
         </repository>
 
         <repository>
-            <id>tencent-thirdparty</id>
-            <name>tencent third party repo</name>
-            <url>https://mirrors.tencent.com/repository/maven/thirdparty</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
+            <id>tencent-thirdparty</id>
+            <name>tencent third party repo</name>
+            <url>https://mirrors.tencent.com/repository/maven/thirdparty</url>
         </repository>
 
     </repositories>

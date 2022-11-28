@@ -51,14 +51,12 @@ public final class CreateFileLogEvent extends LoadLogEvent {
             fileId = buffer.getUint32(headerLen + loadHeaderLen
                     + CF_FILE_ID_OFFSET);
             /*
-              Note that it's ok to use get_data_size() below, because it is computed
-              with values we have already read from this event (because we called
-              copy_log_event()); we are not using slave's format info to decode
-              master's format, we are really using master's format info.
-              Anyway, both formats should be identical (except the common_header_len)
-              as these Load events are not changed between 4.0 and 5.0 (as logging of
-              LOAD DATA INFILE does not use Load_log_event in 5.0).
-            */
+             * Note that it's ok to use get_data_size() below, because it is computed with values we have already read
+             * from this event (because we called copy_log_event()); we are not using slave's format info to decode
+             * master's format, we are really using master's format info. Anyway, both formats should be identical
+             * (except the common_header_len) as these Load events are not changed between 4.0 and 5.0 (as logging of
+             * LOAD DATA INFILE does not use Load_log_event in 5.0).
+             */
             blockLen = buffer.limit() - buffer.position();
             blockBuf = buffer.duplicate(blockLen);
         } else {

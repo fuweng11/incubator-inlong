@@ -50,7 +50,7 @@ public final class FormatDescriptionLogEvent extends StartLogEventV3 {
     public static final int LOAD_HEADER_LEN = (4 + 4 + 4 + 1 + 1 + 4);
     public static final int SLAVE_HEADER_LEN = 0;
     public static final int START_V3_HEADER_LEN = (2 + ST_SERVER_VER_LEN + 4);
-    public static final int ROTATE_HEADER_LEN = 8;                                                       // this
+    public static final int ROTATE_HEADER_LEN = 8; // this
     // is
     // FROZEN
     // (the
@@ -143,7 +143,7 @@ public final class FormatDescriptionLogEvent extends StartLogEventV3 {
             numberOfEventTypes -= BINLOG_CHECKSUM_ALG_DESC_LEN;
         }
 
-        //lynd add for 5.7
+        // lynd add for 5.7
         if (serverVersion != null) {
             Matcher matcher = versionPattern.matcher(serverVersion);
             if (matcher.find()) {

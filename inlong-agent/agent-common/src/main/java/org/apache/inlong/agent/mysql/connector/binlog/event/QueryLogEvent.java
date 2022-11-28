@@ -358,7 +358,6 @@ public class QueryLogEvent extends LogEvent {
      */
     public static final int OVER_MAX_DBS_IN_EVENT_MTS = 254;
 
-
     public static final int SYSTEM_CHARSET_MBMAXLEN = 3;
     public static final int NAME_CHAR_LEN = 64;
     /* Field/table name length */
@@ -524,10 +523,9 @@ public class QueryLogEvent extends LogEvent {
         final int commonHeaderLen = descriptionEvent.commonHeaderLen;
         final int postHeaderLen = descriptionEvent.postHeaderLen[header.type - 1];
         /*
-         * We test if the event's length is sensible, and if so we compute
-         * data_len. We cannot rely on QUERY_HEADER_LEN here as it would not be
-         * format-tolerant. We use QUERY_HEADER_MINIMAL_LEN which is the same
-         * for 3.23, 4.0 & 5.0.
+         * We test if the event's length is sensible, and if so we compute data_len. We cannot rely on QUERY_HEADER_LEN
+         * here as it would not be format-tolerant. We use QUERY_HEADER_MINIMAL_LEN which is the same for 3.23, 4.0 &
+         * 5.0.
          */
         if (buffer.limit() < (commonHeaderLen + postHeaderLen)) {
             throw new IOException("Query event length is too short.");
@@ -542,19 +540,17 @@ public class QueryLogEvent extends LogEvent {
         errorCode = buffer.getUint16(); // Q_ERR_CODE_OFFSET
 
         /*
-         * 5.0 format starts here. Depending on the format, we may or not
-         * have affected/warnings etc The remaining post-header to be parsed
-         * has length:
+         * 5.0 format starts here. Depending on the format, we may or not have affected/warnings etc The remaining
+         * post-header to be parsed has length:
          */
         int statusVarsLen = 0;
         if (postHeaderLen > QUERY_HEADER_MINIMAL_LEN) {
             statusVarsLen = buffer.getUint16(); // Q_STATUS_VARS_LEN_OFFSET
             /*
-              Check if status variable length is corrupt and will lead to very
-              wrong data. We could be even more strict and require data_len to
-              be even bigger, but this will suffice to catch most corruption
-              errors that can lead to a crash.
-            */
+             * Check if status variable length is corrupt and will lead to very wrong data. We could be even more strict
+             * and require data_len to be even bigger, but this will suffice to catch most corruption errors that can
+             * lead to a crash.
+             */
             if (statusVarsLen > Math.min(dataLen, MAX_SIZE_LOG_EVENT_STATUS)) {
                 throw new IOException("status_vars_len (" + statusVarsLen
                         + ") > data_len (" + dataLen + ")");
@@ -562,12 +558,11 @@ public class QueryLogEvent extends LogEvent {
             dataLen -= statusVarsLen;
         }
         /*
-         * We have parsed everything we know in the post header for QUERY_EVENT,
-         * the rest of post header is either comes from older version MySQL or
-         * dedicated to derived events (e.g. Execute_load_query...)
+         * We have parsed everything we know in the post header for QUERY_EVENT, the rest of post header is either comes
+         * from older version MySQL or dedicated to derived events (e.g. Execute_load_query...)
          */
 
-        /* variable-part: the status vars; only in MySQL 5.0  */
+        /* variable-part: the status vars; only in MySQL 5.0 */
         final int start = commonHeaderLen + postHeaderLen;
         final int limit = buffer.limit(); /* for restore */
         final int end = start + statusVarsLen;
@@ -693,10 +688,8 @@ public class QueryLogEvent extends LogEvent {
                     case Q_UPDATED_DB_NAMES:
                         int mtsAccessedDbs = buffer.getUint8();
                         /*
-                         * Notice, the following check is positive also in case
-                         * of the master's MAX_DBS_IN_EVENT_MTS > the slave's
-                         * one and the event contains e.g the master's
-                         * MAX_DBS_IN_EVENT_MTS db:s.
+                         * Notice, the following check is positive also in case of the master's MAX_DBS_IN_EVENT_MTS >
+                         * the slave's one and the event contains e.g the master's MAX_DBS_IN_EVENT_MTS db:s.
                          */
                         if (mtsAccessedDbs > MAX_DBS_IN_EVENT_MTS) {
                             mtsAccessedDbs = OVER_MAX_DBS_IN_EVENT_MTS;
@@ -730,8 +723,7 @@ public class QueryLogEvent extends LogEvent {
                         break;
                     default:
                         /*
-                         * That's why you must write status vars in growing
-                         * order of code
+                         * That's why you must write status vars in growing order of code
                          */
                         logger.error("Query_log_event has unknown status vars (first has code: " + code
                                 + "), skipping the rest of them");

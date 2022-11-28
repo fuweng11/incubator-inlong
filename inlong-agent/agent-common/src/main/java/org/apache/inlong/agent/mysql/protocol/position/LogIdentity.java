@@ -27,9 +27,9 @@ import java.net.InetSocketAddress;
 public class LogIdentity extends Position implements Comparable<LogIdentity> {
 
     private static final long serialVersionUID = 5530225131455662581L;
-    private InetSocketAddress sourceAddress; //serverAddr
-    private Long slaveId; //TODO:change as int
-    private String servername; //TODO:init
+    private InetSocketAddress sourceAddress; // serverAddr
+    private Long slaveId; // TODO:change as int
+    private String servername; // TODO:init
 
     public LogIdentity() {
     }
@@ -39,7 +39,7 @@ public class LogIdentity extends Position implements Comparable<LogIdentity> {
         this.slaveId = slaveId;
     }
 
-    /*add deep copy*/
+    /* add deep copy */
     public LogIdentity(LogIdentity other) {
         this.sourceAddress = other.sourceAddress;
         this.slaveId = other.slaveId;
@@ -129,8 +129,7 @@ public class LogIdentity extends Position implements Comparable<LogIdentity> {
         Long otherSlaveId = 0L;
         Long localSlaveId = (slaveId == null ? 0L : slaveId);
         if (otherPos != null) {
-            otherAddress = (otherPos.getSourceAddress() == null ? "" :
-                    otherPos.getSourceAddress().getHostName());
+            otherAddress = (otherPos.getSourceAddress() == null ? "" : otherPos.getSourceAddress().getHostName());
             otherSlaveId = (otherPos.getSlaveId() == null ? 0L : otherPos.getSlaveId());
         }
         int cmp = currentAddress.compareTo(otherAddress);

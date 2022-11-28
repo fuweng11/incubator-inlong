@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.utils.countmap;
 
 public interface Updater<V1, V2> {
+
     V2 update(V2 var1, V1 var2);
 
     boolean inplace();

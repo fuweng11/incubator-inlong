@@ -27,11 +27,11 @@ public class SysInfoItem {
     protected long cpuIdle;
     protected long cpuTotal;
     // memory
-    protected long memUsed;//GB
+    protected long memUsed;// GB
     protected long memTotal;
     // network
     protected long netIn;
-    protected long netOut;//Mb/s
+    protected long netOut;// Mb/s
     // tcp connections
     protected long tcpConn = -1;
 

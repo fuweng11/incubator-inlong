@@ -65,7 +65,7 @@ public class HandleFailedMessage {
     public static class BusMessageQueueCallback extends FileCallback {
 
         public static final Logger LOG = LogManager.getLogger(BusMessageQueueCallback.class);
-        private ProxyEvent event;//message content
+        private ProxyEvent event;// message content
         private HandleFailedMessage handler = HandleFailedMessage.getInstance();
 
         public BusMessageQueueCallback() {

@@ -96,7 +96,7 @@ public final class UserVarLogEvent extends LogEvent {
         } else {
             type = buffer.getInt8(); // UV_VAL_IS_NULL
             charsetNumber = (int) buffer.getUint32(); // buf + UV_VAL_TYPE_SIZE
-            final int valueLen = (int) buffer.getUint32(); // buf +  UV_CHARSET_NUMBER_SIZE
+            final int valueLen = (int) buffer.getUint32(); // buf + UV_CHARSET_NUMBER_SIZE
             final int limit = buffer.limit(); /* for restore */
             buffer.limit(buffer.position() + valueLen);
 

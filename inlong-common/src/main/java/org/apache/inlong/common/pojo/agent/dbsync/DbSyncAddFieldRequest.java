@@ -26,6 +26,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class DbSyncAddFieldRequest {
+
     private Integer id;
     private List<FieldObject> fields;
 
@@ -33,6 +34,7 @@ public class DbSyncAddFieldRequest {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class FieldObject {
+
         private String fieldName;
         private String fieldType;
     }

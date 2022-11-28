@@ -285,7 +285,7 @@ public class DBSyncReadOperator {
     }
 
     public synchronized void stop() {
-        //TODO: first check running?
+        // TODO: first check running?
         running = false;
 
         DbSyncHeartbeat stopHb = genHeartBeat(true);
@@ -423,7 +423,8 @@ public class DBSyncReadOperator {
         } catch (IOException e) {
             throw new CanalParseException(
                     "command : 'show master status' has an error!" + mysqlConnection.getConnector().getAddress()
-                            .toString(), e);
+                            .toString(),
+                    e);
         }
     }
 
@@ -440,7 +441,8 @@ public class DBSyncReadOperator {
 
                     if (tmpParsePos == null
                             || (parsePos.getPosition().getTimestamp() > tmpParsePos.getPosition().getTimestamp()
-                            || parsePos.getPosition().getPosition() > tmpParsePos.getPosition().getPosition())) {
+                                    || parsePos.getPosition().getPosition() > tmpParsePos.getPosition()
+                                            .getPosition())) {
                         tmpParsePos = parsePos;
                     }
                 }
@@ -452,7 +454,7 @@ public class DBSyncReadOperator {
         return tmpParsePos;
     }
 
-    //TODO: use, updateConnectionCharset
+    // TODO: use, updateConnectionCharset
     public void updateConnectionCharset() {
         for (ParseThread parser : parseThreadList.values()) {
             parser.updateCharSet(jobconf.getCharset());
@@ -529,7 +531,7 @@ public class DBSyncReadOperator {
             LOGGER.error("Detected job :{} is in wrong state :{}", jobconf.getJobName(), status);
             if (heartbeatManager != null && heartbeatManager.isRunnable() && (status == JobStat.State.STOP
                     || status == JobStat.State.INIT)) {
-                //use job Manager start the job
+                // use job Manager start the job
                 LOGGER.error("restart job : {}", jobconf.getJobName());
                 restart();
             }
@@ -549,7 +551,7 @@ public class DBSyncReadOperator {
             maxLogPosition = getLogPosition();
         }
 
-        //TODO: add recordMaxPosition & sendMaxPositionRecord later, using for send metrics to bus and pulsar
+        // TODO: add recordMaxPosition & sendMaxPositionRecord later, using for send metrics to bus and pulsar
 
         long nowTime = System.currentTimeMillis();
         LogPosition tmpLogPos = getLogPosition();
@@ -638,7 +640,7 @@ public class DBSyncReadOperator {
                     ParseThread parser = new ParseThread("parser-"
                             + i + "-" + this.jobName, metaConnection, this);
                     parser.start();
-                    //parseThreadList.add(parser);
+                    // parseThreadList.add(parser);
                     parseThreadList.put(i, parser);
                 }
             } else {
@@ -715,7 +717,7 @@ public class DBSyncReadOperator {
                 } else {
                     try {
                         LogBuffer buffer = new LogBuffer(logBodyData, 0, logBodyData.length);
-                        //won't send event, update gtid directly, or else update gtid when ack
+                        // won't send event, update gtid directly, or else update gtid when ack
                         event = decoder.decode(buffer, context);
                         if (event == null) {
                             continue;
@@ -767,7 +769,7 @@ public class DBSyncReadOperator {
                             if (parser != null) {
                                 parser.putEvents(new PkgEvent(bufferList, positionControl.pkgIndexId, true));
                             }
-                            //pkgIndexId = pkgIndexId + bufferList.size();
+                            // pkgIndexId = pkgIndexId + bufferList.size();
                             bufferList = new ArrayList<>();
                             bInTransaction = false;
                             if (sendLock) {
@@ -786,7 +788,7 @@ public class DBSyncReadOperator {
                                 positionControl.pkgIndexId = genIndexOrder(eventTmStp, 1);
                                 parser.putEvents(new PkgEvent(tmpEvenList, positionControl.pkgIndexId, true));
                             }
-                            //pkgIndexId = pkgIndexId + parseThreadList.size();
+                            // pkgIndexId = pkgIndexId + parseThreadList.size();
                         }
                     } else if (bInTransaction) {
                         bufferList.add(event);
@@ -817,7 +819,7 @@ public class DBSyncReadOperator {
                             if (parser != null) {
                                 parser.putEvents(new PkgEvent(bufferList, positionControl.pkgIndexId, false));
                             }
-                            //pkgIndexId = pkgIndexId + bufferList.size();
+                            // pkgIndexId = pkgIndexId + bufferList.size();
                             bufferList = new ArrayList<LogEvent>();
                         }
 
@@ -852,9 +854,9 @@ public class DBSyncReadOperator {
         dispatcher.setName(jobName + "-dispatcher");
         dispatcher.setUncaughtExceptionHandler((t, e) -> {
             setState(State.STOP);
-            //TODO:handle monitor
-//            MonitorLogUtils.printJobStat(this.getCurrentDbInfo(), MonitorLogUtils.JOB_STAT_STOP,
-//                    ErrorCode.OP_EXCEPTION_DISPATCH_THREAD_EXIT_UNCAUGHT);
+            // TODO:handle monitor
+            // MonitorLogUtils.printJobStat(this.getCurrentDbInfo(), MonitorLogUtils.JOB_STAT_STOP,
+            // ErrorCode.OP_EXCEPTION_DISPATCH_THREAD_EXIT_UNCAUGHT);
             setErrorMsg(e.getMessage());
             LOGGER.error("{} dispatcher Thread has an uncaught error {}",
                     jobName, DBSyncUtils.getExceptionStack(e));
@@ -1004,10 +1006,11 @@ public class DBSyncReadOperator {
                         lastLog = new LogPosition(lastPosition);
                     }
 
-                    @SuppressWarnings("rawtypes") final SinkFunction sinkHandler = (SinkFunction<LogEvent>) event -> {
+                    @SuppressWarnings("rawtypes")
+                    final SinkFunction sinkHandler = (SinkFunction<LogEvent>) event -> {
 
                         if (needReset.get()) {
-                            //break the loop
+                            // break the loop
                             return false;
                         }
 
@@ -1079,10 +1082,10 @@ public class DBSyncReadOperator {
                             jobName, getDbIpAddress(dbConnectionAddress), e);
                     LOGGER.error("JobName [{}] Flush old position log : {}",
                             jobName, lastLog.getJsonObj().toJSONString());
-                    //lastLog = null;
+                    // lastLog = null;
                     bBinlogMiss = true;
                     String alarmMsg = e.getMessage() + "\nBegin dump from the max position \nOld position ";
-//                    sendAlarm(getDbIpAddress(dbConnectionAddress), alarmMsg); //TODO:complete?
+                    // sendAlarm(getDbIpAddress(dbConnectionAddress), alarmMsg); //TODO:complete?
                 } catch (Throwable e) {
                     if (!running) {
                         if (!(e instanceof java.nio.channels.ClosedByInterruptException
@@ -1116,10 +1119,11 @@ public class DBSyncReadOperator {
                         if (!running) {
                             throw new CanalParseException(
                                     String.format("disconnect address %s has an error, retrying %d. ",
-                                            getDbIpAddress(dbConnectionAddress), reConnectCnt), e1);
+                                            getDbIpAddress(dbConnectionAddress), reConnectCnt),
+                                    e1);
                         } else {
                             LOGGER.error("disconnect address {} has an error, retrying {}., "
-                                            + "caused by ",
+                                    + "caused by ",
                                     getDbIpAddress(dbConnectionAddress), reConnectCnt, e1);
                         }
                     }
@@ -1173,9 +1177,9 @@ public class DBSyncReadOperator {
 
         this.stopHb = heartbeatManager.getLastHbInfo(this.jobName);
         this.jobconf.doReset();
-        //TODO
-//        this.manager.updateJob(jobconf.getJobName(), this.jobName, TaskStat.NORMAL);
-//        this.monitor.doSwitchMonitor(jobconf.getJobName(), this.jobName);
+        // TODO
+        // this.manager.updateJob(jobconf.getJobName(), this.jobName, TaskStat.NORMAL);
+        // this.monitor.doSwitchMonitor(jobconf.getJobName(), this.jobName);
         this.jobName = jobconf.getJobName();
         this.masterInfo = new AuthenticationInfo(new InetSocketAddress(mysqlAddress, mysqlPort), userName, passwd);
     }
@@ -1234,8 +1238,8 @@ public class DBSyncReadOperator {
         this.mysqlPort = bakPort;
         this.stopHb = heartbeatManager.getLastHbInfo(this.jobName);
         this.jobconf.doSwitch();
-//        this.manager.updateJob(jobconf.getJobName(), this.jobName, TaskStat.SWITCHED);
-//        this.monitor.doSwitchMonitor(jobconf.getJobName(), this.jobName);
+        // this.manager.updateJob(jobconf.getJobName(), this.jobName, TaskStat.SWITCHED);
+        // this.monitor.doSwitchMonitor(jobconf.getJobName(), this.jobName);
         this.jobName = jobconf.getJobName();
         this.masterInfo = new AuthenticationInfo(new InetSocketAddress(mysqlAddress, mysqlPort), userName, passwd);
     }
@@ -1372,7 +1376,7 @@ public class DBSyncReadOperator {
                                                     }
                                                     if (compareEventCnt < lastEntryList.size()
                                                             && DBSyncUtils.compareEntry(entry,
-                                                            lastEntryList.get(compareEventCnt))) {
+                                                                    lastEntryList.get(compareEventCnt))) {
                                                         compareEventCnt++;
                                                     } else {
                                                         compareEventCnt = 0;
@@ -1453,6 +1457,7 @@ public class DBSyncReadOperator {
             try {
                 connection.reconnect();
                 connection.seek(binFileLogName, 4L, (new SinkFunction<LogEvent>() {
+
                     private int pos;
                     private boolean bFirstEvent = true;
                     private boolean bFirstRotateEvent = true;
@@ -1466,21 +1471,21 @@ public class DBSyncReadOperator {
 
                         LogHeader logHead = event.getHeader();
                         if (logHead.getType() == LogEvent.HEARTBEAT_LOG_EVENT) {
-                            //skip heartbeat event
+                            // skip heartbeat event
                             return true;
                         }
                         if (logHead.getType() == LogEvent.ROTATE_EVENT) {
                             // skip fake rotate event
                             if (logHead.getWhen() == 0 && logHead.getLogPos() == 0 && logHead.getFlags() == 0x20) {
-                                //go on with next event in the same binlog file
+                                // go on with next event in the same binlog file
                                 return true;
                             }
                         }
 
                         long nowTmStample = event.getHeader().getWhen();
-                        //check the timestamp of each binlog file' first event
-                        //if they are both larger than dump time
-                        //need the latter binlog file
+                        // check the timestamp of each binlog file' first event
+                        // if they are both larger than dump time
+                        // need the latter binlog file
                         if (bFirstEvent) {
                             if (nowTmStample > (masterEndlogTime + fallbackIntervalInSeconds)) {
                                 return false;
@@ -1644,8 +1649,8 @@ public class DBSyncReadOperator {
         if (lastLog != null && bBinlogMiss) {
             bBinlogMiss = false;
             startPosition = lastLog.getPosition();
-            //if occur binlog miss, in the same time, the start pos = 4
-            //we seek the next binlog file
+            // if occur binlog miss, in the same time, the start pos = 4
+            // we seek the next binlog file
             if (startPosition.getPosition() == DBSYNC_BINLOG_START_OFFEST) {
                 String nextBinlogFileName =
                         DBSyncUtils.getNextBinlogFileName(startPosition.getJournalName());
@@ -1657,10 +1662,10 @@ public class DBSyncReadOperator {
                 }
             }
 
-            //occure binlog miss, set the start pos is binlog file head
-            //there has the pos error,the dump pos is wrong event head pos,
-            //but the binlog file is still in mysql
-            //so reset the pos to 4(binlog file head),redump the whole binlog file.
+            // occure binlog miss, set the start pos is binlog file head
+            // there has the pos error,the dump pos is wrong event head pos,
+            // but the binlog file is still in mysql
+            // so reset the pos to 4(binlog file head),redump the whole binlog file.
             startPosition.setPosition(DBSYNC_BINLOG_START_OFFEST);
         } else {
             startPosition = findStartPositionInternal(connection);
@@ -1762,7 +1767,7 @@ public class DBSyncReadOperator {
 
     protected Long findTransactionBeginPosition(MysqlConnection mysqlConnection, final EntryPosition entryPosition)
             throws IOException {
-        //find position
+        // find position
         final AtomicBoolean reDump = new AtomicBoolean(false);
         mysqlConnection.reconnect();
         mysqlConnection.seek(entryPosition.getJournalName(), entryPosition.getPosition(), new SinkFunction<LogEvent>() {
@@ -1773,7 +1778,7 @@ public class DBSyncReadOperator {
                 try {
                     LogHeader logHead = event.getHeader();
                     if (logHead.getType() == LogEvent.HEARTBEAT_LOG_EVENT) {
-                        //skip heartbeat event
+                        // skip heartbeat event
                         return true;
                     }
 
@@ -1785,10 +1790,8 @@ public class DBSyncReadOperator {
                     }
 
                     // check transaction is Begin or End
-                    if (EntryType.TRANSACTIONBEGIN
-                            == entry.getEntryType()
-                            || EntryType.TRANSACTIONEND
-                            == entry.getEntryType()) {
+                    if (EntryType.TRANSACTIONBEGIN == entry.getEntryType()
+                            || EntryType.TRANSACTIONEND == entry.getEntryType()) {
                         lastPosition = buildLastPosition(entry);
                         return false;
                     } else {
@@ -1819,7 +1822,7 @@ public class DBSyncReadOperator {
                             try {
                                 LogHeader logHead = event.getHeader();
                                 if (logHead.getType() == LogEvent.HEARTBEAT_LOG_EVENT) {
-                                    //skip heartbeat event
+                                    // skip heartbeat event
                                     return true;
                                 }
 
@@ -1830,8 +1833,7 @@ public class DBSyncReadOperator {
 
                                 // check whether is Begin transaction
                                 // record transaction begin position
-                                if (entry.getEntryType()
-                                        == EntryType.TRANSACTIONBEGIN
+                                if (entry.getEntryType() == EntryType.TRANSACTIONBEGIN
                                         && entry.getHeader().getLogfileOffset() < entryPosition.getPosition()) {
                                     preTransactionStartPosition.set(entry.getHeader().getLogfileOffset());
                                 }
@@ -1944,6 +1946,7 @@ public class DBSyncReadOperator {
             mysqlConnection.reconnect();
             // start to scan file
             mysqlConnection.seek(searchBinlogFile, DBSYNC_BINLOG_START_OFFEST, new SinkFunction<LogEvent>() {
+
                 String journalName = null;
                 private boolean bFirstEvent = true;
                 private LogPosition lastPosition;
@@ -1953,7 +1956,7 @@ public class DBSyncReadOperator {
                     try {
                         LogHeader logHead = event.getHeader();
                         if (logHead.getType() == LogEvent.HEARTBEAT_LOG_EVENT) {
-                            //skip heartbeat event
+                            // skip heartbeat event
                             return true;
                         }
                         if (logHead.getType() == LogEvent.ROTATE_EVENT) {

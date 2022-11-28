@@ -82,7 +82,7 @@ public final class IncidentLogEvent extends LogEvent {
         final int incidentNumber = buffer.getUint16();
         if (incidentNumber >= INCIDENT_COUNT || incidentNumber <= INCIDENT_NONE) {
             // If the incident is not recognized, this binlog event is
-            // invalid.  If we set incident_number to INCIDENT_NONE, the
+            // invalid. If we set incident_number to INCIDENT_NONE, the
             // invalidity will be detected by is_valid().
             incident = INCIDENT_NONE;
             message = null;

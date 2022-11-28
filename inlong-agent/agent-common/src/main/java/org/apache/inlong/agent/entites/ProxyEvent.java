@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.entites;
 
 public class ProxyEvent {
+
     private String message;
     private String bid;
     private String tid;

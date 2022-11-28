@@ -30,7 +30,7 @@ public class TableMeta {
     private String fullName; // schema.table
     private List<FieldMeta> fields;
 
-    public TableMeta(String fullName, List<FieldMeta> fields/*, MysqlTableConf tableConf*/) {
+    public TableMeta(String fullName, List<FieldMeta> fields/* , MysqlTableConf tableConf */) {
         this.fullName = fullName;
         this.fields = fields;
     }

@@ -112,8 +112,7 @@ public class LoadBalanceService implements AutoCloseable {
 
     public LoadBalanceInfo getLocalLoadBalanceInfo() {
         if (localLoadBalanceInfo == null) {
-            this.reportLoadBalance();
-            ;
+            this.reportLoadBalance();;
         }
         return localLoadBalanceInfo;
     }

@@ -27,7 +27,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class UpdateSwitchNodeChangeListener
-        implements TreeCacheListener {
+        implements
+            TreeCacheListener {
 
     private Logger logger = LogManager.getLogger(UpdateSwitchNodeChangeListener.class);
 

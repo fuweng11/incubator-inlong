@@ -157,7 +157,7 @@ public class LRUMap<K, V> extends LinkedHashMap<K, V> {
         }
     }
 
-    //not thread safe
+    // not thread safe
     private void removeInter(Object key) {
         this.remove(key);
         timeStamp.remove(key);

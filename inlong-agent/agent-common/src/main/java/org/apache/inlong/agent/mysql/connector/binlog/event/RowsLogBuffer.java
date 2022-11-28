@@ -299,8 +299,7 @@ public final class RowsLogBuffer {
             }
             case LogEvent.MYSQL_TYPE_DECIMAL: {
                 /*
-                 * log_event.h : This enumeration value is only used internally and
-                 * cannot exist in a binlog.
+                 * log_event.h : This enumeration value is only used internally and cannot exist in a binlog.
                  */
                 logger.warn("MYSQL_TYPE_DECIMAL : This enumeration value is "
                         + "only used internally and cannot exist in a binlog!");
@@ -358,7 +357,7 @@ public final class RowsLogBuffer {
                 break;
             }
             case LogEvent.MYSQL_TYPE_TIMESTAMP2: {
-                final long tv_sec = buffer.getBeUint32(); //big-endian
+                final long tv_sec = buffer.getBeUint32(); // big-endian
                 int tvUsec = 0;
                 switch (meta) {
                     case 0:
@@ -443,20 +442,15 @@ public final class RowsLogBuffer {
             }
             case LogEvent.MYSQL_TYPE_DATETIME2: {
                 /*
-                    DATETIME and DATE low-level memory and disk representation routines
-                    1 bit  sign            (used when on disk)
-                   17 bits year*13+month   (year 0-9999, month 0-12)
-                    5 bits day             (0-31)
-                    5 bits hour            (0-23)
-                    6 bits minute          (0-59)
-                    6 bits second          (0-59)
-                   24 bits microseconds    (0-999999)
-
-                   Total: 64 bits = 8 bytes
-
-                   SYYYYYYY.YYYYYYYY.YYdddddh.hhhhmmmm.mmssssss.ffffffff.ffffffff.ffffffff
-                */
-                long intpart = buffer.getBeUlong40() - DATETIMEF_INT_OFS; //big-endian
+                 * DATETIME and DATE low-level memory and disk representation routines 1 bit sign (used when on disk) 17
+                 * bits year*13+month (year 0-9999, month 0-12) 5 bits day (0-31) 5 bits hour (0-23) 6 bits minute
+                 * (0-59) 6 bits second (0-59) 24 bits microseconds (0-999999)
+                 * 
+                 * Total: 64 bits = 8 bytes
+                 * 
+                 * SYYYYYYY.YYYYYYYY.YYdddddh.hhhhmmmm.mmssssss.ffffffff.ffffffff.ffffffff
+                 */
+                long intpart = buffer.getBeUlong40() - DATETIMEF_INT_OFS; // big-endian
                 @SuppressWarnings("unused")
                 int frac = 0;
                 switch (meta) {
@@ -558,19 +552,14 @@ public final class RowsLogBuffer {
             }
             case LogEvent.MYSQL_TYPE_TIME2: {
                 /*
-                  TIME low-level memory and disk representation routines
-                  In-memory format:
-
-                   1  bit sign          (Used for sign, when on disk)
-                   1  bit unused        (Reserved for wider hour range, e.g. for intervals)
-                   10 bit hour          (0-836)
-                   6  bit minute        (0-59)
-                   6  bit second        (0-59)
-                  24  bits microseconds (0-999999)
-
-                 Total: 48 bits = 6 bytes
-                   Suhhhhhh.hhhhmmmm.mmssssss.ffffffff.ffffffff.ffffffff
-                */
+                 * TIME low-level memory and disk representation routines In-memory format:
+                 * 
+                 * 1 bit sign (Used for sign, when on disk) 1 bit unused (Reserved for wider hour range, e.g. for
+                 * intervals) 10 bit hour (0-836) 6 bit minute (0-59) 6 bit second (0-59) 24 bits microseconds
+                 * (0-999999)
+                 * 
+                 * Total: 48 bits = 6 bytes Suhhhhhh.hhhhmmmm.mmssssss.ffffffff.ffffffff.ffffffff
+                 */
                 long intpart = 0;
                 int frac = 0;
                 long ltime = 0;
@@ -585,23 +574,19 @@ public final class RowsLogBuffer {
                         frac = buffer.getUint8();
                         if (intpart < 0 && frac > 0) {
                             /*
-                            Negative values are stored with reverse fractional part order,
-                            for binary sort compatibility.
-
-                              Disk value  intpart frac   Time value   Memory value
-                              800000.00    0      0      00:00:00.00  0000000000.000000
-                              7FFFFF.FF   -1      255   -00:00:00.01  FFFFFFFFFF.FFD8F0
-                              7FFFFF.9D   -1      99    -00:00:00.99  FFFFFFFFFF.F0E4D0
-                              7FFFFF.00   -1      0     -00:00:01.00  FFFFFFFFFF.000000
-                              7FFFFE.FF   -1      255   -00:00:01.01  FFFFFFFFFE.FFD8F0
-                              7FFFFE.F6   -2      246   -00:00:01.10  FFFFFFFFFE.FE7960
-
-                              Formula to convert fractional part from disk format
-                              (now stored in "frac" variable) to absolute value: "0x100 - frac".
-                              To reconstruct in-memory value, we shift
-                              to the next integer value and then substruct fractional part.
-                          */
-                            intpart++;    /* Shift to the next integer value */
+                             * Negative values are stored with reverse fractional part order, for binary sort
+                             * compatibility.
+                             * 
+                             * Disk value intpart frac Time value Memory value 800000.00 0 0 00:00:00.00
+                             * 0000000000.000000 7FFFFF.FF -1 255 -00:00:00.01 FFFFFFFFFF.FFD8F0 7FFFFF.9D -1 99
+                             * -00:00:00.99 FFFFFFFFFF.F0E4D0 7FFFFF.00 -1 0 -00:00:01.00 FFFFFFFFFF.000000 7FFFFE.FF -1
+                             * 255 -00:00:01.01 FFFFFFFFFE.FFD8F0 7FFFFE.F6 -2 246 -00:00:01.10 FFFFFFFFFE.FE7960
+                             * 
+                             * Formula to convert fractional part from disk format (now stored in "frac" variable) to
+                             * absolute value: "0x100 - frac". To reconstruct in-memory value, we shift to the next
+                             * integer value and then substruct fractional part.
+                             */
+                            intpart++; /* Shift to the next integer value */
                             frac -= 0x100; /* -(0x100 - frac) */
                             // fraclong = frac * 10000;
                         }
@@ -613,7 +598,7 @@ public final class RowsLogBuffer {
                         intpart = buffer.getBeUint24() - TIMEF_INT_OFS;
                         frac = buffer.getBeUint16();
                         if (intpart < 0 && frac > 0) {
-                            intpart++;      /* Shift to the next integer value */
+                            intpart++; /* Shift to the next integer value */
                             frac -= 0x10000; /* -(0x10000-frac) */
                             // fraclong = frac * 100;
                         }
@@ -670,8 +655,7 @@ public final class RowsLogBuffer {
             }
             case LogEvent.MYSQL_TYPE_NEWDATE: {
                 /*
-                 * log_event.h : This enumeration value is only used internally and
-                 * cannot exist in a binlog.
+                 * log_event.h : This enumeration value is only used internally and cannot exist in a binlog.
                  */
                 logger.warn("MYSQL_TYPE_NEWDATE : This enumeration value is "
                         + "only used internally and cannot exist in a binlog!");
@@ -717,9 +701,8 @@ public final class RowsLogBuffer {
                 // If connection property 'YearIsDateType' has
                 // set, value is java.sql.Date.
                 /*
-                 * if (cal == null) cal = Calendar.getInstance(); cal.clear();
-                 * cal.set(Calendar.YEAR, i32 + 1900); value = new
-                 * java.sql.Date(cal.getTimeInMillis());
+                 * if (cal == null) cal = Calendar.getInstance(); cal.clear(); cal.set(Calendar.YEAR, i32 + 1900); value
+                 * = new java.sql.Date(cal.getTimeInMillis());
                  */
                 // The else, value is java.lang.Short.
                 if (i32 == 0) {
@@ -741,8 +724,7 @@ public final class RowsLogBuffer {
             case LogEvent.MYSQL_TYPE_ENUM: {
                 final int int32;
                 /*
-                 * log_event.h : This enumeration value is only used internally and
-                 * cannot exist in a binlog.
+                 * log_event.h : This enumeration value is only used internally and cannot exist in a binlog.
                  */
                 switch (len) {
                     case 1:
@@ -808,8 +790,7 @@ public final class RowsLogBuffer {
             }
             case LogEvent.MYSQL_TYPE_TINY_BLOB: {
                 /*
-                 * log_event.h : This enumeration value is only used internally and
-                 * cannot exist in a binlog.
+                 * log_event.h : This enumeration value is only used internally and cannot exist in a binlog.
                  */
                 logger.warn("MYSQL_TYPE_TINY_BLOB : This enumeration value is "
                         + "only used internally and cannot exist in a binlog!");
@@ -817,8 +798,7 @@ public final class RowsLogBuffer {
             }
             case LogEvent.MYSQL_TYPE_MEDIUM_BLOB: {
                 /*
-                 * log_event.h : This enumeration value is only used internally and
-                 * cannot exist in a binlog.
+                 * log_event.h : This enumeration value is only used internally and cannot exist in a binlog.
                  */
                 logger.warn("MYSQL_TYPE_MEDIUM_BLOB : This enumeration value is "
                         + "only used internally and cannot exist in a binlog!");
@@ -826,15 +806,14 @@ public final class RowsLogBuffer {
             }
             case LogEvent.MYSQL_TYPE_LONG_BLOB: {
                 /*
-                 * log_event.h : This enumeration value is only used internally and
-                 * cannot exist in a binlog.
+                 * log_event.h : This enumeration value is only used internally and cannot exist in a binlog.
                  */
                 logger.warn("MYSQL_TYPE_LONG_BLOB : This enumeration value is "
                         + "only used internally and cannot exist in a binlog!");
                 break;
             }
 
-            //lynd add in 5.7.13
+            // lynd add in 5.7.13
             case LogEvent.MYSQL_TYPE_JSON:
             case LogEvent.MYSQL_TYPE_BLOB: {
                 /*
@@ -890,9 +869,8 @@ public final class RowsLogBuffer {
             case LogEvent.MYSQL_TYPE_VARCHAR:
             case LogEvent.MYSQL_TYPE_VAR_STRING: {
                 /*
-                 * Except for the data length calculation, MYSQL_TYPE_VARCHAR,
-                 * MYSQL_TYPE_VAR_STRING and MYSQL_TYPE_STRING are handled the
-                 * same way.
+                 * Except for the data length calculation, MYSQL_TYPE_VARCHAR, MYSQL_TYPE_VAR_STRING and
+                 * MYSQL_TYPE_STRING are handled the same way.
                  */
                 len = meta;
                 if (len < 256) {

@@ -24,9 +24,9 @@ import java.io.IOException;
 
 public class ErrorPacket extends PacketWithHeaderPacket {
 
-    public byte   fieldCount;
-    public int    errorNumber;
-    public byte   sqlStateMarker;
+    public byte fieldCount;
+    public int errorNumber;
+    public byte sqlStateMarker;
     public byte[] sqlState;
     public String message;
 
@@ -72,7 +72,7 @@ public class ErrorPacket extends PacketWithHeaderPacket {
             return "ErrorPacket [errorNumber=" + errorNumber + ", fieldCount=" + fieldCount;
         }
         return "ErrorPacket [errorNumber=" + errorNumber + ", fieldCount=" + fieldCount + ", message=" + message
-               + ", sqlState=" + sqlStateToString() + ", sqlStateMarker=" + (char) sqlStateMarker + "]";
+                + ", sqlState=" + sqlStateToString() + ", sqlStateMarker=" + (char) sqlStateMarker + "]";
     }
 
     private String sqlStateToString() {

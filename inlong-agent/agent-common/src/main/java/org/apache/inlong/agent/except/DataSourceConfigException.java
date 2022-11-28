@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.except;
 
 public class DataSourceConfigException extends Exception {
+
     public DataSourceConfigException(String msg) {
         super(msg);
     }
@@ -39,18 +40,21 @@ public class DataSourceConfigException extends Exception {
     }
 
     public static class JobNotFoundException extends DataSourceConfigException {
+
         public JobNotFoundException(String msg) {
             super(msg);
         }
     }
 
     public static class InvalidCharsetNameException extends DataSourceConfigException {
+
         public InvalidCharsetNameException(String msg) {
             super(msg);
         }
     }
 
     public static class JobSizeExceedMaxException extends DataSourceConfigException {
+
         public JobSizeExceedMaxException(String msg) {
             super(msg);
         }

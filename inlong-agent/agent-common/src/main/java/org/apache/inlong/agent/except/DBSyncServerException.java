@@ -40,18 +40,21 @@ public class DBSyncServerException extends Exception {
     }
 
     public static class JobInSwitchingState extends DBSyncServerException {
+
         public JobInSwitchingState(String message) {
             super(message);
         }
     }
 
     public static class JobInResetStatus extends DBSyncServerException {
+
         public JobInResetStatus(String message) {
             super(message);
         }
     }
 
     public static class JobResetFailed extends DBSyncServerException {
+
         public JobResetFailed(String message) {
             super(message);
         }

@@ -41,7 +41,7 @@ public class ProxyMessage implements Message {
     private final String batchKey;
     private final String dataKey;
 
-    //dbsync logposition
+    // dbsync logposition
     private LogPosition logPosition;
     private long msgId;
 

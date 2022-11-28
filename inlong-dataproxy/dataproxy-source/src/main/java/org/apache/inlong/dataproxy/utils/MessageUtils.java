@@ -157,7 +157,7 @@ public class MessageUtils {
                         commonAttrMap.get(AttributeConstants.UNIQ_ID));
             } else if (MsgType.MSG_BIN_HEARTBEAT.equals(msgType)) {
                 binBuffer = buildHBRspPackage(destAttrs,
-                        (Byte)resultMap.get(ConfigConstants.VERSION_TYPE),
+                        (Byte) resultMap.get(ConfigConstants.VERSION_TYPE),
                         LoadMonitor.getInstance().getLoadValue());
             } else {
                 // MsgType.MSG_ACK_SERVICE.equals(msgType)

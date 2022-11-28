@@ -37,7 +37,7 @@ public final class ExecuteLoadLogEvent extends LogEvent {
 
         final int commonHeaderLen = descriptionEvent.commonHeaderLen;
         buffer.position(commonHeaderLen + EL_FILE_ID_OFFSET);
-        fileId = buffer.getUint32(); //  EL_FILE_ID_OFFSET
+        fileId = buffer.getUint32(); // EL_FILE_ID_OFFSET
     }
 
     public final long getFileId() {

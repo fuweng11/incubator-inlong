@@ -47,6 +47,7 @@ public class Job {
     protected String jobInstanceId;
     protected List<Task> taskList = new ArrayList<>();
     protected ThreadLocal<Integer> threadNum = new ThreadLocal<Integer>() {
+
         protected Integer initialValue() {
             return 0;
         }

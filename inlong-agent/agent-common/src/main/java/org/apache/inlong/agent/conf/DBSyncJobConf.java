@@ -148,7 +148,7 @@ public class DBSyncJobConf {
         });
         obj.put(JOB_TABLE_LIST, tableJson);
 
-        //for compatibility
+        // for compatibility
         JSONObject comTableJson = new JSONObject();
         table2MysqlConf.forEach((key, value) -> {
             if (!value.isEmpty()) {

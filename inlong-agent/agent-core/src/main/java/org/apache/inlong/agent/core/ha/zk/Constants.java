@@ -24,31 +24,12 @@ public class Constants {
     public static final String ZK_FOR_LEADER = "for_coordinator";
 
     /*
-     *  DbSync
-     *     |----->update_switch
-     *     |----->clusterId1
-     *     |          |
-     *     |          |----->coordinator
-     *     |          |     |-----> for_leader_00001
-     *     |          |     |-----> for_leader_00002
-     *     |          |
-     *     |          |----->candidate
-     *     |          |    |-----> IP1
-     *     |          |    |-----> IP2
-     *     |          |
-     *     |          |----->job
-     *     |                |-----> serverId1
-     *     |                |     |-----> run
-     *     |                |     |-----> position
-     *     |                |
-     *     |                |-----> serverId2
-     *     |
-     *     |----->clusterId2
+     * DbSync |----->update_switch |----->clusterId1 | | | |----->coordinator | | |-----> for_leader_00001 | | |----->
+     * for_leader_00002 | | | |----->candidate | | |-----> IP1 | | |-----> IP2 | | | |----->job | |-----> serverId1 | |
+     * |-----> run | | |-----> position | | | |-----> serverId2 | |----->clusterId2
      */
     /*
-     * /DbSync/update_switch, value:{"updating",true/false}
-     * true: is updating, stop coordinating
-     * false: is not updating
+     * /DbSync/update_switch, value:{"updating",true/false} true: is updating, stop coordinating false: is not updating
      */
     public static final String SYNC_JOB_UPDATE_SWITCH_PATH = "/DbSync/update_switch";
 

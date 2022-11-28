@@ -294,7 +294,7 @@ public final class DirectLogFetcher extends LogFetcher {
         putByte(COM_BINLOG_DUMP);
         putInt32(filePosition);
         putInt16(nonBlocking ? BINLOG_DUMP_NON_BLOCK : 0); // binlog_flags
-        putInt32(serverId); // slave's server-id 
+        putInt32(serverId); // slave's server-id
         putString(fileName);
 
         final byte[] buf = buffer;

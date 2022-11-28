@@ -36,6 +36,7 @@ import org.apache.inlong.manager.pojo.node.DataNodeRequest;
 @JsonTypeDefine(value = DataNodeType.CUSTOM)
 @ApiModel("Custom data node info")
 public class CustomDataNodeInfo extends DataNodeInfo {
+
     @Override
     public DataNodeRequest genRequest() {
         return CommonBeanUtils.copyProperties(this, CustomDataNodeRequest::new);

@@ -35,8 +35,8 @@
             <version>${project.version}</version>
             <exclusions>
                 <exclusion>
-                    <artifactId>security-common</artifactId>
                     <groupId>com.tencent.tdw</groupId>
+                    <artifactId>security-common</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

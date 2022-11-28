@@ -176,5 +176,4 @@ public class ConfigConstants {
     public static final String INTER_NAMANGER_USER_KEY = "manager.internal.user.key";
     public static final String DEFAULT_INTER_NAMANGER_USER_KEY = "";
 
-
 }

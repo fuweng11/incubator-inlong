@@ -325,7 +325,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
     private List<DBSyncJob> parseJob(List<DbSyncTaskInfo> taskConfList) {
         LOGGER.debug("Array: {}, size :{}", taskConfList, taskConfList.size());
         Iterator<DbSyncTaskInfo> iterator = taskConfList.iterator();
-        boolean isHaEnable = true; //TODO: remove
+        boolean isHaEnable = true; // TODO: remove
         List<DbSyncTaskInfo> changeTaskList = new ArrayList<>();
         Map<String, DBSyncJob> dbJobsMap = new HashMap<>();
         while (iterator.hasNext()) {
@@ -389,7 +389,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
 
                 if (!isHaEnable) {
                     future.thenAccept(ignore -> taskRegisterResults.put(taskId,
-                                    new TaskInfoBean(taskId, status, "config success", 0, version)))
+                            new TaskInfoBean(taskId, status, "config success", 0, version)))
                             .exceptionally(t -> {
                                 String msg = t.getCause().getMessage();
                                 taskRegisterResults.put(taskId, new TaskInfoBean(taskId, status, msg, 1, version));
@@ -428,7 +428,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
      */
     public synchronized void deleteTask(DbSyncTaskInfo taskConf, CompletableFuture<Void> future) {
         Integer taskId = taskConf.getId();
-//        String ip = taskConf.getIps();
+        // String ip = taskConf.getIps();
         String dbName = taskConf.getDbName();
         String tableName = taskConf.getTableName();
 

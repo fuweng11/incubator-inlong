@@ -158,7 +158,7 @@ public class InnerBaseHiveSinkDTO {
      * Get the dto instance from the request
      */
     public static InnerBaseHiveSinkDTO getFromRequest(InnerBaseHiveSinkRequest request) throws Exception {
-        return  CommonBeanUtils.copyProperties(request, InnerBaseHiveSinkDTO::new, true);
+        return CommonBeanUtils.copyProperties(request, InnerBaseHiveSinkDTO::new, true);
     }
 
     /**

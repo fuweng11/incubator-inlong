@@ -37,8 +37,7 @@ public class DbSyncClusterInfo {
     @ApiModelProperty(value = "Parent cluster ID of the current IP belongs")
     private Integer parentId;
 
-    @ApiModelProperty(value = "Cluster name of the current node",
-            notes = "Report by the Agent, no need to response to Agent")
+    @ApiModelProperty(value = "Cluster name of the current node", notes = "Report by the Agent, no need to response to Agent")
     private String clusterName;
 
     @ApiModelProperty(value = "Version of the DB servers associated with this cluster")

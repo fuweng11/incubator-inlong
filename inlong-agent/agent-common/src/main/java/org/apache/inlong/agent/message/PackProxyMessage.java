@@ -137,7 +137,7 @@ public class PackProxyMessage {
             long resultBatchSize = 0;
             List<byte[]> result = new ArrayList<>();
 
-            //record dbsync pos; LogPosition<->msgId
+            // record dbsync pos; LogPosition<->msgId
             List<Pair<LogPosition, Long>> positions = new ArrayList<>();
 
             while (!messageQueue.isEmpty()) {

@@ -92,11 +92,11 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobHaDispatcherImpl.class);
     private static JobHaDispatcherImpl jobHaDispatcher = null;
     /*
-     * error task info for addTask,  taskId, errorMsg
+     * error task info for addTask, taskId, errorMsg
      */
     private final List<DbSyncTaskInfo> errorTaskInfoList = new ArrayList<>();
     /*
-     * error task info for addTask,  taskId, errorMsg
+     * error task info for addTask, taskId, errorMsg
      */
     private final List<DbSyncTaskInfo> correctTaskInfoList = new ArrayList<>();
     /*
@@ -117,7 +117,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      */
     private ConcurrentHashMap<String, JobHaInfo> jobHaInfoMap = new ConcurrentHashMap<>();
     /*
-     *  local Register Coordinator Path
+     * local Register Coordinator Path
      */
     private String localRegisterCoordinatorPath;
     private CopyOnWriteArraySet<String> allSyncIdInClusterSet = new CopyOnWriteArraySet<>();
@@ -394,7 +394,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                         String startPositionFromZk = getStartPositionFromZk(jobHaInfo);
                         for (DbSyncTaskInfo taskConf : confList) {
                             LOGGER.info("startJobWithAllTaskOnce add task syncId[{}] "
-                                            + ", taskId[{}]",
+                                    + ", taskId[{}]",
                                     taskConf.getServerName(), taskConf.getId());
                             CompletableFuture<Void> opFuture = new CompletableFuture<>();
                             initStartPosition(startPositionFromZk, taskConf);
@@ -404,7 +404,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                                 dbJobsMap.putIfAbsent(jobHaInfo.getSyncId(), dbJob);
                             }
                             LOGGER.info("startJobWithAllTaskOnce add task syncId[{}] "
-                                            + ", taskId[{}] finished!",
+                                    + ", taskId[{}] finished!",
                                     taskConf.getServerName(), taskConf.getId());
                             opFuture.whenComplete((v, e) -> {
                                 if (e != null && !isJobExceedException(e)) {
@@ -452,8 +452,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
             List<DbSyncTaskInfo> confList) {
         for (DbSyncTaskInfo taskConf : confList) {
             /*
-             * when the running node under syncId is removed
-             * the jobInfo should also be removed from zk
+             * when the running node under syncId is removed the jobInfo should also be removed from zk
              */
             if (taskConf.getNodeIps() == null || taskConf.getNodeIps().stream().noneMatch(a -> a.equals(localIp))) {
                 LOGGER.info("syncId {}, task Conf {}, doesn't contains localIp {}, so remove "
@@ -562,7 +561,6 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         }
     }
 
-
     /**
      * update zk stats
      *
@@ -645,7 +643,8 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
             ConfigDelegate configDelegate = getZkConfigDelegate();
             configDelegate.createPathAndSetData(ConfigDelegate.ZK_GROUP,
                     ZkUtil.getJobPositionPath(String.valueOf(clusterId),
-                            jobHaInfo.getSyncId()), position);
+                            jobHaInfo.getSyncId()),
+                    position);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("[{}] updatePosition {} to zk!", jobHaInfo.getSyncId(), position);
             }
@@ -705,6 +704,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         List<String> paths = configDelegate.getChildren(ConfigDelegate.ZK_GROUP,
                 jobCoordinatorParentPath);
         Collections.sort(paths, new Comparator<String>() {
+
             public int compare(String o1, String o2) {
                 return o1.compareTo(o2);
             }

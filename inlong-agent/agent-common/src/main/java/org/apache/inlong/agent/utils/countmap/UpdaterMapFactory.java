@@ -20,16 +20,18 @@ package org.apache.inlong.agent.utils.countmap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class UpdaterMapFactory {
+
     public UpdaterMapFactory() {
     }
 
     public static UpdaterMap<Integer, AtomicLong> getIntegerUpdater() {
         return new UpdaterMap(new Updater<Integer, AtomicLong>() {
+
             public AtomicLong update(AtomicLong finalv, Integer v) {
                 if (finalv == null) {
-                    return new AtomicLong((long)v);
+                    return new AtomicLong((long) v);
                 } else {
-                    finalv.addAndGet((long)v);
+                    finalv.addAndGet((long) v);
                     return finalv;
                 }
             }

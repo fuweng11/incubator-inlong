@@ -247,13 +247,13 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             creationStrategy = PartitionCreationStrategy.ARRIVED;
         } else if (PART_COUNT_VERIFIED.equalsIgnoreCase(createStrategy)) {
             // TODO If the data quantity passes the verification,
-            //  the [absolute value error] and [relative value error] shall be pushed
+            // the [absolute value error] and [relative value error] shall be pushed
             creationStrategy = PartitionCreationStrategy.AGENT_COUNT_VERIFIED;
-        } /* else if (PART_DISTINCT_VERIFIED.equalsIgnoreCase(createStrategy)) {
-            // The data deduplication verification is passed.
-            It is only used to create us tasks. Sort is still completed for partitions
-            creationStrategy = PartitionCreationStrategy.COMPLETED;
-        }*/
+        } /*
+           * else if (PART_DISTINCT_VERIFIED.equalsIgnoreCase(createStrategy)) { // The data deduplication verification
+           * is passed. It is only used to create us tasks. Sort is still completed for partitions creationStrategy =
+           * PartitionCreationStrategy.COMPLETED; }
+           */
         sortExtConfig.setCreationStrategy(creationStrategy);
 
         // dataPath = hdfsUrl + / + warehouseDir + / + dbName + .db/ + tableName
@@ -339,8 +339,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 sortExtConfig.getCreationStrategy(),
                 partitionList.toArray(new HivePartitionInfo[0]),
                 sortExtConfig.getFormatInfo(),
-                sortExtConfig.getConsistency()
-        );
+                sortExtConfig.getConsistency());
     }
 
     /**

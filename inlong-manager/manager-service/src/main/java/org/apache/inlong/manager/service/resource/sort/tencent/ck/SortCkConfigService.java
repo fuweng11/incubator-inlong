@@ -218,9 +218,10 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
                 String subscription = getConsumerGroup(groupInfo, topic, taskName, clickHouseSink.getId());
                 sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
                         deserializationInfo, fieldList.stream().map(f -> {
-                    FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());
-                    return new FieldInfo(f.getFieldName(), formatInfo);
-                }).toArray(FieldInfo[]::new));
+                            FormatInfo formatInfo =
+                                    SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());
+                            return new FieldInfo(f.getFieldName(), formatInfo);
+                        }).toArray(FieldInfo[]::new));
             } catch (Exception e) {
                 LOGGER.error("get pulsar information failed", e);
                 throw new WorkflowListenerException("get pulsar admin failed, reason: " + e.getMessage());
@@ -245,9 +246,9 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
         ClickHouseSinkInfo.PartitionStrategy partition = ClickHouseSinkInfo.PartitionStrategy.HASH;
         if (clickHouseSink.getIsDistribute() == 1) {
             String strategy = clickHouseSink.getPartitionStrategy();
-            /*if (strategy.equalsIgnoreCase("HASH")) {
-                partition = ClickHouseSinkInfo.PartitionStrategy.HASH;
-            } else */
+            /*
+             * if (strategy.equalsIgnoreCase("HASH")) { partition = ClickHouseSinkInfo.PartitionStrategy.HASH; } else
+             */
             if (strategy.equalsIgnoreCase(TencentConstants.STRATEGY_BALANVE)) {
                 partition = ClickHouseSinkInfo.PartitionStrategy.BALANCE;
             } else if (strategy.equalsIgnoreCase(TencentConstants.STRATEGY_RANDOM)) {

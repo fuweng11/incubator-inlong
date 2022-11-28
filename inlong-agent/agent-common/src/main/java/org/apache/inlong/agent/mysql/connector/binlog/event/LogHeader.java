@@ -140,7 +140,7 @@ public final class LogHeader {
     /**
      * Placeholder for event checksum while writing to binlog.
      */
-    protected long crc;      // ha_checksum
+    protected long crc; // ha_checksum
 
     /* for Start_event_v3 */
     public LogHeader(final int type) {
@@ -162,45 +162,35 @@ public final class LogHeader {
         /* 4.0 or newer */
         logPos = buffer.getUint32(); // LogEvent.LOG_POS_OFFSET
         /*
-          If the log is 4.0 (so here it can only be a 4.0 relay log read by
-          the SQL thread or a 4.0 master binlog read by the I/O thread),
-          log_pos is the beginning of the event: we transform it into the end
-          of the event, which is more useful.
-          But how do you know that the log is 4.0: you know it if
-          description_event is version 3 *and* you are not reading a
-          Format_desc (remember that mysqlbinlog starts by assuming that 5.0
-          logs are in 4.0 format, until it finds a Format_desc).
-        */
+         * If the log is 4.0 (so here it can only be a 4.0 relay log read by the SQL thread or a 4.0 master binlog read
+         * by the I/O thread), log_pos is the beginning of the event: we transform it into the end of the event, which
+         * is more useful. But how do you know that the log is 4.0: you know it if description_event is version 3 *and*
+         * you are not reading a Format_desc (remember that mysqlbinlog starts by assuming that 5.0 logs are in 4.0
+         * format, until it finds a Format_desc).
+         */
         if (descriptionEvent.binlogVersion == 3 && type < LogEvent.FORMAT_DESCRIPTION_EVENT && logPos != 0) {
             /*
-              If log_pos=0, don't change it. log_pos==0 is a marker to mean
-              "don't change rli->group_master_log_pos" (see
-              inc_group_relay_log_pos()). As it is unreal log_pos, adding the
-              event len's is nonsense. For example, a fake Rotate event should
-              not have its log_pos (which is 0) changed or it will modify
-              Exec_master_log_pos in SHOW SLAVE STATUS, displaying a nonsense
-              value of (a non-zero offset which does not exist in the master's
-              binlog, so which will cause problems if the user uses this value
-              in CHANGE MASTER).
-            */
+             * If log_pos=0, don't change it. log_pos==0 is a marker to mean "don't change rli->group_master_log_pos"
+             * (see inc_group_relay_log_pos()). As it is unreal log_pos, adding the event len's is nonsense. For
+             * example, a fake Rotate event should not have its log_pos (which is 0) changed or it will modify
+             * Exec_master_log_pos in SHOW SLAVE STATUS, displaying a nonsense value of (a non-zero offset which does
+             * not exist in the master's binlog, so which will cause problems if the user uses this value in CHANGE
+             * MASTER).
+             */
             logPos += eventLen; /* purecov: inspected */
         }
 
         flags = buffer.getUint16(); // LogEvent.FLAGS_OFFSET
         if ((type == LogEvent.FORMAT_DESCRIPTION_EVENT) || (type == LogEvent.ROTATE_EVENT)) {
             /*
-              These events always have a header which stops here (i.e. their
-              header is FROZEN).
-            */
+             * These events always have a header which stops here (i.e. their header is FROZEN).
+             */
             /*
-              Initialization to zero of all other Log_event members as they're
-              not specified. Currently there are no such members; in the future
-              there will be an event UID (but Format_description and Rotate
-              don't need this UID, as they are not propagated through
-              --log-slave-updates (remember the UID is used to not play a query
-              twice when you have two masters which are slaves of a 3rd master).
-              Then we are done.
-            */
+             * Initialization to zero of all other Log_event members as they're not specified. Currently there are no
+             * such members; in the future there will be an event UID (but Format_description and Rotate don't need this
+             * UID, as they are not propagated through --log-slave-updates (remember the UID is used to not play a query
+             * twice when you have two masters which are slaves of a 3rd master). Then we are done.
+             */
 
             if (type == LogEvent.FORMAT_DESCRIPTION_EVENT) {
                 int commonHeaderLen = buffer.getUint8(FormatDescriptionLogEvent.LOG_EVENT_MINIMAL_HEADER_LEN
@@ -211,8 +201,8 @@ public final class LogHeader {
                 int[] versionSplit = new int[]{0, 0, 0};
                 FormatDescriptionLogEvent.doServerVersionSplit(serverVersion, versionSplit);
                 checksumAlg = LogEvent.BINLOG_CHECKSUM_ALG_UNDEF;
-                if (FormatDescriptionLogEvent.versionProduct(versionSplit)
-                        >= FormatDescriptionLogEvent.CHECKSUM_VERSION_PRODUCT) {
+                if (FormatDescriptionLogEvent
+                        .versionProduct(versionSplit) >= FormatDescriptionLogEvent.CHECKSUM_VERSION_PRODUCT) {
                     buffer.position(eventLen - LogEvent.BINLOG_CHECKSUM_LEN - LogEvent.BINLOG_CHECKSUM_ALG_DESC_LEN);
                     checksumAlg = buffer.getUint8();
                 }
@@ -221,26 +211,20 @@ public final class LogHeader {
             }
             return;
         }
-        
+
         /*
-        CRC verification by SQL and Show-Binlog-Events master side.
-        The caller has to provide @description_event->checksum_alg to
-        be the last seen FD's (A) descriptor.
-        If event is FD the descriptor is in it.
-        Notice, FD of the binlog can be only in one instance and therefore
-        Show-Binlog-Events executing master side thread needs just to know
-        the only FD's (A) value -  whereas RL can contain more.
-        In the RL case, the alg is kept in FD_e (@description_event) which is reset 
-        to the newer read-out event after its execution with possibly new alg descriptor.
-        Therefore in a typical sequence of RL:
-        {FD_s^0, FD_m, E_m^1} E_m^1 
-        will be verified with (A) of FD_m.
-
-        See legends definition on MYSQL_BIN_LOG::relay_log_checksum_alg docs
-        lines (log.h).
-
-        Notice, a pre-checksum FD version forces alg := BINLOG_CHECKSUM_ALG_UNDEF.
-        */
+         * CRC verification by SQL and Show-Binlog-Events master side. The caller has to
+         * provide @description_event->checksum_alg to be the last seen FD's (A) descriptor. If event is FD the
+         * descriptor is in it. Notice, FD of the binlog can be only in one instance and therefore Show-Binlog-Events
+         * executing master side thread needs just to know the only FD's (A) value - whereas RL can contain more. In the
+         * RL case, the alg is kept in FD_e (@description_event) which is reset to the newer read-out event after its
+         * execution with possibly new alg descriptor. Therefore in a typical sequence of RL: {FD_s^0, FD_m, E_m^1}
+         * E_m^1 will be verified with (A) of FD_m.
+         * 
+         * See legends definition on MYSQL_BIN_LOG::relay_log_checksum_alg docs lines (log.h).
+         * 
+         * Notice, a pre-checksum FD version forces alg := BINLOG_CHECKSUM_ALG_UNDEF.
+         */
         checksumAlg = descriptionEvent.getHeader().checksumAlg; // fetch checksum alg
         processCheckSum(buffer);
         /* otherwise, go on with reading the header from buf (nothing now) */

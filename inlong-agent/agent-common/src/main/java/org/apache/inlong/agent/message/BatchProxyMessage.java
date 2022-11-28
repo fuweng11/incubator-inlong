@@ -41,6 +41,6 @@ public class BatchProxyMessage {
     private long dataTime;
     private Map<String, String> extraMap;
     private boolean isSyncSend;
-    //dbsync ack LogPosition
+    // dbsync ack LogPosition
     private List<Pair<LogPosition, Long>> positions;
 }

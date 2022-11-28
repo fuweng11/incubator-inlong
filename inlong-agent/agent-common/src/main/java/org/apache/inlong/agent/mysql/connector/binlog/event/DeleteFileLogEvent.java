@@ -37,7 +37,7 @@ public final class DeleteFileLogEvent extends LogEvent {
 
         final int commonHeaderLen = descriptionEvent.commonHeaderLen;
         buffer.position(commonHeaderLen + DF_FILE_ID_OFFSET);
-        fileId = buffer.getUint32(); //  DF_FILE_ID_OFFSET
+        fileId = buffer.getUint32(); // DF_FILE_ID_OFFSET
     }
 
     public final long getFileId() {

@@ -86,7 +86,8 @@ public final class ExecuteLoadQueryLogEvent extends QueryLogEvent {
                 || dupHandling > LOAD_DUP_REPLACE) {
             throw new IOException(String.format(
                     "Invalid ExecuteLoadQueryLogEvent: fn_pos_start=%d, "
-                            + "fn_pos_end=%d, dup_handling=%d", fnPosStart,
+                            + "fn_pos_end=%d, dup_handling=%d",
+                    fnPosStart,
                     fnPosEnd, dupHandling));
         }
     }

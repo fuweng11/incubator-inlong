@@ -40,8 +40,7 @@ public class HaBinlogSourceDTO {
     @ApiModelProperty(value = "Database name")
     private String dbName;
 
-    @ApiModelProperty(value = "Table name, support regular, such as: order_[0-9]{8}$",
-            notes = "All table schemas must be the same")
+    @ApiModelProperty(value = "Table name, support regular, such as: order_[0-9]{8}$", notes = "All table schemas must be the same")
     private String tableName;
 
     @ApiModelProperty(value = "Binlog data code, default is UTF-8")

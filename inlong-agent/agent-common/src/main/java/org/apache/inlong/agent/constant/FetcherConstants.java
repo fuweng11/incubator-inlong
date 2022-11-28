@@ -68,7 +68,7 @@ public class FetcherConstants {
     public static final String AGENT_MANAGER_AUTH_SECRET_ID = "agent.manager.auth.secretId";
     public static final String AGENT_MANAGER_AUTH_SECRET_KEY = "agent.manager.auth.secretKey";
 
-    //dbsync
+    // dbsync
     public static final String DBSYNC_REPORT_HEARTBEAT = "agent.dbsync.report.heartbeat.path";
     public static final String DEFAULT_DBSYNC_REPORT_HEARTBEAT = "/dbsync/heartbeat";
 

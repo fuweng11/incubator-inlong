@@ -23,5 +23,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UpdateSwitchInfo {
+
     private boolean updating;
 }

@@ -45,26 +45,23 @@ public class JsonParser {
     public static final char JSONB_FALSE_LITERAL = '\2';
 
     /*
-     * The size of offset or size fields in the small and the large storage
-     * format for JSON objects and JSON arrays.
+     * The size of offset or size fields in the small and the large storage format for JSON objects and JSON arrays.
      */
     public static final int SMALL_OFFSET_SIZE = 2;
     public static final int LARGE_OFFSET_SIZE = 4;
 
     /*
-     * The size of key entries for objects when using the small storage format
-     * or the large storage format. In the small format it is 4 bytes (2 bytes
-     * for key length and 2 bytes for key offset). In the large format it is 6
-     * (2 bytes for length, 4 bytes for offset).
+     * The size of key entries for objects when using the small storage format or the large storage format. In the small
+     * format it is 4 bytes (2 bytes for key length and 2 bytes for key offset). In the large format it is 6 (2 bytes
+     * for length, 4 bytes for offset).
      */
     public static final int KEY_ENTRY_SIZE_SMALL = (2 + SMALL_OFFSET_SIZE);
     public static final int KEY_ENTRY_SIZE_LARGE = (2 + LARGE_OFFSET_SIZE);
 
     /*
-     * The size of value entries for objects or arrays. When using the small
-     * storage format, the entry size is 3 (1 byte for type, 2 bytes for
-     * offset). When using the large storage format, it is 5 (1 byte for type, 4
-     * bytes for offset).
+     * The size of value entries for objects or arrays. When using the small storage format, the entry size is 3 (1 byte
+     * for type, 2 bytes for offset). When using the large storage format, it is 5 (1 byte for type, 4 bytes for
+     * offset).
      */
     public static final int VALUE_ENTRY_SIZE_SMALL = (1 + SMALL_OFFSET_SIZE);
     public static final int VALUE_ENTRY_SIZE_LARGE = (1 + LARGE_OFFSET_SIZE);
@@ -170,8 +167,7 @@ public class JsonParser {
                         .forward((int) n).getFixString((int) strLen));
             case JSONB_TYPE_OPAQUE:
                 /*
-                 * There should always be at least one byte, which tells the
-                 * field type of the opaque value.
+                 * There should always be at least one byte, which tells the field type of the opaque value.
                  */
                 // The type is encoded as a uint8 that maps to an
                 // enum_field_types.
@@ -262,7 +258,7 @@ public class JsonParser {
         }
 
         public JsonValue(int fieldType, LogBuffer data, long bytes) {
-            this.mType = JsonEnumType.OPAQUE; //uncertain type
+            this.mType = JsonEnumType.OPAQUE; // uncertain type
             this.mFieldType = fieldType;
             this.mData = data;
             this.mLength = bytes;

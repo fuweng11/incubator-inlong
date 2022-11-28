@@ -103,7 +103,7 @@ public final class FileLogFetcher extends LogFetcher {
             throw new IOException(
                     "Error binlog file header: "
                             + Arrays.toString(Arrays.copyOf(buffer,
-                            BIN_LOG_HEADER_SIZE)));
+                                    BIN_LOG_HEADER_SIZE)));
         }
 
         limit = 0;

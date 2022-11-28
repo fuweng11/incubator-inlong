@@ -43,4 +43,3 @@ public class PreviousGtidsLogEvent extends LogEvent {
         return "PreviousGtidsLogEvent{ mysqlGTIDSet=" + mysqlGTIDSet + '}';
     }
 }
-

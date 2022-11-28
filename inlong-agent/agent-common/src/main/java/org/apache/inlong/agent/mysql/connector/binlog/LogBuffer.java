@@ -1468,7 +1468,7 @@ public class LogBuffer {
         }
 
         if (mark == pos)
-            /* fix 0.0 problem, only '.' may cause BigDecimal parsing exception. */ {
+        /* fix 0.0 problem, only '.' may cause BigDecimal parsing exception. */ {
             buf[pos++] = ('0');
         }
 
@@ -1532,7 +1532,7 @@ public class LogBuffer {
             }
 
             if (mark == pos)
-                /* make number more friendly */ {
+            /* make number more friendly */ {
                 buf[pos++] = ('0');
             }
         }

@@ -26,7 +26,6 @@ import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonTypeDefine;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 
-
 /**
  * Data node info for inner hive
  */

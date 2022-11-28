@@ -36,6 +36,7 @@ public class CommonResponse<T> {
 
     private static ParameterizedType type(final Class raw, final Type... args) {
         return new ParameterizedType() {
+
             public Type getRawType() {
                 return raw;
             }

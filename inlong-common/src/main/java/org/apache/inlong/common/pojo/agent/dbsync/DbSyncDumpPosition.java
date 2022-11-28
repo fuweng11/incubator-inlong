@@ -67,7 +67,7 @@ public class DbSyncDumpPosition {
         private String journalName;
 
         @ApiModelProperty(value = "Position in BinLog file")
-        private String position; //TODO: check string or int
+        private String position; // TODO: check string or int
 
         @ApiModelProperty(value = "Whether to include the current position")
         private Boolean included;

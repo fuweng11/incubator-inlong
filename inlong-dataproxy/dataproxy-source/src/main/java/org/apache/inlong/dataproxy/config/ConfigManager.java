@@ -62,7 +62,6 @@ public class ConfigManager {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigManager.class);
 
     public static final List<ConfigHolder> CONFIG_HOLDER_LIST = new ArrayList<>();
-    private static final Logger LOG = LoggerFactory.getLogger(ConfigManager.class);
     private static volatile boolean isInit = false;
     private static ConfigManager instance = null;
 

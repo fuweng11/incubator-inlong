@@ -114,11 +114,11 @@ public abstract class RowsLogEvent extends LogEvent {
      * Source : http://forge.mysql.com/wiki/MySQL_Internals_Binary_Log
      */
 
-    private final long tableId;                           /* Table ID */
+    private final long tableId; /* Table ID */
     /**
      * XXX: Don't handle buffer in another thread.
      */
-    private final LogBuffer rowsBuf;                           /* The rows in packed format */
+    private final LogBuffer rowsBuf; /* The rows in packed format */
     /**
      * enum enum_flag
      *
@@ -128,7 +128,7 @@ public abstract class RowsLogEvent extends LogEvent {
      * used to set the real set of flags.
      */
     private final int flags;
-    private TableMapLogEvent table;                             /* The table the rows belong to */
+    private TableMapLogEvent table; /* The table the rows belong to */
 
     public RowsLogEvent(LogHeader header, LogBuffer buffer,
             FormatDescriptionLogEvent descriptionEvent) {
@@ -151,14 +151,14 @@ public abstract class RowsLogEvent extends LogEvent {
             headerLen -= 2;
             int start = buffer.position();
             int end = start + headerLen;
-            for (int i = start; i < end; ) {
+            for (int i = start; i < end;) {
                 switch (buffer.getUint8(i++)) {
                     case RW_V_EXTRAINFO_TAG:
                         // int infoLen = buffer.getUint8();
                         buffer.position(i + EXTRA_ROW_INFO_LEN_OFFSET);
                         int checkLen = buffer.getUint8(); // EXTRA_ROW_INFO_LEN_OFFSET
                         int val = checkLen - EXTRA_ROW_INFO_HDR_BYTES;
-                        assert (buffer.getUint8() == val); //EXTRA_ROW_INFO_FORMAT_OFFSET
+                        assert (buffer.getUint8() == val); // EXTRA_ROW_INFO_FORMAT_OFFSET
                         for (int j = 0; j < val; j++) {
                             assert (buffer.getUint8() == val); // EXTRA_ROW_INFO_HDR_BYTES + i
                         }

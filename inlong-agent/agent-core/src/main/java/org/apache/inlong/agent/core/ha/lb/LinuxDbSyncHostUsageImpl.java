@@ -36,7 +36,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LinuxDbSyncHostUsageImpl
-        implements DbSyncHostUsage {
+        implements
+            DbSyncHostUsage {
 
     private static final Logger LOG = LogManager.getLogger(LinuxDbSyncHostUsageImpl.class);
     private final Optional<Double> overrideBrokerNicSpeedGbps;

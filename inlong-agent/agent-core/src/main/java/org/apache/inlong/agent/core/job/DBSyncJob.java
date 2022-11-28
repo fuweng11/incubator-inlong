@@ -65,7 +65,7 @@ public class DBSyncJob {
         return dbSyncJobConf;
     }
 
-    //TODO: when task is delete
+    // TODO: when task is delete
     public void removeDBSyncTask(Integer taskId) {
         dbSyncTasks.remove(taskId);
     }
@@ -83,12 +83,12 @@ public class DBSyncJob {
     }
 
     public void start() {
-        //create tasks and submit
+        // create tasks and submit
         for (MysqlTableConf taskConf : dbSyncJobConf.getMysqlTableConfList()) {
             createAndAddTask(taskConf);
         }
 
-        //make sure all tasks are inited finished before starting dbsyncReadOperator
+        // make sure all tasks are inited finished before starting dbsyncReadOperator
         do {
             DBSyncUtils.sleep(1000);
         } while (!dbSyncTasks.values().stream().allMatch(Task::isTaskFinishInit));

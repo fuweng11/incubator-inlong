@@ -104,7 +104,7 @@ public class JobManager extends AbstractDaemon {
     private final AgentConfiguration agentConf;
     private final int maxConDbSize;
     private final JobConfManager jobConfManager;
-    private final ConcurrentHashMap<String, DBSyncJob> allJobs; //TODO:merge to jobs
+    private final ConcurrentHashMap<String, DBSyncJob> allJobs; // TODO:merge to jobs
     private final ArrayList<DBSyncJobConf> newJobs;
     private final ReentrantReadWriteLock.WriteLock wLock;
     private final ConcurrentHashMap<String, DBSyncJob> runningJobs;
@@ -269,7 +269,7 @@ public class JobManager extends AbstractDaemon {
         return false;
     }
 
-    //TODO: merge to deleteJob?
+    // TODO: merge to deleteJob?
     public void stopJob(String jobName) {
         DBSyncJob job = runningJobs.get(jobName);
         if (job == null) {
@@ -353,19 +353,19 @@ public class JobManager extends AbstractDaemon {
         if (conf == null) {
             conf = jobConfManager.getConfigByDatabase(taskConf.getDbServerInfo().getUrl(), taskConf.getServerName());
             if (conf == null) {
-                //find back
+                // find back
                 if (bakDbUrl != null) {
                     conf = jobConfManager.getConfigByDatabase(bakDbUrl, taskConf.getServerName());
                 }
             }
 
-            //can't find both master and bak
+            // can't find both master and bak
             if (conf == null) {
                 // add new conf
                 int dumpedSize = jobConfManager.getConfSize();
                 if (dumpedSize >= maxConDbSize) {
                     LOGGER.error("skip job add, now dumped job size is {}, max job size {}, "
-                                    + "skipped config is {}, jobConfMng is {} ",
+                            + "skipped config is {}, jobConfMng is {} ",
                             dumpedSize, maxConDbSize, taskConf.toString(), jobConfManager.toString());
                     future.completeExceptionally(
                             new JobSizeExceedMaxException("exceed max job size " + maxConDbSize));
@@ -395,7 +395,7 @@ public class JobManager extends AbstractDaemon {
             conf.updateUserPasswd(taskConf.getDbServerInfo().getUsername(),
                     taskConf.getDbServerInfo().getPassword());
             conf.updateCharset(charset, taskConf.getId());
-//            allJobs.get(dbsyncJobConf.getJobName()).updateJobConf();//TODO:update charset
+            // allJobs.get(dbsyncJobConf.getJobName()).updateJobConf();//TODO:update charset
             String dbUrl = taskConf.getDbServerInfo().getUrl();
             try {
                 conf.resetDbInfo(dbUrl, bakDbUrl);
@@ -417,7 +417,7 @@ public class JobManager extends AbstractDaemon {
                 runningJobs.get(conf.getJobName()).createAndAddTask(tbConf);
             }
         } else {
-            //TODO:improve, update other info, such as table change
+            // TODO:improve, update other info, such as table change
             MysqlTableConf mysqlTableConf = conf.getMysqlTableConf(taskConf.getId());
             if (mysqlTableConf != null) {
                 mysqlTableConf.setSkipDelete(skipDelete);
@@ -435,7 +435,7 @@ public class JobManager extends AbstractDaemon {
 
     public synchronized void updateJob(String newJobName, String oldJobName, TaskStat stat) {
         try {
-            //lock jobMap
+            // lock jobMap
             wLock.lock();
             DBSyncJobConf tmpJobConf = jobConfManager.getParsingConfigByInstName(newJobName);
             if (tmpJobConf == null) {
@@ -511,7 +511,7 @@ public class JobManager extends AbstractDaemon {
                     runningJobs.compute(jobName, (k, v) -> {
                         if (v == null) {
                             LOGGER.info("Start new job after init, jobName={}, conf={}, "
-                                            + "taskIdsSize = {}, taskIdList = {}",
+                                    + "taskIdsSize = {}, taskIdList = {}",
                                     jobName,
                                     job.getDBSyncJobConf(),
                                     (taskIds == null ? 0 : taskIds.size()),
@@ -519,8 +519,8 @@ public class JobManager extends AbstractDaemon {
                             job.start();
                             return job;
                         }
-                        JSONArray vTaskIds = (v.getDBSyncJobConf() == null ? null :
-                                v.getDBSyncJobConf().getTasksJson());
+                        JSONArray vTaskIds =
+                                (v.getDBSyncJobConf() == null ? null : v.getDBSyncJobConf().getTasksJson());
                         LOGGER.info("Job {} has started! taskIdsSize = {}, taskIdList = {}",
                                 jobName, (vTaskIds == null ? 0 : vTaskIds.size()),
                                 (vTaskIds == null ? "" : vTaskIds.toJSONString()));

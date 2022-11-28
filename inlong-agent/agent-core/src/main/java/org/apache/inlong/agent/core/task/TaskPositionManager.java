@@ -60,10 +60,10 @@ public class TaskPositionManager extends AbstractDaemon {
     private final AgentConfiguration conf;
     private final LogCounter logPrinter = new LogCounter(10, 100000, 60 * 1000);
     private final int updateZkInterval;
-    //TODO: improve, merge two ack-position
+    // TODO: improve, merge two ack-position
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, Long>> jobTaskPositionMap;
-    private final ConcurrentHashMap<String, PositionControl> dbsyncJobPositions; //key:jobName
-    private final LinkedBlockingQueue<BatchProxyMessage> logMapQueue; //dbsync-ack
+    private final ConcurrentHashMap<String, PositionControl> dbsyncJobPositions; // key:jobName
+    private final LinkedBlockingQueue<BatchProxyMessage> logMapQueue; // dbsync-ack
 
     private TaskPositionManager(AgentManager agentManager) {
         this.conf = AgentConfiguration.getAgentConf();
@@ -133,7 +133,7 @@ public class TaskPositionManager extends AbstractDaemon {
                             LOGGER.error("log map queue poll error", ei);
                         }
                         handleAckPosition(wAckPkgData);
-                        //TODO: improve this flow control
+                        // TODO: improve this flow control
                         if (wAckPkgData != null) {
                             if (delCnt > 10000) {
                                 break;
@@ -159,8 +159,8 @@ public class TaskPositionManager extends AbstractDaemon {
             while (isRunnable()) {
                 try {
                     /*
-                     * When there is no table name or field name matching rule,
-                     *  it needs to be updated with the position parsed by binlog
+                     * When there is no table name or field name matching rule, it needs to be updated with the position
+                     * parsed by binlog
                      */
                     for (Map.Entry<String, PositionControl> runningJobPos : dbsyncJobPositions.entrySet()) {
                         String jobName = runningJobPos.getKey();
@@ -226,7 +226,7 @@ public class TaskPositionManager extends AbstractDaemon {
         if (posControl != null) {
             return posControl;
         }
-        //may be switched, try to find the backup job
+        // may be switched, try to find the backup job
         posControl = dbsyncJobPositions.values().stream().filter(v -> {
             String bakJobName = v.getJobConf().getBakJobName();
             return Objects.equals(bakJobName, jobName);

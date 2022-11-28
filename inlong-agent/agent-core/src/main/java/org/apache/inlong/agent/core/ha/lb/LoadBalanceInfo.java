@@ -23,7 +23,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class LoadBalanceInfo
-        implements Comparable<LoadBalanceInfo> {
+        implements
+            Comparable<LoadBalanceInfo> {
 
     private static final int PERCENT_HUNDRED = 100;
 
@@ -64,9 +65,8 @@ public class LoadBalanceInfo
     private String ip;
 
     /*
-     *  Priority is given to comparing the capacity utilization rate,
-     *  and secondly, the resource load is compared within a certain range of
-     *  the difference in the capacity utilization rate.
+     * Priority is given to comparing the capacity utilization rate, and secondly, the resource load is compared within
+     * a certain range of the difference in the capacity utilization rate.
      */
     public int compareTo(LoadBalanceInfo o) {
 
@@ -79,16 +79,13 @@ public class LoadBalanceInfo
         if (localCapacityPercentUsage < CAPACITY_PERCENT_THRESHOLD
                 && otherCapacityPercentUsage == CAPACITY_PERCENT_THRESHOLD) {
             /*
-             * when local capacity usage is lower than 100/% and other capacity is equal than 100/%
-             * ,use local
+             * when local capacity usage is lower than 100/% and other capacity is equal than 100/% ,use local
              */
             return -1;
         } else if (otherCapacityPercentUsage < CAPACITY_PERCENT_THRESHOLD
                 && localCapacityPercentUsage == CAPACITY_PERCENT_THRESHOLD) {
             /*
-             * when other capacity usage is lower than 1.0 and local capacity is equal than 100/%
-             * ,use
-             * other
+             * when other capacity usage is lower than 1.0 and local capacity is equal than 100/% ,use other
              */
             return 1;
         } else if (localCapacityPercentUsage == CAPACITY_PERCENT_THRESHOLD
@@ -102,15 +99,16 @@ public class LoadBalanceInfo
         int capacityPercentUsageComp = (int) (localCapacityPercentUsage * PERCENT_HUNDRED
                 - otherCapacityPercentUsage * PERCENT_HUNDRED);
         /*
-         * Compare payload if The value of subtracting two
-         * capacity percent usage is lower than CHECK_LOAD_THRESHOLD
+         * Compare payload if The value of subtracting two capacity percent usage is lower than CHECK_LOAD_THRESHOLD
          */
         int comp = 0;
         if (Math.abs(capacityPercentUsageComp) < COMPARE_LOAD_THRESHOLD) {
             if ((bandwidthIn == null || bandwidthIn.percentUsage() < CHECK_LOAD_THRESHOLD) && (bandwidthOut == null
-                    || bandwidthOut.percentUsage() < CHECK_LOAD_THRESHOLD) && (o.getBandwidthIn() == null
-                    || o.getBandwidthIn().percentUsage() < CHECK_LOAD_THRESHOLD) && (o.getBandwidthOut() == null
-                    || o.getBandwidthOut().percentUsage() < CHECK_LOAD_THRESHOLD)) {
+                    || bandwidthOut.percentUsage() < CHECK_LOAD_THRESHOLD)
+                    && (o.getBandwidthIn() == null
+                            || o.getBandwidthIn().percentUsage() < CHECK_LOAD_THRESHOLD)
+                    && (o.getBandwidthOut() == null
+                            || o.getBandwidthOut().percentUsage() < CHECK_LOAD_THRESHOLD)) {
                 if ((memory == null || memory.percentUsage() < CHECK_LOAD_THRESHOLD) && (o.getMemory() == null
                         || o.getMemory().percentUsage() < CHECK_LOAD_THRESHOLD)) {
                     if (cpu != null && o.getCpu() != null) {

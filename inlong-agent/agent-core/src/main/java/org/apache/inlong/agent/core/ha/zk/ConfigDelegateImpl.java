@@ -90,12 +90,13 @@ public class ConfigDelegateImpl implements ConfigDelegate {
                         sessionTimeoutMs, connectionTimeoutMs);
                 clientCache.put(group, client);
 
-                //add listen, clear cache when conn lost or is invalid
+                // add listen, clear cache when conn lost or is invalid
                 client.getConnectionStateListenable().addListener(new ConnectionStateListener() {
+
                     @Override
                     public void stateChanged(CuratorFramework client, ConnectionState newState) {
                         if (ConnectionState.RECONNECTED == newState || ConnectionState.LOST == newState) {
-//                            ConfigCacheUtil.clearCache();
+                            // ConfigCacheUtil.clearCache();
                         }
                     }
                 });

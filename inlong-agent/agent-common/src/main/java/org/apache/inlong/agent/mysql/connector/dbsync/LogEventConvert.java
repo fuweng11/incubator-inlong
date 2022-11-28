@@ -167,7 +167,7 @@ public class LogEventConvert extends AbstractCanalLifeCycle implements BinlogPar
             tableMetaCache.clearTableMeta();
             bRecvTabMapEvent = false;
         }
-        //bRecvTabMapEvent = false;
+        // bRecvTabMapEvent = false;
     }
 
     private Entry parseQueryEvent(QueryLogEvent event) {
@@ -255,7 +255,7 @@ public class LogEventConvert extends AbstractCanalLifeCycle implements BinlogPar
             TableMapLogEvent table = event.getTable();
             if (table == null) {
                 if (bRecvTabMapEvent) {
-                    //record of tableId doesn't exist
+                    // record of tableId doesn't exist
                     throw new TableIdNotFoundException("not found tableId:" + event.getTableId());
                 } else {
                     throw new TableMapEventMissException("Miss a TABLE_MAP_EVENT, so not found tableId "
@@ -304,15 +304,15 @@ public class LogEventConvert extends AbstractCanalLifeCycle implements BinlogPar
             while (buffer.nextOneRow(columns)) {
                 // handle row record
                 RowData.Builder rowDataBuilder = RowData.newBuilder();
-                //RowData rowDataBuilder = new RowData();
+                // RowData rowDataBuilder = new RowData();
                 if (EventType.INSERT == eventType) {
-                    //put insert in before value
+                    // put insert in before value
                     parseOneRow(rowDataBuilder, event, buffer, columns, true, tableMeta, jobconf, dbName, tbName);
                 } else if (EventType.DELETE == eventType) {
-                    //put delete in before
+                    // put delete in before
                     parseOneRow(rowDataBuilder, event, buffer, columns, false, tableMeta, jobconf, dbName, tbName);
                 } else {
-                    //put update in before and after
+                    // put update in before and after
                     parseOneRow(rowDataBuilder, event, buffer, columns, false, tableMeta, jobconf, dbName, tbName);
                     if (!buffer.nextOneRow(changeColumns)) {
                         rowChangeBuider.addRowDatas(rowDataBuilder);
@@ -366,7 +366,7 @@ public class LogEventConvert extends AbstractCanalLifeCycle implements BinlogPar
             FieldMeta fieldMeta = null;
             boolean isOverride = false;
             Column.Builder columnBuilder = Column.newBuilder();
-            //Column columnBuilder = new Column();
+            // Column columnBuilder = new Column();
             columnBuilder.setIndex(i);
             columnBuilder.setIsNull(false);
             if (tableMeta != null) {
@@ -475,9 +475,10 @@ public class LogEventConvert extends AbstractCanalLifeCycle implements BinlogPar
                                             columnBuilder.getName(), maxColumnValueLen);
                                 }
                                 MysqlTableConf mysqlTableConf = jobconf.getMysqlTableConf(dbName, tbName);
-                                //TODO:add send metrics
-//                                DBSyncUtils.sendBigFieldMetrics(event.getWhen() * MILLISEC_IN_ONE_SEC, mysqlTableConf,
-//                                        fieldMeta, valueList.length);
+                                // TODO:add send metrics
+                                // DBSyncUtils.sendBigFieldMetrics(event.getWhen() * MILLISEC_IN_ONE_SEC,
+                                // mysqlTableConf,
+                                // fieldMeta, valueList.length);
                             } else {
                                 columnBuilder.setValue(new String(Base64.encodeBase64(valueList, false)));
                             }
@@ -554,7 +555,7 @@ public class LogEventConvert extends AbstractCanalLifeCycle implements BinlogPar
             return false;
         }
         for (Column column : bfColumns) {
-            //compare column inde of before/after
+            // compare column inde of before/after
             if (column.getIndex() == index) {
                 if (column.getIsNull() && newValue == null) {
                     // all null
@@ -627,7 +628,7 @@ public class LogEventConvert extends AbstractCanalLifeCycle implements BinlogPar
     }
 
     private Charset getCharset(DBSyncJobConf jobConf, String dbName, String tbName) {
-        //use the first match one
+        // use the first match one
         MysqlTableConf mycnf = jobConf.getMysqlTableConf(dbName, tbName);
         if (mycnf == null) {
             return charset;

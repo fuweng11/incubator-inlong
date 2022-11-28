@@ -142,8 +142,7 @@ public class JobCoordinator {
         private boolean syncIdListIsChanged = false;
 
         /*
-         * key: candidate ip
-         * value : run serverId List
+         * key: candidate ip value : run serverId List
          */
         private ConcurrentHashMap<String, Set<String>> jobRunNodeMap = new ConcurrentHashMap<>();
 
@@ -168,8 +167,7 @@ public class JobCoordinator {
                      * query all infos for coordinate
                      */
                     /*
-                     * 1. query all server id's run node info
-                     * key: ip, value: server id set
+                     * 1. query all server id's run node info key: ip, value: server id set
                      */
                     if (jobRunNodeMap.size() == 0 || syncIdListIsChanged || isNeedUpdateRunNodeMap) {
                         if (isNeedUpdateRunNodeMap) {
@@ -182,14 +180,12 @@ public class JobCoordinator {
                     }
 
                     /*
-                     * 2. query all candidate load info
-                     * key : ip, value : load
+                     * 2. query all candidate load info key : ip, value : load
                      */
                     Map<String, LoadBalanceInfo> candidateLoadMap = getAllCandidateNodeLoad();
 
                     /*
-                     * Assignment current server Id list num to load info
-                     * and sort cadLoadSet
+                     * Assignment current server Id list num to load info and sort cadLoadSet
                      */
                     TreeSet<LoadBalanceInfo> cadLoadSet = null;
                     if (candidateLoadMap != null) {
@@ -213,13 +209,12 @@ public class JobCoordinator {
                     /*
                      * handle some candidates are offline case
                      */
-                    Set<Map.Entry<String, Set<String>>> runNodeInfoEntrySet
-                            = jobRunNodeMap.entrySet();
+                    Set<Map.Entry<String, Set<String>>> runNodeInfoEntrySet = jobRunNodeMap.entrySet();
                     if (candidateLoadMap != null && candidateLoadMap.size() > 0) {
                         for (Map.Entry<String, Set<String>> entry : runNodeInfoEntrySet) {
                             if (candidateLoadMap.get(entry.getKey()) == null) {
                                 LOGGER.info("Candidate [{}] is offline, so need change run "
-                                                + "syncIds [{}]", entry.getKey(),
+                                        + "syncIds [{}]", entry.getKey(),
                                         GSON.toJson(entry.getValue()));
                                 if (!assignSyncIdsToDbSyncNode(entry.getKey(), entry.getValue(),
                                         cadLoadSet)) {
@@ -308,8 +303,7 @@ public class JobCoordinator {
                 return false;
             }
             LoadBalanceInfo loadBalanceInfo = cadLoadSet.pollFirst();
-            if (loadBalanceInfo != null && loadBalanceInfo.getSyncIdNum()
-                    < loadBalanceInfo.getMaxSyncIdsThreshold()) {
+            if (loadBalanceInfo != null && loadBalanceInfo.getSyncIdNum() < loadBalanceInfo.getMaxSyncIdsThreshold()) {
                 try {
                     String dbsyncNodeIp = loadBalanceInfo.getIp();
                     doChangeRunNodeInfo(dbsyncNodeIp, syncId);
@@ -325,7 +319,7 @@ public class JobCoordinator {
                 }
             } else {
                 LOGGER.error("JobCoordinator assign syncId [{}] to dbsync node [{}],"
-                                + "job num is exceed max size [{}]! must add dbsync node!!!!",
+                        + "job num is exceed max size [{}]! must add dbsync node!!!!",
                         syncId, loadBalanceInfo == null ? null : loadBalanceInfo.getIp(),
                         loadBalanceInfo.getMaxSyncIdsThreshold());
             }
@@ -367,24 +361,24 @@ public class JobCoordinator {
                                         syncIdSet.remove(syncId);
                                         updateSyncIdsMapInfo(firstNode.getIp(), syncId);
                                         LOGGER.info("tryToChangeRunNodeByLoad success, from [{}]/[{}],"
-                                                        + "to  [{}]/[{}]", fromIp, toChangeSyncId,
+                                                + "to  [{}]/[{}]", fromIp, toChangeSyncId,
                                                 firstNode.getIp(), toChangeSyncId);
                                     } catch (Exception e) {
                                         LOGGER.error("tryToChangeRunNodeByLoad has exception, from [{}]/[{}], "
-                                                        + "to  [{}]/[{}] e = {}", fromIp, toChangeSyncId,
+                                                + "to  [{}]/[{}] e = {}", fromIp, toChangeSyncId,
                                                 firstNode.getIp(), toChangeSyncId, e);
                                     }
                                 }
                             } else if (firstNode != null) {
                                 LOGGER.warn("There is not any node can bee used to change, firstNode is "
-                                                + "not match condition!"
-                                                + " first node [{}]/[{}]!, last node [{}]/[{}]",
+                                        + "not match condition!"
+                                        + " first node [{}]/[{}]!, last node [{}]/[{}]",
                                         firstNode.getIp(), firstNode.getSyncIdNum(),
                                         loadBalanceInfo.getIp(), loadBalanceInfo.getSyncIdNum());
                                 break;
                             } else {
                                 LOGGER.warn("There is not any node can bee used to change,"
-                                                + " first is null!, last node [{}]/[{}]",
+                                        + " first is null!, last node [{}]/[{}]",
                                         loadBalanceInfo.getIp(), loadBalanceInfo.getSyncIdNum());
                                 break;
                             }
@@ -432,7 +426,7 @@ public class JobCoordinator {
                     for (Map.Entry<String, Set<String>> entry : set) {
                         int size = entry.getValue() == null ? 0 : entry.getValue().size();
                         LOGGER.info("JobCoordinator stat ip = [{}], size = [{}] run server id "
-                                        + "List [{}]",
+                                + "List [{}]",
                                 entry.getKey(), size,
                                 GSON.toJson(entry.getValue()));
                     }
@@ -545,12 +539,12 @@ public class JobCoordinator {
         private boolean isNeedChangeRunNode(LoadBalanceInfo runningNodeLoad) {
             if (runningNodeLoad != null) {
                 if ((runningNodeLoad.getCpu() != null
-                        && runningNodeLoad.getCpu().percentUsage() > haNodeNeedChangeMaxThreshold) || (
-                        runningNodeLoad.getMemory() != null
-                                && runningNodeLoad.getMemory().percentUsage() > haNodeNeedChangeMaxThreshold) || (
-                        runningNodeLoad.getBandwidthOut() != null
-                                && runningNodeLoad.getBandwidthOut().percentUsage() > haNodeNeedChangeMaxThreshold) || (
-                        runningNodeLoad.getBandwidthIn() != null
+                        && runningNodeLoad.getCpu().percentUsage() > haNodeNeedChangeMaxThreshold)
+                        || (runningNodeLoad.getMemory() != null
+                                && runningNodeLoad.getMemory().percentUsage() > haNodeNeedChangeMaxThreshold)
+                        || (runningNodeLoad.getBandwidthOut() != null
+                                && runningNodeLoad.getBandwidthOut().percentUsage() > haNodeNeedChangeMaxThreshold)
+                        || (runningNodeLoad.getBandwidthIn() != null
                                 && runningNodeLoad.getBandwidthIn().percentUsage() > haNodeNeedChangeMaxThreshold)
                         || runningNodeLoad.getSyncsCapacityPercentUsage() > haNodeNeedChangeMaxThreshold) {
                     return true;
@@ -567,15 +561,15 @@ public class JobCoordinator {
          */
         private boolean isNodeCanBeUsedToChange(LoadBalanceInfo candidateNodeLoad) {
             if (candidateNodeLoad != null) {
-                if ((candidateNodeLoad.getSyncIdNum() < candidateNodeLoad.getMaxSyncIdsThreshold()) && (
-                        candidateNodeLoad.getCpu() == null
-                                || candidateNodeLoad.getCpu().percentUsage() < haNodeChangeCandidateThreshold) && (
-                        candidateNodeLoad.getMemory() == null
-                                || candidateNodeLoad.getMemory().percentUsage() < haNodeChangeCandidateThreshold) && (
-                        candidateNodeLoad.getBandwidthOut() == null
+                if ((candidateNodeLoad.getSyncIdNum() < candidateNodeLoad.getMaxSyncIdsThreshold())
+                        && (candidateNodeLoad.getCpu() == null
+                                || candidateNodeLoad.getCpu().percentUsage() < haNodeChangeCandidateThreshold)
+                        && (candidateNodeLoad.getMemory() == null
+                                || candidateNodeLoad.getMemory().percentUsage() < haNodeChangeCandidateThreshold)
+                        && (candidateNodeLoad.getBandwidthOut() == null
                                 || candidateNodeLoad.getBandwidthOut().percentUsage() < haNodeChangeCandidateThreshold)
                         && (candidateNodeLoad.getBandwidthIn() == null
-                        || candidateNodeLoad.getBandwidthIn().percentUsage() > haNodeChangeCandidateThreshold)
+                                || candidateNodeLoad.getBandwidthIn().percentUsage() > haNodeChangeCandidateThreshold)
                         && candidateNodeLoad.getSyncsCapacityPercentUsage() < 1.0F) {
                     return true;
                 }

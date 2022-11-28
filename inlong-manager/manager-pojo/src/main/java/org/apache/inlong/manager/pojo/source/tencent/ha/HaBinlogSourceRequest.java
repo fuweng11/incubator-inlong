@@ -45,16 +45,14 @@ public class HaBinlogSourceRequest extends SourceRequest {
     private String dbName;
 
     @NotBlank(message = "tableName cannot be blank")
-    @ApiModelProperty(value = "Table name, support regular, such as: order_[0-9]{8}$",
-            notes = "All table schemas must be the same")
+    @ApiModelProperty(value = "Table name, support regular, such as: order_[0-9]{8}$", notes = "All table schemas must be the same")
     private String tableName;
 
     @ApiModelProperty("Binlog data code, default is UTF-8")
     private String charset = StandardCharsets.UTF_8.name();
 
     @ApiModelProperty(value = "Collect from the specified binlog location, "
-            + "and modify it after distribution. If it is empty, null will be returned",
-            notes = "sourceIp, sourcePort, journalName and position are required")
+            + "and modify it after distribution. If it is empty, null will be returned", notes = "sourceIp, sourcePort, journalName and position are required")
     private DbSyncDumpPosition binlogStartPosition;
 
     @ApiModelProperty(value = "Whether to skip the deletion event. Default: 1, skip")

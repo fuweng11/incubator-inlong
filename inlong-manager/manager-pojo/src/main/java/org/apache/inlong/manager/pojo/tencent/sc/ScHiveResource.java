@@ -45,5 +45,4 @@ public class ScHiveResource extends ScResource {
     @ApiModelProperty("table name")
     private String table;
 
-
 }

@@ -103,7 +103,7 @@ public class AsyncRelayLogImpl extends AbstractRelayLog {
     public byte[] getLog() {
 
         if (rqueue.isEmpty()) {
-            //get data from file
+            // get data from file
             peekFileData();
         }
 
@@ -230,10 +230,10 @@ public class AsyncRelayLogImpl extends AbstractRelayLog {
                 }
             }
 
-            //check file is delete
+            // check file is delete
             File tmpWriteFile = new File(fileName);
             if (!tmpWriteFile.exists() || tmpWriteFile.length() != writePos) {
-                //need read dump
+                // need read dump
                 bNeedReDump.set(true);
                 LOGGER.error("write file {} de delete, need re dump binlog!", fileName);
             }
@@ -255,7 +255,7 @@ public class AsyncRelayLogImpl extends AbstractRelayLog {
                     startWritePos = writePos;
                     writeByeBufs.position(bufWritePos);
 
-                    //check space
+                    // check space
                     try {
                         long freeSpaceLength = 0;
                         do {
@@ -498,7 +498,7 @@ public class AsyncRelayLogImpl extends AbstractRelayLog {
                     }
 
                     if (writeByeBufs.remaining() <= (byteData.length + 8)) {
-                        //flush byte data to file
+                        // flush byte data to file
                         flushBufferToFile(appendBufferTime);
                     }
                     writeByeBufs.put(MAGIC_BYTES);
@@ -507,7 +507,7 @@ public class AsyncRelayLogImpl extends AbstractRelayLog {
                     writeByeBufs.put(lenByte);
                     writeByeBufs.put(byteData);
                     if (writeByeBufs.remaining() < 100) {
-                        //flush byte data to file
+                        // flush byte data to file
                         flushBufferToFile(appendBufferTime);
                     }
                 } catch (Throwable t) {

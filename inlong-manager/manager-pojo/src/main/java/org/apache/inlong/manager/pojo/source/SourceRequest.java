@@ -81,8 +81,7 @@ public class SourceRequest {
     @ApiModelProperty("Snapshot of the source task")
     private String snapshot;
 
-    @ApiModelProperty(value = "Start collection from the specified binlog location",
-            notes = "The administrator sets it in the database and deletes it after publishing")
+    @ApiModelProperty(value = "Start collection from the specified binlog location", notes = "The administrator sets it in the database and deletes it after publishing")
     private String startPosition;
 
     @ApiModelProperty("Version")

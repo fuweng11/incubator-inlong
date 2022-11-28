@@ -126,7 +126,7 @@ public class HttpManager {
         try {
             HttpPost post = getHttpPost(url);
             post.addHeader(BasicAuth.BASIC_AUTH_HEADER, BasicAuth.genBasicAuthCredential(secretId, secretKey));
-            //internal secure-auth
+            // internal secure-auth
             if (StringUtils.isNotBlank(authUserName) && StringUtils.isNotBlank(authUserKey)) {
                 String encodedAuthentication = BasicAuth.getSecureAuthCredential(authUserName, authUserKey,
                         serviceName);
@@ -166,7 +166,7 @@ public class HttpManager {
         try {
             HttpPost post = getHttpPost(url);
             post.addHeader(BasicAuth.BASIC_AUTH_HEADER, BasicAuth.genBasicAuthCredential(secretId, secretKey));
-            //internal secure-auth
+            // internal secure-auth
             if (StringUtils.isNotBlank(authUserName) && StringUtils.isNotBlank(authUserKey)) {
                 String encodedAuthentication = BasicAuth.getSecureAuthCredential(authUserName, authUserKey,
                         serviceName);

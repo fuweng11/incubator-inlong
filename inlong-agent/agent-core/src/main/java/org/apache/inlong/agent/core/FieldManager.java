@@ -68,8 +68,7 @@ public class FieldManager {
     private FieldManager() {
         tdmFieldChangedReportThread = new FieldChangedTDMThread();
         tdmFieldChangedReportThread.setName(tdmFieldChangedReportThread.getClass().getSimpleName());
-        tdmFieldChangedReportThread.setUncaughtExceptionHandler((t, e)
-                -> logger.error("{} has an uncaught error: ",
+        tdmFieldChangedReportThread.setUncaughtExceptionHandler((t, e) -> logger.error("{} has an uncaught error: ",
                 t.getName(), e));
         maxRetryTimes = config.getInt(DBSYNC_FIELD_CHANGED_REPORT_RETRY_MAX_TIMES,
                 DEFAULT_DBSYNC_FIELD_CHANGED_REPORT_RETRY_MAX_TIMES);
@@ -110,7 +109,8 @@ public class FieldManager {
             } else {
                 logger.warn(
                         "alterQueue is full!, message will be discard addAlterFieldString "
-                                + "groupId[{}], taskId[{}], alterString[{}]", bid, taskId, alterQueryString);
+                                + "groupId[{}], taskId[{}], alterString[{}]",
+                        bid, taskId, alterQueryString);
             }
         }
     }
@@ -223,7 +223,7 @@ public class FieldManager {
                             fieldChangedEntry.setFieldChangedList(array);
                         } else {
                             logger.warn("FieldManager fieldChanged parse has error! and entry will "
-                                            + "be discard! bid = {}, tid = {}, alterString = {}",
+                                    + "be discard! bid = {}, tid = {}, alterString = {}",
                                     fieldChangedEntry.getGroupId(),
                                     fieldChangedEntry.getTaskId(),
                                     fieldChangedEntry.getAlterQueryString());
@@ -266,7 +266,7 @@ public class FieldManager {
                 clearChangedSet(fieldChangedEntry.getGroupId(), fieldChangedEntry.getTaskId(),
                         fieldChangedEntry.getAlterQueryString());
                 logger.warn("alterQueue is full!, message will be discard! addAlterFieldString "
-                                + "groupId[{}], taskId[{}], alterString[{}]", fieldChangedEntry.getGroupId(),
+                        + "groupId[{}], taskId[{}], alterString[{}]", fieldChangedEntry.getGroupId(),
                         fieldChangedEntry.getTaskId(), fieldChangedEntry.getAlterQueryString());
             }
         }

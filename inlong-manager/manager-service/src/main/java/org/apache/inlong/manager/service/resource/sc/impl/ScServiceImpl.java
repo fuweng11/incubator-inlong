@@ -86,16 +86,13 @@ public class ScServiceImpl implements ScService {
     public List<Staff> listStaff(String username) {
         Preconditions.checkNotEmpty(username, "username cannot be null");
 
-        /* // OpenAPI
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("pageNum", 1);
-        params.put("pageSize", 20);
-        params.put("enName", username);
-        ScPage<Staff> staffPage = scApiRequestService
-                .getCall(LIST_USER_BY_NAME_API, params, new ParameterizedTypeReference<Response<ScPage<Staff>>>() {
-                });
-
-        return staffPage.getData();*/
+        /*
+         * // OpenAPI Map<String, Object> params = Maps.newHashMap(); params.put("pageNum", 1); params.put("pageSize",
+         * 20); params.put("enName", username); ScPage<Staff> staffPage = scApiRequestService
+         * .getCall(LIST_USER_BY_NAME_API, params, new ParameterizedTypeReference<Response<ScPage<Staff>>>() { });
+         * 
+         * return staffPage.getData();
+         */
 
         Map<String, Object> params = Maps.newHashMap();
         params.put("pageNum", 1);
@@ -118,19 +115,18 @@ public class ScServiceImpl implements ScService {
     public Product getProduct(Integer id) {
         return scApiRequestService.getCall(GET_DETAIL_PRODUCT_API + id, null,
                 new ParameterizedTypeReference<Response<Product>>() {
-                }
-        );
+                });
     }
 
     @Override
     public List<Product> listProduct(String userName, String productName) {
-        /* // Only OpenAPI can query the product list of the current user
-        Map<String, Object> params = new HashMap<>();
-        params.put("userName", userName);
-
-        return scApiRequestService.getCall(LIST_PRODUCT_BY_USER_API, params,
-                new ParameterizedTypeReference<Response<List<Product>>>() {
-                });*/
+        /*
+         * // Only OpenAPI can query the product list of the current user Map<String, Object> params = new HashMap<>();
+         * params.put("userName", userName);
+         * 
+         * return scApiRequestService.getCall(LIST_PRODUCT_BY_USER_API, params, new
+         * ParameterizedTypeReference<Response<List<Product>>>() { });
+         */
         Map<String, Object> params = new HashMap<>();
         params.put("name", productName);
         params.put("pageNum", 1);
@@ -154,12 +150,10 @@ public class ScServiceImpl implements ScService {
 
     @Override
     public AppGroup getAppGroup(Integer clusterId, String groupName) {
-        /* // OpenAPI
-        Map<String, Object> param = Maps.newHashMap();
-        param.put("clusterIdentifier", clusterId);
-        return scApiRequestService.getCall(GET_GROUP_DETAIL_API + groupName, param,
-                new ParameterizedTypeReference<Response<AppGroup>>() {
-                });
+        /*
+         * // OpenAPI Map<String, Object> param = Maps.newHashMap(); param.put("clusterIdentifier", clusterId); return
+         * scApiRequestService.getCall(GET_GROUP_DETAIL_API + groupName, param, new
+         * ParameterizedTypeReference<Response<AppGroup>>() { });
          */
         Map<String, Object> param = Maps.newHashMap();
         param.put("clusterId", clusterId);
@@ -171,27 +165,17 @@ public class ScServiceImpl implements ScService {
 
     @Override
     public List<String> listAppGroupByUser(Integer productId, String userName) {
-        /* // OpenAPI
-        Map<String, Object> param = null;
-        if (productId != null) {
-            param = Maps.newHashMap();
-            param.put("productId", productId);
-        }
-        return scApiRequestService.getCall(LIST_USER_GROUP_API + userName, param,
-                new ParameterizedTypeReference<Response<List<String>>>() {
-                });
+        /*
+         * // OpenAPI Map<String, Object> param = null; if (productId != null) { param = Maps.newHashMap();
+         * param.put("productId", productId); } return scApiRequestService.getCall(LIST_USER_GROUP_API + userName,
+         * param, new ParameterizedTypeReference<Response<List<String>>>() { });
          */
         /*
-        Map<String, Object> params = JsonUtils.mapper.convertValue(query, Map.class);
-        ScPage<AppGroup> result = scApiRequestService.getCall(LIST_ALL_API, params,
-                new ParameterizedTypeReference<Response<ScPage<AppGroup>>>() {
-                });
-        return new PageResult<AppGroup>()
-                .setList(result.getData())
-                .setPageNum(query.getPageNum())
-                .setPageSize(query.getPageSize())
-                .setTotalPages(result.getTotalPages())
-                .setTotalSize(result.getTotalCount());
+         * Map<String, Object> params = JsonUtils.mapper.convertValue(query, Map.class); ScPage<AppGroup> result =
+         * scApiRequestService.getCall(LIST_ALL_API, params, new
+         * ParameterizedTypeReference<Response<ScPage<AppGroup>>>() { }); return new PageResult<AppGroup>()
+         * .setList(result.getData()) .setPageNum(query.getPageNum()) .setPageSize(query.getPageSize())
+         * .setTotalPages(result.getTotalPages()) .setTotalSize(result.getTotalCount());
          */
         Map<String, Object> params = null;
         if (productId != null) {

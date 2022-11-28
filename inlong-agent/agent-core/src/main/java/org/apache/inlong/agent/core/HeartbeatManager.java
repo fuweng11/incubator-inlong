@@ -149,8 +149,8 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
     @Override
     public void start() throws Exception {
         submitWorker(snapshotReportThread());
-        //TODO:improve, merge two heartbeat report, need manager support
-        //Now, agent automatic registration depends on the heartbeat module, must report
+        // TODO:improve, merge two heartbeat report, need manager support
+        // Now, agent automatic registration depends on the heartbeat module, must report
         submitWorker(heartbeatReportThread());
         if (conf.enableHA()) {
             submitWorker(dbSyncHbReportThread());

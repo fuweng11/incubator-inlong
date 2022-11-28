@@ -586,7 +586,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                             tenant, mqResource, streamEntity.getMqResource());
                     DataProxyTopicInfo topicConfig = new DataProxyTopicInfo();
                     topicConfig.setInlongGroupId(sourceEntity.getInlongGroupId()
-                            + "/" +  sourceEntity.getInlongStreamId());
+                            + "/" + sourceEntity.getInlongStreamId());
                     topicConfig.setTopic(topic);
                     taskInfo.setTopicInfo(topicConfig);
                 } else if (MQType.TUBEMQ.equals(mqType)) {
@@ -665,11 +665,10 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
      */
     private ConcurrentHashMap<String, ConcurrentHashMap<Integer, Integer>> getDbSyncTaskStatusInfo() {
         ConcurrentHashMap<String, ConcurrentHashMap<Integer, Integer>> ipTaskMap = new ConcurrentHashMap<>();
-        /* TDBank's behaviour:
-        select dc.ip, dc.task_id, dc.status
-        from data_source_config dc left join business bi on dc.business_id = bi.business_id
-        left join data_schema ds on bi.schema_name = ds.schema_name
-        where ds.agent_type = 'dbsync_agent' and dc.status in (201, 202, 203, 204, 301, 302, 303, 304)
+        /*
+         * TDBank's behaviour: select dc.ip, dc.task_id, dc.status from data_source_config dc left join business bi on
+         * dc.business_id = bi.business_id left join data_schema ds on bi.schema_name = ds.schema_name where
+         * ds.agent_type = 'dbsync_agent' and dc.status in (201, 202, 203, 204, 301, 302, 303, 304)
          */
         List<DbSyncTaskStatus> taskStatusList = sourceMapper.selectTaskStatus(SourceType.HA_BINLOG);
         for (DbSyncTaskStatus taskStatus : taskStatusList) {
@@ -726,12 +725,12 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             if (previousStatus / 100 == ISSUED_STATUS) {
                 if (result == TASK_SUCCESS) {
                     // agent process succeeded
-                    /*if (previousStatus == SourceStatus.AGENT_ISSUED_CREATE.getCode()
-                            || previousStatus == SourceStatus.AGENT_ISSUED_START.getCode()
-                            || previousStatus == SourceStatus.AGENT_ISSUED_UPDATE.getCode()) {
-                        // Starting 301 / Unfreezing 303 / Update been issued 305, will change to normal(101)
-                        // ignore
-                    } else*/
+                    /*
+                     * if (previousStatus == SourceStatus.AGENT_ISSUED_CREATE.getCode() || previousStatus ==
+                     * SourceStatus.AGENT_ISSUED_START.getCode() || previousStatus ==
+                     * SourceStatus.AGENT_ISSUED_UPDATE.getCode()) { // Starting 301 / Unfreezing 303 / Update been
+                     * issued 305, will change to normal(101) // ignore } else
+                     */
                     if (previousStatus == SourceStatus.BEEN_ISSUED_FROZEN.getCode()) {
                         nextStatus = SourceStatus.SOURCE_FROZEN.getCode();
                     } else if (previousStatus == SourceStatus.BEEN_ISSUED_DELETE.getCode()) {
@@ -854,17 +853,16 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             Preconditions.checkNotNull(groupEntity, "not found group info by groupId " + groupId);
 
             try {
-                /*// add fields for InlongStreamField
-                String defaultOperator = groupEntity.getInCharges().split(",")[0];
-                streamService.addFields(groupId, streamId, fieldsRequest.getFields(), defaultOperator);
-
-                // add fields for StreamSinkField
-                sinkOperatorFactory.getAll().forEach(sinkOperator -> {
-                    List<? extends BaseStorageResponse> storageList = sinkOperator.getSinkList(groupId, streamId);
-                    if (CollectionUtils.isNotEmpty(storageList)) {
-                        sinkOperator.addFields(groupId, streamId, fieldsRequest, defaultOperator);
-                    }
-                });*/
+                /*
+                 * // add fields for InlongStreamField String defaultOperator =
+                 * groupEntity.getInCharges().split(",")[0]; streamService.addFields(groupId, streamId,
+                 * fieldsRequest.getFields(), defaultOperator);
+                 * 
+                 * // add fields for StreamSinkField sinkOperatorFactory.getAll().forEach(sinkOperator -> { List<?
+                 * extends BaseStorageResponse> storageList = sinkOperator.getSinkList(groupId, streamId); if
+                 * (CollectionUtils.isNotEmpty(storageList)) { sinkOperator.addFields(groupId, streamId, fieldsRequest,
+                 * defaultOperator); } });
+                 */
                 LOGGER.info("success to add fields for dbsync, groupId={} streamId={}", groupId, streamId);
             } catch (Exception e) {
                 String errMsg = String.format("failed to add fields for dbsync, groupId=%s streamId=%s ",
@@ -897,10 +895,10 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 ipTaskCacheMap.put(ip, new LinkedBlockingQueue<>(64));
                 taskInfoQueue = ipTaskCacheMap.get(ip);
             }
-            /*for (DbSyncTaskInfo taskInfo : taskInfoList) {
-                changeStatusAndFillInfo(taskInfo, opType, ip);
-                taskInfoQueue.add(taskInfo);
-            }*/
+            /*
+             * for (DbSyncTaskInfo taskInfo : taskInfoList) { changeStatusAndFillInfo(taskInfo, opType, ip);
+             * taskInfoQueue.add(taskInfo); }
+             */
         }
     }
 

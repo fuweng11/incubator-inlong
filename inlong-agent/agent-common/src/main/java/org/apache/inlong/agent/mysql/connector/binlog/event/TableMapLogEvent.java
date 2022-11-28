@@ -387,7 +387,7 @@ public final class TableMapLogEvent extends LogEvent {
     protected final String dbname;
     protected final String tblname;
     protected final int columnCnt;
-    protected final ColumnInfo[] columnInfo;         // buffer for field metadata
+    protected final ColumnInfo[] columnInfo; // buffer for field metadata
     protected final long tableId;
     protected BitSet nullBits;
     private FormatDescriptionLogEvent descriptionEvent;
@@ -454,7 +454,7 @@ public final class TableMapLogEvent extends LogEvent {
                 case MYSQL_TYPE_DOUBLE:
                 case MYSQL_TYPE_FLOAT:
                 case MYSQL_TYPE_GEOMETRY:
-                    //lynd add for mysql 5.7.13
+                    // lynd add for mysql 5.7.13
                 case MYSQL_TYPE_JSON:
                     info.meta = buffer.getUint8();
                     break;
@@ -466,10 +466,8 @@ public final class TableMapLogEvent extends LogEvent {
                     break;
                 case MYSQL_TYPE_STRING: {
                     /*
-                     * log_event.h : The first byte is always
-                     * MYSQL_TYPE_VAR_STRING (i.e., 253). The second byte is the
-                     * field size, i.e., the number of bytes in the
-                     * representation of size of the string: 3 or 4.
+                     * log_event.h : The first byte is always MYSQL_TYPE_VAR_STRING (i.e., 253). The second byte is the
+                     * field size, i.e., the number of bytes in the representation of size of the string: 3 or 4.
                      */
                     int x = (buffer.getUint8() << 8); // real_type
                     x += buffer.getUint8(); // pack or field length
@@ -491,13 +489,13 @@ public final class TableMapLogEvent extends LogEvent {
                     info.meta = x;
                     break;
                 }
-                //lynd add
+                // lynd add
                 case MYSQL_TYPE_TIME2:
                 case MYSQL_TYPE_DATETIME2:
                 case MYSQL_TYPE_TIMESTAMP2: {
-//                    if (descriptionEvent.bUseNewBinlogFormat()) {
-//                        info.meta = buffer.getUint8();
-//                    }
+                    // if (descriptionEvent.bUseNewBinlogFormat()) {
+                    // info.meta = buffer.getUint8();
+                    // }
                     info.meta = buffer.getUint8();
                     break;
                 }

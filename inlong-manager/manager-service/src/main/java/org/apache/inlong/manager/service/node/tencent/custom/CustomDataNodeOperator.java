@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class CustomDataNodeOperator extends AbstractDataNodeOperator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomDataNodeOperator.class);
 
     @Override

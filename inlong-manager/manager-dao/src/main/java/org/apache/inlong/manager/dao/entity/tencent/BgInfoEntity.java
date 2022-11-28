@@ -74,7 +74,7 @@ public class BgInfoEntity implements Serializable {
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
                 && (this.getName() == null ? other.getName() == null : this.getName().equals(other.getName()))
                 && (this.getAbbrevName() == null ? other.getAbbrevName() == null
-                : this.getAbbrevName().equals(other.getAbbrevName()))
+                        : this.getAbbrevName().equals(other.getAbbrevName()))
                 && (this.getUsBgId() == null ? other.getUsBgId() == null : this.getUsBgId().equals(other.getUsBgId()));
     }
 

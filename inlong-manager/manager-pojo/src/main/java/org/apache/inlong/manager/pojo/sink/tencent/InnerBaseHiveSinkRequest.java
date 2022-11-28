@@ -68,10 +68,9 @@ public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
     private String secondaryPartition;
 
     @NotNull(message = "partitionCreationStrategy cannot be null")
-    @ApiModelProperty(value = "Partition creation policy", notes =
-            "like: ARRIVED-data arrival, COMPLETED-data completion,"
-                    + "AGENT_COUNT_VERIFIED-data count verification passed,"
-                    + " DATA_DISTINCT_VERIFIED-data distinct verification passed")
+    @ApiModelProperty(value = "Partition creation policy", notes = "like: ARRIVED-data arrival, COMPLETED-data completion,"
+            + "AGENT_COUNT_VERIFIED-data count verification passed,"
+            + " DATA_DISTINCT_VERIFIED-data distinct verification passed")
     private String partitionCreationStrategy;
 
     @NotNull(message = "fileFormat cannot be null")
@@ -97,14 +96,12 @@ public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
 
     @ApiModelProperty(value = "absolute error, like: 0-100:1,1000:10,"
             + "less than 100 pieces of data can be 1 piece less, "
-            + " and more than 1000 pieces of data can be 10 pieces less",
-            notes = "the interval is left closed and right open, and cannot be overlapped")
+            + " and more than 1000 pieces of data can be 10 pieces less", notes = "the interval is left closed and right open, and cannot be overlapped")
     private String checkAbsolute;
 
     @ApiModelProperty(value = "relative error, like: 0-100:0.1,1000+:0.02, "
             + "less than 100 pieces of data can be reduced by 0.1%, "
-            + "and more than 1000 pieces of data can be reduced by 0.02%",
-            notes = "the interval is left closed and right open, and cannot be overlapped")
+            + "and more than 1000 pieces of data can be reduced by 0.02%", notes = "the interval is left closed and right open, and cannot be overlapped")
     private String checkRelative;
 
     @ApiModelProperty("background operation log")

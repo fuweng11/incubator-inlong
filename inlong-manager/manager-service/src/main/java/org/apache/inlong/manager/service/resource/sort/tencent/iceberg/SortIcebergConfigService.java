@@ -198,9 +198,10 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
                 String subscription = getConsumerGroup(groupInfo, topic, taskName, icebergSink.getId());
                 sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
                         deserializationInfo, fieldList.stream().map(f -> {
-                    FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());
-                    return new FieldInfo(f.getFieldName(), formatInfo);
-                }).toArray(FieldInfo[]::new));
+                            FormatInfo formatInfo =
+                                    SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());
+                            return new FieldInfo(f.getFieldName(), formatInfo);
+                        }).toArray(FieldInfo[]::new));
             } catch (Exception e) {
                 LOGGER.error("get pulsar information failed", e);
                 throw new WorkflowListenerException("get pulsar admin failed, reason: " + e.getMessage());

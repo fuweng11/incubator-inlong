@@ -207,11 +207,9 @@ public class LoadLogEvent extends LogEvent {
     public static final int L_SQL_EX_OFFSET = 18;
     public static final int L_DATA_OFFSET = FormatDescriptionLogEvent.LOAD_HEADER_LEN;
     /*
-      These are flags and structs to handle all the LOAD DATA INFILE options (LINES
-      TERMINATED etc).
-      DUMPFILE_FLAG is probably useless (DUMPFILE is a clause of SELECT, not of LOAD
-      DATA).
-    */
+     * These are flags and structs to handle all the LOAD DATA INFILE options (LINES TERMINATED etc). DUMPFILE_FLAG is
+     * probably useless (DUMPFILE is a clause of SELECT, not of LOAD DATA).
+     */
     public static final int DUMPFILE_FLAG = 0x1;
     public static final int OPT_ENCLOSED_FLAG = 0x2;
     public static final int REPLACE_FLAG = 0x4;
@@ -243,11 +241,12 @@ public class LoadLogEvent extends LogEvent {
 
         final int loadHeaderLen = FormatDescriptionLogEvent.LOAD_HEADER_LEN;
         /*
-         * I (Guilhem) manually tested replication of LOAD DATA INFILE for
-         * 3.23->5.0, 4.0->5.0 and 5.0->5.0 and it works.
+         * I (Guilhem) manually tested replication of LOAD DATA INFILE for 3.23->5.0, 4.0->5.0 and 5.0->5.0 and it
+         * works.
          */
         copyLogEvent(buffer, ((header.type == LOAD_EVENT) ? loadHeaderLen
-                        + descriptionEvent.commonHeaderLen : loadHeaderLen
+                + descriptionEvent.commonHeaderLen
+                : loadHeaderLen
                         + FormatDescriptionLogEvent.LOG_EVENT_HEADER_LEN),
                 descriptionEvent);
     }
@@ -265,16 +264,14 @@ public class LoadLogEvent extends LogEvent {
 
         buffer.position(bodyOffset);
         /*
-         * Sql_ex.init() on success returns the pointer to the first byte after
-         * the sql_ex structure, which is the start of field lengths array.
+         * Sql_ex.init() on success returns the pointer to the first byte after the sql_ex structure, which is the start
+         * of field lengths array.
          */
         if (header.type != LOAD_EVENT /* use_new_format */) {
             /*
-             * The code below assumes that buf will not disappear from under our
-             * feet during the lifetime of the event. This assumption holds true
-             * in the slave thread if the log is in new format, but is not the
-             * case when we have old format because we will be reusing net
-             * buffer to read the actual file before we write out the
+             * The code below assumes that buf will not disappear from under our feet during the lifetime of the event.
+             * This assumption holds true in the slave thread if the log is in new format, but is not the case when we
+             * have old format because we will be reusing net buffer to read the actual file before we write out the
              * Create_file event.
              */
             fieldTerm = buffer.getString();
@@ -321,14 +318,14 @@ public class LoadLogEvent extends LogEvent {
         table = buffer.getFixString(tableNameLen + 1);
         db = buffer.getFixString(dbLen + 1);
 
-        // null termination is accomplished by the caller 
+        // null termination is accomplished by the caller
         final int from = buffer.position();
         final int end = from + buffer.limit();
         int found = from;
         for (; (found < end) && buffer.getInt8(found) != '\0'; found++) {
         }
         fname = buffer.getString(found);
-        buffer.forward(1); // The + 1 is for \0 terminating fname 
+        buffer.forward(1); // The + 1 is for \0 terminating fname
     }
 
     public final String getTable() {

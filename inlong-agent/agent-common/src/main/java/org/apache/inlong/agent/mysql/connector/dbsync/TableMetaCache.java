@@ -50,21 +50,21 @@ public class TableMetaCache {
     public static final String COLUMN_DEFAULT_MYSQL8 = "Default";
     public static final String EXTRA_MYSQL8 = "Extra";
 
-
     private MysqlConnection connection;
     private LoadingCache<String, TableMeta> tableMetaCache;
 
     @SuppressWarnings("deprecation")
-    public TableMetaCache(MysqlConnection con/*, DBSyncJobConf jobConf*/) {
+    public TableMetaCache(MysqlConnection con/* , DBSyncJobConf jobConf */) {
         this.connection = con;
-        //this.conf = jobConf;
+        // this.conf = jobConf;
         this.tableMetaCache = CacheBuilder.newBuilder().build(new CacheLoader<String, TableMeta>() {
+
             @Override
             public TableMeta load(String name) throws Exception {
                 try {
                     return getTableMeta0(name);
                 } catch (Throwable e) {
-                    //retry operation
+                    // retry operation
                     try {
                         synchronized (connection) {
                             connection.reconnect();
@@ -114,7 +114,7 @@ public class TableMetaCache {
         synchronized (connection) {
             packet = connection.query("desc " + fullname);
         }
-        return new TableMeta(fullname, parserTableMeta(packet)/*, tableConf*/);
+        return new TableMeta(fullname, parserTableMeta(packet)/* , tableConf */);
     }
 
     private List<FieldMeta> parserTableMeta(ResultSetPacket packet) {

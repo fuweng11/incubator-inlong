@@ -29,9 +29,9 @@ import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_STREAM_
 public class DBSyncMessage extends DefaultMessage {
 
     private LogPosition logPosition;
-    /*the binlog time stample is second, use msgId for same time stample*/
+    /* the binlog time stample is second, use msgId for same time stample */
     private long msgId;
-    private String instName; //namely jobName
+    private String instName; // namely jobName
 
     public DBSyncMessage(byte[] body, Map<String, String> header) {
         super(body, header);

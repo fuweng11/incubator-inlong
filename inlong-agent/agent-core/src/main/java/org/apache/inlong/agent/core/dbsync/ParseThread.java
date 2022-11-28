@@ -261,7 +261,7 @@ public class ParseThread extends Thread {
                 && (myConfList = dbSyncReadOperator.jobconf.getMysqlTableConfList(dbName, tbName)) != null) {
             int sendIndex = 0;
             for (MysqlTableConf myConf : myConfList) {
-                //multi business report
+                // multi business report
                 LogPosition sendPosition = new LogPosition(lastParsePosition);
                 sendPosition.setSendIndex(sendIndex);
                 sendPosition.setPkgIndex(parseMsgId);
@@ -286,10 +286,10 @@ public class ParseThread extends Thread {
 
                     boolean putResult = genSendDataByPbProtoc(rowChange, entry, dbName, tbName, myConf,
                             sendPosition, parseMsgId, dbSyncReadOperator.jobconf.getServerId());
-//                    if (putResult) {
-//                        //TODO:puting data first is ok?
-//                        dbSyncReadOperator.addLogPositionToCache(sendPosition);
-//                    }
+                    // if (putResult) {
+                    // //TODO:puting data first is ok?
+                    // dbSyncReadOperator.addLogPositionToCache(sendPosition);
+                    // }
                 }
                 sendIndex++;
             }
@@ -308,7 +308,7 @@ public class ParseThread extends Thread {
             return false;
         }
 
-        //skip delete rowdata
+        // skip delete rowdata
         boolean isSkipData = AgentConfiguration.getAgentConf()
                 .getBoolean(DBSYNC_NEED_SKIP_DELETE_DATA, DEFAULT_DBSYNC_NEED_SKIP_DELETE_DATA);
         if (eventType == EventType.DELETE && (isSkipData || myConf.isSkipDelete())) {
@@ -321,14 +321,14 @@ public class ParseThread extends Thread {
                 parsePbData(rowData, dbName, tbName, entry.getHeader().getExecuteTime(),
                         eventType, parseMsgId, serverId, logPosition, myConf.getTaskId());
             }
-            //TODO: is need?
-//            if (isDebug) {
-//                String address = logPosition.getIdentity().getSourceAddress().toString().replaceAll("/", "");
-//                long timeStample = entry.getHeader().getExecuteTime() - entry.getHeader().getExecuteTime() % 600000;
-//                String key = "job_debug_info#" + myConf.getBusinessId() + "#" + iname + "#" + address
-//                        + "#" + DBSyncUtils.convertFrom(timeStample).format(fmt);
-//                sendMsgCnt.add(key, logData.getDataList().size());
-//            }
+            // TODO: is need?
+            // if (isDebug) {
+            // String address = logPosition.getIdentity().getSourceAddress().toString().replaceAll("/", "");
+            // long timeStample = entry.getHeader().getExecuteTime() - entry.getHeader().getExecuteTime() % 600000;
+            // String key = "job_debug_info#" + myConf.getBusinessId() + "#" + iname + "#" + address
+            // + "#" + DBSyncUtils.convertFrom(timeStample).format(fmt);
+            // sendMsgCnt.add(key, logData.getDataList().size());
+            // }
             return true;
 
         }
@@ -354,8 +354,8 @@ public class ParseThread extends Thread {
         rowDataOrBuilder.setTransferIp(AgentUtils.getLocalIp());
         String key = dbName + sep + tbName;
 
-//        logData.addData(rowDataOrBuilder.build().toByteArray(), key, execTime);
-        DBSyncMessage message = new DBSyncMessage(rowDataOrBuilder.build().toByteArray()); //add groupId-streamId
+        // logData.addData(rowDataOrBuilder.build().toByteArray(), key, execTime);
+        DBSyncMessage message = new DBSyncMessage(rowDataOrBuilder.build().toByteArray()); // add groupId-streamId
         message.setInstName(pbInstName);
         message.setLogPosition(logPosition);
         message.setMsgId(msgIdIndex);

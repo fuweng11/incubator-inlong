@@ -37,7 +37,7 @@ public class DBSyncReader extends AbstractReader {
     private volatile boolean finished = false;
 
     public DBSyncReader(JobProfile taskConf) {
-        messageQueue = new LinkedBlockingQueue<>(5000);//TODO:configurable in agent.properties
+        messageQueue = new LinkedBlockingQueue<>(5000);// TODO:configurable in agent.properties
         taskId = taskConf.get(DBSYNC_TASK_ID, "-1");
     }
 

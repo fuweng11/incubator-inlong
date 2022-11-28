@@ -19,7 +19,6 @@ package org.apache.inlong.agent.mysql.connector.driver.packets;
 
 public interface Capability {
 
-
     // Use the improved version of Old Password Authentication.
     // Assumed to be set since 4.1.1.
     int CLIENT_LONG_PASSWORD = 0x00000001;
@@ -144,6 +143,5 @@ public interface Capability {
      * as of MySQL 5.7.5.
      */
     int CLIENT_DEPRECATE_EOF = 0x01000000;
-
 
 }

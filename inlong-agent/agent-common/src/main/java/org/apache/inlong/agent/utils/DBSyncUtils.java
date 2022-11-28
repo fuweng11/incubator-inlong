@@ -171,8 +171,7 @@ public class DBSyncUtils {
                     || StringUtils.isEmpty(dbConf.getUsername()) || StringUtils.isEmpty(dbConf.getPassword())) {
                 future.completeExceptionally(new DataSourceConfigException("db config has error! "
                         + "dbName=" + taskConf.getDbName() + ", dbUrl=" + dbConf.getUrl()
-                        + ", userName=" + dbConf.getUsername() + ", password = " + dbConf.getPassword()
-                ));
+                        + ", userName=" + dbConf.getUsername() + ", password = " + dbConf.getPassword()));
                 result = false;
             }
         } else {
@@ -350,38 +349,38 @@ public class DBSyncUtils {
         return (coll == null || coll.isEmpty());
     }
 
-    //TODO:add send big field metrics
-//    public static void sendBigFieldMetrics(long dataTime, MysqlTableConf mysqlTableConf,
-//            FieldMeta fieldMeta, long filedLength) {
-//        if (fieldMeta == null) {
-//            return;
-//        }
-//
-//        DBSyncConf instance = DBSyncConf.getInstance(null);
-//        String metricsBid = instance.getStringVar(METRICS_BID);
-//        String metricsTid = instance.getStringVar(METRICS_BIG_FIELD_TID);
-//        String localIp = instance.getLocalIp();
-//        String businessId = mysqlTableConf.getGroupId();
-//        String iname = mysqlTableConf.getStreamId();
-//
-//        StringJoiner joiner = new StringJoiner(BUS_DELIMITER);
-//        String message = joiner.add(localIp).add(businessId).add(iname)
-//                .add(fieldMeta.getColumnName()).add(String.valueOf(filedLength)).add(String.valueOf(dataTime))
-//                .toString();
-//        logger.error("send big field metrics {}", message);
-//
-//        sendMetricsToBus(metricsBid, metricsTid, message);
-//
-//    }
+    // TODO:add send big field metrics
+    // public static void sendBigFieldMetrics(long dataTime, MysqlTableConf mysqlTableConf,
+    // FieldMeta fieldMeta, long filedLength) {
+    // if (fieldMeta == null) {
+    // return;
+    // }
+    //
+    // DBSyncConf instance = DBSyncConf.getInstance(null);
+    // String metricsBid = instance.getStringVar(METRICS_BID);
+    // String metricsTid = instance.getStringVar(METRICS_BIG_FIELD_TID);
+    // String localIp = instance.getLocalIp();
+    // String businessId = mysqlTableConf.getGroupId();
+    // String iname = mysqlTableConf.getStreamId();
+    //
+    // StringJoiner joiner = new StringJoiner(BUS_DELIMITER);
+    // String message = joiner.add(localIp).add(businessId).add(iname)
+    // .add(fieldMeta.getColumnName()).add(String.valueOf(filedLength)).add(String.valueOf(dataTime))
+    // .toString();
+    // logger.error("send big field metrics {}", message);
+    //
+    // sendMetricsToBus(metricsBid, metricsTid, message);
+    //
+    // }
 
-    //TODO:add send metrics to bus
-//    public static void sendMetricsToBus(String metricsBid, String metricsTid, String message) {
-//        ProxyEvent event = new ProxyEvent(message, metricsBid, metricsTid, System.currentTimeMillis(), 20 * 1000);
-//        BusMessageQueueCallback callback = new BusMessageQueueCallback(event);
-//        HttpProxySender busSender = JobMonitor.getProxySender();
-//        busSender.asyncSendMessage(message, metricsBid, metricsTid, System.currentTimeMillis(),
-//                20 * 1000, TimeUnit.MILLISECONDS, callback);
-//    }
+    // TODO:add send metrics to bus
+    // public static void sendMetricsToBus(String metricsBid, String metricsTid, String message) {
+    // ProxyEvent event = new ProxyEvent(message, metricsBid, metricsTid, System.currentTimeMillis(), 20 * 1000);
+    // BusMessageQueueCallback callback = new BusMessageQueueCallback(event);
+    // HttpProxySender busSender = JobMonitor.getProxySender();
+    // busSender.asyncSendMessage(message, metricsBid, metricsTid, System.currentTimeMillis(),
+    // 20 * 1000, TimeUnit.MILLISECONDS, callback);
+    // }
 
     /**
      * determine whether tdm pass NULL string

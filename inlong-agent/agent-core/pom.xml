@@ -87,8 +87,8 @@
             <artifactId>curator-recipes</artifactId>
             <exclusions>
                 <exclusion>
-                    <artifactId>slf4j-api</artifactId>
                     <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

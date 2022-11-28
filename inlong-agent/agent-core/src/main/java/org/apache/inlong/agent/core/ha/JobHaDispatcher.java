@@ -51,7 +51,6 @@ public interface JobHaDispatcher {
      */
     void stopJob(String syncId, Integer taskId);
 
-
     /**
      * delete job
      *

@@ -418,9 +418,9 @@ public class ManagerFetcher extends AbstractDaemon implements ProfileFetcher {
         List<File> pendingFiles =
                 suitFiles.stream().filter(file -> !agentManager.getJobManager().checkJobExist(file.getAbsolutePath()))
                         .collect(Collectors.toList());
-        List<File> pendingFiles = suitFiles.stream().filter(file ->
-                        !agentManager.getJobManager().checkJobExist(file.getAbsolutePath()))
-                .collect(Collectors.toList());
+        List<File> pendingFiles =
+                suitFiles.stream().filter(file -> !agentManager.getJobManager().checkJobExist(file.getAbsolutePath()))
+                        .collect(Collectors.toList());
         for (File pendingFile : pendingFiles) {
             JobProfile copiedProfile = copyJobProfile(triggerProfile, dataTime,
                     pendingFile);

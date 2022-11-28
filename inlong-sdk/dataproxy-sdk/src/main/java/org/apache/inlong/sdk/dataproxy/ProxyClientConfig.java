@@ -101,12 +101,12 @@ public class ProxyClientConfig {
 
     private int maxRetry;
 
-    //internal secure-auth
+    // internal secure-auth
     private boolean needSecureAuth = false;
     private String secureAuthToken = "secure-authentication";
     private String secureServiceName = "inlong_manager";
 
-    /*pay attention to the last url parameter ip*/
+    /* pay attention to the last url parameter ip */
     public ProxyClientConfig(String localHost, boolean isLocalVisit, String managerIp,
             int managerPort, String groupId, String netTag, String authSecretId, String authSecretKey,
             LoadBalance loadBalance, int virtualNode, int maxRetry) throws ProxysdkException {

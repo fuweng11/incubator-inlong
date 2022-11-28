@@ -27,7 +27,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
 public class JobCoordinatorChangeListener
-        implements PathChildrenCacheListener {
+        implements
+            PathChildrenCacheListener {
 
     private Logger logger = LogManager.getLogger(JobCoordinatorChangeListener.class);
 
@@ -42,7 +43,7 @@ public class JobCoordinatorChangeListener
             throws Exception {
         if (event.getData() == null) {
             return;
-         }
+        }
         String eventPath = event.getData().getPath();
         String clusterId = ConfigDelegate.getClusterIdFromZKPath(eventPath);
         logger.info("path: {}, eventType: {}, clusterId: {}", event.getData().getPath(),
@@ -64,10 +65,10 @@ public class JobCoordinatorChangeListener
                 break;
             case CONNECTION_LOST:
                 logger.info("connection lost===============");
-                dispatcher.updateZkStats(clusterId, null,false);
+                dispatcher.updateZkStats(clusterId, null, false);
                 break;
             case CONNECTION_RECONNECTED:
-                dispatcher.updateZkStats(clusterId, null,true);
+                dispatcher.updateZkStats(clusterId, null, true);
                 logger.info("connection reconnected ===============");
                 break;
             case CONNECTION_SUSPENDED:

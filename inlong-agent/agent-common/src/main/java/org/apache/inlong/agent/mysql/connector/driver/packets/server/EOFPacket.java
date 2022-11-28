@@ -26,8 +26,8 @@ import java.io.IOException;
 public class EOFPacket extends PacketWithHeaderPacket {
 
     public byte fieldCount;
-    public int  warningCount;
-    public int  statusFlag;
+    public int warningCount;
+    public int statusFlag;
 
     /**
      * <pre>
