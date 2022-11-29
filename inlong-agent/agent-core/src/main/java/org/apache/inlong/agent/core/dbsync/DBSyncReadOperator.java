@@ -529,7 +529,7 @@ public class DBSyncReadOperator {
 
         } else {
             LOGGER.error("Detected job :{} is in wrong state :{}", jobconf.getJobName(), status);
-            if (heartbeatManager != null && heartbeatManager.isRunnable() && (status == JobStat.State.STOP
+            if (heartbeatManager != null && heartbeatManager.isActive() && (status == JobStat.State.STOP
                     || status == JobStat.State.INIT)) {
                 // use job Manager start the job
                 LOGGER.error("restart job : {}", jobconf.getJobName());

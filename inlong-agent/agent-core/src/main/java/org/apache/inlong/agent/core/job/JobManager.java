@@ -34,6 +34,7 @@ import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.state.JobStat;
+import org.apache.inlong.agent.state.JobStat.State;
 import org.apache.inlong.agent.state.JobStat.TaskStat;
 import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.DBSyncUtils;
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.SynchronousQueue;
@@ -697,8 +699,37 @@ public class JobManager extends AbstractDaemon {
 
     @Override
     public void stop() throws Exception {
+        stopDbSyncJobs();
         waitForTerminate();
         this.runningPool.shutdown();
+    }
+
+    private void stopDbSyncJobs() {
+        if (!agentConf.enableHA()) {
+            return;
+        }
+        LOGGER.info("begin to stop all dbsyncJobs");
+        boolean stopped = false;
+        while (!stopped) {
+            stopped = true;
+            for (Entry<String, DBSyncJob> entry : runningJobs.entrySet()) {
+                if (entry.getValue().getJobStat() != State.STOP) {
+                    stopped = false;
+                    try {
+                        LOGGER.info("retry stop dbsyncJob[{}] ", entry.getKey());
+                        entry.getValue().stop();
+                    } catch (Exception e) {
+                        LOGGER.error("stop dbsyncJob[{}] error", entry.getKey());
+                    }
+                } else {
+                    runningJobs.remove(entry.getKey());
+                }
+            }
+            if (!stopped) {
+                AgentUtils.silenceSleepInMs(1000 * 5);
+            }
+        }
+        LOGGER.info("complete to stop all dbsyncJobs");
     }
 
     private AgentMetricItem getJobMetric() {

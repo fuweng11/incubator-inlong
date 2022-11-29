@@ -90,6 +90,7 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
     private final Random random = new Random();
     private final LinkedBlockingQueue<DbSyncHeartbeat> stoppedDbSyncJobHb = new LinkedBlockingQueue<>();
     private final ConcurrentHashMap<String, DBSyncReadOperator> monitorDbSyncJobs = new ConcurrentHashMap<>();
+    private volatile boolean stopFlag = false;
 
     /**
      * Init heartbeat manager.
@@ -181,9 +182,10 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
             while (isRunnable()) {
                 try {
                     reportDBSyncHeartbeat();
-                    TimeUnit.MILLISECONDS.sleep(getDBSyncInterval());
-                } catch (InterruptedException e) {
+                } catch (Throwable e) {
                     LOGGER.error("dbsync-heartbeat-report interrupted while report heartbeat", e);
+                } finally {
+                    AgentUtils.silenceSleepInMs(getDBSyncInterval());
                 }
 
             }
@@ -207,6 +209,14 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
     @Override
     public void stop() throws Exception {
         waitForTerminate();
+    }
+
+    public boolean isActive() {
+        return (isRunnable() && !stopFlag);
+    }
+
+    public void setStopFlag(boolean stopFlag) {
+        this.stopFlag = stopFlag;
     }
 
     @Override

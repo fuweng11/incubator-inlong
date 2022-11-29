@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.regex.Pattern;
@@ -78,7 +79,7 @@ public class DBSyncJobConf {
     private volatile InetSocketAddress currAddress;
     private ConcurrentHashMap<String, Pattern> namePatternMap;
     private ConcurrentHashMap<String, List<MysqlTableConf>> table2MysqlConf;
-    private LRUMap<String, List<String>> lruCache;
+    private LRUMap<String, CopyOnWriteArrayList<String>> lruCache;
     private TableNameFilter filter;
     private HashSet<String> jobAlarmPerson;
 
@@ -201,7 +202,7 @@ public class DBSyncJobConf {
 
     public List<MysqlTableConf> getMysqlTableConfList(String dbName, String tbName) {
         String fullName = dbName + "." + tbName;
-        List<String> namePatterns = lruCache.get(fullName);
+        CopyOnWriteArrayList<String> namePatterns = lruCache.get(fullName);
         List<MysqlTableConf> confList = new ArrayList<>();
         if (namePatterns != null) {
             for (String namePattern : namePatterns) {
@@ -228,7 +229,7 @@ public class DBSyncJobConf {
         String fullName = dbName + "." + tbName;
         namePatternMap.remove(fullName);
         table2MysqlConf.remove(fullName);
-        lruCache.removeValue(Collections.singletonList(fullName));
+        lruCache.removeValue(new CopyOnWriteArrayList<>(Collections.singletonList(fullName)));
     }
 
     public void removeTable(Integer taskId) {
@@ -240,7 +241,7 @@ public class DBSyncJobConf {
             if (confList != null && confList.isEmpty()) {
                 String fullName = entry.getKey();
                 namePatternMap.remove(fullName);
-                lruCache.removeValue(Collections.singletonList(fullName));
+                lruCache.removeValue(new CopyOnWriteArrayList<>(Collections.singletonList(fullName)));
                 return true;
             } else {
                 return false;
@@ -498,7 +499,7 @@ public class DBSyncJobConf {
         public boolean filter(final String event) throws CanalFilterException {
 
             boolean bFind = false;
-            List<String> findEvents = new ArrayList<>();
+            CopyOnWriteArrayList<String> findEvents = new CopyOnWriteArrayList<>();
 
             boolean lruCacheFound = false;
             if (lruCache.containsKey(event)) {

@@ -222,8 +222,12 @@ public class AgentManager extends AbstractDaemon {
         LOGGER.info("stopping agent manager");
         // close in order: trigger -> job -> task
         triggerManager.stop();
+        heartbeatManager.setStopFlag(true);
         jobManager.stop();
         taskManager.stop();
+        if (fieldManager != null) {
+            fieldManager.stop();
+        }
         heartbeatManager.stop();
         taskPositionManager.stop();
         this.db.close();
