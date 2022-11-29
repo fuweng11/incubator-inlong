@@ -143,6 +143,7 @@
                         <goals>
                             <goal>test-jar</goal>
                         </goals>
+                        <phase>compile</phase>
                     </execution>
                 </executions>
             </plugin>
@@ -160,7 +161,6 @@
                         <goals>
                             <goal>compile</goal>
                         </goals>
-                        <phase>compile</phase>
                     </execution>
                 </executions>
             </plugin>
