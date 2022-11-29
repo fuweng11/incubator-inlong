@@ -61,7 +61,7 @@ const Comp: React.FC = () => {
       key: 'logout',
       onClick: runLogout,
     },
-  ];
+  ].filter(item => !['password', 'logout'].includes(item.key));
 
   return (
     <div style={{ marginRight: '20px' }}>
