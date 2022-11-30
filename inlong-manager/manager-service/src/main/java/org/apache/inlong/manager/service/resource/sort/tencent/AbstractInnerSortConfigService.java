@@ -28,7 +28,7 @@ import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.inlong.manager.common.consts.MQType;
+import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;

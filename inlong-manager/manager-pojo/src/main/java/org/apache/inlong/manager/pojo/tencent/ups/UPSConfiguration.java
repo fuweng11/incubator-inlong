@@ -33,4 +33,5 @@ public class UPSConfiguration {
     private String metaStoreUrl;
     private String securityCenterUrl;
     private String cmkDir;
+    private String upsServer = "http://tdwopen.oa.com/tdwprivapi";
 }

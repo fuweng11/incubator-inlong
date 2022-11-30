@@ -168,9 +168,13 @@ public class UPSOperator {
             hiveImpl.setCMKDir(upsConfiguration.getCmkDir());
             return hiveImpl;
         } else if (hiveType == TencentConstants.THIVE_TYPE) {
+            String upsServer = upsConfiguration.getUpsServer();
+            if (StringUtils.isBlank(upsServer)) {
+                upsServer = "http://tdwopen.oa.com/tdwprivapi";
+            }
             TdwUps tdwUps = TdwUpsFactory.getInstance("com.tencent.tdw.ups.client.impl.TdwUpsImpl",
-                    "http://tdwopen.oa.com/tdwprivapi");
-            tdwUps.setServer("http://tdwopen.oa.com/tdwprivapi");
+                    upsServer);
+            tdwUps.setServer(upsServer);
             tdwUps.setProxyUser(originalUser);
             tdwUps.setUser("tdm");
             tdwUps.setCMKDir(upsConfiguration.getCmkDir());
