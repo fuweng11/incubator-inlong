@@ -237,11 +237,16 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
             throws Exception {
         String groupId = groupInfo.getInlongGroupId();
         String streamId = clickHouseSink.getInlongStreamId();
-        DataNodeEntity ckCluster = dataNodeEntityMapper.selectByUniqueKey(clickHouseSink.getDataNodeName(),
-                DataNodeType.INNER_CK);
-        if (ckCluster == null) {
-            log.error("can not find click house cluster for {} - {} ", groupId, streamId);
-            throw new Exception("can not find click house cluster");
+        if (StringUtils.isBlank(clickHouseSink.getUrl())) {
+            DataNodeEntity ckCluster = dataNodeEntityMapper.selectByUniqueKey(clickHouseSink.getDataNodeName(),
+                    DataNodeType.INNER_CK);
+            if (ckCluster == null) {
+                log.error("can not find click house cluster for {} - {} ", groupId, streamId);
+                throw new Exception("can not find click house cluster");
+            }
+            clickHouseSink.setUrl(ckCluster.getUrl());
+            clickHouseSink.setUsername(ckCluster.getUsername());
+            clickHouseSink.setPassword(ckCluster.getToken());
         }
         ClickHouseSinkInfo.PartitionStrategy partition = ClickHouseSinkInfo.PartitionStrategy.HASH;
         if (clickHouseSink.getIsDistribute() == 1) {
@@ -257,8 +262,8 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
         }
         List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(clickHouseSink.getId());
         return new ClickHouseSinkInfo(
-                "clickhouse://" + ckCluster.getUrl(), clickHouseSink.getDbName(),
-                clickHouseSink.getTableName(), ckCluster.getUsername(), ckCluster.getToken(),
+                "clickhouse://" + clickHouseSink.getUrl(), clickHouseSink.getDbName(),
+                clickHouseSink.getTableName(), clickHouseSink.getUsername(), clickHouseSink.getPassword(),
                 clickHouseSink.getIsDistribute() != 0, partition,
                 clickHouseSink.getPartitionFields() == null ? "" : clickHouseSink.getPartitionFields(),
                 fieldList.stream().map(f -> {

@@ -36,6 +36,15 @@ import org.apache.inlong.manager.pojo.sink.SinkRequest;
 @JsonTypeDefine(value = SinkType.INNER_CK)
 public class InnerClickHouseSinkRequest extends SinkRequest {
 
+    @ApiModelProperty("URL of the ClickHouse server")
+    private String url;
+
+    @ApiModelProperty("Username of the ClickHouse server")
+    private String username;
+
+    @ApiModelProperty("User password of the ClickHouse server")
+    private String password;
+
     @ApiModelProperty("target database name")
     private String dbName;
 

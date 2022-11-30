@@ -35,6 +35,15 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 public class InnerClickHouseDTO {
 
+    @ApiModelProperty("url of the ClickHouse server")
+    private String url;
+
+    @ApiModelProperty("Username of the ClickHouse server")
+    private String username;
+
+    @ApiModelProperty("User password of the ClickHouse server")
+    private String password;
+
     @ApiModelProperty("target database name")
     private String dbName;
 
@@ -67,6 +76,9 @@ public class InnerClickHouseDTO {
      */
     public static InnerClickHouseDTO getFromRequest(InnerClickHouseSinkRequest request) {
         return InnerClickHouseDTO.builder()
+                .url(request.getUrl())
+                .username(request.getUsername())
+                .password(request.getPassword())
                 .dbName(request.getDbName())
                 .tableName(request.getTableName())
                 .flushInterval(request.getFlushInterval())

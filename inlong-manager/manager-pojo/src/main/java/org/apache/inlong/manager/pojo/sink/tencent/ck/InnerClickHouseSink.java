@@ -42,6 +42,15 @@ import org.apache.inlong.manager.pojo.sink.StreamSink;
 @JsonTypeDefine(value = SinkType.INNER_CK)
 public class InnerClickHouseSink extends StreamSink {
 
+    @ApiModelProperty("URL of the ClickHouse server")
+    private String url;
+
+    @ApiModelProperty("Username of the ClickHouse server")
+    private String username;
+
+    @ApiModelProperty("User password of the ClickHouse server")
+    private String password;
+
     @ApiModelProperty("app group name")
     private String appGroupName;
 
