@@ -40,9 +40,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -81,16 +78,6 @@ public class SortClusterOperator extends AbstractClusterOperator {
         BaseSortClusterRequest clusterRequest = (BaseSortClusterRequest) request;
         CommonBeanUtils.copyProperties(clusterRequest, targetEntity, true);
         try {
-            List<InlongClusterEntity> clusterList = clusterEntityMapper.selectByKey(request.getClusterTags(), null,
-                    request.getType());
-            for (InlongClusterEntity cluster : clusterList) {
-                if (!Objects.equals(request.getId(), cluster.getId())) {
-                    String errMsg = String.format("sort task name already exists for clusterTag=%s, clusterType=%s",
-                            request.getClusterTags(), request.getType());
-                    LOGGER.error(errMsg);
-                    throw new BusinessException(errMsg);
-                }
-            }
             BaseSortClusterDTO dto = BaseSortClusterDTO.getFromRequest(clusterRequest);
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
             LOGGER.info("success to set entity for sort cluster");

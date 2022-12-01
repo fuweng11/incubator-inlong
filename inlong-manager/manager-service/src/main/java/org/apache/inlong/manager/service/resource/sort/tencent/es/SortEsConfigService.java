@@ -22,6 +22,7 @@ import com.tencent.flink.formats.common.FormatInfo;
 import com.tencent.oceanus.etl.ZkTools;
 import com.tencent.oceanus.etl.protocol.DataFlowInfo;
 import com.tencent.oceanus.etl.protocol.FieldInfo;
+import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.sink.EsSinkInfo;
 import com.tencent.oceanus.etl.protocol.sink.EsSinkInfo.EsClusterInfo;
@@ -193,6 +194,17 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
             if (CollectionUtils.isEmpty(pulsarClusters)) {
                 throw new WorkflowListenerException("pulsar cluster not found for groupId=" + groupId);
             }
+
+            List<PulsarClusterInfo> pulsarClusterInfos = new ArrayList<>();
+            pulsarClusters.forEach(pulsarCluster -> {
+                // Multiple adminurls should be configured for pulsar,
+                // otherwise all requests will be sent to the same broker
+                PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
+                String adminUrl = pulsarClusterDTO.getAdminUrl();
+                String serviceUrl = pulsarCluster.getUrl();
+                pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, null, null));
+            });
+
             InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
             // Multiple adminurls should be configured for pulsar,
             // otherwise all requests will be sent to the same broker
@@ -217,7 +229,7 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
                             FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
                                     f.getSourceFieldType().toLowerCase());
                             return new FieldInfo(f.getSourceFieldType(), formatInfo);
-                        }).toArray(FieldInfo[]::new));
+                        }).toArray(FieldInfo[]::new), pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null);
             } catch (Exception e) {
                 LOGGER.error("get pulsar information failed", e);
                 throw new WorkflowListenerException("get pulsar admin failed, reason: " + e.getMessage());
