@@ -25,6 +25,7 @@ import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
+import org.apache.inlong.manager.pojo.sink.es.ElasticsearchSink;
 import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
@@ -32,6 +33,7 @@ import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.resource.sort.tencent.ck.SortCkConfigService;
+import org.apache.inlong.manager.service.resource.sort.tencent.es.SortEsConfigService;
 import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.resource.sort.tencent.iceberg.SortIcebergConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
@@ -65,6 +67,8 @@ public class InnerSortConfigOperator implements SortConfigOperator {
     private SortHiveConfigService hiveConfigService;
     @Autowired
     private SortIcebergConfigService icebergConfigService;
+    @Autowired
+    private SortEsConfigService esConfigService;
 
     @Override
     public Boolean accept(Integer enableZk) {
@@ -85,6 +89,7 @@ public class InnerSortConfigOperator implements SortConfigOperator {
         List<InnerHiveFullInfo> hiveInfos = new ArrayList<>();
         List<InnerClickHouseSink> clickHouseSinkList = new ArrayList<>();
         List<InnerIcebergSink> icebergSinkList = new ArrayList<>();
+        List<ElasticsearchSink> elasticsearchSinkList = new ArrayList<>();
         for (SinkInfo sinkInfo : configList) {
             switch (sinkInfo.getSinkType()) {
                 case SinkType.INNER_HIVE:
@@ -105,6 +110,10 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                     InnerIcebergSink icebergSink = (InnerIcebergSink) sinkService.get(sinkInfo.getId());
                     icebergSinkList.add(icebergSink);
                     break;
+                case SinkType.ELASTICSEARCH:
+                    ElasticsearchSink esSink = (ElasticsearchSink) sinkService.get(sinkInfo.getId());
+                    elasticsearchSinkList.add(esSink);
+                    break;
                 default:
                     LOGGER.warn("skip to push sort config for sink id={}, as no sort config info", sinkInfo.getId());
             }
@@ -112,6 +121,7 @@ public class InnerSortConfigOperator implements SortConfigOperator {
         hiveConfigService.buildHiveConfig(groupInfo, hiveInfos);
         ckConfigService.buildCkConfig(groupInfo, clickHouseSinkList);
         icebergConfigService.buildIcebergConfig(groupInfo, icebergSinkList);
+        esConfigService.buildEsConfig(groupInfo, elasticsearchSinkList);
     }
 
 }

@@ -42,6 +42,7 @@ public class ClusterType {
     public static final String SORT_THIVE = "SORT_THIVE";
     public static final String SORT_CK = "SORT_CK";
     public static final String SORT_ICEBERG = "SORT_ICEBERG";
+    public static final String SORT_ES = "SORT_ES";
     public static final String CUSTOM = "CUSTOM";
 
     private static final Set<String> TYPE_SET = new HashSet<String>() {
