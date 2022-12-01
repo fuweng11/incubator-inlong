@@ -497,6 +497,7 @@ public class DBSyncReadOperator {
         hbInfo.setCurrentDb(jobconf.getCurMysqlIp());
         hbInfo.setUrl(jobconf.getCurMysqlUrl());
         hbInfo.setBackupUrl(jobconf.getBakMysqlUrl());
+        hbInfo.setReportTime(System.currentTimeMillis());
 
         if (status == JobStat.State.RUN || markToStop) {
             if (markToStop) {
@@ -536,7 +537,6 @@ public class DBSyncReadOperator {
                 restart();
             }
             hbInfo.setErrorMsg(getErrorMsg());
-            hbInfo.setReportTime(System.currentTimeMillis());
         }
 
         return hbInfo;
