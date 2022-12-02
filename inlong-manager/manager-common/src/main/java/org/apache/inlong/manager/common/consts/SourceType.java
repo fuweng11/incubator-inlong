@@ -40,6 +40,7 @@ public class SourceType {
     public static final String SQLSERVER = "SQLSERVER";
     public static final String MONGODB = "MONGODB";
     public static final String REDIS = "REDIS";
+    public static final String MQTT = "MQTT";
 
     // --------------------------------------------------------------------------------------------
     // inner method
@@ -63,6 +64,7 @@ public class SourceType {
             put(SQLSERVER, TaskTypeEnum.SQLSERVER);
             put(MONGODB, TaskTypeEnum.MONGODB);
             put(REDIS, TaskTypeEnum.REDIS);
+            put(MQTT, TaskTypeEnum.MQTT);
 
             // --------------------------------------------------------------------------------------------
             // inner method
