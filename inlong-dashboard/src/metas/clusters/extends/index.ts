@@ -30,21 +30,26 @@ export const allExtendsClusters: MetaExportWithBackendList<ClusterMetaType> = [
   {
     label: 'SortCKTask',
     value: 'SORT_CK',
-    LoadEntity: () => import('./SortCKTask'),
+    LoadEntity: () => import('./sort/SortCKTask'),
+  },
+  {
+    label: 'SortESTask',
+    value: 'SORT_ES',
+    LoadEntity: () => import('./sort/SortESTask'),
   },
   {
     label: 'SortHiveTask',
     value: 'SORT_HIVE',
-    LoadEntity: () => import('./SortHiveTask'),
+    LoadEntity: () => import('./sort/SortHiveTask'),
   },
   {
     label: 'SortTHiveTask',
     value: 'SORT_THIVE',
-    LoadEntity: () => import('./SortTHiveTask'),
+    LoadEntity: () => import('./sort/SortTHiveTask'),
   },
   {
     label: 'SortIcebergTask',
     value: 'SORT_ICEBERG',
-    LoadEntity: () => import('./SortIcebergTask'),
+    LoadEntity: () => import('./sort/SortIcebergTask'),
   },
 ];

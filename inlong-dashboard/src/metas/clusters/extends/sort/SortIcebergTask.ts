@@ -20,8 +20,8 @@
 import { DataWithBackend } from '@/metas/DataWithBackend';
 import { RenderRow } from '@/metas/RenderRow';
 import { RenderList } from '@/metas/RenderList';
-import { ClusterInfo } from '../common/ClusterInfo';
+import { BasicSortClusterInfo } from './BasicSortClusterInfo';
 
-export default class SortCkCluster
-  extends ClusterInfo
+export default class SortIcebergCluster
+  extends BasicSortClusterInfo
   implements DataWithBackend, RenderRow, RenderList {}

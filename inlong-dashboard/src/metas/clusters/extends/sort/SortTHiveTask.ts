@@ -20,28 +20,8 @@
 import { DataWithBackend } from '@/metas/DataWithBackend';
 import { RenderRow } from '@/metas/RenderRow';
 import { RenderList } from '@/metas/RenderList';
-import UserSelect from '@/components/UserSelect';
-import { ClusterInfo } from '../common/ClusterInfo';
-
-const { I18n } = DataWithBackend;
-const { FieldDecorator } = RenderRow;
+import { BasicSortClusterInfo } from './BasicSortClusterInfo';
 
 export default class SortThiveCluster
-  extends ClusterInfo
-  implements DataWithBackend, RenderRow, RenderList
-{
-  @FieldDecorator({
-    type: 'input',
-    props: {
-      placeholder: 'hdfs://xx-xxx-xx/xxx/xxx',
-    },
-  })
-  @I18n('meta.Clusters.Sort.BackupDataPath')
-  backupDataPath: string;
-
-  @FieldDecorator({
-    type: UserSelect,
-  })
-  @I18n('meta.Clusters.Sort.BackupHadoopProxyUser')
-  backupHadoopProxyUser: string;
-}
+  extends BasicSortClusterInfo
+  implements DataWithBackend, RenderRow, RenderList {}
