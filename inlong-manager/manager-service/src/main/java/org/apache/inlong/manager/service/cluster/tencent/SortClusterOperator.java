@@ -25,7 +25,6 @@ import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
-import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
@@ -60,8 +59,6 @@ public class SortClusterOperator extends AbstractClusterOperator {
 
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private InlongClusterEntityMapper clusterEntityMapper;
 
     @Override
     public Boolean accept(String clusterType) {

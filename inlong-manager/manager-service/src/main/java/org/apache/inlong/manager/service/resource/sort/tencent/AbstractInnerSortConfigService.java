@@ -29,12 +29,14 @@ import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationIn
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.common.constant.MQType;
+import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.dao.entity.InlongConsumeEntity;
@@ -44,6 +46,7 @@ import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongConsumeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.slf4j.Logger;
@@ -67,6 +70,8 @@ public class AbstractInnerSortConfigService {
     private InlongGroupEntityMapper groupService;
     @Autowired
     private InlongClusterEntityMapper clusterMapper;
+    @Autowired
+    private StreamSinkEntityMapper sinkMapper;
 
     public String getZkRoot(String mqType, ZkClusterDTO zkClusterDTO) {
         Preconditions.checkNotNull(mqType, "mq type cannot be null");
@@ -221,6 +226,37 @@ public class AbstractInnerSortConfigService {
         // It could be hive or thive
         ZkTools.removeDataFlowFromCluster(topoName, sinkId.toString(), zkUrl, zkRoot);
         LOGGER.info("success to delete sort config from {}, idList={}", zkUrl, sinkId);
+    }
+
+    public String getSortTaskName(InlongGroupInfo groupInfo, Integer sinkId, String sortTaskType) {
+        StreamSinkEntity sinkEntity = sinkMapper.selectByPrimaryKey(sinkId);
+        String taskName = sinkEntity.getSortTaskName();
+        String groupId = groupInfo.getInlongGroupId();
+        if (StringUtils.isBlank(taskName)) {
+            List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
+                    groupInfo.getInlongClusterTag(), null, sortTaskType);
+            int minCount = -1;
+            for (InlongClusterEntity sortCluster : sortClusters) {
+                int isUsedCount = sinkMapper.selectExistByGroupIdAndTaskName(groupId, sortCluster.getName());
+                if (minCount < 0 || isUsedCount <= minCount) {
+                    minCount = isUsedCount;
+                    taskName = sortCluster.getName();
+                }
+            }
+            if (taskName == null || StringUtils.isBlank(taskName)) {
+                throw new WorkflowListenerException("topo cluster not found for groupId=" + groupId);
+            }
+            // save sort task name
+            sinkEntity.setSortTaskName(taskName);
+            int rowCount = sinkMapper.updateByIdSelective(sinkEntity);
+            if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
+                LOGGER.error("sink has already updated with groupId={}, streamId={}, name={}, curVersion={}",
+                        sinkEntity.getInlongGroupId(), sinkEntity.getInlongStreamId(), sinkEntity.getSinkName(),
+                        sinkEntity.getVersion());
+                throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
+            }
+        }
+        return taskName;
     }
 
 }

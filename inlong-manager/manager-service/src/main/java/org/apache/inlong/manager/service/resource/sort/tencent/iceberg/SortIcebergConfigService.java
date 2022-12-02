@@ -29,7 +29,6 @@ import com.tencent.oceanus.etl.protocol.source.SourceInfo;
 import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
@@ -95,12 +94,6 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
 
         String zkUrl = zkCluster.getUrl();
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
-        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                groupInfo.getInlongClusterTag(), null, ClusterType.SORT_ICEBERG);
-        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
-            throw new WorkflowListenerException("sort cluster not found for groupId=" + groupInfo.getInlongGroupId());
-        }
-        String taskName = sortClusters.get(0).getName();
         for (InnerIcebergSink icebergSink : icebergSinkList) {
             QueryIcebergTableResponse tableDetail = icebergBaseOptService.getTableDetail(icebergSink);
             log.info("iceberg table info: {}", OBJECT_MAPPER.writeValueAsString(tableDetail));
@@ -112,6 +105,8 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
                 log.info("table [{}.{}] not ready, skip push config for iceberg={}", dbName, tableName, icebergId);
                 continue;
             }
+            // get sort task name for sink
+            String taskName = getSortTaskName(groupInfo, icebergSink.getId(), ClusterType.SORT_ICEBERG);
             // table not exists, push config to zk
             log.info("begin to push iceberg config [{}] to zkUrl={}, icebergTopo={}", icebergId, zkUrl, taskName);
             DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, icebergSink, tableDetail, taskName);

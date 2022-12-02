@@ -21,16 +21,14 @@ import com.google.common.base.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.common.constant.MQType;
+import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.GroupStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
-import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
-import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
@@ -41,6 +39,7 @@ import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
 import org.apache.inlong.manager.service.consume.InlongConsumeService;
 import org.apache.inlong.manager.service.resource.queue.QueueResourceOperator;
+import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.apache.pulsar.client.admin.PulsarAdmin;
@@ -72,7 +71,7 @@ public class PulsarResourceOperator implements QueueResourceOperator {
     @Autowired
     private PulsarOperator pulsarOperator;
     @Autowired
-    private InlongClusterEntityMapper clusterMapper;
+    private SortHiveConfigService sortConfigService;
 
     @Override
     public boolean accept(String mqType) {
@@ -309,16 +308,18 @@ public class PulsarResourceOperator implements QueueResourceOperator {
             case SinkType.INNER_CK:
                 sortTaskType = ClusterType.SORT_CK;
                 break;
+            case SinkType.INNER_ICEBERG:
+                sortTaskType = ClusterType.SORT_ICEBERG;
+                break;
+            case SinkType.ELASTICSEARCH:
+                sortTaskType = ClusterType.SORT_ES;
+                break;
             default:
                 return String.format(PULSAR_SUBSCRIPTION, clusterTag, groupInfo.getMqResource(), topicName,
                         sink.getId());
         }
-        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                clusterTag, null, sortTaskType);
-        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
-            throw new WorkflowListenerException("sort cluster not found for groupId=" + sink.getInlongGroupId());
-        }
-        String taskName = sortClusters.get(0).getName();
+        // get sort task name for sink
+        String taskName = sortConfigService.getSortTaskName(groupInfo, sink.getId(), sortTaskType);
         return String.format(PULSAR_SUBSCRIPTION, taskName, groupInfo.getMqResource(), topicName,
                 sink.getId());
     }

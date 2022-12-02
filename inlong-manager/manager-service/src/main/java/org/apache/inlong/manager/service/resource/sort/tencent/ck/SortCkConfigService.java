@@ -104,20 +104,15 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
 
         String zkUrl = zkCluster.getUrl();
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
-        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                groupInfo.getInlongClusterTag(), null, ClusterType.SORT_CK);
-        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
-            throw new WorkflowListenerException("sort cluster not found for groupId=" + groupInfo.getInlongGroupId());
-        }
-        String topoName = sortClusters.get(0).getName();
         for (InnerClickHouseSink clickHouseSink : clickHouseSinkList) {
-            log.info("begin to push sort ck config to zkUrl={}, ckTopo={}", zkUrl, topoName);
+            String taskName = getSortTaskName(groupInfo, clickHouseSink.getId(), ClusterType.SORT_CK);
+            log.info("begin to push sort ck config to zkUrl={}, ckTopo={}", zkUrl, taskName);
             try {
-                DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, clickHouseSink);
+                DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, clickHouseSink, taskName);
                 // Update / add data under dataflow on ZK
-                ZkTools.updateDataFlowInfo(flowInfo, topoName, flowInfo.getId(), zkUrl, zkRoot);
+                ZkTools.updateDataFlowInfo(flowInfo, taskName, flowInfo.getId(), zkUrl, zkRoot);
                 // Add data under clusters on ZK
-                ZkTools.addDataFlowToCluster(topoName, flowInfo.getId(), zkUrl, zkRoot);
+                ZkTools.addDataFlowToCluster(taskName, flowInfo.getId(), zkUrl, zkRoot);
                 String info = "success to push clickhouse sort config";
                 sinkService.updateStatus(clickHouseSink.getId(), SinkStatus.CONFIG_SUCCESSFUL.getCode(), info);
                 log.info("success to push ck sort config {}", JSON_MAPPER.writeValueAsString(flowInfo));
@@ -133,9 +128,9 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     /**
      * Get DataFlowInfo for Sort
      */
-    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink)
+    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink, String taskName)
             throws Exception {
-        SourceInfo sourceInfo = getSourceInfo(groupInfo, clickHouseSink);
+        SourceInfo sourceInfo = getSourceInfo(groupInfo, clickHouseSink, taskName);
         ClickHouseSinkInfo ckSink = getCkSinkInfo(groupInfo, clickHouseSink);
 
         String flowId = clickHouseSink.getId().toString();
@@ -157,16 +152,11 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     /**
      * Assembly source information
      */
-    private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink) throws Exception {
+    private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink, String taskName)
+            throws Exception {
         String groupId = clickHouseSink.getInlongGroupId();
         String streamId = clickHouseSink.getInlongStreamId();
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
-        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                groupInfo.getInlongClusterTag(), null, ClusterType.SORT_CK);
-        String taskName = sortClusters.get(0).getName();
-        if (taskName == null || StringUtils.isBlank(taskName)) {
-            throw new WorkflowListenerException("click house topo cluster not found for groupId=" + groupId);
-        }
         String mqType = groupInfo.getMqType();
         SourceInfo sourceInfo = null;
         if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {

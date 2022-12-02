@@ -163,9 +163,12 @@ public interface StreamSinkEntityMapper {
     // --------------------------------------------------------------------------------------------
     // inner method
     // --------------------------------------------------------------------------------------------
+
     /**
      * query the deleted thive configuration according to the business and data flow identifier for reusing US tasks
      */
     StreamSinkEntity selectDeletedThive(@Param("groupId") String groupId, @Param("streamId") String streamId);
+
+    Integer selectExistByGroupIdAndTaskName(@Param("groupId") String groupId, @Param("taskName") String taskName);
 
 }

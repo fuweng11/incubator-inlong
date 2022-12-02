@@ -55,6 +55,7 @@ import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
@@ -123,6 +124,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     }
 
     @Autowired
+    private StreamSinkEntityMapper sinkMapper;
+
+    @Autowired
     private StreamSinkFieldEntityMapper sinkFieldMapper;
 
     @Autowired
@@ -150,13 +154,14 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
         for (InnerHiveFullInfo hiveFullInfo : hiveFullInfos) {
             String topoType = hiveFullInfo.getIsThive() == 1 ? ClusterType.SORT_THIVE : ClusterType.SORT_HIVE;
-            List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                    groupInfo.getInlongClusterTag(), null, topoType);
+            String taskName = getSortTaskName(groupInfo, hiveFullInfo.getSinkId(), ClusterType.SORT_ICEBERG);
+
+            List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
+                    taskName, topoType);
             if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
                 throw new WorkflowListenerException("sort cluster not found for groupId=" + groupId);
             }
             InlongClusterEntity sortCluster = sortClusters.get(0);
-            String taskName = sortCluster.getName();
 
             // Backup configuration
             BaseSortClusterDTO sortClusterDTO = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
@@ -164,9 +169,6 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             sortExtConfig.setBackupDataPath(sortClusterDTO.getBackupDataPath());
             sortExtConfig.setBackupHadoopProxyUser(sortClusterDTO.getBackupHadoopProxyUser());
 
-            if (taskName == null || StringUtils.isBlank(taskName)) {
-                throw new WorkflowListenerException("hive topo cluster not found for groupId=" + groupId);
-            }
             LOGGER.info("begin to push hive sort config to zkUrl={}, hiveTopo={}", zkUrl, taskName);
             DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, hiveFullInfo, taskName, sortExtConfig);
             // Update / add data under dataflow on ZK

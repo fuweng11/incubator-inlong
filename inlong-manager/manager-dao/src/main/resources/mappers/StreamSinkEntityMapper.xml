@@ -475,4 +475,11 @@
         </where>
         order by modify_time desc limit 1
     </select>
+    <select id="selectExistByGroupIdAndTaskName" resultType="java.lang.Integer">
+        select count(1)
+        from stream_sink
+        where inlong_group_id = #{groupId, jdbcType=VARCHAR}
+          and sort_task_name = #{taskName, jdbcType=VARCHAR}
+          and is_deleted = 0
+    </select>
 </mapper>

@@ -31,7 +31,6 @@ import com.tencent.oceanus.etl.protocol.source.SourceInfo;
 import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
@@ -99,16 +98,12 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
 
         String zkUrl = zkCluster.getUrl();
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
-        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                groupInfo.getInlongClusterTag(), null, ClusterType.SORT_ES);
-        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
-            throw new WorkflowListenerException("sort cluster not found for groupId=" + groupInfo.getInlongGroupId());
-        }
-        String taskName = sortClusters.get(0).getName();
         for (ElasticsearchSink elasticsearchSink : elasticsearchSinkList) {
+            // get sort task name for sink
+            String taskName = getSortTaskName(groupInfo, elasticsearchSink.getId(), ClusterType.SORT_ES);
             log.info("begin to push sort elasticsearch config to zkUrl={}, taskName={}", zkUrl, taskName);
             try {
-                DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, elasticsearchSink);
+                DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, elasticsearchSink, taskName);
                 // Update / add data under dataflow on ZK
                 ZkTools.updateDataFlowInfo(flowInfo, taskName, flowInfo.getId(), zkUrl, zkRoot);
                 // Add data under clusters on ZK
@@ -126,9 +121,10 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
     /**
      * Get DataFlowInfo for Sort
      */
-    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, ElasticsearchSink elasticsearchSink)
+    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, ElasticsearchSink elasticsearchSink,
+            String taskName)
             throws Exception {
-        SourceInfo sourceInfo = getSourceInfo(groupInfo, elasticsearchSink);
+        SourceInfo sourceInfo = getSourceInfo(groupInfo, elasticsearchSink, taskName);
         EsSinkInfo esSink = getEsSinkInfo(groupInfo, elasticsearchSink);
         // TransformInfo transformInfo = getTransformInfo(groupInfo, innerEsSink);
         String flowId = elasticsearchSink.getId().toString();
@@ -150,17 +146,12 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
     /**
      * Assembly source information
      */
-    private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, ElasticsearchSink elasticsearchSink)
+    private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, ElasticsearchSink elasticsearchSink, String taskName)
             throws Exception {
         String groupId = elasticsearchSink.getInlongGroupId();
         String streamId = elasticsearchSink.getInlongStreamId();
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
-        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                groupInfo.getInlongClusterTag(), null, ClusterType.SORT_ES);
-        String taskName = sortClusters.get(0).getName();
-        if (taskName == null || StringUtils.isBlank(taskName)) {
-            throw new WorkflowListenerException("elasticsearch topo cluster not found for groupId=" + groupId);
-        }
+
         String mqType = groupInfo.getMqType();
         SourceInfo sourceInfo = null;
         if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
