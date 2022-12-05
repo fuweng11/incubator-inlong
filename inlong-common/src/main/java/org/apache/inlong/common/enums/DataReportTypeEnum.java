@@ -15,14 +15,37 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.sdk.sort.api;
+package org.apache.inlong.common.enums;
 
-import org.apache.inlong.sdk.sort.entity.ConsumeConfig;
+/**
+ * Enum of data report type
+ */
+public enum DataReportTypeEnum {
 
-public interface QueryConsumeConfig {
+    NORMAL_SEND_TO_DATAPROXY(0),
+    PROXY_SEND_TO_DATAPROXY(1),
+    DIRECT_SEND_TO_MQ(2);
 
-    ConsumeConfig queryCurrentConsumeConfig(String sortTaskId);
+    private final int type;
 
-    void configure(ClientContext context);
+    DataReportTypeEnum(int type) {
+        this.type = type;
+    }
 
+    public static DataReportTypeEnum getReportType(int type) {
+        switch (type) {
+            case 0:
+                return NORMAL_SEND_TO_DATAPROXY;
+            case 1:
+                return PROXY_SEND_TO_DATAPROXY;
+            case 2:
+                return DIRECT_SEND_TO_MQ;
+            default:
+                throw new RuntimeException("Unsupported data report type " + type);
+        }
+    }
+
+    public int getType() {
+        return type;
+    }
 }
