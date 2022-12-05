@@ -37,6 +37,8 @@ public enum TaskTypeEnum {
     MQTT(12),
 
     HA_BINLOG(101),
+    // only used for unit test
+    MOCK(201)
 
     ;
 
@@ -72,6 +74,8 @@ public enum TaskTypeEnum {
                 return TUBEMQ;
             case 12:
                 return MQTT;
+            case 201:
+                return MOCK;
             default:
                 throw new RuntimeException("Unsupported task type " + taskType);
         }
