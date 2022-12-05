@@ -37,6 +37,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.client.impl.GlobalBufferSizeSemaphore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -296,6 +297,7 @@ public class PulsarSingleTopicFetcher extends SingleTopicFetcher {
                             context.getStateCounterByTopic(topic).addConsumeSize(msg.getData().length);
                             context.getStateCounterByTopic(topic).addMsgCount(msgs.size());
                             handleAndCallbackMsg(msgs);
+                            messages.forEach(v -> GlobalBufferSizeSemaphore.getInstance().release(v.size()));
                         }
                         sleepTime = 0L;
                     } else {
