@@ -57,6 +57,7 @@ import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSourceEntityMapper;
 import org.apache.inlong.manager.dao.mapper.tencent.DbSyncHeartbeatEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
+import org.apache.inlong.manager.pojo.cluster.ClusterPageRequest;
 import org.apache.inlong.manager.pojo.cluster.agent.AgentClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.node.mysql.MySQLDataNodeInfo;
@@ -561,8 +562,13 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             if (InlongConstants.REPORT_TO_MQ_RECEIVED == dataReportType) {
                 // add mq cluster setting
                 List<MQClusterInfo> mqSet = new ArrayList<>();
-                List<InlongClusterEntity> mqClusterList =
-                        clusterMapper.selectByClusterTag(groupEntity.getInlongClusterTag());
+                List<String> clusterTagList = Arrays.asList(groupEntity.getInlongClusterTag());
+                List<String> typeList = Arrays.asList(ClusterType.TUBEMQ, ClusterType.PULSAR);
+                ClusterPageRequest pageRequest = ClusterPageRequest.builder()
+                        .typeList(typeList)
+                        .clusterTagList(clusterTagList)
+                        .build();
+                List<InlongClusterEntity> mqClusterList = clusterMapper.selectByCondition(pageRequest);
                 for (InlongClusterEntity cluster : mqClusterList) {
                     MQClusterInfo clusterInfo = new MQClusterInfo();
                     clusterInfo.setUrl(cluster.getUrl());
