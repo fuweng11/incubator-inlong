@@ -62,12 +62,12 @@ public class PackProxyMessage {
     // streamId -> list of proxyMessage
     private final LinkedBlockingQueue<ProxyMessage> messageQueue;
     private final AtomicLong queueSize = new AtomicLong(0);
-    private final boolean syncSend;
+    private boolean syncSend;
+    private int currentSize;
     /**
      * extra map used when sending to dataproxy
      */
-    private final Map<String, String> extraMap = new HashMap<>();
-    private int currentSize;
+    private Map<String, String> extraMap = new HashMap<>();
     private volatile long currentCacheTime = System.currentTimeMillis();
 
     /**
@@ -140,7 +140,8 @@ public class PackProxyMessage {
     public BatchProxyMessage fetchBatch() {
         // if queue is nearly full or package size is satisfied or timeout
         long currentTime = System.currentTimeMillis();
-        if (queueSize.get() > maxPackSize || queueIsFull() || currentTime - currentCacheTime > cacheTimeout) {
+        if (queueSize.get() > maxPackSize || queueIsFull()
+                || currentTime - currentCacheTime > cacheTimeout) {
             // refresh cache time.
             currentCacheTime = currentTime;
             long resultBatchSize = 0;

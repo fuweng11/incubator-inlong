@@ -45,7 +45,6 @@ public class Job {
     // job description
     private String description;
     protected String jobInstanceId;
-    protected List<Task> taskList = new ArrayList<>();
     protected ThreadLocal<Integer> threadNum = new ThreadLocal<Integer>() {
 
         protected Integer initialValue() {
@@ -105,6 +104,7 @@ public class Job {
     }
 
     private List<Task> getTasks(JobProfile jobConf) {
+        protected List<Task> taskList = new ArrayList<>();
         try {
             LOGGER.info("job id: {}, source: {}, channel: {}, sink: {}",
                     getJobInstanceId(), jobConf.get(JobConstants.JOB_SOURCE_CLASS),
