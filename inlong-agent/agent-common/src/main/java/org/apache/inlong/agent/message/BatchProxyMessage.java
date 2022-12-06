@@ -22,6 +22,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.inlong.common.msg.InLongMsg;
+import org.apache.inlong.common.util.MessageUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -43,4 +46,20 @@ public class BatchProxyMessage {
     private boolean isSyncSend;
     // dbsync ack LogPosition
     private List<Pair<LogPosition, Long>> positions;
+    public InLongMsg getInLongMsg() {
+        InLongMsg message = InLongMsg.newInLongMsg(true);
+        String attr = MessageUtils.convertAttrToStr(extraMap).toString();
+        for (byte[] lineData : dataList) {
+            message.addMsg(attr, lineData);
+        }
+        return message;
+    }
+
+    public int getMsgCnt() {
+        return CollectionUtils.isEmpty(dataList) ? 0 : dataList.size();
+    }
+
+    public long getTotalSize() {
+        return CollectionUtils.isEmpty(dataList) ? 0 : dataList.stream().mapToLong(body -> body.length).sum();
+    }
 }
