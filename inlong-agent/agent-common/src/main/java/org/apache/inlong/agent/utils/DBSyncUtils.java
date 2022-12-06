@@ -178,6 +178,11 @@ public class DBSyncUtils {
             future.completeExceptionally(new DataSourceConfigException("taskConf is null"));
             result = false;
         }
+        // check data report info
+        if (!taskConf.isValid()) {
+            future.completeExceptionally(new DataSourceConfigException("taskConf dataReport info has error"));
+            result = false;
+        }
         return result;
     }
 

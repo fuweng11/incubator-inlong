@@ -17,17 +17,22 @@
 
 package org.apache.inlong.common.pojo.agent.dbsync;
 
-import org.apache.inlong.common.pojo.dataproxy.DataProxyTopicInfo;
-import org.apache.inlong.common.pojo.dataproxy.MQClusterInfo;
-
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.inlong.common.enums.DataReportTypeEnum;
+import org.apache.inlong.common.pojo.dataproxy.DataProxyTopicInfo;
+import org.apache.inlong.common.pojo.dataproxy.MQClusterInfo;
 
 import java.util.List;
+
+import static org.apache.inlong.common.enums.DataReportTypeEnum.DIRECT_SEND_TO_MQ;
+import static org.apache.inlong.common.enums.DataReportTypeEnum.NORMAL_SEND_TO_DATAPROXY;
+import static org.apache.inlong.common.enums.DataReportTypeEnum.PROXY_SEND_TO_DATAPROXY;
 
 /**
  * Task info for DbSync
@@ -110,4 +115,15 @@ public class DbSyncTaskInfo {
     @ApiModelProperty(value = "mq topic information")
     private DataProxyTopicInfo topicInfo;
 
+    public boolean isValid() {
+        DataReportTypeEnum reportType = DataReportTypeEnum.getReportType(dataReportType);
+        if (reportType == NORMAL_SEND_TO_DATAPROXY || reportType == PROXY_SEND_TO_DATAPROXY) {
+            return true;
+        }
+        if (reportType == DIRECT_SEND_TO_MQ && CollectionUtils.isNotEmpty(mqClusters) && mqClusters.stream()
+                .allMatch(MQClusterInfo::isValid) && topicInfo.isValid()) {
+            return true;
+        }
+        return false;
+    }
 }

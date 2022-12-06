@@ -19,6 +19,7 @@ package org.apache.inlong.agent.conf;
 
 import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -47,17 +48,23 @@ public class MysqlTableConf {
     private boolean skipDelete = false;
     private Charset charset;
 
-    public MysqlTableConf(String jobName, String databaseName, String tableName, String groupId, String streamId,
-            Integer taskId, Charset charset, boolean skipDelete) {
+    private DbSyncTaskInfo taskInfo;
+
+    public MysqlTableConf(String jobName, DbSyncTaskInfo taskInfo, Charset charset, boolean skipDelete) {
         this.jobName = jobName;
-        this.dbName = databaseName;
-        this.tbName = tableName;
-        this.groupId = groupId;
-        this.streamId = streamId;
-        this.taskId = taskId;
+        this.dbName = taskInfo.getDbName();
+        this.tbName = taskInfo.getTableName();
+        this.groupId = taskInfo.getInlongGroupId();
+        this.streamId = taskInfo.getInlongStreamId();
+        this.taskId = taskInfo.getId();
         this.skipDelete = skipDelete;
         this.charset = charset;
         this.fields = new ArrayList<>();
+        this.taskInfo = taskInfo;
+    }
+
+    public DbSyncTaskInfo getTaskInfo() {
+        return taskInfo;
     }
 
     public String getDataBaseName() {

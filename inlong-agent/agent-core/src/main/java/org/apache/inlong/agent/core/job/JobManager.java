@@ -410,8 +410,7 @@ public class JobManager extends AbstractDaemon {
         String dbName = taskConf.getDbName();
         String tableName = taskConf.getTableName();
         if (!conf.containsTask(taskId)) {
-            MysqlTableConf tbConf = new MysqlTableConf(conf.getJobName(), dbName, tableName,
-                    taskConf.getInlongGroupId(), taskConf.getInlongStreamId(), taskId, charset, skipDelete);
+            MysqlTableConf tbConf = new MysqlTableConf(conf.getJobName(), taskConf, charset, skipDelete);
             conf.addTable(tbConf);
             conf.getMysqlTableConfList(dbName, taskConf.getTableName())
                     .forEach(myconf -> myconf.updateJobStatus(TaskStat.NORMAL));
@@ -424,8 +423,7 @@ public class JobManager extends AbstractDaemon {
             if (mysqlTableConf != null) {
                 mysqlTableConf.setSkipDelete(skipDelete);
             }
-            LOGGER.warn("dbName {}, tableName {} already in conf, taskId {}",
-                    dbName, tableName, taskConf.getId());
+            LOGGER.warn("dbName {}, tableName {} already in conf, taskId {}", dbName, tableName, taskConf.getId());
         }
 
         final DBSyncJobConf finalConf = conf;

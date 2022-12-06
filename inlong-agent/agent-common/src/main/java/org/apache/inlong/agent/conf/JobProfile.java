@@ -21,21 +21,26 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.constant.JobConstants;
+import org.apache.inlong.common.constant.MQType;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 import org.apache.inlong.common.pojo.dataproxy.DataProxyTopicInfo;
 import org.apache.inlong.common.pojo.dataproxy.MQClusterInfo;
 
 import java.util.List;
 
-import static org.apache.inlong.agent.constant.JobConstants.JOB_MQ_ClUSTERS;
-import static org.apache.inlong.agent.constant.JobConstants.JOB_MQ_TOPIC;
-
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_GROUP_ID;
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID;
 import static org.apache.inlong.agent.constant.JobConstants.DBSYNC_TASK_ID;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_INSTANCE_ID;
+import static org.apache.inlong.agent.constant.JobConstants.JOB_MQ_ClUSTERS;
+import static org.apache.inlong.agent.constant.JobConstants.JOB_MQ_TOPIC;
+import static org.apache.inlong.agent.constant.JobConstants.JOB_PROXY_SEND;
 import static org.apache.inlong.agent.pojo.JobProfileDto.DBSYNC_SOURCE;
 import static org.apache.inlong.agent.pojo.JobProfileDto.DEFAULT_CHANNEL;
 import static org.apache.inlong.agent.pojo.JobProfileDto.DEFAULT_DATAPROXY_SINK;
+import static org.apache.inlong.agent.pojo.JobProfileDto.PULSAR_SINK;
+import static org.apache.inlong.common.enums.DataReportTypeEnum.NORMAL_SEND_TO_DATAPROXY;
+import static org.apache.inlong.common.enums.DataReportTypeEnum.PROXY_SEND_TO_DATAPROXY;
 
 /**
  * job profile which contains details describing properties of one job.
@@ -47,12 +52,29 @@ public class JobProfile extends AbstractConfiguration {
     public static JobProfile parseDbSyncTaskInfo(MysqlTableConf taskInfo) {
         JobProfile conf = new JobProfile();
         conf.set(JobConstants.JOB_SOURCE_CLASS, DBSYNC_SOURCE);
-        conf.set(JobConstants.JOB_SINK, DEFAULT_DATAPROXY_SINK);
         conf.set(JobConstants.JOB_CHANNEL, DEFAULT_CHANNEL);
         conf.set(PROXY_INLONG_GROUP_ID, taskInfo.getGroupId());
         conf.set(PROXY_INLONG_STREAM_ID, taskInfo.getStreamId());
         conf.set(JOB_INSTANCE_ID, taskInfo.getJobName());
         conf.set(DBSYNC_TASK_ID, String.valueOf(taskInfo.getTaskId()));
+        // set sink type
+        DbSyncTaskInfo taskConfig = taskInfo.getTaskInfo();
+        if (taskConfig.getDataReportType() == NORMAL_SEND_TO_DATAPROXY.getType()) {
+            conf.set(JobConstants.JOB_SINK, DEFAULT_DATAPROXY_SINK);
+            conf.setBoolean(JOB_PROXY_SEND, false);
+        } else if (taskConfig.getDataReportType() == PROXY_SEND_TO_DATAPROXY.getType()) {
+            conf.set(JobConstants.JOB_SINK, DEFAULT_DATAPROXY_SINK);
+            conf.setBoolean(JOB_PROXY_SEND, true);
+        } else {
+            String mqType = taskConfig.getMqClusters().get(0).getMqType();
+            conf.set(JOB_MQ_ClUSTERS, GSON.toJson(taskConfig.getMqClusters()));
+            conf.set(JOB_MQ_TOPIC, GSON.toJson(taskConfig.getTopicInfo()));
+            if (mqType.equals(MQType.PULSAR)) {
+                conf.set(JobConstants.JOB_SINK, PULSAR_SINK);
+            } else {
+                throw new IllegalArgumentException("dbsyncTaskInfo " + taskConfig + "is invalid please check");
+            }
+        }
         return conf;
     }
 

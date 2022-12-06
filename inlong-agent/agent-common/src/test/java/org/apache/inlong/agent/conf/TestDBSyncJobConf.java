@@ -17,6 +17,7 @@
 
 package org.apache.inlong.agent.conf;
 
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,13 +39,18 @@ public class TestDBSyncJobConf {
 
     @Test
     public void testRegexTable() {
-        MysqlTableConf tableConf1 = new MysqlTableConf("jobName", "inlongtest", "student.*", "groupId", "streamId", 29,
-                Charset.defaultCharset(), true);
-        conf.addTable(tableConf1);
-        MysqlTableConf tableConf2 = new MysqlTableConf("jobName", "inlongtest", "student_1", "groupId", "streamId", 30,
-                Charset.defaultCharset(), true);
-        conf.addTable(tableConf2);
         String dbName = "inlongtest";
+        DbSyncTaskInfo taskInfo1 = new DbSyncTaskInfo();
+        taskInfo1.setDbName(dbName);
+        taskInfo1.setTableName("student.*");
+        MysqlTableConf tableConf1 = new MysqlTableConf("jobName", taskInfo1, Charset.defaultCharset(), true);
+        conf.addTable(tableConf1);
+
+        DbSyncTaskInfo taskInfo2 = new DbSyncTaskInfo();
+        taskInfo2.setDbName(dbName);
+        taskInfo2.setTableName("student_1");
+        MysqlTableConf tableConf2 = new MysqlTableConf("jobName", taskInfo2, Charset.defaultCharset(), true);
+        conf.addTable(tableConf2);
         String tableName = "student_1";
         conf.getFilter().filter(dbName + "." + tableName);
         assertTrue(conf.bInNeedTable(dbName, tableName));
