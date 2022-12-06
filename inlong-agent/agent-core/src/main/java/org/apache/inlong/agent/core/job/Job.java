@@ -104,7 +104,7 @@ public class Job {
     }
 
     private List<Task> getTasks(JobProfile jobConf) {
-        protected List<Task> taskList = new ArrayList<>();
+        List<Task> taskList = new ArrayList<>();
         try {
             LOGGER.info("job id: {}, source: {}, channel: {}, sink: {}",
                     getJobInstanceId(), jobConf.get(JobConstants.JOB_SOURCE_CLASS),
