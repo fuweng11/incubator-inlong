@@ -35,6 +35,7 @@ import org.apache.inlong.manager.pojo.sink.es.ElasticsearchFieldInfo;
 import org.apache.inlong.manager.pojo.sink.es.ElasticsearchSink;
 import org.apache.inlong.manager.pojo.sink.es.ElasticsearchSinkDTO;
 import org.apache.inlong.manager.pojo.sink.es.ElasticsearchSinkRequest;
+import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.sink.AbstractSinkOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +57,8 @@ public class ElasticsearchSinkOperator extends AbstractSinkOperator {
 
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private SortHiveConfigService sortEsConfigService;
 
     @Override
     public Boolean accept(String sinkType) {
@@ -167,6 +170,28 @@ public class ElasticsearchSinkOperator extends AbstractSinkOperator {
 
         });
         return fieldList;
+    }
+
+    @Override
+    public void deleteOpt(StreamSinkEntity entity, String operator) {
+        try {
+            sortEsConfigService.deleteSortConfig(entity);
+        } catch (Exception e) {
+            String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
+                    entity.getSinkName());
+            LOGGER.error(errMsg, e);
+        }
+        entity.setPreviousStatus(entity.getStatus());
+        entity.setStatus(InlongConstants.DELETED_STATUS);
+        entity.setIsDeleted(entity.getId());
+        entity.setModifier(operator);
+        int rowCount = sinkMapper.updateByIdSelective(entity);
+        if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
+            LOGGER.error("sink has already updated with groupId={}, streamId={}, name={}, curVersion={}",
+                    entity.getInlongGroupId(), entity.getInlongStreamId(), entity.getSinkName(), entity.getVersion());
+            throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
+        }
+        sinkFieldMapper.logicDeleteAll(entity.getId());
     }
 
 }

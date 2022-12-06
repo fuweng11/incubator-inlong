@@ -105,7 +105,8 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
         String zkUrl = zkCluster.getUrl();
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
         for (InnerClickHouseSink clickHouseSink : clickHouseSinkList) {
-            String taskName = getSortTaskName(groupInfo, clickHouseSink.getId(), ClusterType.SORT_CK);
+            String taskName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
+                    clickHouseSink.getId(), ClusterType.SORT_CK);
             log.info("begin to push sort ck config to zkUrl={}, ckTopo={}", zkUrl, taskName);
             try {
                 DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, clickHouseSink, taskName);

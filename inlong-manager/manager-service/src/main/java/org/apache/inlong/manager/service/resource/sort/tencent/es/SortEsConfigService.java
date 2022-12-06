@@ -100,7 +100,8 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
         for (ElasticsearchSink elasticsearchSink : elasticsearchSinkList) {
             // get sort task name for sink
-            String taskName = getSortTaskName(groupInfo, elasticsearchSink.getId(), ClusterType.SORT_ES);
+            String taskName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
+                    elasticsearchSink.getId(), ClusterType.SORT_ES);
             log.info("begin to push sort elasticsearch config to zkUrl={}, taskName={}", zkUrl, taskName);
             try {
                 DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, elasticsearchSink, taskName);

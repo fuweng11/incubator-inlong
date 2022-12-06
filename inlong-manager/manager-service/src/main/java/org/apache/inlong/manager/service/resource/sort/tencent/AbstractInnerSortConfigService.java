@@ -67,7 +67,7 @@ public class AbstractInnerSortConfigService {
     @Autowired
     private InlongConsumeEntityMapper inlongConsumeMapper;
     @Autowired
-    private InlongGroupEntityMapper groupService;
+    private InlongGroupEntityMapper grouMapper;
     @Autowired
     private InlongClusterEntityMapper clusterMapper;
     @Autowired
@@ -184,7 +184,7 @@ public class AbstractInnerSortConfigService {
             LOGGER.warn("sink is not configured successfully, do not need to delete config in zk");
             return;
         }
-        InlongGroupEntity groupInfo = groupService.selectByGroupId(sink.getInlongGroupId());
+        InlongGroupEntity groupInfo = grouMapper.selectByGroupId(sink.getInlongGroupId());
         String groupId = sink.getInlongGroupId();
         List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
                 null, ClusterType.ZOOKEEPER);
@@ -203,6 +203,12 @@ public class AbstractInnerSortConfigService {
             case SinkType.INNER_CK:
                 topoType = ClusterType.SORT_CK;
                 break;
+            case SinkType.INNER_ICEBERG:
+                topoType = ClusterType.SORT_ICEBERG;
+                break;
+            case SinkType.ELASTICSEARCH:
+                topoType = ClusterType.SORT_ES;
+                break;
             default:
                 throw new BusinessException(ErrorCodeEnum.MQ_TYPE_NOT_SUPPORTED);
         }
@@ -212,11 +218,8 @@ public class AbstractInnerSortConfigService {
             LOGGER.warn("no matching sort cluster information for groupId=" + groupId);
             return;
         }
-        String topoName = sortClusters.get(0).getName();
-        if (topoName == null || StringUtils.isBlank(topoName)) {
-            LOGGER.warn("no matching topo name for groupId=" + groupId);
-            return;
-        }
+        String taskName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(), sink.getId(),
+                topoType);
         InlongClusterEntity zkCluster = zkClusters.get(0);
         ZkClusterDTO zkClusterDTO = ZkClusterDTO.getFromJson(zkCluster.getExtParams());
         String zkUrl = zkCluster.getUrl();
@@ -224,17 +227,16 @@ public class AbstractInnerSortConfigService {
         Integer sinkId = sink.getId();
         LOGGER.info("try to delete sort config from {}, idList={}", zkUrl, sinkId);
         // It could be hive or thive
-        ZkTools.removeDataFlowFromCluster(topoName, sinkId.toString(), zkUrl, zkRoot);
+        ZkTools.removeDataFlowFromCluster(taskName, sinkId.toString(), zkUrl, zkRoot);
         LOGGER.info("success to delete sort config from {}, idList={}", zkUrl, sinkId);
     }
 
-    public String getSortTaskName(InlongGroupInfo groupInfo, Integer sinkId, String sortTaskType) {
+    public String getSortTaskName(String groupId, String clusterTag, Integer sinkId, String sortTaskType) {
         StreamSinkEntity sinkEntity = sinkMapper.selectByPrimaryKey(sinkId);
         String taskName = sinkEntity.getSortTaskName();
-        String groupId = groupInfo.getInlongGroupId();
         if (StringUtils.isBlank(taskName)) {
             List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                    groupInfo.getInlongClusterTag(), null, sortTaskType);
+                    clusterTag, null, sortTaskType);
             int minCount = -1;
             for (InlongClusterEntity sortCluster : sortClusters) {
                 int isUsedCount = sinkMapper.selectExistByGroupIdAndTaskName(groupId, sortCluster.getName());

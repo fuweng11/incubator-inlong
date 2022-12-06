@@ -154,7 +154,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
         for (InnerHiveFullInfo hiveFullInfo : hiveFullInfos) {
             String topoType = hiveFullInfo.getIsThive() == 1 ? ClusterType.SORT_THIVE : ClusterType.SORT_HIVE;
-            String taskName = getSortTaskName(groupInfo, hiveFullInfo.getSinkId(), ClusterType.SORT_ICEBERG);
+            String taskName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
+                    hiveFullInfo.getSinkId(), ClusterType.SORT_ICEBERG);
 
             List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
                     taskName, topoType);

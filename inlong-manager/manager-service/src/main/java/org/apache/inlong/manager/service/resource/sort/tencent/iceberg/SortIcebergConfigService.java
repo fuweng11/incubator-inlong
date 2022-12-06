@@ -106,12 +106,13 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
                 continue;
             }
             // get sort task name for sink
-            String taskName = getSortTaskName(groupInfo, icebergSink.getId(), ClusterType.SORT_ICEBERG);
+            String taskName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
+                    icebergSink.getId(), ClusterType.SORT_ICEBERG);
             // table not exists, push config to zk
             log.info("begin to push iceberg config [{}] to zkUrl={}, icebergTopo={}", icebergId, zkUrl, taskName);
             DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, icebergSink, tableDetail, taskName);
-            ZkTools.updateDataFlowInfo(flowInfo, tableName, flowInfo.getId(), zkUrl, zkRoot);
-            ZkTools.addDataFlowToCluster(tableName, flowInfo.getId(), zkUrl, zkRoot);
+            ZkTools.updateDataFlowInfo(flowInfo, taskName, flowInfo.getId(), zkUrl, zkRoot);
+            ZkTools.addDataFlowToCluster(taskName, flowInfo.getId(), zkUrl, zkRoot);
 
             log.info("success to push iceberg sort config {}", OBJECT_MAPPER.writeValueAsString(flowInfo));
         }
