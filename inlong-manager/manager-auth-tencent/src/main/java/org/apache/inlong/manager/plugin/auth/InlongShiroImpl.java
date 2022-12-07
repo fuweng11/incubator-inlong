@@ -108,7 +108,7 @@ public class InlongShiroImpl implements InlongShiro {
 
         Map<String, Filter> filters = new LinkedHashMap<>();
         boolean allowMock = !Env.PROD.equals(Env.forName(env));
-        filters.put(FILTER_NAME_WEB, new WebAuthenticationFilter(allowMock));
+        filters.put(FILTER_NAME_WEB, new WebAuthenticationFilter(allowMock, roleService));
         filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, roleService));
         shiroFilterFactoryBean.setFilters(filters);
 

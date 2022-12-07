@@ -22,8 +22,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.NetworkUtils;
+import org.apache.inlong.manager.plugin.auth.openapi.BasicAuthenticationToken;
+import org.apache.inlong.manager.plugin.auth.openapi.TAuthAuthenticationToken;
 import org.apache.inlong.manager.plugin.common.pojo.user.StaffDTO;
 import org.apache.inlong.manager.pojo.user.UserInfo;
+import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -39,6 +42,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -47,12 +52,17 @@ import java.util.Optional;
 @Slf4j
 public class WebAuthenticationFilter implements Filter {
 
+    private static final String MANAGER_CLIENT_REQUEST = "Manager_Client_Request";
+
     private final boolean supportMockUsername;
 
-    public WebAuthenticationFilter(boolean supportMockUsername) {
+    private final RoleService roleService;
+
+    public WebAuthenticationFilter(boolean supportMockUsername, RoleService roleService) {
         if (supportMockUsername) {
             log.warn("ensure that you are not using the test mode in production environment");
         }
+        this.roleService = roleService;
         this.supportMockUsername = supportMockUsername;
     }
 
@@ -65,8 +75,12 @@ public class WebAuthenticationFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
             throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
-        ProxyUserAuthenticationToken token = getAuthenticationToken(request);
+        if (isManagerClientRequest(request) && doTAuthFilter(servletRequest, servletResponse, filterChain)) {
+            log.info("login manager client success");
+            return;
+        }
 
+        ProxyUserAuthenticationToken token = getAuthenticationToken(request);
         String clientIp = NetworkUtils.getClientIpAddress(request);
         if (token == null) {
             log.error("access denied for anonymous user with no token, clientIp: {}, path: {}", clientIp,
@@ -143,6 +157,57 @@ public class WebAuthenticationFilter implements Filter {
             return tofAuthenticationToken;
         }
         return null;
+    }
+
+    private boolean isManagerClientRequest(HttpServletRequest request) {
+        String isManagerClientRequest = request.getHeader(MANAGER_CLIENT_REQUEST);
+        if (StringUtils.isNotBlank(isManagerClientRequest)) {
+            log.info("It's the manager client request, use mock authentication");
+            return true;
+        }
+        return false;
+    }
+
+    private boolean doTAuthFilter(
+            ServletRequest servletRequest,
+            ServletResponse servletResponse,
+            FilterChain filterChain) throws IOException, ServletException {
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+
+        TAuthAuthenticationToken tAuthAuthenticationToken = new TAuthAuthenticationToken(request);
+        BasicAuthenticationToken token = tAuthAuthenticationToken;
+
+        // 403 on login failure
+        String clientIp = NetworkUtils.getClientIpAddress(request);
+        Subject subject = SecurityUtils.getSubject();
+        if (token != null) {
+            try {
+                subject.login(token);
+                log.debug("login user: " + subject.getPrincipal() + ", clientIp: " + clientIp
+                        + ", token " + token.getClass().getSimpleName());
+            } catch (Exception e) {
+                ((HttpServletResponse) servletResponse).sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
+                return false;
+            }
+        }
+
+        if (!subject.isAuthenticated()) {
+            log.error("access denied for anonymous user: {}, clientIp: {}, path: {} ", subject.getPrincipal(),
+                    clientIp, request.getServletPath());
+            ((HttpServletResponse) servletResponse).sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+
+        UserInfo userInfo = new UserInfo();
+        String userName = (String) (subject.getPrincipal());
+        List<String> roleList = roleService.listByUser(userName);
+        userInfo.setName(userName);
+        userInfo.setRoles(new HashSet<>(roleList));
+        LoginUserUtils.setUserLoginInfo(userInfo);
+
+        filterChain.doFilter(servletRequest, servletResponse);
+        LoginUserUtils.removeUserLoginInfo();
+        return true;
     }
 
     @Override

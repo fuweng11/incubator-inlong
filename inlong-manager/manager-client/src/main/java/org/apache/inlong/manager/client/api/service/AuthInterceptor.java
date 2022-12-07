@@ -17,6 +17,8 @@
 
 package org.apache.inlong.manager.client.api.service;
 
+import com.tencent.tdw.security.authentication.v2.TauthClient;
+import com.tencent.tdw.security.exceptions.SecureException;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -30,6 +32,10 @@ import java.io.IOException;
  */
 public class AuthInterceptor implements Interceptor {
 
+    private static final String MANAGER_CLIENT_REQUEST = "Manager_Client_Request";
+    private static final String MANAGER_SECURE_AUTH = "secure-authentication";
+    private static final String MANAGER_NAME = "inlong_manager";
+
     private final String username;
     private final String password;
 
@@ -40,17 +46,25 @@ public class AuthInterceptor implements Interceptor {
 
     @Override
     public Response intercept(Chain chain) throws IOException {
-        Request oldRequest = chain.request();
-        HttpUrl.Builder builder = oldRequest.url()
-                .newBuilder()
-                .addEncodedQueryParameter("username", username)
-                .addEncodedQueryParameter("password", password);
+        TauthClient tauthClient = new TauthClient(username, password);
+        try {
+            String encodedAuthentication = tauthClient.getAuthentication(MANAGER_NAME);
+            Request oldRequest = chain.request();
+            HttpUrl.Builder builder = oldRequest.url()
+                    .newBuilder()
+                    .addEncodedQueryParameter("username", username)
+                    .addEncodedQueryParameter("password", password);
 
-        Request newRequest = oldRequest.newBuilder()
-                .method(oldRequest.method(), oldRequest.body())
-                .url(builder.build())
-                .build();
+            Request newRequest = oldRequest.newBuilder()
+                    .method(oldRequest.method(), oldRequest.body())
+                    .addHeader(MANAGER_CLIENT_REQUEST, "true")
+                    .addHeader(MANAGER_SECURE_AUTH, encodedAuthentication)
+                    .url(builder.build())
+                    .build();
 
-        return chain.proceed(newRequest);
+            return chain.proceed(newRequest);
+        } catch (SecureException e) {
+            throw new IllegalStateException("failed to request with tauth, ex=" + e.getMessage());
+        }
     }
 }
