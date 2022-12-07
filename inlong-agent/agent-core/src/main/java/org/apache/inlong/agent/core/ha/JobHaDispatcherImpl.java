@@ -225,9 +225,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      */
     @Override
     public void startJob(DbSyncTaskInfo taskConf) {
-        LOGGER.info("start job syncId[{}], taskId[{}]",
-                taskConf.getServerName(),
-                taskConf.getId());
+        LOGGER.info("start job syncId[{}], taskId[{}]", taskConf.getServerName(), taskConf.getId());
         this.updateJob(taskConf);
     }
 
@@ -238,29 +236,22 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      */
     @Override
     public void updateJob(DbSyncTaskInfo taskConf) {
-        LOGGER.info("update job syncId[{}], taskId[{}]",
-                taskConf.getServerName(), taskConf.getId());
-        /*
-         * check haInfo is or not exist
-         */
+        LOGGER.info("update job syncId[{}], taskId[{}]", taskConf.getServerName(), taskConf.getId());
+        // check haInfo is or not exist
         JobHaInfo jobHaInfo = jobHaInfoMap.computeIfAbsent(taskConf.getServerName(), (k) -> {
             JobHaInfo newJobHaInfo = new JobHaInfo();
             newJobHaInfo.setZkHealth(true);
-            String jobInstanceName =
-                    taskConf.getDbServerInfo().getUrl() + ":" + taskConf.getServerName();
+            String jobInstanceName = taskConf.getDbServerInfo().getUrl() + ":" + taskConf.getServerName();
             newJobHaInfo.setJobName(jobInstanceName);
             newJobHaInfo.setSyncId(k);
             return newJobHaInfo;
         });
 
         if (jobHaInfo != null) {
-            /*
-             * update config
-             */
+            // update config
             jobHaInfo.addTaskConf(taskConf);
         } else {
-            LOGGER.error("Task conf is error taskId[{}], syncId[{}]", taskConf.getId(),
-                    taskConf.getServerName());
+            LOGGER.error("Task conf is error taskId[{}], syncId[{}]", taskConf.getId(), taskConf.getServerName());
         }
     }
 
@@ -317,12 +308,13 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      */
     @Override
     public void deleteJob(String syncId, Integer taskId, DbSyncTaskInfo taskConfFromTdm) {
-        LOGGER.info("delete job syncId[{}], taskId[{}]",
-                syncId, taskId);
+        LOGGER.info("delete job syncId[{}], taskId[{}]", syncId, taskId);
         JobHaInfo jobHaInfo = jobHaInfoMap.get(syncId);
         if (jobHaInfo != null) {
             DbSyncTaskInfo taskConf = jobHaInfo.deleteTaskConf(taskId);
             if (taskConf != null) {
+                // update version first
+                taskConf.setVersion(taskConfFromTdm.getVersion());
                 CompletableFuture<Void> opFuture = new CompletableFuture<>();
                 jobManager.deleteTask(taskConf, opFuture);
                 opFuture.whenComplete((v, e) -> {
@@ -332,8 +324,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                             errorTaskInfoList.add(taskConf);
                         }
                     } else {
-                        LOGGER.info("stop task has completed! syncId[{}], taskId[{}]",
-                                syncId, taskId);
+                        LOGGER.info("stop task has completed! syncId[{}], taskId[{}]", syncId, taskId);
                         synchronized (correctTaskInfoList) {
                             correctTaskInfoList.add(taskConf);
                         }
@@ -347,9 +338,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                 }
 
             }
-            /*
-             * delete when there is not any task
-             */
+            // delete job when there is no any task
             synchronized (jobHaInfo) {
                 if (jobHaInfo.getTaskConfMap().size() <= 0) {
                     jobHaInfoMap.remove(syncId);

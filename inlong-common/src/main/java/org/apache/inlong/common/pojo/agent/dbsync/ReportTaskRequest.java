@@ -80,7 +80,7 @@ public class ReportTaskRequest {
 
         @Override
         public String toString() {
-            return id + "-" + status + "-" + message + "-" + result;
+            return id + "-" + version + "-" + status + "-" + message + "-" + result;
         }
     }
 

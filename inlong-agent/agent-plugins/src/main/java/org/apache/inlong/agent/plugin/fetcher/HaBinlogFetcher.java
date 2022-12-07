@@ -234,7 +234,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
             for (DbSyncTaskInfo tc : errorTaskConfigList) {
                 taskRegisterResults.put(tc.getId(),
                         new TaskInfoBean(tc.getId(), tc.getStatus(),
-                                "ha addTask has task conf info error! ip:" + localIp, 1, tc.getVersion()));
+                                "ha op Task has task conf info error! ip:" + localIp, 1, tc.getVersion()));
                 LOGGER.error("Error task config syncId {}, taskId {}", tc.getServerName(), tc.getId());
             }
         }
