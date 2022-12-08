@@ -37,6 +37,7 @@ public class SinkType {
     public static final String TDSQLPOSTGRESQL = "TDSQLPOSTGRESQL";
     public static final String DLCICEBERG = "DLCICEBERG";
     public static final String DORIS = "DORIS";
+    public static final String STARROCKS = "STARROCKS";
 
     // --------------------------------------------------------------------------------------------
     // Inner parameters
