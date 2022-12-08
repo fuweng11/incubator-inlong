@@ -73,12 +73,6 @@
             </includes>
         </fileSet>
 
-        <!-- Package the manager plugins -->
-        <fileSet>
-            <directory>../manager-plugins/target/plugins</directory>
-            <outputDirectory>plugins</outputDirectory>
-        </fileSet>
-
         <!-- Package the client jars into the lib directory -->
         <fileSet>
             <directory>../manager-client/target</directory>

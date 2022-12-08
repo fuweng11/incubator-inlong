@@ -105,15 +105,15 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
         String zkUrl = zkCluster.getUrl();
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
         for (InnerClickHouseSink clickHouseSink : clickHouseSinkList) {
-            String taskName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
+            String sortClusterName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
                     clickHouseSink.getId(), ClusterType.SORT_CK);
-            log.info("begin to push sort ck config to zkUrl={}, ckTopo={}", zkUrl, taskName);
+            log.info("begin to push sort ck config to zkUrl={}, ckTopo={}", zkUrl, sortClusterName);
             try {
-                DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, clickHouseSink, taskName);
+                DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, clickHouseSink, sortClusterName);
                 // Update / add data under dataflow on ZK
-                ZkTools.updateDataFlowInfo(flowInfo, taskName, flowInfo.getId(), zkUrl, zkRoot);
+                ZkTools.updateDataFlowInfo(flowInfo, sortClusterName, flowInfo.getId(), zkUrl, zkRoot);
                 // Add data under clusters on ZK
-                ZkTools.addDataFlowToCluster(taskName, flowInfo.getId(), zkUrl, zkRoot);
+                ZkTools.addDataFlowToCluster(sortClusterName, flowInfo.getId(), zkUrl, zkRoot);
                 String info = "success to push clickhouse sort config";
                 sinkService.updateStatus(clickHouseSink.getId(), SinkStatus.CONFIG_SUCCESSFUL.getCode(), info);
                 log.info("success to push ck sort config {}", JSON_MAPPER.writeValueAsString(flowInfo));
@@ -129,9 +129,9 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     /**
      * Get DataFlowInfo for Sort
      */
-    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink, String taskName)
-            throws Exception {
-        SourceInfo sourceInfo = getSourceInfo(groupInfo, clickHouseSink, taskName);
+    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink,
+            String sortClusterName) throws Exception {
+        SourceInfo sourceInfo = getSourceInfo(groupInfo, clickHouseSink, sortClusterName);
         ClickHouseSinkInfo ckSink = getCkSinkInfo(groupInfo, clickHouseSink);
 
         String flowId = clickHouseSink.getId().toString();
@@ -153,8 +153,8 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     /**
      * Assembly source information
      */
-    private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink, String taskName)
-            throws Exception {
+    private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink,
+            String sortClusterName) throws Exception {
         String groupId = clickHouseSink.getInlongGroupId();
         String streamId = clickHouseSink.getInlongStreamId();
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
@@ -217,7 +217,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
                 DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupInfo, topic, taskName, clickHouseSink.getId());
+                String subscription = getConsumerGroup(groupInfo, topic, sortClusterName, clickHouseSink.getId());
                 sourceInfo = new PulsarSourceInfo(null, null, fullTopic, subscription,
                         deserializationInfo, fieldList.stream().map(f -> {
                             FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(

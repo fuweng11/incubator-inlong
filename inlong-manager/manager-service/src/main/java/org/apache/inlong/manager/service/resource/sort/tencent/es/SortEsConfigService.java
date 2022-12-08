@@ -100,15 +100,15 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
         for (ElasticsearchSink elasticsearchSink : elasticsearchSinkList) {
             // get sort task name for sink
-            String taskName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
+            String sortClusterName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
                     elasticsearchSink.getId(), ClusterType.SORT_ES);
-            log.info("begin to push sort elasticsearch config to zkUrl={}, taskName={}", zkUrl, taskName);
+            log.info("begin to push sort elasticsearch config to zkUrl={}, sortClusterName={}", zkUrl, sortClusterName);
             try {
-                DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, elasticsearchSink, taskName);
+                DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, elasticsearchSink, sortClusterName);
                 // Update / add data under dataflow on ZK
-                ZkTools.updateDataFlowInfo(flowInfo, taskName, flowInfo.getId(), zkUrl, zkRoot);
+                ZkTools.updateDataFlowInfo(flowInfo, sortClusterName, flowInfo.getId(), zkUrl, zkRoot);
                 // Add data under clusters on ZK
-                ZkTools.addDataFlowToCluster(taskName, flowInfo.getId(), zkUrl, zkRoot);
+                ZkTools.addDataFlowToCluster(sortClusterName, flowInfo.getId(), zkUrl, zkRoot);
                 String info = "success to push elasticsearch sort config";
                 log.info("success to push elasticsearch sort config {}", JSON_MAPPER.writeValueAsString(flowInfo));
             } catch (Exception e) {
@@ -123,9 +123,8 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
      * Get DataFlowInfo for Sort
      */
     private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, ElasticsearchSink elasticsearchSink,
-            String taskName)
-            throws Exception {
-        SourceInfo sourceInfo = getSourceInfo(groupInfo, elasticsearchSink, taskName);
+            String sortClusterName) throws Exception {
+        SourceInfo sourceInfo = getSourceInfo(groupInfo, elasticsearchSink, sortClusterName);
         EsSinkInfo esSink = getEsSinkInfo(groupInfo, elasticsearchSink);
         // TransformInfo transformInfo = getTransformInfo(groupInfo, innerEsSink);
         String flowId = elasticsearchSink.getId().toString();
@@ -147,8 +146,8 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
     /**
      * Assembly source information
      */
-    private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, ElasticsearchSink elasticsearchSink, String taskName)
-            throws Exception {
+    private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, ElasticsearchSink elasticsearchSink,
+            String sortClusterName) throws Exception {
         String groupId = elasticsearchSink.getInlongGroupId();
         String streamId = elasticsearchSink.getInlongStreamId();
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
@@ -215,7 +214,7 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
                 DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupInfo, topic, taskName, elasticsearchSink.getId());
+                String subscription = getConsumerGroup(groupInfo, topic, sortClusterName, elasticsearchSink.getId());
                 sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
                         deserializationInfo, fieldList.stream().map(f -> {
                             FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(

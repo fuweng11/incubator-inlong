@@ -218,7 +218,8 @@ public class AbstractInnerSortConfigService {
             LOGGER.warn("no matching sort cluster information for groupId=" + groupId);
             return;
         }
-        String taskName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(), sink.getId(),
+        String sortClusterName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
+                sink.getId(),
                 topoType);
         InlongClusterEntity zkCluster = zkClusters.get(0);
         ZkClusterDTO zkClusterDTO = ZkClusterDTO.getFromJson(zkCluster.getExtParams());
@@ -227,14 +228,14 @@ public class AbstractInnerSortConfigService {
         Integer sinkId = sink.getId();
         LOGGER.info("try to delete sort config from {}, idList={}", zkUrl, sinkId);
         // It could be hive or thive
-        ZkTools.removeDataFlowFromCluster(taskName, sinkId.toString(), zkUrl, zkRoot);
+        ZkTools.removeDataFlowFromCluster(sortClusterName, sinkId.toString(), zkUrl, zkRoot);
         LOGGER.info("success to delete sort config from {}, idList={}", zkUrl, sinkId);
     }
 
     public String getSortTaskName(String groupId, String clusterTag, Integer sinkId, String sortTaskType) {
         StreamSinkEntity sinkEntity = sinkMapper.selectByPrimaryKey(sinkId);
-        String taskName = sinkEntity.getSortTaskName();
-        if (StringUtils.isBlank(taskName)) {
+        String sortClusterName = sinkEntity.getInlongClusterName();
+        if (StringUtils.isBlank(sortClusterName)) {
             List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
                     clusterTag, null, sortTaskType);
             int minCount = -1;
@@ -242,14 +243,14 @@ public class AbstractInnerSortConfigService {
                 int isUsedCount = sinkMapper.selectExistByGroupIdAndTaskName(groupId, sortCluster.getName());
                 if (minCount < 0 || isUsedCount <= minCount) {
                     minCount = isUsedCount;
-                    taskName = sortCluster.getName();
+                    sortClusterName = sortCluster.getName();
                 }
             }
-            if (taskName == null || StringUtils.isBlank(taskName)) {
+            if (sortClusterName == null || StringUtils.isBlank(sortClusterName)) {
                 throw new WorkflowListenerException("topo cluster not found for groupId=" + groupId);
             }
             // save sort task name
-            sinkEntity.setSortTaskName(taskName);
+            sinkEntity.setInlongClusterName(sortClusterName);
             int rowCount = sinkMapper.updateByIdSelective(sinkEntity);
             if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
                 LOGGER.error("sink has already updated with groupId={}, streamId={}, name={}, curVersion={}",
@@ -258,7 +259,7 @@ public class AbstractInnerSortConfigService {
                 throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
             }
         }
-        return taskName;
+        return sortClusterName;
     }
 
 }

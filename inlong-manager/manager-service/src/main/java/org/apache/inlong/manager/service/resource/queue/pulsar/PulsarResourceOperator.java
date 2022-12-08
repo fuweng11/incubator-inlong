@@ -319,9 +319,9 @@ public class PulsarResourceOperator implements QueueResourceOperator {
                         sink.getId());
         }
         // get sort task name for sink
-        String taskName = sortConfigService.getSortTaskName(groupInfo.getInlongGroupId(),
+        String sortClusterName = sortConfigService.getSortTaskName(groupInfo.getInlongGroupId(),
                 groupInfo.getInlongClusterTag(), sink.getId(), sortTaskType);
-        return String.format(PULSAR_SUBSCRIPTION, taskName, groupInfo.getMqResource(), topicName,
+        return String.format(PULSAR_SUBSCRIPTION, sortClusterName, groupInfo.getMqResource(), topicName,
                 sink.getId());
     }
 

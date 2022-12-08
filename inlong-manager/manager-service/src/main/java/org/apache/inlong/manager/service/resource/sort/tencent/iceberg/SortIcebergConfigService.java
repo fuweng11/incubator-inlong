@@ -106,13 +106,14 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
                 continue;
             }
             // get sort task name for sink
-            String taskName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
+            String sortClusterName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
                     icebergSink.getId(), ClusterType.SORT_ICEBERG);
             // table not exists, push config to zk
-            log.info("begin to push iceberg config [{}] to zkUrl={}, icebergTopo={}", icebergId, zkUrl, taskName);
-            DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, icebergSink, tableDetail, taskName);
-            ZkTools.updateDataFlowInfo(flowInfo, taskName, flowInfo.getId(), zkUrl, zkRoot);
-            ZkTools.addDataFlowToCluster(taskName, flowInfo.getId(), zkUrl, zkRoot);
+            log.info("begin to push iceberg config [{}] to zkUrl={}, icebergTopo={}", icebergId, zkUrl,
+                    sortClusterName);
+            DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, icebergSink, tableDetail, sortClusterName);
+            ZkTools.updateDataFlowInfo(flowInfo, sortClusterName, flowInfo.getId(), zkUrl, zkRoot);
+            ZkTools.addDataFlowToCluster(sortClusterName, flowInfo.getId(), zkUrl, zkRoot);
 
             log.info("success to push iceberg sort config {}", OBJECT_MAPPER.writeValueAsString(flowInfo));
         }
@@ -122,8 +123,8 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
      * Get DataFlowInfo for Sort
      */
     private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerIcebergSink icebergSink,
-            QueryIcebergTableResponse tableDetail, String taskName) throws Exception {
-        SourceInfo sourceInfo = getSourceInfo(groupInfo, icebergSink, taskName);
+            QueryIcebergTableResponse tableDetail, String sortClusterName) throws Exception {
+        SourceInfo sourceInfo = getSourceInfo(groupInfo, icebergSink, sortClusterName);
         IcebergSinkInfo icebergSinkInfo = getIcebergSinkInfo(icebergSink, tableDetail);
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("source.tdbank.bid", groupInfo.getInlongGroupId());
@@ -141,7 +142,7 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
      * get source info
      */
     private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, InnerIcebergSink icebergSink,
-            String taskName) throws Exception {
+            String sortClusterName) throws Exception {
         String groupId = groupInfo.getInlongGroupId();
         String streamId = icebergSink.getInlongStreamId();
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
@@ -163,7 +164,7 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
 
             List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(icebergSink.getId());
             String topic = groupInfo.getMqResource();
-            String consumerGroup = getConsumerGroup(groupInfo, topic, taskName, icebergSink.getId());
+            String consumerGroup = getConsumerGroup(groupInfo, topic, sortClusterName, icebergSink.getId());
             return new TubeSourceInfo(topic, masterAddress, consumerGroup, deserializationInfo,
                     fieldList.stream().map(f -> {
                         FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
@@ -204,7 +205,7 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
                 DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupInfo, topic, taskName, icebergSink.getId());
+                String subscription = getConsumerGroup(groupInfo, topic, sortClusterName, icebergSink.getId());
                 sourceInfo = new PulsarSourceInfo(null, null, fullTopic, subscription,
                         deserializationInfo, fieldList.stream().map(f -> {
                             FormatInfo formatInfo =
