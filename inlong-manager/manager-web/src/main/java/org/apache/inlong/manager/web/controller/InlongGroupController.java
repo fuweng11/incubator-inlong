@@ -20,7 +20,6 @@ package org.apache.inlong.manager.web.controller;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.inlong.manager.common.enums.OperationType;
 import org.apache.inlong.manager.common.enums.UserTypeEnum;
 import org.apache.inlong.manager.common.validation.UpdateValidation;
@@ -33,7 +32,7 @@ import org.apache.inlong.manager.pojo.group.InlongGroupPageRequest;
 import org.apache.inlong.manager.pojo.group.InlongGroupRequest;
 import org.apache.inlong.manager.pojo.group.InlongGroupResetRequest;
 import org.apache.inlong.manager.pojo.group.InlongGroupTopicInfo;
-import org.apache.inlong.manager.pojo.user.UserInfo;
+import org.apache.inlong.manager.pojo.group.InlongGroupTopicRequest;
 import org.apache.inlong.manager.pojo.workflow.WorkflowResult;
 import org.apache.inlong.manager.service.group.InlongGroupProcessService;
 import org.apache.inlong.manager.service.group.InlongGroupService;
@@ -49,10 +48,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * Inlong group control layer
  */
-@Slf4j
 @RestController
 @RequestMapping("/api")
 @Api(tags = "Inlong-Group-API")
@@ -98,6 +98,12 @@ public class InlongGroupController {
         return Response.success(groupService.getTopic(groupId));
     }
 
+    @PostMapping(value = "/group/listTopics")
+    @ApiOperation(value = "Get topic infos")
+    public Response<List<InlongGroupTopicInfo>> listTopics(@RequestBody InlongGroupTopicRequest request) {
+        return Response.success(groupService.listTopics(request));
+    }
+
     @GetMapping(value = "/group/getBackupTopic/{groupId}")
     @ApiOperation(value = "Get backup topic info")
     public Response<InlongGroupTopicInfo> getBackupTopic(@PathVariable String groupId) {
@@ -107,9 +113,8 @@ public class InlongGroupController {
     @RequestMapping(value = "/group/list", method = RequestMethod.POST)
     @ApiOperation(value = "List inlong groups by paginating")
     public Response<PageResult<InlongGroupBriefInfo>> listBrief(@RequestBody InlongGroupPageRequest request) {
-        UserInfo userInfo = LoginUserUtils.getLoginUser();
-        request.setCurrentUser(userInfo.getName());
-        request.setIsAdminRole(userInfo.getRoles().contains(UserTypeEnum.ADMIN.name()));
+        request.setCurrentUser(LoginUserUtils.getLoginUser().getName());
+        request.setIsAdminRole(LoginUserUtils.getLoginUser().getRoles().contains(UserTypeEnum.ADMIN.name()));
         return Response.success(groupService.listBrief(request));
     }
 
