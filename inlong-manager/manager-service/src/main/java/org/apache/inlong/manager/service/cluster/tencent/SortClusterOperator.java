@@ -30,6 +30,7 @@ import org.apache.inlong.manager.pojo.cluster.ClusterRequest;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterRequest;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.ck.SortClickHouseClusterInfo;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.es.SortEsClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.hive.SortHiveClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.iceberg.SortIcebergClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.thive.SortThiveClusterInfo;
@@ -54,6 +55,7 @@ public class SortClusterOperator extends AbstractClusterOperator {
             add(ClusterType.SORT_THIVE);
             add(ClusterType.SORT_CK);
             add(ClusterType.SORT_ICEBERG);
+            add(ClusterType.SORT_ES);
         }
     };
 
@@ -100,6 +102,9 @@ public class SortClusterOperator extends AbstractClusterOperator {
                 break;
             case ClusterType.SORT_ICEBERG:
                 sortClusterInfo = new SortIcebergClusterInfo();
+                break;
+            case ClusterType.SORT_ES:
+                sortClusterInfo = new SortEsClusterInfo();
                 break;
             default:
                 throw new BusinessException("unsupported cluster type " + entity.getType());
