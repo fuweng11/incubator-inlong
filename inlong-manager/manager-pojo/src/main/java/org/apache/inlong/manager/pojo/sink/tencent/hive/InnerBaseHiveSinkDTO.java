@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.util.AESUtils;
@@ -172,8 +173,9 @@ public class InnerBaseHiveSinkDTO {
      * Get Hive table info
      */
     public static InnerHiveFullInfo getFullInfo(InlongGroupInfo groupInfo, InnerBaseHiveSinkDTO innerHiveDTO,
-            SinkInfo sinkInfo, InnerBaseHiveDataNodeInfo hiveDataNode) {
+            SinkInfo sinkInfo, InnerBaseHiveDataNodeInfo hiveDataNode) throws Exception {
         Integer isThive = Objects.equals(sinkInfo.getSinkType(), SinkType.INNER_THIVE) ? 1 : 0;
+        String password = encryptPassword(hiveDataNode.getToken(), innerHiveDTO.getTableName());
         return InnerHiveFullInfo.builder()
                 .sinkId(sinkInfo.getId())
                 .productId(groupInfo.getProductId())
@@ -209,12 +211,18 @@ public class InnerBaseHiveSinkDTO {
                 .dataEscapeChar(sinkInfo.getDataEscapeChar())
                 .hiveAddress(hiveDataNode.getHiveAddress())
                 .username(hiveDataNode.getUsername())
-                .password(hiveDataNode.getToken())
+                .password(password)
                 .warehouseDir(hiveDataNode.getWarehouseDir())
                 .hdfsDefaultFs(hiveDataNode.getHdfsDefaultFs())
                 .hdfsUgi(hiveDataNode.getHdfsUgi())
                 .clusterTag(hiveDataNode.getClusterTag())
                 .build();
+    }
+
+    private static String encryptPassword(String password, String key) throws Exception {
+        byte[] passwordBytes = Base64.encodeBase64(password.getBytes(StandardCharsets.UTF_8), false);
+        byte[] cipheredBytes = AESUtils.encrypt(passwordBytes, key.trim().getBytes(StandardCharsets.UTF_8));
+        return new String(cipheredBytes, StandardCharsets.UTF_8);
     }
 
     private InnerBaseHiveSinkDTO decryptPassword() throws Exception {

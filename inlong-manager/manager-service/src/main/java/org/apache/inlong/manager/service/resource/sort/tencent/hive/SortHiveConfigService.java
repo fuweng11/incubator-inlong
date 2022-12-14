@@ -317,7 +317,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
         // Hive's JDBC connection
         String hiveServerUrl = hiveFullInfo.getHiveAddress();
-        if (!hiveServerUrl.startsWith("jdbc")) {
+        if (!hiveServerUrl.startsWith("jdbc") && !hiveServerUrl.startsWith("thrift")) {
             hiveServerUrl = "jdbc:hive2://" + hiveServerUrl;
         }
 
@@ -374,7 +374,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
         // Thive's JDBC connection
         String hiveServerUrl = hiveFullInfo.getHiveAddress();
-        if (!hiveServerUrl.startsWith("jdbc")) {
+        if (!hiveServerUrl.startsWith("jdbc") && !hiveServerUrl.startsWith("thrift")) {
             hiveServerUrl = "jdbc:hive://" + hiveServerUrl;
         }
 
