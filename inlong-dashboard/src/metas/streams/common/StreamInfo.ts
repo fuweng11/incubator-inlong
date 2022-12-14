@@ -34,10 +34,6 @@ export class StreamInfo extends StreamDefaultInfo {
           value: 'CSV',
         },
         {
-          label: 'Raw-CSV',
-          value: 'RAW_CSV',
-        },
-        {
           label: 'BinLog',
           value: 'BINLOG',
         },
