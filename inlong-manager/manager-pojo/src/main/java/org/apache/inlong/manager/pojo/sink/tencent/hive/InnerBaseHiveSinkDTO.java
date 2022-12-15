@@ -64,6 +64,9 @@ public class InnerBaseHiveSinkDTO {
     @ApiModelProperty("table name")
     private String tableName;
 
+    @ApiModelProperty("hdfs location")
+    private String location;
+
     @ApiModelProperty("partition type")
     private String partitionType;
 

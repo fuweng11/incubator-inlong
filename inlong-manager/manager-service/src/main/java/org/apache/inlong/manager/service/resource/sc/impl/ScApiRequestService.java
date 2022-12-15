@@ -72,7 +72,7 @@ public class ScApiRequestService {
         return response.getData();
     }
 
-    private HttpHeaders getHeader() {
+    public HttpHeaders getHeader() {
         HttpHeaders header = new HttpHeaders();
         header.add(ScAuthenticate.SECURE_AUTHENTICATION,
                 scAuthenticate.urlEncode(scAuthenticate.tauth(scConfig.getService())));

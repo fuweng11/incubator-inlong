@@ -52,6 +52,9 @@ public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
     @ApiModelProperty("target table name")
     private String tableName;
 
+    @ApiModelProperty("hdfs location")
+    private String location;
+
     @ApiModelProperty("partition type, only for thive:LIST,RANGE")
     private String partitionType = "LIST";
 

@@ -259,10 +259,6 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
            */
         sortExtConfig.setCreationStrategy(creationStrategy);
 
-        // dataPath = hdfsUrl + / + warehouseDir + / + dbName + .db/ + tableName
-        String dataPath = hiveFullInfo.getHdfsDefaultFs() + hiveFullInfo.getWarehouseDir() + "/"
-                + hiveFullInfo.getDbName() + ".db/" + hiveFullInfo.getTableName();
-
         // Data consistency assurance
         ConsistencyGuarantee consistency = ConsistencyGuarantee.EXACTLY_ONCE;
         String consistencyStr = hiveFullInfo.getDataConsistency();
@@ -280,9 +276,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 throw new BusinessException(String.format("us task id cannot be empty for bid=%s, tid=%s",
                         hiveFullInfo.getInlongGroupId(), hiveFullInfo.getInlongStreamId()));
             }
-            sinkInfo = getTHiveSinkInfo(hiveFullInfo, dataPath, fieldInfoList, sortExtConfig);
+            sinkInfo = getTHiveSinkInfo(hiveFullInfo, hiveFullInfo.getLocation(), fieldInfoList, sortExtConfig);
         } else {
-            sinkInfo = getHiveSinkInfo(hiveFullInfo, dataPath, fieldInfoList, sortExtConfig);
+            sinkInfo = getHiveSinkInfo(hiveFullInfo, hiveFullInfo.getLocation(), fieldInfoList, sortExtConfig);
         }
         return sinkInfo;
     }

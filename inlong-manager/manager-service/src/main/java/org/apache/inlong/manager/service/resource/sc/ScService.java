@@ -95,4 +95,26 @@ public interface ScService {
      */
     List<AppGroup> listAllAppGroup(String name);
 
+    /**
+     * Check whether there is corresponding permission according to the username
+     *
+     * @param username username
+     * @param database database
+     * @param table table
+     * @param accessType access type
+     * @return true or false
+     */
+    boolean checkPermissions(String username, String database, String table, String accessType);
+
+    /**
+     * Grant permission according to the username
+     *
+     * @param username username
+     * @param database database
+     * @param table table
+     * @param accessType access type
+     * @return true or false
+     */
+    boolean grant(String username, String database, String table, String accessType, String hiveType);
+
 }

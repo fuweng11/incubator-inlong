@@ -17,20 +17,38 @@
 
 package org.apache.inlong.manager.service.resource.sink.tencent.us;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Maps;
 import com.tencent.tdw.ups.client.TdwUps;
 import com.tencent.tdw.ups.client.TdwUpsFactory;
 import com.tencent.tdw.ups.client.impl.HiveImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.TencentConstants;
+import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
+import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
+import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.common.util.JsonUtils;
+import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
+import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
+import org.apache.inlong.manager.pojo.tencent.ups.QueryHiveLocationResponse;
+import org.apache.inlong.manager.pojo.tencent.ups.QueryHiveLocationResponse.TableObject;
 import org.apache.inlong.manager.pojo.tencent.ups.UPSConfiguration;
 import org.apache.inlong.manager.pojo.tencent.ups.UPSCreateTableInfo;
 import org.apache.inlong.manager.pojo.tencent.ups.UPSOperateResult;
 import org.apache.inlong.manager.pojo.tencent.ups.UpsTableInfo;
+import org.apache.inlong.manager.pojo.tencent.ups.UpsTableInfo.TableInfoBean;
 import org.apache.inlong.manager.pojo.tencent.ups.UpsTablePrivilege;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
 
 /**
  * UPS related operations
@@ -41,6 +59,18 @@ public class UPSOperator {
 
     @Autowired
     private UPSConfiguration upsConfiguration;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private StreamSinkEntityMapper sinkEntityMapper;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Value("${inlong.oms.httpUrl}")
+    private String omsHttpUrl;
 
     /**
      * query library table interface
@@ -183,6 +213,61 @@ public class UPSOperator {
         } else {
             throw new Exception("hive type " + hiveType + " not support");
         }
+    }
+
+    /**
+     * get and save hdfs location
+     */
+    public void getAndSaveLocation(InnerHiveFullInfo hiveFullInfo) {
+        Integer sinkId = hiveFullInfo.getSinkId();
+        log.info("begin to get and save hdfs location for sinkId={}", sinkId);
+        try {
+            String location = getLocation(hiveFullInfo);
+            StreamSinkEntity sinkEntity = sinkEntityMapper.selectByPrimaryKey(hiveFullInfo.getSinkId());
+            InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(sinkEntity.getExtParams());
+            dto.setLocation(location);
+            sinkEntity.setExtParams(objectMapper.writeValueAsString(dto));
+            sinkEntityMapper.updateByIdSelective(sinkEntity);
+        } catch (Exception e) {
+            log.error("parsing json string to sink info failed", e);
+            throw new WorkflowListenerException(ErrorCodeEnum.SINK_SAVE_FAILED.getMessage());
+        }
+    }
+
+    public String getLocation(InnerHiveFullInfo hiveFullInfo) throws Exception {
+        Integer sinkId = hiveFullInfo.getSinkId();
+        String location = "";
+        log.info("begin to  get and save hdfs location for sinkId={}", sinkId);
+        try {
+            QueryHiveLocationResponse response = queryHiveTableInfoByOms(hiveFullInfo.getClusterTag(),
+                    hiveFullInfo.getUsername(), hiveFullInfo.getDbName(), hiveFullInfo.getTableName());
+            TableObject retObj = response.getRetObj();
+            if (retObj != null && retObj.getTableInfo() != null) {
+                TableInfoBean tableInfo = retObj.getTableInfo();
+                location = tableInfo.getLocation();
+            }
+            log.info("success to get and save hdfs location for sinkId={}", sinkId);
+        } catch (Exception e) {
+            String errMsg = String.format("failed get and save hdfs location for sinkId=%s", sinkId);
+            log.error(errMsg, e);
+            throw new WorkflowListenerException(errMsg);
+        }
+        return location;
+    }
+
+    public QueryHiveLocationResponse queryHiveTableInfoByOms(String clusterTag, String username, String database,
+            String table)
+            throws Exception {
+        log.info("begin get table info by oms");
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("cluster", clusterTag);
+        params.put("user", username);
+        params.put("db", database);
+        params.put("table", table);
+        HttpHeaders headers = new HttpHeaders();
+        return HttpUtils.getRequest(restTemplate, omsHttpUrl, params, headers,
+                new ParameterizedTypeReference<QueryHiveLocationResponse>() {
+                });
     }
 
 }

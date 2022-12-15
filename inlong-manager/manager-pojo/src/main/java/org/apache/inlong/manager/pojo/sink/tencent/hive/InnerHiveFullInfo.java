@@ -48,6 +48,7 @@ public class InnerHiveFullInfo {
 
     private String dbName;
     private String tableName;
+    private String location;
     private String partitionType;
     private Integer partitionInterval;
     private String partitionUnit;

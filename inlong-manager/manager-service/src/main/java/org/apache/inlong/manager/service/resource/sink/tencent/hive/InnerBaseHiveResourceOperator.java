@@ -69,12 +69,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InnerBaseHiveResourceOperator.class);
     private static final Gson GSON = new GsonBuilder().create();
+    private static final int MAX_RETRY_TIMES = 20;
 
     @Autowired
     private ScService scService;
@@ -195,10 +197,16 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                     dataNodeInfo);
             String dbName = hiveFullInfo.getDbName();
             String tbName = hiveFullInfo.getTableName();
+            String superUser = hiveFullInfo.getUsername();
+            // before querying the table, it is necessary to determine whether the superuser has the right to select
+            grantPrivilegeBySc(hiveFullInfo, superUser, "select", true);
+
             TableInfoBean existTable = upsOperator.queryTableInfo(hiveFullInfo.getIsThive(),
                     hiveFullInfo.getClusterTag(), hiveFullInfo.getUsername(), dbName, tbName);
             DealResult dealResult;
             if (existTable == null) {
+                // grant superuser permission to create tables, and create tables with superuser
+                grantPrivilegeBySc(hiveFullInfo, superUser, "create", true);
                 LOGGER.info("new hive table [{}.{}] will be created", dbName, tbName);
                 dealResult = this.createTdwTable(hiveFullInfo, columnList);
             } else {
@@ -217,6 +225,13 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                 sinkService.updateStatus(sinkInfo.getId(), SinkStatus.CONFIG_FAILED.getCode(), errMsg);
                 throw new WorkflowException(errMsg);
             }
+
+            // get and save hdfs location
+            upsOperator.getAndSaveLocation(hiveFullInfo);
+
+            // after the table is created successfully, need to set the table alter and select permission for the super user
+            grantPrivilegeBySc(hiveFullInfo, superUser, "alter", false);
+
             // give the responsible person query permission
             // and the write permission is only required by cluster level users of sort side write partition
             InlongGroupInfo inlongGroupInfo = groupService.get(sinkInfo.getInlongGroupId());
@@ -289,11 +304,6 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             }
         }
         tableInfo.setFieldsTerminated(separator);
-
-        // Address of the file on HDFS
-        String location = innerHiveInfo.getHdfsDefaultFs() + innerHiveInfo.getWarehouseDir()
-                + "/" + innerHiveInfo.getDbName() + ".db/" + innerHiveInfo.getTableName();
-        tableInfo.setLocation(location);
 
         // encapsulate table fields
         List<Map<String, String>> columnList = new ArrayList<>();
@@ -543,4 +553,46 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         return dealResult;
     }
 
+
+    /**
+     * check permission for database or table through security center
+     */
+    public boolean checkAndGrant(InnerHiveFullInfo hiveFullInfo, String username, String accessType, boolean isAll)
+            throws Exception {
+        String dbName = hiveFullInfo.getDbName();
+        String tableName = isAll ? "*" : hiveFullInfo.getTableName();
+        String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
+        LOGGER.info("check whether the user has permission to {} a table for user={}, database={}", accessType,
+                username, dbName);
+        boolean hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType);
+        AtomicInteger retryTimes = new AtomicInteger(0);
+        while (!hasPermissions && retryTimes.get() < MAX_RETRY_TIMES) {
+            LOGGER.info("check permission with user={}, hasPermission={}, retryTimes={}, maxRetryTimes={}",
+                    username, hasPermissions, retryTimes.get(), MAX_RETRY_TIMES);
+            // sleep 5 minute
+            LOGGER.info("begin to grant hive privilege {} for user={}", accessType, username);
+            scService.grant(username, dbName, tableName, accessType, hiveType);
+            LOGGER.info("finish to grant hive privilege {} for user={}", accessType, username);
+            Thread.sleep(1000 * 60);
+            retryTimes.incrementAndGet();
+            hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType);
+        }
+        return hasPermissions;
+    }
+
+    public void grantPrivilegeBySc(InnerHiveFullInfo hiveFullInfo, String username, String accessType, boolean isAll)
+            throws Exception {
+        String database = hiveFullInfo.getDbName();
+        String table = hiveFullInfo.getTableName();
+        boolean isSuccess = checkAndGrant(hiveFullInfo, username, accessType, isAll);
+        if (!isSuccess) {
+            String errMsg = String.format("grant %s permission failed for user=%s, database=%s, table=%s", accessType,
+                    username, database, table);
+            LOGGER.info(errMsg);
+            sinkService.updateStatus(hiveFullInfo.getSinkId(), SinkStatus.CONFIG_FAILED.getCode(), errMsg);
+            throw new WorkflowException(errMsg);
+        }
+        LOGGER.info("success to grant privilege {} for user={}, database={}, table={}", accessType, username, database,
+                table);
+    }
 }
