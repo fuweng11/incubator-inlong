@@ -146,7 +146,7 @@
 
         <aws.sdk.version>1.12.346</aws.sdk.version>
         <zookeeper.version>3.6.3</zookeeper.version>
-        <pulsar.version>2.8.4-internal</pulsar.version>
+        <pulsar.version>2.8.4.1</pulsar.version>
         <pulsar.testcontainers.version>1.15.3</pulsar.testcontainers.version>
         <kafka.version>2.4.1</kafka.version>
         <iceberg.version>0.13.2</iceberg.version>
@@ -1863,10 +1863,6 @@
             <id>tencent-thirdparty</id>
             <name>tencent third party repo</name>
             <url>https://mirrors.tencent.com/repository/maven/thirdparty</url>
-        </repository>
-        <repository>
-            <id>atta-central</id>
-            <url>https://mirrors.tencent.com/repository/maven/Atta</url>
         </repository>
     </repositories>
 
