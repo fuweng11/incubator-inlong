@@ -107,7 +107,7 @@ public class CustomSinkOperator extends AbstractSinkOperator {
     public void deleteOpt(StreamSinkEntity entity, String operator) {
         entity.setPreviousStatus(entity.getStatus());
         entity.setStatus(InlongConstants.DELETED_STATUS);
-        entity.setIsDeleted(1);
+        entity.setIsDeleted(entity.getId());
         entity.setModifier(operator);
         int rowCount = sinkMapper.updateByIdSelective(entity);
         if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
@@ -115,6 +115,7 @@ public class CustomSinkOperator extends AbstractSinkOperator {
                     entity.getInlongGroupId(), entity.getInlongStreamId(), entity.getSinkName(), entity.getVersion());
             throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
         }
+        sinkFieldMapper.logicDeleteAll(entity.getId());
     }
 
     @Override
