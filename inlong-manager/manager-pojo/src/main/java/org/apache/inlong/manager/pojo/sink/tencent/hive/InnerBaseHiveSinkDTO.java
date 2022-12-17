@@ -222,7 +222,7 @@ public class InnerBaseHiveSinkDTO {
     private static String encryptPassword(String password, String key) throws Exception {
         byte[] passwordBytes = Base64.encodeBase64(password.getBytes(StandardCharsets.UTF_8), false);
         byte[] cipheredBytes = AESUtils.encrypt(passwordBytes, key.trim().getBytes(StandardCharsets.UTF_8));
-        return new String(cipheredBytes, StandardCharsets.UTF_8);
+        return AESUtils.parseByte2HexStr(cipheredBytes);
     }
 
     private InnerBaseHiveSinkDTO decryptPassword() throws Exception {
