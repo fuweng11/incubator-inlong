@@ -15,33 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.sort.cdc.base.util;
+package org.apache.inlong.sort.cdc.mongodb.debezium.table;
 
-import org.apache.flink.util.Collector;
-import org.apache.flink.util.function.ThrowingConsumer;
+import io.debezium.relational.history.TableChanges.TableChange;
+import java.io.Serializable;
+import org.apache.kafka.connect.data.Schema;
 
 /**
- * A collector supporting callback.
+ * Runtime converter that converts objects of Debezium into objects of Flink Table & SQL internal
+ * data structures.
  */
-public class CallbackCollector<T> implements Collector<T> {
+public interface DeserializationRuntimeConverter extends Serializable {
 
-    private final ThrowingConsumer<T, Exception> callback;
+    Object convert(Object dbzObj, Schema schema) throws Exception;
 
-    public CallbackCollector(ThrowingConsumer<T, Exception> callback) {
-        this.callback = callback;
-    }
-
-    @Override
-    public void collect(T t) {
-        try {
-            callback.accept(t);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void close() {
-
-    }
+    Object convert(Object dbzObj, Schema schema, TableChange tableSchema) throws Exception;
 }

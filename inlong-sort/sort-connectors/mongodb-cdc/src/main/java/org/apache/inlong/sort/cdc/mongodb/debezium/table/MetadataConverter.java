@@ -15,33 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.sort.cdc.base.util;
+package org.apache.inlong.sort.cdc.mongodb.debezium.table;
 
-import org.apache.flink.util.Collector;
-import org.apache.flink.util.function.ThrowingConsumer;
+import io.debezium.relational.history.TableChanges;
+import java.io.Serializable;
+import javax.annotation.Nullable;
+import org.apache.flink.annotation.Internal;
+import org.apache.flink.table.data.RowData;
+import org.apache.kafka.connect.source.SourceRecord;
 
 /**
- * A collector supporting callback.
+ * A converter converts {@link SourceRecord} metadata into Flink internal data structures.
  */
-public class CallbackCollector<T> implements Collector<T> {
+@FunctionalInterface
+@Internal
+public interface MetadataConverter extends Serializable {
 
-    private final ThrowingConsumer<T, Exception> callback;
+    Object read(SourceRecord record);
 
-    public CallbackCollector(ThrowingConsumer<T, Exception> callback) {
-        this.callback = callback;
-    }
-
-    @Override
-    public void collect(T t) {
-        try {
-            callback.accept(t);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void close() {
-
+    default Object read(SourceRecord record, @Nullable TableChanges.TableChange tableSchema, RowData rowData) {
+        return read(record);
     }
 }

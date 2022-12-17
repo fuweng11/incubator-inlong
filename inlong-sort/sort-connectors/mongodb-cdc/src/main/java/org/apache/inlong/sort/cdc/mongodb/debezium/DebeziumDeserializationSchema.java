@@ -15,33 +15,26 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.sort.cdc.base.util;
+package org.apache.inlong.sort.cdc.mongodb.debezium;
 
+import java.io.Serializable;
+import org.apache.flink.annotation.PublicEvolving;
+import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.function.ThrowingConsumer;
+import org.apache.kafka.connect.source.SourceRecord;
 
 /**
- * A collector supporting callback.
+ * The deserialization schema describes how to turn the Debezium SourceRecord into data types
+ * (Java/Scala objects) that are processed by Flink.
+ *
+ * @param <T> The type created by the deserialization schema.
  */
-public class CallbackCollector<T> implements Collector<T> {
+@PublicEvolving
+public interface DebeziumDeserializationSchema<T> extends Serializable, ResultTypeQueryable<T> {
 
-    private final ThrowingConsumer<T, Exception> callback;
+    /**
+     * Deserialize the Debezium record, it is represented in Kafka {@link SourceRecord}.
+     */
+    void deserialize(SourceRecord record, Collector<T> out) throws Exception;
 
-    public CallbackCollector(ThrowingConsumer<T, Exception> callback) {
-        this.callback = callback;
-    }
-
-    @Override
-    public void collect(T t) {
-        try {
-            callback.accept(t);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void close() {
-
-    }
 }
