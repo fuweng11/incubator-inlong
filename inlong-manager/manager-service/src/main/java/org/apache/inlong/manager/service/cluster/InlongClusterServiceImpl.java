@@ -67,6 +67,7 @@ import org.apache.inlong.manager.pojo.common.UpdateResult;
 import org.apache.inlong.manager.pojo.group.InlongGroupBriefInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupPageRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamBriefInfo;
+import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.repository.DataProxyConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -505,7 +506,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         LOGGER.info("success to save inlong cluster={} by user={}", request, operator);
         return id;
     }
-
 
     @Override
     public Integer save(ClusterRequest request, UserInfo opInfo) {
