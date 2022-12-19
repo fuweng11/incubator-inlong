@@ -53,6 +53,8 @@ public class TencentConstants {
 
     public static final String FILE_FORMAT_SEQUENCE = "SequenceFile";
 
+    public static final String FILE_FORMAT_MY_SEQUENCE = "MySequenceFile";
+
     public static final String FILE_FORMAT_PARQUET = "Parquet";
 
     /**

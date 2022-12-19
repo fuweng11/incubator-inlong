@@ -237,6 +237,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         } else if (TencentConstants.FILE_FORMAT_SEQUENCE.equalsIgnoreCase(format)) {
             fileFormat = new HiveSinkInfo.SequenceFileFormatInfo(separator,
                     SequenceCompressionCodec.DEFAULT, SequenceCompressionType.NONE);
+        } else if (TencentConstants.FILE_FORMAT_MY_SEQUENCE.equalsIgnoreCase(format)) {
+            fileFormat = new HiveSinkInfo.MySequenceFileFormatInfo(separator,
+                    SequenceCompressionCodec.DEFAULT, SequenceCompressionType.NONE);
         } else if (TencentConstants.FILE_FORMAT_PARQUET.equalsIgnoreCase(format)) {
             fileFormat = new HiveSinkInfo.ParquetFileFormatInfo();
         } else {
