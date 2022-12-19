@@ -15,25 +15,32 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.sort.standalone.metrics;
+package org.apache.inlong.manager.pojo.sink.starrocks;
+
+import lombok.Data;
 
 import java.util.List;
 
 /**
- * 
- * MetricListener
+ * StarRocks table info.
  */
-public interface MetricListener {
+@Data
+public class StarRocksTableInfo {
 
-    String KEY_METRIC_DOMAINS = "metricDomains";
-    String KEY_DOMAIN_LISTENERS = "domainListeners";
-    String KEY_SNAPSHOT_INTERVAL = "snapshotInterval";
+    private String dbName;
 
-    /**
-     * snapshot
-     * 
-     * @param domain
-     * @param itemValues
-     */
-    public void snapshot(String domain, List<MetricItemValue> itemValues);
+    private String tableName;
+
+    private String comment;
+
+    private String primaryKey;
+
+    private String tableEngine;
+
+    private Integer replicationNum;
+
+    private Integer barrelSize;
+
+    private List<StarRocksColumnInfo> columns;
+
 }
