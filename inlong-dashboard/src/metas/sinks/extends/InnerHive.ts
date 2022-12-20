@@ -189,6 +189,14 @@ export default class InnerHiveSink
           label: 'Parquet',
           value: 'Parquet',
         },
+        {
+          label: 'SequenceFile',
+          value: 'SequenceFile',
+        },
+        {
+          label: 'MySequenceFile',
+          value: 'MySequenceFile',
+        },
       ],
     }),
   })

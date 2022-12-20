@@ -200,6 +200,14 @@ export default class InnerThiveSink
           label: 'Parquet',
           value: 'Parquet',
         },
+        {
+          label: 'SequenceFile',
+          value: 'SequenceFile',
+        },
+        {
+          label: 'MySequenceFile',
+          value: 'MySequenceFile',
+        },
       ],
     }),
   })
