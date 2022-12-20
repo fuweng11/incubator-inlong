@@ -261,7 +261,11 @@ public class ScServiceImpl implements ScService {
         Map<String, Object> authAccess = new HashMap<>();
         authAccess.put("type", "AUTH_HIVE_RS");
         List<String> access = new ArrayList<>();
-        access.add(accessType);
+        if (Objects.equals("alter", accessType)) {
+            access.add("rw");
+        } else {
+            access.add(accessType);
+        }
         authAccess.put("access", access);
         params.put("authAccess", authAccess);
         params.put("duration", 12);
