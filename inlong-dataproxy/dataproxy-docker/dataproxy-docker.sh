@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -44,7 +44,7 @@ sed -i "s/zhiyan.metricGroup=.*$/zhiyan.metricGroup=${ZHIYAN_METRICGROUP}/g" "${
 sed -i "s/zhiyan.env=.*$/zhiyan.env=${ZHIYAN_ENV}/g" "${common_conf_file}"
 sed -i "s/zhiyan.instanceMark=.*$/zhiyan.instanceMark=${local_ip}/g" "${common_conf_file}"
 
- bash +x ./bin/dataproxy-start.sh "${MQ_TYPE}"
+bash +x ./bin/dataproxy-start.sh "${MQ_TYPE}"
 
 sleep 3
 # keep alive
