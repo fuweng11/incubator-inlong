@@ -240,7 +240,6 @@ public class ScServiceImpl implements ScService {
                 });
         log.info("success check privilege for user={}, database={}, table={},url={}, response is {}", username,
                 database, table, url, rsp.getData());
-        ;
         return rsp.getData().get(0).getAllowed();
     }
 

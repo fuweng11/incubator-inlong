@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.pojo.tencent.ups;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

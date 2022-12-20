@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
+import org.apache.inlong.manager.common.exceptions.WorkflowException;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.common.util.JsonUtils;
@@ -223,6 +224,11 @@ public class UPSOperator {
         log.info("begin to get and save hdfs location for sinkId={}", sinkId);
         try {
             String location = getLocation(hiveFullInfo);
+            if (StringUtils.isBlank(location)) {
+                String errMsg = "location is null";
+                log.error(errMsg);
+                throw new WorkflowException(errMsg);
+            }
             StreamSinkEntity sinkEntity = sinkEntityMapper.selectByPrimaryKey(hiveFullInfo.getSinkId());
             InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(sinkEntity.getExtParams());
             dto.setLocation(location);
