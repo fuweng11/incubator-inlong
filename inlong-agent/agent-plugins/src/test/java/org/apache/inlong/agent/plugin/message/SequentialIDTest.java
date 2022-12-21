@@ -15,20 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.sort.base.metric.sub;
+package org.apache.inlong.agent.plugin.message;
 
-import java.util.Map;
-import org.apache.inlong.sort.base.metric.SinkMetricData;
+import org.junit.Test;
 
-/**
- * A collection class for handling sub metrics
- */
-public interface SinkSubMetricData {
+import static org.junit.Assert.assertNotEquals;
 
-    /**
-     * Get sub sink metric map
-     *
-     * @return The sub sink metric map
-     */
-    Map<String, SinkMetricData> getSubSinkMetricMap();
+public class SequentialIDTest {
+
+    @Test
+    public void testUUID() {
+        String uid1 = SequentialID.getInstance().getNextUuid();
+        String uid2 = SequentialID.getInstance().getNextUuid();
+        assertNotEquals(uid1, uid2);
+    }
+
 }
