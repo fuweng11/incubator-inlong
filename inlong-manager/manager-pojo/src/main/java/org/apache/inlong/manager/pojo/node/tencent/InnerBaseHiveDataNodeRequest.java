@@ -36,6 +36,9 @@ public abstract class InnerBaseHiveDataNodeRequest extends DataNodeRequest {
     @ApiModelProperty(value = "hive address")
     private String hiveAddress;
 
+    @ApiModelProperty(value = "oms address")
+    private String omsAddress;
+
     @ApiModelProperty(value = "warehouse dir")
     private String warehouseDir;
 

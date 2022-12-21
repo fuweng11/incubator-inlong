@@ -315,9 +315,13 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         }
 
         // Hive's JDBC connection
-        String hiveServerUrl = hiveFullInfo.getHiveAddress();
-        if (!hiveServerUrl.startsWith("jdbc") && !hiveServerUrl.startsWith("thrift")) {
-            hiveServerUrl = "jdbc:hive2://" + hiveServerUrl;
+        String serverUrl = hiveFullInfo.getHiveAddress();
+        if (!serverUrl.startsWith("jdbc")) {
+            serverUrl = "jdbc:hive2://" + serverUrl;
+        }
+        String omsServerUrl = hiveFullInfo.getOmsAddress();
+        if (StringUtils.isNotBlank(omsServerUrl)) {
+            serverUrl = omsServerUrl;
         }
 
         // The virtual user, namely Hadoop proxyuser, is used to write HDFS
@@ -333,7 +337,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             sortExtConfig.setBackupHadoopProxyUser(user);
         }
         return new HiveSinkInfo(fieldInfoList.toArray(new FieldInfo[0]),
-                hiveServerUrl,
+                serverUrl,
                 hiveFullInfo.getDbName(), hiveFullInfo.getTableName(),
                 hiveFullInfo.getUsername(), hiveFullInfo.getPassword(),
                 dataPath, sortExtConfig.getBackupDataPath(),
@@ -372,9 +376,13 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         }
 
         // Thive's JDBC connection
-        String hiveServerUrl = hiveFullInfo.getHiveAddress();
-        if (!hiveServerUrl.startsWith("jdbc") && !hiveServerUrl.startsWith("thrift")) {
-            hiveServerUrl = "jdbc:hive://" + hiveServerUrl;
+        String serverUrl = hiveFullInfo.getHiveAddress();
+        if (!serverUrl.startsWith("jdbc")) {
+            serverUrl = "jdbc:hive://" + serverUrl;
+        }
+        String omsServerUrl = hiveFullInfo.getOmsAddress();
+        if (StringUtils.isNotBlank(omsServerUrl)) {
+            serverUrl = omsServerUrl;
         }
 
         // info.getUsername(); // Create partitions through the thive JDBC server link
@@ -387,7 +395,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             sortExtConfig.setBackupHadoopProxyUser(hadoopProxyUser);
         }
 
-        return new THiveSinkInfo(fieldInfoList.toArray(new FieldInfo[0]), hiveServerUrl,
+        return new THiveSinkInfo(fieldInfoList.toArray(new FieldInfo[0]), serverUrl,
                 hiveFullInfo.getDbName(), hiveFullInfo.getTableName(),
                 hiveFullInfo.getUsername(), hiveFullInfo.getPassword(),
                 dataPath, hadoopProxyUser,

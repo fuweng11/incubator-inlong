@@ -41,6 +41,9 @@ public class InnerBaseHiveDataNodeDTO {
     @ApiModelProperty(value = "hive address")
     private String hiveAddress;
 
+    @ApiModelProperty(value = "oms address")
+    private String omsAddress;
+
     @ApiModelProperty(value = "warehouse dir")
     private String warehouseDir;
 
@@ -59,6 +62,7 @@ public class InnerBaseHiveDataNodeDTO {
     public static InnerBaseHiveDataNodeDTO getFromRequest(InnerBaseHiveDataNodeRequest request) throws Exception {
         return InnerBaseHiveDataNodeDTO.builder()
                 .hiveAddress(request.getHiveAddress())
+                .omsAddress(request.getOmsAddress())
                 .warehouseDir(request.getWarehouseDir())
                 .hdfsDefaultFs(request.getHdfsDefaultFs())
                 .hdfsUgi(request.getHdfsUgi())

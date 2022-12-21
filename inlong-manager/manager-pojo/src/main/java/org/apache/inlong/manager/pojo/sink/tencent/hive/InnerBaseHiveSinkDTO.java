@@ -213,6 +213,7 @@ public class InnerBaseHiveSinkDTO {
                 .sourceSeparator(sinkInfo.getSourceSeparator())
                 .dataEscapeChar(sinkInfo.getDataEscapeChar())
                 .hiveAddress(hiveDataNode.getHiveAddress())
+                .omsAddress(hiveDataNode.getOmsAddress())
                 .username(hiveDataNode.getUsername())
                 .password(password)
                 .warehouseDir(hiveDataNode.getWarehouseDir())

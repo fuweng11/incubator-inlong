@@ -81,6 +81,7 @@ public class InnerHiveFullInfo {
 
     // Hive cluster configuration
     private String hiveAddress;
+    private String omsAddress;
     private String username;
     private String password;
     private String warehouseDir;
