@@ -80,4 +80,10 @@ export default class InnerHiveNode
   })
   @I18n('hdfsUgi')
   hdfsUgi: string;
+
+  @FieldDecorator({
+    type: 'input',
+  })
+  @I18n('omsAddress')
+  omsAddress: string;
 }

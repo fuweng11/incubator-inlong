@@ -80,4 +80,10 @@ export default class InnerThiveNode
   })
   @I18n('hdfsUgi')
   hdfsUgi: string;
+
+  @FieldDecorator({
+    type: 'input',
+  })
+  @I18n('omsAddress')
+  omsAddress: string;
 }
