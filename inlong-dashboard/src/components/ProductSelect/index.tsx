@@ -28,7 +28,6 @@ const ProductSelect: React.FC<HighSelectProps> = _props => {
     showSearch: true,
     allowClear: true,
     filterOption: false,
-    style: { minWidth: 200, width: 500 },
     options: {
       ..._props.options,
       requestTrigger: ['onOpen', 'onSearch'],
