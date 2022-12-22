@@ -43,6 +43,9 @@ public class ZkClusterInfo extends ClusterInfo {
     @ApiModelProperty(value = "Pulsar root")
     private String pulsarRoot;
 
+    @ApiModelProperty(value = "Kafka root")
+    private String kafkaRoot;
+
     public ZkClusterInfo() {
         this.setType(ClusterType.ZOOKEEPER);
     }

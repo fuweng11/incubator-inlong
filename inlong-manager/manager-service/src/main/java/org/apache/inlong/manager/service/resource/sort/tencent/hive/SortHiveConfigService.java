@@ -26,6 +26,7 @@ import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo;
 import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo.BuiltInField;
 import com.tencent.oceanus.etl.protocol.DataFlowInfo;
 import com.tencent.oceanus.etl.protocol.FieldInfo;
+import com.tencent.oceanus.etl.protocol.KafkaClusterInfo;
 import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo;
@@ -37,6 +38,7 @@ import com.tencent.oceanus.etl.protocol.sink.HiveSinkInfo.PartitionCreationStrat
 import com.tencent.oceanus.etl.protocol.sink.THiveSinkInfo;
 import com.tencent.oceanus.etl.protocol.sink.THiveSinkInfo.THivePartitionType;
 import com.tencent.oceanus.etl.protocol.sink.THiveSinkInfo.THiveTimePartitionInfo;
+import com.tencent.oceanus.etl.protocol.source.KafkaSourceInfo;
 import com.tencent.oceanus.etl.protocol.source.PulsarSourceInfo;
 import com.tencent.oceanus.etl.protocol.source.SourceInfo;
 import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
@@ -57,6 +59,7 @@ import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
+import org.apache.inlong.manager.pojo.cluster.kafka.KafkaClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
@@ -196,7 +199,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             throw new WorkflowListenerException("fields is null for group id=" + groupId + ", stream id=" + streamId);
         }
 
-        SourceInfo sourceInfo = getSourceInfo(groupInfo, hiveFullInfo, fieldList, sortClusterName);
+        SourceInfo sourceInfo = this.getSourceInfo(groupInfo, hiveFullInfo, fieldList, sortClusterName);
         com.tencent.oceanus.etl.protocol.sink.SinkInfo sinkInfo = getSinkInfo(hiveFullInfo, fieldList, sortExtConfig);
 
         // Dynamic configuration information,
@@ -510,6 +513,34 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             } catch (Exception e) {
                 LOGGER.error("get pulsar information failed", e);
                 throw new WorkflowListenerException("get pulsar admin failed, reason: " + e.getMessage());
+            }
+        } else if (MQType.KAFKA.equalsIgnoreCase(mqType)) {
+            List<InlongClusterEntity> kafkaClusters = clusterMapper.selectByKey(
+                    groupInfo.getInlongClusterTag(), null, MQType.KAFKA);
+            if (CollectionUtils.isEmpty(kafkaClusters)) {
+                throw new WorkflowListenerException("kafka cluster not found for groupId=" + groupId);
+            }
+            List<KafkaClusterInfo> kafkaClusterInfos = new ArrayList<>();
+            kafkaClusters.forEach(kafkaCluster -> {
+                // Multiple adminurls should be configured for pulsar,
+                // otherwise all requests will be sent to the same broker
+                KafkaClusterDTO kafkaClusterDTO = KafkaClusterDTO.getFromJson(kafkaCluster.getExtParams());
+                String bootstrapServers = kafkaClusterDTO.getBootstrapServers();
+                kafkaClusterInfos.add(new KafkaClusterInfo(bootstrapServers));
+            });
+            try {
+                String topic = stream.getMqResource();
+                deserializationInfo = getDeserializationInfo(stream);
+                sourceInfo = new KafkaSourceInfo(kafkaClusterInfos.toArray(new KafkaClusterInfo[0]), topic, groupId,
+                        deserializationInfo,
+                        fieldList.stream().map(f -> {
+                            FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
+                                    f.getSourceFieldType().toLowerCase());
+                            return new FieldInfo(f.getSourceFieldType(), formatInfo);
+                        }).toArray(FieldInfo[]::new));
+            } catch (Exception e) {
+                LOGGER.error("get kafka information failed", e);
+                throw new WorkflowListenerException("get kafka admin failed, reason: " + e.getMessage());
             }
         }
 

@@ -43,6 +43,9 @@ public class ZkClusterDTO {
     @ApiModelProperty(value = "Pulsar root")
     private String pulsarRoot;
 
+    @ApiModelProperty(value = "Kafka root")
+    private String kafkaRoot;
+
     /**
      * Get the dto instance from the request
      */
@@ -50,6 +53,7 @@ public class ZkClusterDTO {
         return ZkClusterDTO.builder()
                 .tubeRoot(request.getTubeRoot())
                 .pulsarRoot(request.getPulsarRoot())
+                .kafkaRoot(request.getKafkaRoot())
                 .build();
     }
 

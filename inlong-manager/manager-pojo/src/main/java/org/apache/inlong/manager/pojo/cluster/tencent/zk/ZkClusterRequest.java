@@ -42,6 +42,9 @@ public class ZkClusterRequest extends ClusterRequest {
     @ApiModelProperty(value = "Pulsar root")
     private String pulsarRoot;
 
+    @ApiModelProperty(value = "Kafka root")
+    private String kafkaRoot;
+
     public ZkClusterRequest() {
         this.setType(ClusterType.ZOOKEEPER);
     }

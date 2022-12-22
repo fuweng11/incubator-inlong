@@ -42,6 +42,8 @@ public class TencentConstants {
 
     public static final String PULSAR_ROOT_DEFAULT = "/inlong_pulsar";
 
+    public static final String KAFKA_ROOT_DEFAULT = "/inlong_kafka";
+
     public static final String DATA_TYPE_CSV = "CSV";
     public static final String DATA_TYPE_RAW_CSV = "RAW_CSV";
     public static final String DATA_TYPE_KV = "KV";

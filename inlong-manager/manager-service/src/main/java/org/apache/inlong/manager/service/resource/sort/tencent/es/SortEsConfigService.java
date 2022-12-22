@@ -22,31 +22,21 @@ import com.tencent.flink.formats.common.FormatInfo;
 import com.tencent.oceanus.etl.ZkTools;
 import com.tencent.oceanus.etl.protocol.DataFlowInfo;
 import com.tencent.oceanus.etl.protocol.FieldInfo;
-import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.sink.EsSinkInfo;
 import com.tencent.oceanus.etl.protocol.sink.EsSinkInfo.EsClusterInfo;
-import com.tencent.oceanus.etl.protocol.source.PulsarSourceInfo;
 import com.tencent.oceanus.etl.protocol.source.SourceInfo;
-import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.DataNodeType;
-import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
-import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
-import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
-import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.DataNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
-import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.es.ElasticsearchSink;
@@ -124,7 +114,8 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
      */
     private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, ElasticsearchSink elasticsearchSink,
             String sortClusterName) throws Exception {
-        SourceInfo sourceInfo = getSourceInfo(groupInfo, elasticsearchSink, sortClusterName);
+        List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(elasticsearchSink.getId());
+        SourceInfo sourceInfo = getSourceInfo(groupInfo, elasticsearchSink, sortClusterName, fieldList);
         EsSinkInfo esSink = getEsSinkInfo(groupInfo, elasticsearchSink);
         // TransformInfo transformInfo = getTransformInfo(groupInfo, innerEsSink);
         String flowId = elasticsearchSink.getId().toString();
@@ -141,92 +132,6 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
         log.info("elasticsearch data flow info: " + JSON_MAPPER.writeValueAsString(flowInfo));
 
         return flowInfo;
-    }
-
-    /**
-     * Assembly source information
-     */
-    private SourceInfo getSourceInfo(InlongGroupInfo groupInfo, ElasticsearchSink elasticsearchSink,
-            String sortClusterName) throws Exception {
-        String groupId = elasticsearchSink.getInlongGroupId();
-        String streamId = elasticsearchSink.getInlongStreamId();
-        InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
-
-        String mqType = groupInfo.getMqType();
-        SourceInfo sourceInfo = null;
-        if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
-            List<InlongClusterEntity> tubeClusters = clusterMapper.selectByKey(
-                    groupInfo.getInlongClusterTag(), null, MQType.TUBEMQ);
-            if (CollectionUtils.isEmpty(tubeClusters)) {
-                throw new WorkflowListenerException("tube cluster not found for groupId=" + groupId);
-            }
-            InlongClusterEntity tubeCluster = tubeClusters.get(0);
-            Preconditions.checkNotNull(tubeCluster, "tube cluster not found for groupId=" + groupId);
-            String masterAddress = tubeCluster.getUrl();
-            Preconditions.checkNotNull(masterAddress,
-                    "tube cluster [" + tubeCluster.getId() + "] not contains masterAddress");
-            DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
-            List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(elasticsearchSink.getId());
-            // List<InnerElasticsearchFieldInfo> fieldList = getElasticsearchFieldFromSink(innerEsSink);
-            // The consumer group name is pushed to null, which is constructed by the sort side
-            return new TubeSourceInfo(
-                    groupInfo.getMqResource(),
-                    masterAddress,
-                    null,
-                    deserializationInfo,
-                    fieldList.stream().map(f -> {
-                        FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
-                                f.getSourceFieldType().toLowerCase());
-                        return new FieldInfo(f.getSourceFieldType(), formatInfo);
-                    }).toArray(FieldInfo[]::new));
-        } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
-            List<InlongClusterEntity> pulsarClusters = clusterMapper.selectByKey(
-                    groupInfo.getInlongClusterTag(), null, MQType.PULSAR);
-            if (CollectionUtils.isEmpty(pulsarClusters)) {
-                throw new WorkflowListenerException("pulsar cluster not found for groupId=" + groupId);
-            }
-
-            List<PulsarClusterInfo> pulsarClusterInfos = new ArrayList<>();
-            pulsarClusters.forEach(pulsarCluster -> {
-                // Multiple adminurls should be configured for pulsar,
-                // otherwise all requests will be sent to the same broker
-                PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
-                String adminUrl = pulsarClusterDTO.getAdminUrl();
-                String serviceUrl = pulsarCluster.getUrl();
-                pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, null, null));
-            });
-
-            InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
-            // Multiple adminurls should be configured for pulsar,
-            // otherwise all requests will be sent to the same broker
-            PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
-            String adminUrl = pulsarClusterDTO.getAdminUrl();
-            String masterAddress = pulsarCluster.getUrl();
-            String tenant = pulsarClusterDTO.getTenant() == null ? InlongConstants.DEFAULT_PULSAR_TENANT
-                    : pulsarClusterDTO.getTenant();
-            String namespace = groupInfo.getMqResource();
-            String topic = stream.getMqResource();
-            // Full path of topic in pulsar
-            String fullTopic = "persistent://" + tenant + "/" + namespace + "/" + topic;
-            List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(elasticsearchSink.getId());
-            // List<InnerElasticsearchFieldInfo> fieldList = getElasticsearchFieldFromSink(innerEsSink);
-            try {
-                DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
-                // Ensure compatibility of old data: if the old subscription exists, use the old one;
-                // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupInfo, topic, sortClusterName, elasticsearchSink.getId());
-                sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
-                        deserializationInfo, fieldList.stream().map(f -> {
-                            FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
-                                    f.getSourceFieldType().toLowerCase());
-                            return new FieldInfo(f.getSourceFieldType(), formatInfo);
-                        }).toArray(FieldInfo[]::new), pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null);
-            } catch (Exception e) {
-                LOGGER.error("get pulsar information failed", e);
-                throw new WorkflowListenerException("get pulsar admin failed, reason: " + e.getMessage());
-            }
-        }
-        return sourceInfo;
     }
 
     /**
