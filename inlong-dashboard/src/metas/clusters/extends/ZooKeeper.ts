@@ -48,4 +48,10 @@ export default class ZooKeeperCluster
   })
   @I18n('pulsarRoot')
   pulsarRoot: string;
+
+  @FieldDecorator({
+    type: 'input',
+  })
+  @I18n('kafkaRoot')
+  kafkaRoot: string;
 }
