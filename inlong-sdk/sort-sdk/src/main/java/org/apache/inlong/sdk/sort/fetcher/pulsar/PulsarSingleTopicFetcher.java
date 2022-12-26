@@ -86,7 +86,7 @@ public class PulsarSingleTopicFetcher extends SingleTopicFetcher {
 
     private void ackSucc(String offset) {
         offsetCache.remove(offset);
-        context.getStateCounterByTopic(topic).addAckSuccTimes(1L);
+        context.addAckSuccess(topic, -1);
     }
 
     /**
@@ -99,13 +99,13 @@ public class PulsarSingleTopicFetcher extends SingleTopicFetcher {
         if (!StringUtils.isEmpty(msgOffset)) {
             try {
                 if (consumer == null) {
-                    context.getStateCounterByTopic(topic).addAckFailTimes(1L);
+                    context.addAckFail(topic, -1);
                     LOGGER.error("consumer == null {}", topic);
                     return;
                 }
                 MessageId messageId = offsetCache.get(msgOffset);
                 if (messageId == null) {
-                    context.getStateCounterByTopic(topic).addAckFailTimes(1L);
+                    context.addAckFail(topic, -1);
                     LOGGER.error("messageId == null {}", topic);
                     return;
                 }
@@ -114,11 +114,11 @@ public class PulsarSingleTopicFetcher extends SingleTopicFetcher {
                         .exceptionally(exception -> {
                             LOGGER.error("ack fail:{} {},error:{}",
                                     topic, msgOffset, exception.getMessage(), exception);
-                            context.getStateCounterByTopic(topic).addAckFailTimes(1L);
+                            context.addAckFail(topic, -1);
                             return null;
                         });
             } catch (Exception e) {
-                context.getStateCounterByTopic(topic).addAckFailTimes(1L);
+                context.addAckFail(topic, -1);
                 LOGGER.error(e.getMessage(), e);
                 throw e;
             }
@@ -233,12 +233,13 @@ public class PulsarSingleTopicFetcher extends SingleTopicFetcher {
         private void handleAndCallbackMsg(List<MessageRecord> messageRecords) {
             long start = System.currentTimeMillis();
             try {
-                context.getStateCounterByTopic(topic).addCallbackTimes(1L);
+                context.addCallBack(topic, -1);
                 context.getConfig().getCallback().onFinishedBatch(messageRecords);
-                context.getStateCounterByTopic(topic)
-                        .addCallbackTimeCost(System.currentTimeMillis() - start).addCallbackDoneTimes(1L);
+                context.addCallBackSuccess(topic, -1, messageRecords.size(),
+                        System.currentTimeMillis() - start);
             } catch (Exception e) {
-                context.getStateCounterByTopic(topic).addCallbackErrorTimes(1L);
+                context.addCallBackFail(topic, -1, messageRecords.size(),
+                        System.currentTimeMillis() - start);
                 LOGGER.error("failed to callback {}", e.getMessage(), e);
             }
         }
@@ -252,6 +253,7 @@ public class PulsarSingleTopicFetcher extends SingleTopicFetcher {
             boolean hasPermit;
             while (true) {
                 hasPermit = false;
+                long fetchTimeCost = -1;
                 try {
                     if (context.getConfig().isStopConsume() || stopConsume) {
                         TimeUnit.MILLISECONDS.sleep(50);
@@ -264,12 +266,11 @@ public class PulsarSingleTopicFetcher extends SingleTopicFetcher {
 
                     context.acquireRequestPermit();
                     hasPermit = true;
-                    context.getStateCounterByTopic(topic).addMsgCount(1L).addFetchTimes(1L);
+                    context.addConsumeTime(topic, -1);
 
                     long startFetchTime = System.currentTimeMillis();
                     Messages<byte[]> messages = consumer.batchReceive();
-
-                    context.getStateCounterByTopic(topic).addFetchTimeCost(System.currentTimeMillis() - startFetchTime);
+                    fetchTimeCost = System.currentTimeMillis() - startFetchTime;
                     if (null != messages && messages.size() != 0) {
                         for (Message<byte[]> msg : messages) {
                             // if need seek
@@ -277,30 +278,35 @@ public class PulsarSingleTopicFetcher extends SingleTopicFetcher {
                                 seeker.seek();
                                 break;
                             }
+
                             String offsetKey = getOffset(msg.getMessageId());
                             offsetCache.put(offsetKey, msg.getMessageId());
 
                             // deserialize
                             List<InLongMessage> inLongMessages = deserializer
                                     .deserialize(context, topic, msg.getProperties(), msg.getData());
+                            context.addConsumeSuccess(topic, -1, inLongMessages.size(), msg.getData().length,
+                                    fetchTimeCost);
+                            int originSize = inLongMessages.size();
                             // intercept
                             inLongMessages = interceptor.intercept(inLongMessages);
                             if (inLongMessages.isEmpty()) {
                                 ack(offsetKey);
                                 continue;
                             }
+                            int filterSize = originSize - inLongMessages.size();
+                            context.addConsumeFilter(topic, -1, filterSize);
+
                             List<MessageRecord> msgs = new ArrayList<>();
                             msgs.add(new MessageRecord(topic.getTopicKey(),
                                     inLongMessages,
                                     offsetKey, System.currentTimeMillis()));
-                            context.getStateCounterByTopic(topic).addConsumeSize(msg.getData().length);
-                            context.getStateCounterByTopic(topic).addMsgCount(msgs.size());
                             handleAndCallbackMsg(msgs);
                             messages.forEach(v -> GlobalBufferSizeSemaphore.getInstance().release(v.size()));
                         }
                         sleepTime = 0L;
                     } else {
-                        context.getStateCounterByTopic(topic).addEmptyFetchTimes(1L);
+                        context.addConsumeEmpty(topic, -1, fetchTimeCost);
                         emptyFetchTimes++;
                         if (emptyFetchTimes >= context.getConfig().getEmptyPollTimes()) {
                             sleepTime = Math.min((sleepTime += context.getConfig().getEmptyPollSleepStepMs()),
@@ -309,7 +315,7 @@ public class PulsarSingleTopicFetcher extends SingleTopicFetcher {
                         }
                     }
                 } catch (Exception e) {
-                    context.getStateCounterByTopic(topic).addFetchErrorTimes(1L);
+                    context.addConsumeError(topic, -1, fetchTimeCost);
                     LOGGER.error("failed to fetch msg: {}", e.getMessage(), e);
                 } finally {
                     if (hasPermit) {
