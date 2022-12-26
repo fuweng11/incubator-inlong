@@ -58,6 +58,7 @@ public class SortFieldFormatUtils {
                 formatInfo = new ShortFormatInfo();
                 break;
             case "int":
+            case "integer":
                 formatInfo = new IntFormatInfo();
                 break;
             case "bigint":

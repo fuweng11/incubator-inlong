@@ -198,8 +198,6 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             String dbName = hiveFullInfo.getDbName();
             String tbName = hiveFullInfo.getTableName();
             String superUser = hiveFullInfo.getUsername();
-            // before querying the table, it is necessary to determine whether the superuser has the right to select
-            grantPrivilegeBySc(hiveFullInfo, superUser, "select", true);
 
             TableInfoBean existTable = upsOperator.queryTableInfo(hiveFullInfo.getIsThive(),
                     hiveFullInfo.getClusterTag(), hiveFullInfo.getUsername(), dbName, tbName);
@@ -225,9 +223,6 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                 sinkService.updateStatus(sinkInfo.getId(), SinkStatus.CONFIG_FAILED.getCode(), errMsg);
                 throw new WorkflowException(errMsg);
             }
-
-            // get and save hdfs location
-            upsOperator.getAndSaveLocation(hiveFullInfo);
 
             // after the table is created successfully, need to set the table alter and select permission for the super user
             grantPrivilegeBySc(hiveFullInfo, superUser, "alter", false);

@@ -65,6 +65,7 @@ import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
+import org.apache.inlong.manager.service.resource.sink.tencent.us.UPSOperator;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
 import org.apache.inlong.manager.service.sink.tencent.sort.SortExtConfig;
@@ -138,6 +139,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     @Autowired
     private InlongStreamEntityMapper streamEntityMapper;
 
+    @Autowired
+    private UPSOperator upsOperator;
+
     public void buildHiveConfig(InlongGroupInfo groupInfo, List<InnerHiveFullInfo> hiveFullInfos) throws Exception {
         if (CollectionUtils.isEmpty(hiveFullInfos)) {
             return;
@@ -172,7 +176,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             SortExtConfig sortExtConfig = new SortExtConfig();
             sortExtConfig.setBackupDataPath(sortClusterDTO.getBackupDataPath());
             sortExtConfig.setBackupHadoopProxyUser(sortClusterDTO.getBackupHadoopProxyUser());
-
+            // get and save hdfs location
+            upsOperator.getAndSaveLocation(hiveFullInfo);
             LOGGER.info("begin to push hive sort config to zkUrl={}, hiveTopo={}", zkUrl, sortClusterName);
             DataFlowInfo flowInfo = getDataFlowInfo(groupInfo, hiveFullInfo, sortClusterName, sortExtConfig);
             // Update / add data under dataflow on ZK
