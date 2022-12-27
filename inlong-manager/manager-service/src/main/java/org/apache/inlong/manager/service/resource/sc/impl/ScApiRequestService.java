@@ -62,7 +62,7 @@ public class ScApiRequestService {
         return checkAndGetResponseBody(response);
     }
 
-    private <T> T checkAndGetResponseBody(Response<T> response) {
+    public  <T> T checkAndGetResponseBody(Response<T> response) {
         if (response == null) {
             throw new BusinessException("security center interface request failed");
         }

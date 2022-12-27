@@ -29,6 +29,7 @@ import org.apache.inlong.manager.pojo.common.Response;
 import org.apache.inlong.manager.pojo.tencent.sc.AppGroup;
 import org.apache.inlong.manager.pojo.tencent.sc.Product;
 import org.apache.inlong.manager.pojo.tencent.sc.ScDbPermission;
+import org.apache.inlong.manager.pojo.tencent.sc.ScHiveResource;
 import org.apache.inlong.manager.pojo.tencent.sc.ScPage;
 import org.apache.inlong.manager.pojo.tencent.sc.Staff;
 import org.apache.inlong.manager.service.resource.sc.ScService;
@@ -63,6 +64,8 @@ public class ScServiceImpl implements ScService {
     private static final String LIST_ALL_GROUP_API = "/api/authz/group/listAllGroupsPage";
     private static final String CHECK_PERMISSIONS_API = "/openapi/sc/authz/ranger/checkPermissions";
     private static final String GRANT_AUTH = "/openapi/sc/authz/management/grant/AUTH_HIVE_RS";
+    private static final String LIST_DATABASE_API = "/openapi/sc/authz/resource/hive/listDatabases";
+
     private static final Gson GSON = new GsonBuilder().create();
     private final ScApiRequestService scApiRequestService;
     private final ImmutableMap<String, Integer> clusterIdentifier2Id;
@@ -222,6 +225,21 @@ public class ScServiceImpl implements ScService {
                 new ParameterizedTypeReference<Response<ScPage<AppGroup>>>() {
                 });
         return result.getData();
+    }
+
+    @Override
+    public List<ScHiveResource> listDatabase(String name, String clusterTag) {
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("pageNum", 1);
+        params.put("pageSize", 20);
+        params.put("clusterIdentifier", clusterTag);
+        params.put("groupList", name);
+        String url = scOpenApiUrl + LIST_DATABASE_API;
+        Response<ScPage<ScHiveResource>> response = HttpUtils.getRequest(restTemplate, url, params,
+                scApiRequestService.getHeader(),
+                new ParameterizedTypeReference<Response<ScPage<ScHiveResource>>>() {
+                });
+        return scApiRequestService.checkAndGetResponseBody(response).getData();
     }
 
     @Override

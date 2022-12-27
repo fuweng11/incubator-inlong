@@ -19,6 +19,7 @@ package org.apache.inlong.manager.service.resource.sc;
 
 import org.apache.inlong.manager.pojo.tencent.sc.AppGroup;
 import org.apache.inlong.manager.pojo.tencent.sc.Product;
+import org.apache.inlong.manager.pojo.tencent.sc.ScHiveResource;
 import org.apache.inlong.manager.pojo.tencent.sc.Staff;
 
 import java.util.List;
@@ -94,6 +95,15 @@ public interface ScService {
      * @return App group list
      */
     List<AppGroup> listAllAppGroup(String name);
+
+    /**
+     * Fuzzy query application group list according to application group name
+     *
+     * @param name App group name
+     * @param clusterTag clusterTag
+     * @return Database list
+     */
+    List<ScHiveResource> listDatabase(String name, String clusterTag);
 
     /**
      * Check whether there is corresponding permission according to the username

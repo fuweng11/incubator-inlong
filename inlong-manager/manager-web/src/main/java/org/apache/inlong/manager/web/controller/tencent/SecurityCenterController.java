@@ -24,9 +24,9 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.inlong.manager.pojo.common.Response;
 import org.apache.inlong.manager.pojo.tencent.sc.AppGroup;
 import org.apache.inlong.manager.pojo.tencent.sc.Product;
+import org.apache.inlong.manager.pojo.tencent.sc.ScHiveResource;
 import org.apache.inlong.manager.pojo.tencent.sc.Staff;
 import org.apache.inlong.manager.service.resource.sc.ScService;
-
 import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.service.tencentauth.StaffBaseInfo;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
@@ -111,6 +111,16 @@ public class SecurityCenterController {
     @ApiImplicitParam(name = "name", value = "Application group name", dataTypeClass = String.class, required = false)
     public Response<List<AppGroup>> listAppGroup(@RequestParam(required = false) String name) {
         return Response.success(securityService.listAllAppGroup(name));
+    }
+
+    @ApiOperation(value = "Database list - list of all database by appGroup and clusterTag")
+    @GetMapping("/sc/database/list")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "name", value = "Application group name", dataTypeClass = String.class, required = true),
+            @ApiImplicitParam(name = "clusterTag", value = "Cluster tag", dataTypeClass = String.class, required = true)
+    })
+    public Response<List<ScHiveResource>> listDatabase(@RequestParam String name, @RequestParam String clusterTag) {
+        return Response.success(securityService.listDatabase(name, clusterTag));
     }
 
 }
