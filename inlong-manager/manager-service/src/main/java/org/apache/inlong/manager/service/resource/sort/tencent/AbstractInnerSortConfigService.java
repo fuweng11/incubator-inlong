@@ -386,6 +386,11 @@ public class AbstractInnerSortConfigService {
             });
             try {
                 String topic = stream.getMqResource();
+                if (topic.equals(streamId)) {
+                    // the default mq resource (stream id) is not sufficient to discriminate different kafka topics
+                    topic = String.format(org.apache.inlong.common.constant.Constants.DEFAULT_KAFKA_TOPIC_FORMAT,
+                            groupInfo.getMqResource(), stream.getMqResource());
+                }
                 DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
                 sourceInfo = new KafkaSourceInfo(kafkaClusterInfos.toArray(new KafkaClusterInfo[0]), topic, groupId,
                         deserializationInfo,
