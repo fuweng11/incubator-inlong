@@ -113,14 +113,16 @@ public class SecurityCenterController {
         return Response.success(securityService.listAllAppGroup(name));
     }
 
-    @ApiOperation(value = "Database list - list of all database by appGroup and clusterTag")
+    @ApiOperation(value = "Database list - list of all database by group id, sinkType and dataNodeName")
     @GetMapping("/sc/database/list")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "name", value = "Application group name", dataTypeClass = String.class, required = true),
-            @ApiImplicitParam(name = "clusterTag", value = "Cluster tag", dataTypeClass = String.class, required = true)
+            @ApiImplicitParam(name = "groupId", value = "Inlong group id", dataTypeClass = String.class, required = true),
+            @ApiImplicitParam(name = "dataNodeName", value = "Data node name", dataTypeClass = String.class, required = true),
+            @ApiImplicitParam(name = "sinkType", value = "Sink type", dataTypeClass = String.class, required = true)
     })
-    public Response<List<ScHiveResource>> listDatabase(@RequestParam String name, @RequestParam String clusterTag) {
-        return Response.success(securityService.listDatabase(name, clusterTag));
+    public Response<List<ScHiveResource>> listDatabase(@RequestParam String groupId, @RequestParam String dataNodeName,
+            @RequestParam String sinkType) {
+        return Response.success(securityService.listDatabase(groupId, dataNodeName, sinkType));
     }
 
 }

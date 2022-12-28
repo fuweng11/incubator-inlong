@@ -26,12 +26,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.pojo.common.Response;
+import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.tencent.sc.AppGroup;
 import org.apache.inlong.manager.pojo.tencent.sc.Product;
 import org.apache.inlong.manager.pojo.tencent.sc.ScDbPermission;
 import org.apache.inlong.manager.pojo.tencent.sc.ScHiveResource;
 import org.apache.inlong.manager.pojo.tencent.sc.ScPage;
 import org.apache.inlong.manager.pojo.tencent.sc.Staff;
+import org.apache.inlong.manager.service.group.InlongGroupService;
+import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.resource.sc.ScService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -71,6 +75,10 @@ public class ScServiceImpl implements ScService {
     private final ImmutableMap<String, Integer> clusterIdentifier2Id;
     @Value("${inlong.sc.openApiUrl}")
     private String scOpenApiUrl;
+    @Autowired
+    private DataNodeService dataNodeService;
+    @Autowired
+    private InlongGroupService groupService;
     @Autowired
     private RestTemplate restTemplate;
 
@@ -228,12 +236,15 @@ public class ScServiceImpl implements ScService {
     }
 
     @Override
-    public List<ScHiveResource> listDatabase(String name, String clusterTag) {
+    public List<ScHiveResource> listDatabase(String groupId, String dataNodeName, String sinkType) {
+        InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) dataNodeService.get(
+                dataNodeName, sinkType);
+        InlongGroupInfo groupInfo = groupService.get(groupId);
         Map<String, Object> params = Maps.newHashMap();
         params.put("pageNum", 1);
         params.put("pageSize", 20);
-        params.put("clusterIdentifier", clusterTag);
-        params.put("groupList", name);
+        params.put("clusterIdentifier", dataNodeInfo.getClusterTag());
+        params.put("groupList", groupInfo.getAppGroupName());
         String url = scOpenApiUrl + LIST_DATABASE_API;
         Response<ScPage<ScHiveResource>> response = HttpUtils.getRequest(restTemplate, url, params,
                 scApiRequestService.getHeader(),

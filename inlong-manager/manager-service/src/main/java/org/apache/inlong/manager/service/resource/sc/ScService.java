@@ -99,11 +99,12 @@ public interface ScService {
     /**
      * Fuzzy query application group list according to application group name
      *
-     * @param name App group name
-     * @param clusterTag clusterTag
+     * @param groupId inlong group id
+     * @param dataNodeName data node name
+     * @param sinkType sink type
      * @return Database list
      */
-    List<ScHiveResource> listDatabase(String name, String clusterTag);
+    List<ScHiveResource> listDatabase(String groupId, String dataNodeName, String sinkType);
 
     /**
      * Check whether there is corresponding permission according to the username
