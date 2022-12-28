@@ -83,10 +83,31 @@ export default class InnerHiveSink
   dataNodeName: string;
 
   @FieldDecorator({
-    type: 'input',
+    type: 'select',
     rules: [{ required: true }],
     props: values => ({
-      disabled: [110, 130].includes(values?.status),
+      showSearch: true,
+      requestTrigger: ['onOpen', 'onSearch'],
+      options: {
+        requestService: {
+          url: '/sc/database/list',
+          method: 'GET',
+          params: {
+            groupId: values.inlongGroupId,
+            sinkType: 'INNER_HIVE',
+            dataNodeName: values.dataNodeName,
+            pageNum: 1,
+            pageSize: 20,
+          },
+        },
+        requestParams: {
+          formatResult: result =>
+            result?.map(item => ({
+              label: item.database,
+              value: item.database,
+            })),
+        },
+      },
     }),
   })
   @I18n('meta.Sinks.InnerHive.DbName')
