@@ -20,7 +20,6 @@ package org.apache.inlong.manager.service.resource.sort.tencent.iceberg;
 import com.tencent.tdw.security.authentication.v2.TauthClient;
 import com.tencent.tdw.security.exceptions.SecureException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowException;
 import org.apache.inlong.manager.common.util.HttpUtils;
@@ -41,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.apache.inlong.manager.common.util.JsonUtils.OBJECT_MAPPER;
@@ -111,7 +111,7 @@ public class IcebergBaseOptService {
                     });
             log.info("create iceberg result rsp={}", rsp);
             QueryIcebergTableResponse response = JsonUtils.parseObject(rsp, QueryIcebergTableResponse.class);
-            if (ObjectUtils.isNotEmpty(response) && response.getCode() == 0) {
+            if (!Objects.isNull(response) && response.getCode() == 0) {
                 log.info("create iceberg table [{}.{}] success, rsp {}", request.getDb(), request.getTable(), rsp);
                 sinkService.updateStatus(icebergSink.getId(), SinkStatus.CONFIG_SUCCESSFUL.getCode(),
                         response.getMessage());
