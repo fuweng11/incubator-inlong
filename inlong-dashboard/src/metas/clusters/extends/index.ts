@@ -52,4 +52,9 @@ export const allExtendsClusters: MetaExportWithBackendList<ClusterMetaType> = [
     value: 'SORT_ICEBERG',
     LoadEntity: () => import('./sort/SortIcebergTask'),
   },
+  {
+    label: 'SortStarRocksTask',
+    value: 'SORT_STARROCKS',
+    LoadEntity: () => import('./sort/SortStarRocksTask'),
+  },
 ];
