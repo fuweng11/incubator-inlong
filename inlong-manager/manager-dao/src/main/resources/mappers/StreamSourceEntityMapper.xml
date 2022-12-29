@@ -31,6 +31,7 @@
         <result column="uuid" jdbcType="VARCHAR" property="uuid"/>
         <result column="data_node_name" jdbcType="VARCHAR" property="dataNodeName"/>
         <result column="inlong_cluster_name" jdbcType="VARCHAR" property="inlongClusterName"/>
+        <result column="inlong_cluster_node_tag" jdbcType="VARCHAR" property="inlongClusterNodeTag"/>
         <result column="serialization_type" jdbcType="VARCHAR" property="serializationType"/>
         <result column="snapshot" jdbcType="LONGVARCHAR" property="snapshot"/>
         <result column="start_position" jdbcType="VARCHAR" property="startPosition"/>
@@ -48,8 +49,9 @@
     </resultMap>
     <sql id="Base_Column_List">
         id, inlong_group_id, inlong_stream_id, source_type, source_name, template_id, agent_ip, uuid,
-        data_node_name, inlong_cluster_name, serialization_type, snapshot, start_position, report_time,ext_params,
-        operate_log, version, status, previous_status, is_deleted, creator, modifier, create_time, modify_time
+        data_node_name, inlong_cluster_name, inlong_cluster_node_tag, serialization_type, snapshot, start_position,
+        report_time, ext_params, operate_log, version, status, previous_status, is_deleted, creator, modifier,
+        create_time, modify_time
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id"
@@ -57,17 +59,18 @@
         insert into stream_source (inlong_group_id, inlong_stream_id,
                                    source_type, source_name, template_id,
                                    agent_ip, uuid, data_node_name,
-                                   inlong_cluster_name, serialization_type,
-                                   snapshot, start_position,
+                                   inlong_cluster_name, inlong_cluster_node_tag,
+                                   serialization_type, snapshot, start_position,
                                    report_time, ext_params,
                                    operate_log, status,
                                    previous_status, creator, modifier)
         values (#{inlongGroupId,jdbcType=VARCHAR}, #{inlongStreamId,jdbcType=VARCHAR},
                 #{sourceType,jdbcType=VARCHAR}, #{sourceName,jdbcType=VARCHAR}, #{templateId,jdbcType=INTEGER},
                 #{agentIp,jdbcType=VARCHAR}, #{uuid,jdbcType=VARCHAR}, #{dataNodeName,jdbcType=VARCHAR},
-                #{inlongClusterName,jdbcType=VARCHAR}, #{serializationType,jdbcType=VARCHAR},
-                #{snapshot,jdbcType=LONGVARCHAR}, #{startPosition,jdbcType=LONGVARCHAR},
-                #{reportTime,jdbcType=TIMESTAMP}, #{extParams,jdbcType=LONGVARCHAR}, #{operateLog,jdbcType=LONGVARCHAR},
+                #{inlongClusterName,jdbcType=VARCHAR}, #{inlongClusterNodeTag,jdbcType=VARCHAR},
+                #{serializationType,jdbcType=VARCHAR}, #{snapshot,jdbcType=LONGVARCHAR},
+                #{startPosition,jdbcType=LONGVARCHAR}, #{reportTime,jdbcType=TIMESTAMP},
+                #{extParams,jdbcType=LONGVARCHAR}, #{operateLog,jdbcType=LONGVARCHAR},
                 #{status,jdbcType=INTEGER}, #{previousStatus,jdbcType=INTEGER},
                 #{creator,jdbcType=VARCHAR}, #{modifier,jdbcType=VARCHAR})
     </insert>
@@ -209,7 +212,7 @@
             limit #{limit, jdbcType=INTEGER}
         </where>
     </select>
-    <select id="selectByAgentIpOrCluster" resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
+    <select id="selectByAgentIpAndCluster" resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
         select
         <include refid="Base_Column_List"/>
         from stream_source
@@ -227,7 +230,33 @@
                     #{item}
                 </foreach>
             </if>
-            and (agent_ip = #{agentIp, jdbcType=VARCHAR} or inlong_cluster_name = #{clusterName, jdbcType=VARCHAR})
+            <if test="agentIp != null and agentIp != ''">
+                and agent_ip = #{agentIp, jdbcType=VARCHAR}
+            </if>
+            and inlong_cluster_name = #{clusterName, jdbcType=VARCHAR}
+        </where>
+    </select>
+    <select id="selectTemplateSourceByCluster" resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from stream_source
+        <where>
+            is_deleted = 0
+            <if test="statusList != null and statusList.size()>0">
+                and status in
+                <foreach item="item" index="index" collection="statusList" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="sourceTypeList != null and sourceTypeList.size()>0">
+                and source_type in
+                <foreach item="item" index="index" collection="sourceTypeList" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            and agent_ip is NULL
+            and template_id is NULL
+            and inlong_cluster_name = #{clusterName, jdbcType=VARCHAR}
         </where>
     </select>
     <select id="selectByStatusAndCluster" resultType="org.apache.inlong.manager.dao.entity.StreamSourceEntity">
@@ -371,6 +400,9 @@
             <if test="inlongClusterName != null">
                 inlong_cluster_name = #{inlongClusterName,jdbcType=INTEGER},
             </if>
+            <if test="inlongClusterNodeTag != null">
+                inlong_cluster_node_tag = #{inlongClusterNodeTag,jdbcType=INTEGER},
+            </if>
             <if test="serializationType != null">
                 serialization_type = #{serializationType,jdbcType=VARCHAR},
             </if>
@@ -419,6 +451,7 @@
             uuid                = #{uuid,jdbcType=VARCHAR},
             data_node_name      = #{dataNodeName,jdbcType=VARCHAR},
             inlong_cluster_name = #{inlongClusterName,jdbcType=VARCHAR},
+            inlong_cluster_node_tag = #{inlongClusterNodeTag,jdbcType=VARCHAR},
             serialization_type  = #{serializationType,jdbcType=VARCHAR},
             snapshot            = #{snapshot,jdbcType=LONGVARCHAR},
             start_position      = #{startPosition,jdbcType=LONGVARCHAR},

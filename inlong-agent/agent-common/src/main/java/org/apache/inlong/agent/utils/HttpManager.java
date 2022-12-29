@@ -33,6 +33,7 @@ import org.apache.inlong.common.util.BasicAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_HTTP_APPLICATION_JSON;
@@ -133,7 +134,7 @@ public class HttpManager {
                 post.addHeader(token, encodedAuthentication);
             }
 
-            StringEntity stringEntity = new StringEntity(toJsonStr(dto));
+            StringEntity stringEntity = new StringEntity(toJsonStr(dto), Charset.forName("UTF-8"));
             stringEntity.setContentType(AGENT_HTTP_APPLICATION_JSON);
             post.setEntity(stringEntity);
 
