@@ -114,6 +114,8 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
         baseManagerUrl = HttpManager.buildBaseUrl();
         reportSnapshotUrl = buildReportSnapShotUrl(baseManagerUrl);
         reportHeartbeatUrl = buildReportHeartbeatUrl(baseManagerUrl);
+        dbSyncReportUrl = buildDBSyncHbUrl();
+        connInterval = conf.getLong(DBSYNC_HEART_INTERVAL, DEFAULT_DBSYNC_HEART_INTERVAL);
 
         jobmanager = null;
     }

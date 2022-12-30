@@ -23,6 +23,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.inlong.common.constant.Constants;
+import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.common.db.CommandEntity;
 import org.apache.inlong.common.enums.PullJobTypeEnum;
 import org.apache.inlong.common.enums.TaskTypeEnum;
@@ -34,7 +35,6 @@ import org.apache.inlong.common.pojo.agent.TaskSnapshotRequest;
 import org.apache.inlong.common.pojo.dataproxy.DataProxyTopicInfo;
 import org.apache.inlong.common.pojo.dataproxy.MQClusterInfo;
 import org.apache.inlong.manager.common.consts.InlongConstants;
-import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.SourceStatus;
@@ -302,9 +302,9 @@ public class AgentServiceImpl implements AgentService {
 
     /**
      * Find file collecting task match those condition:
-     *  1.agent ip match
-     *  2.cluster name match
-     *  Send the corresponding task action request according to the matching state of the tag and the current state
+     * 1.agent ip match
+     * 2.cluster name match
+     * Send the corresponding task action request according to the matching state of the tag and the current state
      *
      * @param taskRequest
      */
@@ -334,11 +334,11 @@ public class AgentServiceImpl implements AgentService {
                     if (!matchTag(sourceEntity, clusterNodeEntity)
                             && !exceptedUnmatchedStatus.contains(SourceStatus.forCode(sourceEntity.getStatus()))) {
                         LOGGER.info("Transform task({}) from {} to {} because tag mismatch "
-                                + "for agent({}) in cluster({})", sourceEntity.getAgentIp(),
+                                        + "for agent({}) in cluster({})", sourceEntity.getAgentIp(),
                                 sourceEntity.getStatus(), SourceStatus.TO_BE_ISSUED_FROZEN.getCode(),
                                 agentIp, agentClusterName);
                         sourceMapper.updateStatus(
-                                sourceEntity.getId(), SourceStatus.TO_BE_ISSUED_FROZEN.getCode(), false);
+                                sourceEntity.getId(), SourceStatus.TO_BE_ISSUED_FROZEN.getCode(), null, false);
                     }
 
                     // case: agent tag rebind and match source task again and stream is not in 'SUSPENDED' status
@@ -354,11 +354,11 @@ public class AgentServiceImpl implements AgentService {
                             && !exceptedMatchedSourceStatus.contains(SourceStatus.forCode(sourceEntity.getStatus()))
                             && !exceptedMatchedStreamStatus.contains(StreamStatus.forCode(streamEntity.getStatus()))) {
                         LOGGER.info("Transform task({}) from {} to {} because tag rematch "
-                                + "for agent({}) in cluster({})", sourceEntity.getAgentIp(),
+                                        + "for agent({}) in cluster({})", sourceEntity.getAgentIp(),
                                 sourceEntity.getStatus(), SourceStatus.TO_BE_ISSUED_ACTIVE.getCode(),
                                 agentIp, agentClusterName);
                         sourceMapper.updateStatus(
-                                sourceEntity.getId(), SourceStatus.TO_BE_ISSUED_ACTIVE.getCode(), false);
+                                sourceEntity.getId(), SourceStatus.TO_BE_ISSUED_ACTIVE.getCode(), null, false);
                     }
                 });
     }
@@ -499,6 +499,7 @@ public class AgentServiceImpl implements AgentService {
     }
 
     // todo:delete it, source cmd is useless
+
     /**
      * Get the agent command config by the agent ip.
      *

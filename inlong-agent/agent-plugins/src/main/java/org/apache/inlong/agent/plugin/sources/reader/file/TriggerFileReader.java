@@ -77,6 +77,11 @@ public class TriggerFileReader implements Reader {
     }
 
     @Override
+    public void addMessage(Message message) {
+
+    }
+
+    @Override
     public void init(JobProfile jobConf) {
         this.triggerId = jobConf.get(JobConstants.JOB_TRIGGER);
     }
