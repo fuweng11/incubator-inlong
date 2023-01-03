@@ -231,6 +231,7 @@ public class UPSOperator {
             }
             StreamSinkEntity sinkEntity = sinkEntityMapper.selectByPrimaryKey(hiveFullInfo.getSinkId());
             InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(sinkEntity.getExtParams());
+            hiveFullInfo.setLocation(location);
             dto.setLocation(location);
             sinkEntity.setExtParams(objectMapper.writeValueAsString(dto));
             sinkEntityMapper.updateByIdSelective(sinkEntity);
