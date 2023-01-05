@@ -323,7 +323,7 @@ public class AbstractInnerSortConfigService {
                     fieldList.stream().map(f -> {
                         FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
                                 f.getSourceFieldType().toLowerCase());
-                        return new FieldInfo(f.getSourceFieldType(), formatInfo);
+                        return new FieldInfo(f.getSourceFieldName(), formatInfo);
                     }).toArray(FieldInfo[]::new));
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
             List<InlongClusterEntity> pulsarClusters = clusterMapper.selectByKey(
@@ -364,7 +364,7 @@ public class AbstractInnerSortConfigService {
                         deserializationInfo, fieldList.stream().map(f -> {
                             FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
                                     f.getSourceFieldType().toLowerCase());
-                            return new FieldInfo(f.getSourceFieldType(), formatInfo);
+                            return new FieldInfo(f.getSourceFieldName(), formatInfo);
                         }).toArray(FieldInfo[]::new), pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null);
             } catch (Exception e) {
                 LOGGER.error("get pulsar information failed", e);
@@ -397,7 +397,7 @@ public class AbstractInnerSortConfigService {
                         fieldList.stream().map(f -> {
                             FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
                                     f.getSourceFieldType().toLowerCase());
-                            return new FieldInfo(f.getSourceFieldType(), formatInfo);
+                            return new FieldInfo(f.getSourceFieldName(), formatInfo);
                         }).toArray(FieldInfo[]::new));
             } catch (Exception e) {
                 LOGGER.error("get kafka information failed", e);
