@@ -59,7 +59,7 @@
         insert into stream_source (inlong_group_id, inlong_stream_id,
                                    source_type, source_name, template_id,
                                    agent_ip, uuid, data_node_name,
-                                   inlong_cluster_name, inlong_cluster_node_tag,
+                                   inlong_cluster_name, inlong_cluster_node_group,
                                    serialization_type, snapshot, start_position,
                                    report_time, ext_params,
                                    operate_log, status,

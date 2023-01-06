@@ -822,6 +822,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                         }
                         entity.setErrorMsg(message.getErrorMsg());
                         entity.setModifyTime(now);
+                        entity.setReportTime(message.getReportTime());
 
                         entityList.add(entity);
                     }
