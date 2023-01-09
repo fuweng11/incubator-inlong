@@ -80,6 +80,9 @@ public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
     @ApiModelProperty("stored table format, like: TextFile, ORCFile, Parquet, etc")
     private String fileFormat;
 
+    @ApiModelProperty("compression type, like: gzip, lzo, etc")
+    private String compressionType;
+
     @ApiModelProperty("Pb file storage path")
     private String filePath;
 

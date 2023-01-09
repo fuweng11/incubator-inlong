@@ -75,6 +75,9 @@ public abstract class InnerBaseHiveSink extends StreamSink {
     @ApiModelProperty("file format")
     private String fileFormat;
 
+    @ApiModelProperty("compression type, like: gzip, lzo, etc")
+    private String compressionType;
+
     @ApiModelProperty("data encoding")
     private String dataEncoding;
 

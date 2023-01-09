@@ -88,6 +88,9 @@ public class InnerBaseHiveSinkDTO {
     @ApiModelProperty("file format")
     private String fileFormat;
 
+    @ApiModelProperty("compression type")
+    private String compressionType;
+
     @ApiModelProperty("data encoding")
     private String dataEncoding;
 
@@ -200,6 +203,7 @@ public class InnerBaseHiveSinkDTO {
                 .secondaryPartition(innerHiveDTO.getSecondaryPartition())
                 .partitionCreationStrategy(innerHiveDTO.getPartitionCreationStrategy())
                 .fileFormat(innerHiveDTO.getFileFormat())
+                .compressionType(innerHiveDTO.getCompressionType())
                 .dataEncoding(innerHiveDTO.getDataEncoding())
                 .targetSeparator(innerHiveDTO.getDataSeparator())
                 .virtualUser(innerHiveDTO.getVirtualUser())

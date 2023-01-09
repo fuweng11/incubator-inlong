@@ -20,6 +20,7 @@ package org.apache.inlong.manager.service.resource.sort.tencent.hive;
 import com.tencent.flink.formats.common.FormatInfo;
 import com.tencent.flink.formats.common.TimestampFormatInfo;
 import com.tencent.oceanus.etl.ZkTools;
+import com.tencent.oceanus.etl.configuration.Constants.CompressionType;
 import com.tencent.oceanus.etl.configuration.Constants.SequenceCompressionCodec;
 import com.tencent.oceanus.etl.configuration.Constants.SequenceCompressionType;
 import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo;
@@ -78,6 +79,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.inlong.manager.common.consts.TencentConstants.PART_ARRIVED;
@@ -103,6 +105,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
      */
     private static final Map<String, BuiltInField> BUILT_IN_FIELD_MAP = new HashMap<>();
 
+    private static final Map<String, CompressionType> COMPRESSION_TYPE_MAP = new HashMap<>();
+
     static {
         TIME_UNIT_MAP.put("10I", "t");
         TIME_UNIT_MAP.put("15I", "q");
@@ -125,6 +129,10 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         BUILT_IN_FIELD_MAP.put("exp_time_stample_order", BuiltInField.DBSYNC_EXECUTE_ORDER);
         BUILT_IN_FIELD_MAP.put("tdbank_transfer_ip", BuiltInField.DBSYNC_TRANSFER_IP);
         BUILT_IN_FIELD_MAP.put("dt", BuiltInField.DATA_TIME);
+
+        COMPRESSION_TYPE_MAP.put("none", CompressionType.NONE);
+        COMPRESSION_TYPE_MAP.put("gzip", CompressionType.GZIP);
+        COMPRESSION_TYPE_MAP.put("lzo", CompressionType.LZO);
     }
 
     @Autowired
@@ -251,7 +259,13 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         } else if (TencentConstants.FILE_FORMAT_PARQUET.equalsIgnoreCase(format)) {
             fileFormat = new HiveSinkInfo.ParquetFileFormatInfo();
         } else {
-            fileFormat = new HiveSinkInfo.TextFileFormatInfo(separator);
+            CompressionType compressionType = COMPRESSION_TYPE_MAP.get(hiveFullInfo.getCompressionType());
+            if (!Objects.isNull(compressionType)) {
+                fileFormat = new HiveSinkInfo.TextFileFormatInfo(separator, compressionType,
+                        new HiveSinkInfo.TextFileFormatInfo.FixedReplaceEscapeMode(String.valueOf(separator)));
+            } else {
+                fileFormat = new HiveSinkInfo.TextFileFormatInfo(separator);
+            }
         }
         sortExtConfig.setFormatInfo(fileFormat);
 
