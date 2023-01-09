@@ -176,18 +176,18 @@ export default class InnerHiveSink
 
   @FieldDecorator({
     type: 'radio',
-    initialValue: 'TextFile',
+    initialValue: 'OrcFile',
     rules: [{ required: true }],
     props: values => ({
       disabled: [110, 130].includes(values?.status),
       options: [
         {
-          label: 'TextFile',
-          value: 'TextFile',
-        },
-        {
           label: 'OrcFile',
           value: 'OrcFile',
+        },
+        {
+          label: 'TextFile',
+          value: 'TextFile',
         },
         {
           label: 'Parquet',
@@ -206,6 +206,32 @@ export default class InnerHiveSink
   })
   @I18n('meta.Sinks.InnerHive.FieldFormat')
   fileFormat: string;
+
+  @FieldDecorator({
+    type: 'radio',
+    initialValue: 'none',
+    rules: [{ required: true }],
+    visible: values => values.fileFormat === 'TextFile',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      options: [
+        {
+          label: 'none',
+          value: 'none',
+        },
+        {
+          label: 'gzip',
+          value: 'gzip',
+        },
+        {
+          label: 'lzo',
+          value: 'lzo',
+        },
+      ],
+    }),
+  })
+  @I18n('meta.Sinks.InnerHive.CompressionType')
+  compressionType: string;
 
   @FieldDecorator({
     type: 'radio',
