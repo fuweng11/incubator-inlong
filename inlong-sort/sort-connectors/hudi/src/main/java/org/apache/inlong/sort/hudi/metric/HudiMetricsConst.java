@@ -15,13 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.dataproxy.sink.mqzone;
+package org.apache.inlong.sort.hudi.metric;
 
-import org.apache.inlong.dataproxy.config.pojo.CacheClusterConfig;
+/**
+ * The constant values of hudi metric.
+ */
+public class HudiMetricsConst {
 
-@FunctionalInterface
-public interface ZoneClusterProducerCalculator {
+    public static final String METRIC_TOTAL_RECORDS_WRITTEN = "totalRecordsWritten";
 
-    AbstractZoneClusterProducer calculator(String workerName,
-            CacheClusterConfig config, AbstractZoneSinkContext context);
+    public static final String METRIC_TOTAL_BYTES_WRITTEN = "totalBytesWritten";
+
+    public static final String[] ACTION_TYPES = {"insert", "upsert"};
+
 }

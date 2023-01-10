@@ -15,31 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.dataproxy.sink.mqzone.impl.pulsarzone;
+package org.apache.inlong.sort.hudi.metric;
 
-import org.apache.inlong.dataproxy.sink.mqzone.AbstractZoneSink;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.hudi.common.model.HoodieCommitMetadata;
+import org.apache.hudi.metrics.HoodieMetrics;
 
-/**
- * PulsarZoneSink
- */
-public class PulsarZoneSink extends AbstractZoneSink {
-
-    public static final Logger LOG = LoggerFactory.getLogger(PulsarZoneSink.class);
+public class HudiMetricsUtil {
 
     /**
-     * start
+     * Get metric name of hudi inner metrics.
+     * {@link HoodieMetrics#updateCommitMetrics(long, long, HoodieCommitMetadata, String)}
      */
-    @Override
-    public void start() {
-        try {
-            super.context = new PulsarZoneSinkContext(getName(), parentContext, getChannel(), super.dispatchQueues);
-            super.start((sinkName, workIndex, context) -> new PulsarZoneWorker(sinkName, workIndex,
-                    (PulsarZoneSinkContext) context));
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-        }
-        super.start();
+    public static String getMetricsName(String metricsNamePrefix, String action, String metric) {
+        return String.format("%s.%s.%s", metricsNamePrefix, action, metric);
     }
 }
