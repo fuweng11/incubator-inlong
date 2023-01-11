@@ -86,7 +86,7 @@ export const useColumns = ({ onDelete, openModal, onRestart, onStop }) => {
             <Button type="link" onClick={() => onDelete(record)}>
               {i18n.t('basic.Delete')}
             </Button>
-            {record?.status && (record?.status === 120 || record?.status === 130) && (
+            {/* {record?.status && (record?.status === 120 || record?.status === 130) && (
               <Button type="link" onClick={() => onRestart(record)}>
                 {i18n.t('pages.GroupDashboard.config.Restart')}
               </Button>
@@ -95,7 +95,7 @@ export const useColumns = ({ onDelete, openModal, onRestart, onStop }) => {
               <Button type="link" onClick={() => onStop(record)}>
                 {i18n.t('pages.GroupDashboard.config.Stop')}
               </Button>
-            )}
+            )} */}
             {record?.status && (record?.status === 120 || record?.status === 130) && (
               <Button type="link" onClick={() => openModal(record)}>
                 {i18n.t('pages.GroupDashboard.config.ExecuteLog')}
