@@ -69,6 +69,8 @@ import org.apache.inlong.manager.pojo.group.InlongGroupPageRequest;
 import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarDTO;
 import org.apache.inlong.manager.pojo.stream.InlongStreamBriefInfo;
 import org.apache.inlong.manager.pojo.user.UserInfo;
+import org.apache.inlong.manager.service.cluster.node.InlongClusterNodeOperator;
+import org.apache.inlong.manager.service.cluster.node.InlongClusterNodeOperatorFactory;
 import org.apache.inlong.manager.service.repository.DataProxyConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,6 +107,8 @@ public class InlongClusterServiceImpl implements InlongClusterService {
     private InlongStreamEntityMapper streamMapper;
     @Autowired
     private InlongClusterOperatorFactory clusterOperatorFactory;
+    @Autowired
+    private InlongClusterNodeOperatorFactory clusterNodeOperatorFactory;
     @Autowired
     private InlongClusterTagEntityMapper clusterTagMapper;
     @Autowired
@@ -1000,14 +1004,8 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             LOGGER.error(errMsg);
             throw new BusinessException(errMsg);
         }
-
-        InlongClusterNodeEntity entity = CommonBeanUtils.copyProperties(request, InlongClusterNodeEntity::new);
-        entity.setCreator(operator);
-        entity.setModifier(operator);
-        clusterNodeMapper.insert(entity);
-
-        LOGGER.info("success to add inlong cluster node={}", request);
-        return entity.getId();
+        InlongClusterNodeOperator instance = clusterNodeOperatorFactory.getInstance(request.getType());
+        return instance.saveOpt(request, operator);
     }
 
     @Override
@@ -1042,11 +1040,9 @@ public class InlongClusterServiceImpl implements InlongClusterService {
                             request.getType(), request.getIp(), request.getPort()));
         }
         // add record
-        InlongClusterNodeEntity clusterNode = CommonBeanUtils.copyProperties(request, InlongClusterNodeEntity::new);
-        clusterNode.setCreator(opInfo.getName());
-        clusterNode.setModifier(opInfo.getName());
-        clusterNodeMapper.insert(clusterNode);
-        return entity.getId();
+        InlongClusterNodeOperator instance = clusterNodeOperatorFactory.getInstance(request.getType());
+        instance.saveOpt(request, opInfo.getName());
+        return instance.saveOpt(request, opInfo.getName());
     }
 
     @Override
@@ -1060,9 +1056,8 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         InlongClusterEntity cluster = clusterMapper.selectById(entity.getParentId());
         String message = "Current user does not have permission to get cluster node";
         checkUser(cluster, currentUser, message);
-        ClusterNodeResponse clusterNodeResponse = CommonBeanUtils.copyProperties(entity, ClusterNodeResponse::new);
-        LOGGER.debug("success to get inlong cluster node by id={}", id);
-        return clusterNodeResponse;
+        InlongClusterNodeOperator instance = clusterNodeOperatorFactory.getInstance(entity.getType());
+        return instance.getFromEntity(entity);
     }
 
     @Override
@@ -1282,14 +1277,8 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         String message = "Current user does not have permission to update cluster node";
         checkUser(cluster, operator, message);
 
-        CommonBeanUtils.copyProperties(request, entity, true);
-        entity.setParentId(request.getParentId());
-        entity.setModifier(operator);
-        if (InlongConstants.AFFECTED_ONE_ROW != clusterNodeMapper.updateById(entity)) {
-            LOGGER.warn(errMsg);
-            throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
-        }
-        LOGGER.info("success to update inlong cluster node={}", request);
+        InlongClusterNodeOperator instance = clusterNodeOperatorFactory.getInstance(request.getType());
+        instance.updateOpt(request, operator);
         return true;
     }
 
@@ -1337,12 +1326,8 @@ public class InlongClusterServiceImpl implements InlongClusterService {
                     "inlong cluster node already exist for " + request);
         }
         // update record
-        CommonBeanUtils.copyProperties(request, entity, true);
-        entity.setParentId(request.getParentId());
-        entity.setModifier(opInfo.getName());
-        if (InlongConstants.AFFECTED_ONE_ROW != clusterNodeMapper.updateById(entity)) {
-            throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
-        }
+        InlongClusterNodeOperator instance = clusterNodeOperatorFactory.getInstance(request.getType());
+        instance.updateOpt(request, opInfo.getName());
         return true;
     }
 
