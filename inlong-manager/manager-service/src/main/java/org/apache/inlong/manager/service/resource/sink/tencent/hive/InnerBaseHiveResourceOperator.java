@@ -199,17 +199,19 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             String tbName = hiveFullInfo.getTableName();
             String superUser = hiveFullInfo.getUsername();
 
-            TableInfoBean existTable = upsOperator.queryTableInfo(hiveFullInfo.getIsThive(),
-                    hiveFullInfo.getClusterTag(), hiveFullInfo.getUsername(), dbName, tbName);
+            boolean isExist = upsOperator.checkTableExist(hiveFullInfo, dbName, tbName);
             DealResult dealResult;
-            if (existTable == null) {
+            if (isExist) {
+                grantPrivilegeBySc(hiveFullInfo, superUser, "select", false);
+                TableInfoBean existTable = upsOperator.queryTableInfo(hiveFullInfo.getIsThive(),
+                        hiveFullInfo.getClusterTag(), hiveFullInfo.getUsername(), dbName, tbName);
+                LOGGER.info("hive table [{}.{}] exists, it will be updated", dbName, tbName);
+                dealResult = compareTableAndModifyColumn(existTable, hiveFullInfo);
+            } else {
                 // grant superuser permission to create tables, and create tables with superuser
                 grantPrivilegeBySc(hiveFullInfo, superUser, "create", true);
                 LOGGER.info("new hive table [{}.{}] will be created", dbName, tbName);
                 dealResult = this.createTdwTable(hiveFullInfo, columnList);
-            } else {
-                LOGGER.info("hive table [{}.{}] exists, it will be updated", dbName, tbName);
-                dealResult = compareTableAndModifyColumn(existTable, hiveFullInfo);
             }
 
             // failed to create / modify the table structure. Modify the storage status and business status
@@ -568,7 +570,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             LOGGER.info("begin to grant hive privilege {} for user={}", accessType, username);
             scService.grant(username, dbName, tableName, accessType, hiveType);
             LOGGER.info("finish to grant hive privilege {} for user={}", accessType, username);
-            Thread.sleep(1000 * 60);
+            Thread.sleep(500 * 60);
             retryTimes.incrementAndGet();
             hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType);
         }

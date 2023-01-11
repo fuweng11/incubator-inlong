@@ -23,6 +23,7 @@ import com.tencent.tdw.ups.client.TdwUps;
 import com.tencent.tdw.ups.client.TdwUpsFactory;
 import com.tencent.tdw.ups.client.impl.HiveImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
@@ -34,6 +35,7 @@ import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
+import org.apache.inlong.manager.pojo.tencent.ups.CheckTableExistInfo;
 import org.apache.inlong.manager.pojo.tencent.ups.QueryHiveLocationResponse;
 import org.apache.inlong.manager.pojo.tencent.ups.QueryHiveLocationResponse.TableObject;
 import org.apache.inlong.manager.pojo.tencent.ups.UPSConfiguration;
@@ -49,6 +51,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,6 +76,9 @@ public class UPSOperator {
 
     @Value("${inlong.oms.httpUrl}")
     private String omsHttpUrl;
+
+    @Value("${inlong.oms.checkTableUrl:http://tdwopen.oa.com/security/is_table_exists}")
+    private String checkTableExistUrl;
 
     /**
      * query library table interface
@@ -275,6 +282,29 @@ public class UPSOperator {
         return HttpUtils.getRequest(restTemplate, omsHttpUrl, params, headers,
                 new ParameterizedTypeReference<QueryHiveLocationResponse>() {
                 });
+    }
+
+    public boolean checkTableExist(InnerHiveFullInfo hiveFullInfo, String database, String table) throws Exception {
+        boolean result = false;
+        log.info("begin check table exist");
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("clusterName", hiveFullInfo.getClusterTag());
+        String type = hiveFullInfo.getIsThive() == TencentConstants.HIVE_TYPE ? "HIVE" : "THIVE";
+        params.put("type", type);
+        params.put("database", database);
+        List<String> tables = new ArrayList<>();
+        tables.add(table);
+        params.put("tables", tables);
+        HttpHeaders headers = new HttpHeaders();
+        CheckTableExistInfo rsp = HttpUtils.postRequest(restTemplate, checkTableExistUrl, params, headers,
+                new ParameterizedTypeReference<CheckTableExistInfo>() {
+                });
+        log.info("check table exist result rsp={}", rsp.toString());
+        List<String> tableList = rsp.getData();
+        if (CollectionUtils.isNotEmpty(tableList) && tableList.contains(table)) {
+            result = true;
+        }
+        return result;
     }
 
 }
