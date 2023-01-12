@@ -25,6 +25,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.JsonUtils;
@@ -108,8 +109,8 @@ public class MySQLSinkDTO {
         try {
             return JsonUtils.parseObject(extParams, MySQLSinkDTO.class);
         } catch (Exception e) {
-            LOGGER.error("fetch mysql sink info failed from json params: " + extParams, e);
-            throw new BusinessException(ErrorCodeEnum.SINK_INFO_INCORRECT.getMessage() + ": " + e.getMessage());
+            throw new BusinessException(ErrorCodeEnum.SINK_INFO_INCORRECT,
+                    String.format("parse extParams of MySQL SinkDTO failure: %s", e.getMessage()));
         }
     }
 
@@ -189,7 +190,10 @@ public class MySQLSinkDTO {
             return url;
         }
         try {
-            String resultUrl = URLDecoder.decode(url, "UTF-8");
+            String resultUrl = url;
+            while (resultUrl.contains(InlongConstants.PERCENT)) {
+                resultUrl = URLDecoder.decode(resultUrl, "UTF-8");
+            }
             for (String sensitiveParam : SENSITIVE_PARAM_MAP.keySet()) {
                 if (StringUtils.containsIgnoreCase(resultUrl, sensitiveParam)) {
                     resultUrl = StringUtils.replaceIgnoreCase(resultUrl, sensitiveParam,
