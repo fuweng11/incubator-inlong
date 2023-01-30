@@ -146,7 +146,7 @@ public class HaBinlogSourceOperator extends AbstractSourceOperator {
     @Transactional(rollbackFor = Throwable.class, isolation = Isolation.REPEATABLE_READ)
     public void updateOpt(SourceRequest request, Integer groupStatus, Integer groupMode, String operator) {
         StreamSourceEntity entity = sourceMapper.selectByIdForUpdate(request.getId());
-        Preconditions.checkNotNull(entity, ErrorCodeEnum.SOURCE_INFO_NOT_FOUND.getMessage());
+        Preconditions.expectNotNull(entity, ErrorCodeEnum.SOURCE_INFO_NOT_FOUND.getMessage());
 
         if (SourceType.AUTO_PUSH.equals(entity.getSourceType())) {
             LOGGER.warn("auto push source {} can not be updated", entity.getSourceName());
