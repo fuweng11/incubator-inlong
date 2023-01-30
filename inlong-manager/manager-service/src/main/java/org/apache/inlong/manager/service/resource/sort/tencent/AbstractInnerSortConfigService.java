@@ -91,8 +91,8 @@ public class AbstractInnerSortConfigService {
     private InlongStreamEntityMapper streamEntityMapper;
 
     public String getZkRoot(String mqType, ZkClusterDTO zkClusterDTO) {
-        Preconditions.checkNotNull(mqType, "mq type cannot be null");
-        Preconditions.checkNotNull(zkClusterDTO, "zookeeper cluster cannot be null");
+        Preconditions.expectNotNull(mqType, "mq type cannot be null");
+        Preconditions.expectNotNull(zkClusterDTO, "zookeeper cluster cannot be null");
 
         String zkRoot;
         mqType = mqType.toUpperCase(Locale.ROOT);
@@ -308,9 +308,9 @@ public class AbstractInnerSortConfigService {
                 throw new WorkflowListenerException("tube cluster not found for groupId=" + groupId);
             }
             InlongClusterEntity tubeCluster = tubeClusters.get(0);
-            Preconditions.checkNotNull(tubeCluster, "tube cluster not found for groupId=" + groupId);
+            Preconditions.expectNotNull(tubeCluster, "tube cluster not found for groupId=" + groupId);
             String masterAddress = tubeCluster.getUrl();
-            Preconditions.checkNotNull(masterAddress,
+            Preconditions.expectNotNull(masterAddress,
                     "tube cluster [" + tubeCluster.getId() + "] not contains masterAddress");
             DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
             // List<InnerElasticsearchFieldInfo> fieldList = getElasticsearchFieldFromSink(innerEsSink);

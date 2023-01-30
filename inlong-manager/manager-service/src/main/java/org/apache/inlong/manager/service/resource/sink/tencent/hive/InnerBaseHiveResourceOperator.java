@@ -517,7 +517,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         DealResult dealResult = new DealResult();
         try {
             Integer clusterId = scService.getClusterIdByIdentifier(clusterTag);
-            Preconditions.checkNotNull(clusterId, "unknown clusterTag: " + clusterTag);
+            Preconditions.expectNotNull(clusterId, "unknown clusterTag: " + clusterTag);
 
             ScHiveResource scHiveResource = new ScHiveResource();
             scHiveResource.setType(hiveType);

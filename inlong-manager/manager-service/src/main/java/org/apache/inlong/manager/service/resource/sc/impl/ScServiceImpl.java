@@ -109,7 +109,7 @@ public class ScServiceImpl implements ScService {
 
     @Override
     public List<Staff> listStaff(String username) {
-        Preconditions.checkNotEmpty(username, "username cannot be null");
+        Preconditions.expectNotEmpty(username, "username cannot be null");
 
         /*
          * // OpenAPI Map<String, Object> params = Maps.newHashMap(); params.put("pageNum", 1); params.put("pageSize",

@@ -83,7 +83,7 @@ public abstract class BaseProxyAuthenticator implements Authenticator {
 
     private StaffDTO getStaffInfo(String username, String proxyUser) {
         StaffBaseInfo staffBaseInfo = smartGateService.getStaffByEnName(username);
-        Preconditions.checkNotNull(staffBaseInfo, "staff not exist :" + username);
+        Preconditions.expectNotNull(staffBaseInfo, "staff not exist :" + username);
 
         String[] deptNames = staffBaseInfo.getDeptNameString().split("/");
         StaffDTO staff = new StaffDTO();

@@ -78,7 +78,7 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
     @Override
     protected void setTargetEntity(SinkRequest request, StreamSinkEntity targetEntity) {
         String sinkType = request.getSinkType();
-        Preconditions.checkTrue(this.getSinkType().equals(sinkType) || SinkType.INNER_THIVE.equals(sinkType),
+        Preconditions.expectTrue(this.getSinkType().equals(sinkType) || SinkType.INNER_THIVE.equals(sinkType),
                 ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT.getMessage() + ": " + getSinkType());
         InnerBaseHiveSinkRequest sinkRequest = (InnerBaseHiveSinkRequest) request;
         if (Objects.equals(SinkType.INNER_THIVE, request.getSinkType())) {
@@ -95,7 +95,7 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
 
     @Override
     public StreamSink getFromEntity(StreamSinkEntity entity) {
-        Preconditions.checkNotNull(entity, ErrorCodeEnum.SINK_INFO_NOT_FOUND.getMessage());
+        Preconditions.expectNotNull(entity, ErrorCodeEnum.SINK_INFO_NOT_FOUND.getMessage());
         InnerBaseHiveSink sink;
         switch (entity.getSinkType()) {
             case SinkType.INNER_HIVE:
@@ -153,7 +153,7 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
     }
 
     private void freezeUsTaskForThive(StreamSinkEntity entity, Integer id, String operator) {
-        Preconditions.checkTrue(entity != null && Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE),
+        Preconditions.expectTrue(entity != null && Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE),
                 "not found thive storage with id " + id);
         InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(entity.getExtParams());
         String verifiedTaskId = dto.getVerifiedTaskId();

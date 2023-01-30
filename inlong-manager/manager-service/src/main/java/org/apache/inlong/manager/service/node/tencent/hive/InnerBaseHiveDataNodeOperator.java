@@ -57,7 +57,7 @@ public class InnerBaseHiveDataNodeOperator extends AbstractDataNodeOperator {
 
     @Override
     public DataNodeInfo getFromEntity(DataNodeEntity entity) {
-        Preconditions.checkNotNull(entity, ErrorCodeEnum.DATA_NODE_NOT_FOUND.getMessage());
+        Preconditions.expectNotNull(entity, ErrorCodeEnum.DATA_NODE_NOT_FOUND.getMessage());
         DataNodeInfo dataNodeInfo;
         switch (entity.getType()) {
             case DataNodeType.INNER_HIVE:

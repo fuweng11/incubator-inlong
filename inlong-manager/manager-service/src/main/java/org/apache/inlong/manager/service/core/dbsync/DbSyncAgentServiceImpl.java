@@ -866,16 +866,16 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 return;
             }
             AddFieldsRequest fieldsRequest = addFieldQueue.poll();
-            Preconditions.checkNotNull(fieldsRequest, "add fields request is null from the queue");
+            Preconditions.expectNotNull(fieldsRequest, "add fields request is null from the queue");
             Integer id = fieldsRequest.getId();
-            Preconditions.checkNotNull(fieldsRequest, "add fields request has no id field " + fieldsRequest);
+            Preconditions.expectNotNull(fieldsRequest, "add fields request has no id field " + fieldsRequest);
             StreamSourceEntity dbDetailEntity = sourceMapper.selectById(id);
-            Preconditions.checkNotNull(dbDetailEntity, "db detail not found by id=" + id);
+            Preconditions.expectNotNull(dbDetailEntity, "db detail not found by id=" + id);
 
             String groupId = dbDetailEntity.getInlongGroupId();
             String streamId = dbDetailEntity.getInlongStreamId();
             InlongGroupEntity groupEntity = groupMapper.selectByGroupId(groupId);
-            Preconditions.checkNotNull(groupEntity, "not found group info by groupId " + groupId);
+            Preconditions.expectNotNull(groupEntity, "not found group info by groupId " + groupId);
 
             try {
                 /*

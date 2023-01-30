@@ -68,7 +68,7 @@ public class ScApiRequestService {
         }
 
         String errMsg = Optional.ofNullable(response).map(Response::getErrMsg).orElse("");
-        Preconditions.checkTrue(response.isSuccess(), "security center request failed: " + errMsg);
+        Preconditions.expectTrue(response.isSuccess(), "security center request failed: " + errMsg);
         return response.getData();
     }
 

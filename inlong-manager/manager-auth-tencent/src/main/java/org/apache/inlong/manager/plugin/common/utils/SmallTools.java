@@ -45,7 +45,7 @@ public class SmallTools {
             return bgFullName;
         }
         Matcher matcher = BG_EN_NAME_PATTERN.matcher(bgFullName.toLowerCase());
-        Preconditions.checkTrue(matcher.find(), "cannot get the bg en name :" + bgFullName);
+        Preconditions.expectTrue(matcher.find(), "cannot get the bg en name :" + bgFullName);
         return matcher.group();
     }
 

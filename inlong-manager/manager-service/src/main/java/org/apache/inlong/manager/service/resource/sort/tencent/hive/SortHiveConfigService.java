@@ -487,10 +487,10 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 throw new WorkflowListenerException("tube cluster not found for groupId=" + groupId);
             }
             InlongClusterEntity tubeCluster = tubeClusters.get(0);
-            Preconditions.checkNotNull(tubeCluster, "tube cluster not found for bid=" + groupId);
+            Preconditions.expectNotNull(tubeCluster, "tube cluster not found for bid=" + groupId);
             Integer tubeId = tubeCluster.getId();
             String masterAddress = tubeCluster.getUrl();
-            Preconditions.checkNotNull(masterAddress, "tube cluster [" + tubeId + "] not contains masterAddress");
+            Preconditions.expectNotNull(masterAddress, "tube cluster [" + tubeId + "] not contains masterAddress");
 
             String topic = groupInfo.getMqResource();
             String consumerGroup = getConsumerGroup(groupInfo, topic, sortClusterName, hiveFullInfo.getSinkId());

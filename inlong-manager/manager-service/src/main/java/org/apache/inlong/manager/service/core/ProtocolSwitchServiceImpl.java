@@ -69,8 +69,8 @@ public class ProtocolSwitchServiceImpl extends AbstractInnerSortConfigService im
         String groupId = request.getInlongGroupId();
         String streamId = request.getInlongStreamId();
         LOGGER.debug("begin to switch configuration of groupId={}, streamId={}", groupId, streamId);
-        Preconditions.checkNotNull(groupId, ErrorCodeEnum.GROUP_ID_IS_EMPTY.getMessage());
-        Preconditions.checkNotNull(streamId, ErrorCodeEnum.STREAM_ID_IS_EMPTY.getMessage());
+        Preconditions.expectNotNull(groupId, ErrorCodeEnum.GROUP_ID_IS_EMPTY.getMessage());
+        Preconditions.expectNotNull(streamId, ErrorCodeEnum.STREAM_ID_IS_EMPTY.getMessage());
         InlongGroupEntity groupEntity = groupMapper.selectByGroupId(groupId);
         if (groupEntity == null) {
             LOGGER.error("inlong group not found by groupId={}", groupId);

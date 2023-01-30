@@ -485,7 +485,7 @@ public class InlongClusterServiceImpl implements InlongClusterService {
 
     @Override
     public ClusterInfo get(Integer id) {
-        Preconditions.checkNotNull(id, "inlong cluster id cannot be empty");
+        Preconditions.expectNotNull(id, "inlong cluster id cannot be empty");
         InlongClusterEntity entity = clusterMapper.selectById(id);
         if (entity == null) {
             LOGGER.error("inlong cluster not found by id={}", id);

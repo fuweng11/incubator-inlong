@@ -87,7 +87,7 @@ public class SortClusterOperator extends AbstractClusterOperator {
 
     @Override
     public ClusterInfo getFromEntity(InlongClusterEntity entity) {
-        Preconditions.checkNotNull(entity, ErrorCodeEnum.CLUSTER_NOT_FOUND.getMessage());
+        Preconditions.expectNotNull(entity, ErrorCodeEnum.CLUSTER_NOT_FOUND.getMessage());
 
         ClusterInfo sortClusterInfo;
         switch (entity.getType()) {
