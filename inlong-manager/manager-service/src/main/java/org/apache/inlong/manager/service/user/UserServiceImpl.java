@@ -199,6 +199,7 @@ public class UserServiceImpl implements UserService {
                 && Objects.equals(currentUser, updateName);
         Preconditions.expectFalse(managerToOrdinary, "You are a manager and you cannot change to an ordinary user");
 
+        // target username must not exist
         UserEntity updateUserEntity = userMapper.selectById(request.getId());
         Preconditions.expectNotNull(updateUserEntity, "User not exists with id=" + request.getId());
         String errMsg = String.format("user has already updated with username=%s, reqVersion=%s, storedVersion=%s",
