@@ -154,7 +154,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserInfo getByName(String name) {
-        Preconditions.expectNotNull(name, "User name cannot be null");
+        Preconditions.expectNotBlank(name, ErrorCodeEnum.INVALID_PARAMETER, "User name cannot be null");
         UserEntity entity = userMapper.selectByName(name);
         if (entity == null) {
             return null;
@@ -211,8 +211,9 @@ public class UserServiceImpl implements UserService {
 
         // target username must not exist
         UserEntity targetUserEntity = userMapper.selectByName(updateName);
-        Preconditions.expectTrue(Objects.isNull(targetUserEntity)
-                || Objects.equals(targetUserEntity.getName(), updateUserEntity.getName()),
+        Preconditions.expectTrue(
+                Objects.isNull(targetUserEntity)
+                        || Objects.equals(targetUserEntity.getName(), updateUserEntity.getName()),
                 "Username [" + updateName + "] already exists");
 
         // if the current user is not a manager, needs to check the password before updating user info
