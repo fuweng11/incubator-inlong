@@ -208,6 +208,7 @@
         <aviator.version>2.2.1</aviator.version>
         <protobuf.maven.plugin.version>0.6.1</protobuf.maven.plugin.version>
         <os.maven.plugin.version>1.6.0</os.maven.plugin.version>
+        <kudu.version>1.16.0</kudu.version>
     </properties>
 
     <dependencyManagement>
