@@ -18,10 +18,13 @@
 package org.apache.inlong.manager.plugin.auth.openapi;
 
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.inlong.manager.common.enums.UserTypeEnum;
 import org.apache.inlong.manager.common.util.NetworkUtils;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
+import org.apache.inlong.manager.service.user.UserService;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 
@@ -45,13 +48,15 @@ public class OpenAPIAuthenticationFilter implements Filter {
 
     private final boolean supportMockUsername;
 
+    private final UserService userService;
     private final RoleService roleService;
 
-    public OpenAPIAuthenticationFilter(boolean supportMockUsername, RoleService roleService) {
+    public OpenAPIAuthenticationFilter(boolean supportMockUsername, UserService userService, RoleService roleService) {
         if (supportMockUsername) {
             log.warn("Ensure that you are not using test mode in production environment.");
         }
         this.supportMockUsername = supportMockUsername;
+        this.userService = userService;
         this.roleService = roleService;
     }
 
@@ -98,9 +103,16 @@ public class OpenAPIAuthenticationFilter implements Filter {
 
         UserInfo userInfo = new UserInfo();
         String userName = (String) (subject.getPrincipal());
+        UserInfo userInfoDB = userService.getByName(userName);
         List<String> roleList = roleService.listByUser(userName);
         userInfo.setName(userName);
         userInfo.setRoles(new HashSet<>(roleList));
+        // add account type info
+        if (userInfoDB == null) {
+            userInfo.setAccountType(UserTypeEnum.OPERATOR.getCode());
+        } else {
+            userInfo.setAccountType(userInfoDB.getAccountType());
+        }
         LoginUserUtils.setUserLoginInfo(userInfo);
 
         filterChain.doFilter(servletRequest, servletResponse);

@@ -20,11 +20,13 @@ package org.apache.inlong.manager.plugin.auth.openapi;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.inlong.manager.common.enums.UserTypeEnum;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.pojo.user.UserRoleCode;
 import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
+import org.apache.inlong.manager.service.user.UserService;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -43,9 +45,11 @@ import java.util.List;
 public class OpenAPIAuthorizingRealm extends AuthorizingRealm {
 
     private final TAuthAuthenticator tAuthAuthenticator;
+    private final UserService userService;
     private final RoleService roleService;
 
-    public OpenAPIAuthorizingRealm(RoleService roleService, AuthConfig authConfig) {
+    public OpenAPIAuthorizingRealm(UserService userService, RoleService roleService, AuthConfig authConfig) {
+        this.userService = userService;
         this.roleService = roleService;
         this.tAuthAuthenticator = new TAuthAuthenticator(authConfig.getService(), authConfig.getSmk());
     }
@@ -70,9 +74,11 @@ public class OpenAPIAuthorizingRealm extends AuthorizingRealm {
             UserInfo userInfo = (UserInfo) principal;
             authorizationInfo.setRoles(userInfo.getRoles());
             LoginUserUtils.getLoginUser().setRoles(authorizationInfo.getRoles());
+            LoginUserUtils.getLoginUser().setAccountType(userInfo.getAccountType());
             return authorizationInfo;
         }
         if (principal instanceof String) {
+            UserInfo userInfoDB = userService.getByName((String) principal);
             List<String> roles = roleService.listByUser((String) principal);
             if (CollectionUtils.isEmpty(roles)) {
                 authorizationInfo.setRoles(Sets.newHashSet(UserRoleCode.OPERATOR));
@@ -80,6 +86,12 @@ public class OpenAPIAuthorizingRealm extends AuthorizingRealm {
                 authorizationInfo.setRoles(Sets.newHashSet(roles));
             }
             LoginUserUtils.getLoginUser().setRoles(authorizationInfo.getRoles());
+            // add account type info
+            if (userInfoDB == null) {
+                LoginUserUtils.getLoginUser().setAccountType(UserTypeEnum.OPERATOR.getCode());
+            } else {
+                LoginUserUtils.getLoginUser().setAccountType(userInfoDB.getAccountType());
+            }
         }
 
         log.warn("principal {} not instance of UserInfo nor String, ignored", principal);

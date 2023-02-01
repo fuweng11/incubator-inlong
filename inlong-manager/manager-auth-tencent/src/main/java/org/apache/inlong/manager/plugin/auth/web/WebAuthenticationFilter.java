@@ -20,6 +20,7 @@ package org.apache.inlong.manager.plugin.auth.web;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
+import org.apache.inlong.manager.common.enums.UserTypeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.NetworkUtils;
 import org.apache.inlong.manager.plugin.auth.openapi.BasicAuthenticationToken;
@@ -28,6 +29,7 @@ import org.apache.inlong.manager.plugin.common.pojo.user.StaffDTO;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
+import org.apache.inlong.manager.service.user.UserService;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.subject.SimplePrincipalCollection;
@@ -56,12 +58,15 @@ public class WebAuthenticationFilter implements Filter {
 
     private final boolean supportMockUsername;
 
+    private final UserService userService;
+
     private final RoleService roleService;
 
-    public WebAuthenticationFilter(boolean supportMockUsername, RoleService roleService) {
+    public WebAuthenticationFilter(boolean supportMockUsername, UserService userService, RoleService roleService) {
         if (supportMockUsername) {
             log.warn("ensure that you are not using the test mode in production environment");
         }
+        this.userService = userService;
         this.roleService = roleService;
         this.supportMockUsername = supportMockUsername;
     }
@@ -200,9 +205,16 @@ public class WebAuthenticationFilter implements Filter {
 
         UserInfo userInfo = new UserInfo();
         String userName = (String) (subject.getPrincipal());
+        UserInfo userInfoDB = userService.getByName(userName);
         List<String> roleList = roleService.listByUser(userName);
         userInfo.setName(userName);
         userInfo.setRoles(new HashSet<>(roleList));
+        // add account type info
+        if (userInfoDB == null) {
+            userInfo.setAccountType(UserTypeEnum.OPERATOR.getCode());
+        } else {
+            userInfo.setAccountType(userInfoDB.getAccountType());
+        }
         LoginUserUtils.setUserLoginInfo(userInfo);
 
         filterChain.doFilter(servletRequest, servletResponse);

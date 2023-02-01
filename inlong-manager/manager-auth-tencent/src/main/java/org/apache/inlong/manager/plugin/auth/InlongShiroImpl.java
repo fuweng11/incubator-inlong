@@ -85,7 +85,7 @@ public class InlongShiroImpl implements InlongShiro {
         webRealm.setCredentialsMatcher(getCredentialsMatcher());
 
         // openAPI realm
-        AuthorizingRealm openAPIRealm = new OpenAPIAuthorizingRealm(roleService, authConfig);
+        AuthorizingRealm openAPIRealm = new OpenAPIAuthorizingRealm(userService, roleService, authConfig);
         openAPIRealm.setCredentialsMatcher(getCredentialsMatcher());
 
         return Arrays.asList(webRealm, openAPIRealm);
@@ -108,8 +108,8 @@ public class InlongShiroImpl implements InlongShiro {
 
         Map<String, Filter> filters = new LinkedHashMap<>();
         boolean allowMock = !Env.PROD.equals(Env.forName(env));
-        filters.put(FILTER_NAME_WEB, new WebAuthenticationFilter(allowMock, roleService));
-        filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, roleService));
+        filters.put(FILTER_NAME_WEB, new WebAuthenticationFilter(allowMock, userService, roleService));
+        filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, roleService));
         shiroFilterFactoryBean.setFilters(filters);
 
         // anon: can be accessed by anyone
