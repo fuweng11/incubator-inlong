@@ -40,6 +40,8 @@ public enum ErrorCodeEnum {
     RECORD_NOT_FOUND(109, "The record does not exist"),
     USER_IS_NOT_MANAGER(110, "%s is not the manager, please contact %s"),
     RECORD_IN_USED(111, "The record is in use"),
+    IP_EMPTY(112, "The IP is is empty"),
+    PORT_EMPTY(113, "The PORT is is empty"),
 
     GROUP_NOT_FOUND(1001, "Inlong group does not exist/no operation authority"),
     GROUP_DUPLICATE(1002, "Inlong group already exists"),
