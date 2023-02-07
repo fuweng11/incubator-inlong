@@ -18,12 +18,14 @@
 package org.apache.inlong.manager.service.sink.tencent.custom;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
+import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.pojo.sink.SinkField;
 import org.apache.inlong.manager.pojo.sink.SinkRequest;
@@ -36,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Custom sink operator.
@@ -75,6 +78,9 @@ public class CustomSinkOperator extends AbstractSinkOperator {
             return sink;
         }
         CommonBeanUtils.copyProperties(entity, sink, true);
+        if (StringUtils.isNotBlank(entity.getExtParams())) {
+            sink.setProperties(JsonUtils.parseObject(entity.getExtParams(), Map.class));
+        }
         return sink;
     }
 
