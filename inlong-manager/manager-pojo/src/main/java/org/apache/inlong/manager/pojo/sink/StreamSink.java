@@ -33,6 +33,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.apache.inlong.manager.common.auth.DefaultAuthentication;
 import org.apache.inlong.manager.common.enums.DataFormat;
+import org.apache.inlong.manager.pojo.sink.custom.CustomSink;
 import org.apache.inlong.manager.pojo.stream.StreamNode;
 
 import java.util.Date;
@@ -49,7 +50,7 @@ import java.util.Map;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @ApiModel("Stream sink info")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, visible = true, property = "sinkType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, visible = true, property = "sinkType", defaultImpl = CustomSink.class)
 public abstract class StreamSink extends StreamNode {
 
     @ApiModelProperty("Sink id")

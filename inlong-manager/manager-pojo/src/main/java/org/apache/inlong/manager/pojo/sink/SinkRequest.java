@@ -26,6 +26,7 @@ import lombok.Data;
 import org.apache.inlong.manager.common.validation.SaveValidation;
 import org.apache.inlong.manager.common.validation.UpdateByIdValidation;
 import org.apache.inlong.manager.common.validation.UpdateByKeyValidation;
+import org.apache.inlong.manager.pojo.sink.custom.CustomSinkRequest;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.Range;
 
@@ -40,7 +41,7 @@ import java.util.Map;
  */
 @Data
 @ApiModel("Stream sink request")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, visible = true, property = "sinkType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, visible = true, property = "sinkType", defaultImpl = CustomSinkRequest.class)
 public abstract class SinkRequest {
 
     @ApiModelProperty(value = "Primary key")

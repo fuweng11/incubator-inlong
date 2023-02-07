@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.apache.inlong.manager.pojo.node.tencent.custom.CustomDataNodeInfo;
 
 import java.util.Date;
 
@@ -36,7 +37,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @ApiModel("Data node info")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, visible = true, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, visible = true, property = "type", defaultImpl = CustomDataNodeInfo.class)
 public abstract class DataNodeInfo {
 
     @ApiModelProperty(value = "Primary key")
