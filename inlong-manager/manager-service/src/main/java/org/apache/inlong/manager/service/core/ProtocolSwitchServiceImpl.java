@@ -65,6 +65,7 @@ public class ProtocolSwitchServiceImpl extends AbstractInnerSortConfigService im
     @Autowired
     private InlongClusterEntityMapper clusterMapper;
 
+    @Override
     public Boolean switchConfiguration(ProtocolSwitchRequest request) {
         String groupId = request.getInlongGroupId();
         String streamId = request.getInlongStreamId();

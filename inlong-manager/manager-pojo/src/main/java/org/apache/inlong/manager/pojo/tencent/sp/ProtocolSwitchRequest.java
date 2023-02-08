@@ -39,7 +39,7 @@ public class ProtocolSwitchRequest {
     private String inlongStreamId;
 
     @ApiModelProperty("Partition time")
-    private String partitionTime;
+    private Long partitionTime;
 
     @ApiModelProperty("Etl un save to tmp")
     private Boolean etlUnSaveToTmp = false;

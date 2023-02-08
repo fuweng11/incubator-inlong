@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
 public class ProtocolSwitchInfo {
 
     @ApiModelProperty("Partition time")
-    private String partitionTime;
+    private Long partitionTime;
 
     @ApiModelProperty("Etl temp path")
     private UnSaveToTmp etl;
