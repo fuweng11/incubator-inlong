@@ -103,12 +103,14 @@ public class ProtocolSwitchServiceImpl extends AbstractInnerSortConfigService im
             updateZkInfo(request, zkUrl, zkRoot, etlZkPath);
             LOGGER.info("success to update etl zk info, zkUrl={}, zkRoot={}, etlZkPath={}",
                     zkUrl, zkRoot, etlZkPath);
-            String usZkPath = getUsZkPath(request.getHdfsTablePath());
-            LOGGER.info("begin to update us zk info, usZkPath={}", usZkPath);
-            updateZkInfo(request, zkUrl, zkRoot, usZkPath);
-            LOGGER.info("success to update us zk info, usZkPath={}", usZkPath);
+            if (StringUtils.isNotBlank(request.getHdfsTablePath())) {
+                String usZkPath = getUsZkPath(request.getHdfsTablePath());
+                LOGGER.info("begin to update us zk info, usZkPath={}", usZkPath);
+                updateZkInfo(request, zkUrl, zkRoot, usZkPath);
+                LOGGER.info("success to update us zk info, usZkPath={}", usZkPath);
+            }
         } catch (Exception e) {
-            LOGGER.error("failed to update etl zk info", e);
+            LOGGER.error("failed to update zk info", e);
             return false;
         }
         return true;
