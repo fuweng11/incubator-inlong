@@ -114,6 +114,10 @@
         </dependency>
 
         <dependency>
+            <groupId>com.tencent.flink</groupId>
+            <artifactId>flink-format-common</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-core</artifactId>
             <scope>compile</scope>

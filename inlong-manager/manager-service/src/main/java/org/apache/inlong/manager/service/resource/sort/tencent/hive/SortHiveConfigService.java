@@ -364,6 +364,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 hiveFullInfo.getUsername(), hiveFullInfo.getPassword(),
                 dataPath, sortExtConfig.getBackupDataPath(),
                 user, sortExtConfig.getBackupHadoopProxyUser(),
+                3,
                 sortExtConfig.getCreationStrategy(),
                 partitionList.toArray(new HivePartitionInfo[0]),
                 sortExtConfig.getFormatInfo(),
@@ -429,7 +430,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 sortExtConfig.getConsistency(),
                 hiveFullInfo.getUsTaskId(),
                 sortExtConfig.getBackupDataPath(),
-                sortExtConfig.getBackupHadoopProxyUser());
+                sortExtConfig.getBackupHadoopProxyUser(), 3);
     }
 
     /**
@@ -509,7 +510,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
                 String adminUrl = pulsarClusterDTO.getAdminUrl();
                 String serviceUrl = pulsarCluster.getUrl();
-                pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, null, null));
+                pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, pulsarCluster.getName(), null, null));
             });
             InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
             // Multiple adminUrls should be configured for pulsar,

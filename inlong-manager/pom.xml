@@ -50,7 +50,8 @@
         <tq-hadoop.version>2.8.5-tq-0.1.10</tq-hadoop.version>
         <tdw-api-client.version>1.0.9-SNAPSHOT</tdw-api-client.version>
         <oceanus-etl-api.version>2.1.0.3-SNAPSHOT</oceanus-etl-api.version>
-        <oceanus-etl-common.version>2.1.1-SNAPSHOT</oceanus-etl-common.version>
+        <oceanus-etl-common.version>2.1.2-SNAPSHOT</oceanus-etl-common.version>
+        <flink-format.version>1.9-tq-1.22</flink-format.version>
     </properties>
 
     <dependencyManagement>
@@ -206,6 +207,11 @@
                 <groupId>com.tencent.oceanus.etl</groupId>
                 <artifactId>oceanus-etl-common</artifactId>
                 <version>${oceanus-etl-common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.tencent.flink</groupId>
+                <artifactId>flink-format-common</artifactId>
+                <version>${flink-format.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

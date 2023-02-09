@@ -339,7 +339,7 @@ public class AbstractInnerSortConfigService {
                 PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
                 String adminUrl = pulsarClusterDTO.getAdminUrl();
                 String serviceUrl = pulsarCluster.getUrl();
-                pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, null, null));
+                pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, pulsarCluster.getName(), null, null));
             });
 
             InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
