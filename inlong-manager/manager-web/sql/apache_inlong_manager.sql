@@ -893,7 +893,15 @@ VALUES ('audit_sdk_collect', 'SDK', 0, '1'),
        ('audit_sort_doris_input', 'DORIS', 0, '21'),
        ('audit_sort_doris_output', 'DORIS', 1, '22'),
        ('audit_sort_mysql_input', 'MYSQL', 0, '23'),
-       ('audit_sort_mysql_output', 'MYSQL', 1, '24');
+       ('audit_sort_mysql_output', 'MYSQL', 1, '24'),
+       ('audit_id_sort_inner_hive_input', 'INNER_HIVE', 0, '7'),
+       ('audit_id_sort_inner_hive_output', 'INNER_HIVE', 1, '8'),
+       ('audit_id_sort_inner_thive_input', 'INNER_THIVE', 0, '7'),
+       ('audit_id_sort_inner_thive_output', 'INNER_THIVE', 1, '8'),
+       ('audit_id_sort_inner_clickhouse_input', 'INNER_CK', 0, '9'),
+       ('audit_id_sort_inner_clickhouse_output', 'INNER_CK', 1, '10'),
+       ('audit_id_sort_inner_iceberg_input', 'INNER_ICEBERG', 0, '17'),
+       ('audit_id_sort_inner_iceberg_output', 'INNER_ICEBERG', 1, '18');
 
 -- ----------------------------
 
