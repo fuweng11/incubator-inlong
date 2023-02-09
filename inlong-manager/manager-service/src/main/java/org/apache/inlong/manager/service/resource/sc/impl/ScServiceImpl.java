@@ -273,7 +273,8 @@ public class ScServiceImpl implements ScService {
     }
 
     @Override
-    public boolean grant(String username, String database, String table, String accessType, String hiveType) {
+    public boolean grant(String username, String database, String table, String accessType, String hiveType,
+            String clusterTag) {
         boolean result = false;
         Map<String, Object> params = Maps.newHashMap();
         params.put("action", "GRANT");
@@ -281,7 +282,7 @@ public class ScServiceImpl implements ScService {
         Map<String, Object> resource = new HashMap<>();
         resource.put("type", "HIVE");
         resource.put("hiveType", hiveType);
-        resource.put("clusterIdentifier", "tl");
+        resource.put("clusterIdentifier", clusterTag);
         resource.put("database", database);
         resource.put("table", table);
 

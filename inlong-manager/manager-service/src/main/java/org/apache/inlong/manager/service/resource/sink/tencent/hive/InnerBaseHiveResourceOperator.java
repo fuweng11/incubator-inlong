@@ -559,6 +559,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         String dbName = hiveFullInfo.getDbName();
         String tableName = isAll ? "*" : hiveFullInfo.getTableName();
         String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
+        String clusterTag = hiveFullInfo.getClusterTag();
         LOGGER.info("check whether the user has permission to {} a table for user={}, database={}", accessType,
                 username, dbName);
         boolean hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType);
@@ -568,7 +569,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                     username, hasPermissions, retryTimes.get(), MAX_RETRY_TIMES);
             // sleep 5 minute
             LOGGER.info("begin to grant hive privilege {} for user={}", accessType, username);
-            scService.grant(username, dbName, tableName, accessType, hiveType);
+            scService.grant(username, dbName, tableName, accessType, hiveType, clusterTag);
             LOGGER.info("finish to grant hive privilege {} for user={}", accessType, username);
             Thread.sleep(500 * 60);
             retryTimes.incrementAndGet();

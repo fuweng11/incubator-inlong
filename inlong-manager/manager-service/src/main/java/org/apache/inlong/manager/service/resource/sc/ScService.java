@@ -124,8 +124,10 @@ public interface ScService {
      * @param database database
      * @param table table
      * @param accessType access type
+     * @param clusterTag cluster tag of hive or thive cluster, like tl, hk, etc
      * @return true or false
      */
-    boolean grant(String username, String database, String table, String accessType, String hiveType);
+    boolean grant(String username, String database, String table, String accessType, String hiveType,
+            String clusterTag);
 
 }
