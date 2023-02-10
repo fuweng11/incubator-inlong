@@ -37,6 +37,10 @@ export class StreamInfo extends StreamDefaultInfo {
           label: 'BinLog',
           value: 'BINLOG',
         },
+        {
+          label: 'SEA_CUBE',
+          value: 'SEA_CUBE',
+        },
       ],
     }),
   })
