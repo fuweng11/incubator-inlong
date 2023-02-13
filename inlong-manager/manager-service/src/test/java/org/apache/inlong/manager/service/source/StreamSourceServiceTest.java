@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.service.source;
 
+import com.google.common.collect.Maps;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.pojo.source.StreamSource;
