@@ -300,14 +300,14 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         tagSet.addAll(Arrays.asList(request.getClusterTag().split(InlongConstants.COMMA)));
         List<String> clusterTagList = new ArrayList<>(tagSet);
         ClusterPageRequest pageRequest = ClusterPageRequest.builder()
-                .type(ClusterType.ZOOKEEPER)
+                .type(ClusterType.DBSYNC_ZK)
                 .clusterTagList(clusterTagList)
                 .build();
-        List<InlongClusterEntity> zkClusters = clusterMapper.selectByCondition(pageRequest);
-        if (CollectionUtils.isEmpty(zkClusters)) {
+        List<InlongClusterEntity> dbsyncZkClusters = clusterMapper.selectByCondition(pageRequest);
+        if (CollectionUtils.isEmpty(dbsyncZkClusters)) {
             throw new BusinessException("zk cluster for ha not found for cluster tag=" + request.getClusterTag());
         }
-        initInfo.setZkUrl(zkClusters.get(0).getUrl());
+        initInfo.setZkUrl(dbsyncZkClusters.get(0).getUrl());
 
         AgentClusterInfo clusterInfo = (AgentClusterInfo) clusterService.getOne(
                 null, request.getClusterName(), ClusterType.AGENT);
@@ -343,16 +343,16 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         tagSet.addAll(Arrays.asList(request.getClusterTag().split(InlongConstants.COMMA)));
         List<String> clusterTagList = new ArrayList<>(tagSet);
         ClusterPageRequest pageRequest = ClusterPageRequest.builder()
-                .type(ClusterType.ZOOKEEPER)
+                .type(ClusterType.DBSYNC_ZK)
                 .clusterTagList(clusterTagList)
                 .build();
-        List<InlongClusterEntity> zkClusters = clusterMapper.selectByCondition(pageRequest);
-        if (CollectionUtils.isEmpty(zkClusters)) {
+        List<InlongClusterEntity> dbsyncZkClusters = clusterMapper.selectByCondition(pageRequest);
+        if (CollectionUtils.isEmpty(dbsyncZkClusters)) {
             throw new BusinessException("zk cluster for ha not found for cluster tag=" + request.getClusterTag());
         }
 
         DbSyncTaskFullInfo fullTaskInfo = new DbSyncTaskFullInfo();
-        fullTaskInfo.setZkUrl(zkClusters.get(0).getUrl());
+        fullTaskInfo.setZkUrl(dbsyncZkClusters.get(0).getUrl());
 
         // pull all tasks for this running server, including normal and updated tasks
         String clusterName = dbSyncCluster.getClusterName();
@@ -416,15 +416,15 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         tagSet.addAll(Arrays.asList(request.getClusterTag().split(InlongConstants.COMMA)));
         List<String> clusterTagList = new ArrayList<>(tagSet);
         ClusterPageRequest pageRequest = ClusterPageRequest.builder()
-                .type(ClusterType.ZOOKEEPER)
+                .type(ClusterType.DBSYNC_ZK)
                 .clusterTagList(clusterTagList)
                 .build();
-        List<InlongClusterEntity> zkClusters = clusterMapper.selectByCondition(pageRequest);
-        if (CollectionUtils.isEmpty(zkClusters)) {
+        List<InlongClusterEntity> dbsyncZkClusters = clusterMapper.selectByCondition(pageRequest);
+        if (CollectionUtils.isEmpty(dbsyncZkClusters)) {
             throw new BusinessException("zk cluster for ha not found for cluster tag=" + request.getClusterTag());
         }
 
-        fullTaskInfo.setZkUrl(zkClusters.get(0).getUrl());
+        fullTaskInfo.setZkUrl(dbsyncZkClusters.get(0).getUrl());
 
         DbSyncClusterInfo oldCluster = request.getDbSyncCluster();
         String ip = request.getIp();

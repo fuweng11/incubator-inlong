@@ -38,6 +38,7 @@ public class ClusterType {
     // Inner parameters
     // --------------------------------------------------------------------------------------------
     public static final String ZOOKEEPER = "ZOOKEEPER";
+    public static final String DBSYNC_ZK = "DBSYNC_ZK";
     public static final String SORT_HIVE = "SORT_HIVE";
     public static final String SORT_THIVE = "SORT_THIVE";
     public static final String SORT_CK = "SORT_CK";
