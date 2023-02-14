@@ -30,9 +30,7 @@
   },
   "exclude": [
     "build",
-    "node_modules",
-    "src/**/*.tencent.ts",
-    "src/@tencent"
+    "node_modules"
   ],
   "include": [
     "src"
