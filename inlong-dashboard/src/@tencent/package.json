@@ -1,0 +1,15 @@
+{
+  "name": "tencent",
+  "version": "1.0.0",
+  "description": "这里指定@types/react与主react版本一致（后续修改react时需要注意这里），是为了避免ts查找@types类型时，types类型版本不同造成语法提示问题",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/react": "^16.9.41",
+    "tea-component": "^2.7.8"
+  }
+}
