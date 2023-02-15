@@ -43,6 +43,7 @@ import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.sink.SinkBriefInfo;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.pojo.source.StreamSource;
+import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamApproveRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamBriefInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamExtInfo;
@@ -52,6 +53,7 @@ import org.apache.inlong.manager.pojo.stream.InlongStreamRequest;
 import org.apache.inlong.manager.pojo.stream.StreamField;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.pojo.user.UserRoleCode;
+import org.apache.inlong.manager.service.resource.sort.FieldTypeUtils;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.source.StreamSourceService;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
@@ -67,8 +69,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.inlong.manager.pojo.stream.InlongStreamExtParam.packExtParams;
@@ -789,6 +793,42 @@ public class InlongStreamServiceImpl implements InlongStreamService {
         }
 
         return entity;
+    }
+
+    public void addFieldForStream(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
+            InlongStreamEntity streamEntity) {
+        String groupId = groupEntity.getInlongGroupId();
+        String streamId = streamEntity.getInlongStreamId();
+        // add fields for InlongStreamField
+        String defaultOperator = groupEntity.getInCharges().split(InlongConstants.COMMA)[0];
+        List<InlongStreamFieldEntity> fieldEntityList = streamFieldMapper.selectByIdentifier(groupId, streamId);
+        List<StreamField> streamFields = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(fieldEntityList)) {
+            streamFields = CommonBeanUtils.copyListProperties(fieldEntityList, StreamField::new);
+        }
+        Set<String> existsNames = streamFields.stream()
+                .map(field -> field.getFieldName().toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+        List<StreamField> tobeAddFields = fieldsRequest.getFields();
+        for (StreamField fieldInfo : tobeAddFields) {
+            String tobeAddFieldName = fieldInfo.getFieldName().toLowerCase(Locale.ROOT);
+            fieldInfo.setFieldType(FieldTypeUtils.toStreamFieldType(fieldInfo.getFieldType()));
+            if (existsNames.contains(tobeAddFieldName)) {
+                LOGGER.error("field {} already exist for streamId {}", fieldInfo.getFieldName(), streamId);
+            } else {
+                streamFields.add(fieldInfo);
+            }
+        }
+        InlongStreamRequest request = new InlongStreamRequest();
+        request.setInlongGroupId(groupId);
+        request.setInlongStreamId(streamId);
+        request.setVersion(streamEntity.getVersion());
+        request.setFieldList(streamFields);
+        if (streamFields.size() == fieldEntityList.size()) {
+            LOGGER.warn("not need add field for streamId {}", streamId);
+            return;
+        }
+        this.update(request, defaultOperator);
     }
 
 }

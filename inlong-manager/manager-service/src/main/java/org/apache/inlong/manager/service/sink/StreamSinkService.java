@@ -17,6 +17,8 @@
 
 package org.apache.inlong.manager.service.sink;
 
+import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.UpdateResult;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
@@ -25,13 +27,13 @@ import org.apache.inlong.manager.pojo.sink.SinkBriefInfo;
 import org.apache.inlong.manager.pojo.sink.SinkPageRequest;
 import org.apache.inlong.manager.pojo.sink.SinkRequest;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
+import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
-
-import javax.annotation.Nullable;
 
 /**
  * Service layer interface for stream sink
@@ -245,4 +247,6 @@ public interface StreamSinkService {
      */
     Boolean updateAfterApprove(List<SinkApproveDTO> sinkApproveList, String operator);
 
+    void addFieldForSink(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
+            InlongStreamEntity streamEntity);
 }

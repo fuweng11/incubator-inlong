@@ -66,6 +66,8 @@ import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
 import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSourceDTO;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
 import org.apache.inlong.manager.service.node.DataNodeService;
+import org.apache.inlong.manager.service.sink.StreamSinkService;
+import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,6 +154,10 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     @Autowired
     private InlongClusterService clusterService;
     @Autowired
+    private InlongStreamService streamService;
+    @Autowired
+    private StreamSinkService sinkService;
+    @Autowired
     private InlongGroupEntityMapper groupMapper;
     @Autowired
     private InlongStreamEntityMapper streamMapper;
@@ -171,9 +177,9 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     private void startHeartbeatTask() {
         SaveHeartbeatTaskRunnable taskRunnable = new SaveHeartbeatTaskRunnable();
         ipTaskStatusMap = getDbSyncTaskStatusInfo();
-        // AddFieldsTaskRunnable addFieldsTaskRunnable = new AddFieldsTaskRunnable();
+        AddFieldsTaskRunnable addFieldsTaskRunnable = new AddFieldsTaskRunnable();
         this.executorService.execute(taskRunnable);
-        // this.executorService.execute(addFieldsTaskRunnable);
+        this.executorService.execute(addFieldsTaskRunnable);
         LOGGER.info("dbsync heartbeat operate task started successfully");
     }
 
@@ -876,18 +882,11 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             String streamId = dbDetailEntity.getInlongStreamId();
             InlongGroupEntity groupEntity = groupMapper.selectByGroupId(groupId);
             Preconditions.expectNotNull(groupEntity, "not found group info by groupId " + groupId);
+            InlongStreamEntity streamEntity = streamMapper.selectByIdentifier(groupId, streamId);
 
             try {
-                /*
-                 * // add fields for InlongStreamField String defaultOperator =
-                 * groupEntity.getInCharges().split(",")[0]; streamService.addFields(groupId, streamId,
-                 * fieldsRequest.getFields(), defaultOperator);
-                 * 
-                 * // add fields for StreamSinkField sinkOperatorFactory.getAll().forEach(sinkOperator -> { List<?
-                 * extends BaseStorageResponse> storageList = sinkOperator.getSinkList(groupId, streamId); if
-                 * (CollectionUtils.isNotEmpty(storageList)) { sinkOperator.addFields(groupId, streamId, fieldsRequest,
-                 * defaultOperator); } });
-                 */
+                streamService.addFieldForStream(fieldsRequest, groupEntity, streamEntity);
+                sinkService.addFieldForSink(fieldsRequest, groupEntity, streamEntity);
                 LOGGER.info("success to add fields for dbsync, groupId={} streamId={}", groupId, streamId);
             } catch (Exception e) {
                 String errMsg = String.format("failed to add fields for dbsync, groupId=%s streamId=%s ",

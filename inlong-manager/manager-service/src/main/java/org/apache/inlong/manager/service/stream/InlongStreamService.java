@@ -17,7 +17,10 @@
 
 package org.apache.inlong.manager.service.stream;
 
+import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.pojo.common.PageResult;
+import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamApproveRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamBriefInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
@@ -230,4 +233,6 @@ public interface InlongStreamService {
      */
     void logicDeleteDlqOrRlq(String bid, String topicName, String operator);
 
+    void addFieldForStream(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
+            InlongStreamEntity streamEntity);
 }
