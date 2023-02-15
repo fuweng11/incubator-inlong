@@ -25,6 +25,10 @@ const conf: RouteProps[] = [
     component: () => import('@/@tencent/pages/Example'),
     // childRoutes: [],
   },
+  {
+    path: '/report',
+    component: () => import('@/@tencent/pages/ReportDetail'),
+  },
 ];
 
 export default conf;

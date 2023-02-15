@@ -73,15 +73,7 @@ const Page: React.FC<PageContainerProps> = ({
       />
 
       <Content.Body>
-        {useDefaultContainer ? (
-          <Container>
-            <Card>
-              <Card.Body>{children}</Card.Body>
-            </Card>
-          </Container>
-        ) : (
-          children
-        )}
+        {useDefaultContainer ? <Container>{children}</Container> : children}
       </Content.Body>
     </Content>
   );

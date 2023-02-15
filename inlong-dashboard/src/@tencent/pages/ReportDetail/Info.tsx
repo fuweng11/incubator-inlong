@@ -17,26 +17,17 @@
  * under the License.
  */
 
-import type { MenuItemType } from '.';
+import React, { useState } from 'react';
+import Description from '@/@tencent/components/Description';
 
-const conf: MenuItemType[] = [
-  {
-    path: '/group',
-    name: 'Example',
-  },
-  {
-    name: '数据上报',
-    children: [
-      {
-        path: '/report',
-        name: '上报管理',
-      },
-      {
-        path: '/subscribe',
-        name: '数据订阅',
-      },
-    ],
-  },
-];
-
-export default conf;
+export default function Info() {
+  return (
+    <Description column={3}>
+      <Description.Item title="接入方式">SDK</Description.Item>
+      <Description.Item title="单日峰值">2022-01-01</Description.Item>
+      <Description.Item title="单日最大接入量">aa</Description.Item>
+      <Description.Item title="单条数据最大值">bb</Description.Item>
+      <Description.Item title="采集类型">cc</Description.Item>
+    </Description>
+  );
+}

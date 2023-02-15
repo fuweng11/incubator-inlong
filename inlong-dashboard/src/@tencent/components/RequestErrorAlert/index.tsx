@@ -17,26 +17,6 @@
  * under the License.
  */
 
-import type { MenuItemType } from '.';
+import { message } from 'tea-component';
 
-const conf: MenuItemType[] = [
-  {
-    path: '/group',
-    name: 'Example',
-  },
-  {
-    name: '数据上报',
-    children: [
-      {
-        path: '/report',
-        name: '上报管理',
-      },
-      {
-        path: '/subscribe',
-        name: '数据订阅',
-      },
-    ],
-  },
-];
-
-export default conf;
+export const requestErrorAlert = (msg: string) => message.error({ content: msg });

@@ -17,18 +17,24 @@
  * under the License.
  */
 
-import i18n from '@/i18n';
 import Provider from '@/@tencent/components/Provider';
 import Layout from '@/@tencent/components/Layout';
 import PageLoading from '@/@tencent/components/PageLoading';
+import { requestErrorAlert } from '@/@tencent/components/RequestErrorAlert';
 
 const conf = {
   title: '',
   logo: '/logo.svg',
-  loginUrl: `${window.location.origin}/#/${i18n?.language || ''}/login`,
+  useLogin: false,
+  redirectRoutes: {
+    '/': '/report',
+  } as Record<string, string>,
+  loginUrl: '/',
   AppProvider: Provider,
   AppLoading: PageLoading,
   AppLayout: Layout,
+  requestPrefix: '/api',
+  requestErrorAlert,
 };
 
 export default conf;

@@ -18,11 +18,13 @@
  */
 
 import React from 'react';
+import { Card } from 'tea-component';
 import styles from './Page.module.less';
 
 export interface ContainerProps {
   className?: string;
   style?: object;
+  useDefaultBackground?: boolean;
 }
 
 // Blocking, there is only one block for a page by default
@@ -31,9 +33,20 @@ export interface ContainerProps {
 //  <Container><Card/></Container>
 //  <Container><Card/></Container>
 // </>
-const Container: React.FC<ContainerProps> = ({ className = '', children, style }) => (
+const Container: React.FC<ContainerProps> = ({
+  className = '',
+  children,
+  style,
+  useDefaultBackground = true,
+}) => (
   <div className={[styles.layoutContainer, className].join(' ')} style={style}>
-    {children}
+    {useDefaultBackground ? (
+      <Card>
+        <Card.Body>{children}</Card.Body>
+      </Card>
+    ) : (
+      children
+    )}
   </div>
 );
 
