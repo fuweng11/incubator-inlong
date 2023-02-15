@@ -17,23 +17,25 @@
  * under the License.
  */
 
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import 'tea-component/dist/tea.css';
+.descriptionTitleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
 
-const Provider = ({ children }) => {
-  const dispatch = useDispatch();
+.descriptionTitle {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 500;
+}
 
-  useEffect(() => {
-    dispatch({
-      type: 'setUserInfo',
-      payload: {
-        userName: 'mockUser',
-      },
-    });
-  }, [dispatch]);
+.descriptionContent {
+  display: flex;
+  flex-wrap: wrap;
+}
 
-  return children;
-};
-
-export default Provider;
+.descriptionItemTitle {
+  margin-right: 5px;
+}

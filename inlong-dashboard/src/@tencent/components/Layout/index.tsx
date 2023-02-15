@@ -25,8 +25,6 @@ import { useSelector } from '@/hooks';
 import { Link } from 'react-router-dom';
 import { State } from '@/models';
 
-import 'tea-component/dist/tea.css';
-
 const { Header, Body, Sider, Content } = Layout;
 
 const BasicLayout: React.FC = props => {
