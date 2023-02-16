@@ -56,8 +56,8 @@ public class DbSyncController {
 
     @PostMapping("/dbsync/getHeartbeat")
     @ApiOperation(value = "Get the latest heartbeats By on task ID and server ID")
-    public Response<DbSyncHeartbeat> getHeartbeat(@RequestParam Integer id, @RequestParam Integer dataNodeId) {
-        return Response.success(dbSyncAgentService.getHeartbeat(id, dataNodeId));
+    public Response<DbSyncHeartbeat> getHeartbeat(@RequestParam Integer id, @RequestParam String dataNodeName) {
+        return Response.success(dbSyncAgentService.getHeartbeat(id, dataNodeName));
     }
 
     @PostMapping("/dbsync/getInitInfo")

@@ -39,12 +39,12 @@ public interface DbSyncAgentService {
     Boolean heartbeat(DbSyncHeartbeatRequest request);
 
     /**
-     * Query the latest heartbeat according to the DbSync task ID and the server ID
+     * Query the latest heartbeat according to the DbSync task ID and the server name
      *
      * @apiNote At the same time, a task can only be executed by at most one IP and report the heartbeat,
      *         and one transfer machine may report the heartbeat of multiple tasks
      */
-    DbSyncHeartbeat getHeartbeat(Integer id, Integer dataNodeId);
+    DbSyncHeartbeat getHeartbeat(Integer id, String dataNodeName);
 
     /**
      * Pull the server names to be collected according to the IP + the version of the server list

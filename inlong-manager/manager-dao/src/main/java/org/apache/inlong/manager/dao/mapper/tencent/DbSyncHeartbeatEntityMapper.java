@@ -33,7 +33,7 @@ public interface DbSyncHeartbeatEntityMapper {
     /**
      * Query the latest heartbeat info
      */
-    DbSyncHeartbeatEntity getHeartbeat(@Param("taskId") Integer taskId, @Param("serverId") Integer serverId);
+    DbSyncHeartbeatEntity getHeartbeat(@Param("taskId") Integer taskId, @Param("serverName") String serverName);
 
     /**
      * Query the latest heartbeat info of the specified server.

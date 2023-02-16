@@ -251,17 +251,17 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     }
 
     @Override
-    public DbSyncHeartbeat getHeartbeat(Integer id, Integer dataNodeId) {
+    public DbSyncHeartbeat getHeartbeat(Integer id, String dataNodeName) {
         // the data node must exist
-        if (dataNodeService.get(dataNodeId) == null) {
-            throw new BusinessException("no db node found with id=" + dataNodeId);
+        if (dataNodeService.get(dataNodeName, DataNodeType.MYSQL) == null) {
+            throw new BusinessException("no db node found with name=" + dataNodeName);
         }
 
         // query the latest heartbeat by the taskId and serverId
         DbSyncHeartbeat message = new DbSyncHeartbeat();
-        DbSyncHeartbeatEntity entity = dbSyncHeartbeatMapper.getHeartbeat(id, dataNodeId);
+        DbSyncHeartbeatEntity entity = dbSyncHeartbeatMapper.getHeartbeat(id, dataNodeName);
         if (entity == null) {
-            LOGGER.warn("no heartbeat message found with id={}, nodeId={}", id, dataNodeId);
+            LOGGER.warn("no heartbeat message found with id={}, nodeId={}", id, dataNodeName);
             return message;
         }
         message.setInstance(entity.getInstance());
@@ -286,7 +286,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         message.setErrorMsg(entity.getErrorMsg());
         message.setReportTime(entity.getReportTime());
 
-        LOGGER.debug("success get heartbeat message by clusterId={}, serverId={}", id, dataNodeId);
+        LOGGER.debug("success get heartbeat message by clusterId={}, serverName={}", id, dataNodeName);
         return message;
     }
 
