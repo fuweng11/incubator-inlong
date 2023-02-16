@@ -25,7 +25,7 @@ import { ClusterInfo } from '../common/ClusterInfo';
 const { I18n } = DataWithBackend;
 const { FieldDecorator } = RenderRow;
 
-export default class DbsyncZKCluster
+export default class DbsyncCluster
   extends ClusterInfo
   implements DataWithBackend, RenderRow, RenderList
 {
