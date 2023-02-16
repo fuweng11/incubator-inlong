@@ -20,7 +20,10 @@ package org.apache.inlong.manager.service.resource.sort;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
+import org.apache.inlong.manager.common.enums.StreamStatus;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
+import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
@@ -44,6 +47,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +62,8 @@ public class InnerSortConfigOperator implements SortConfigOperator {
     private StreamSinkService sinkService;
     @Autowired
     private DataNodeService dataNodeService;
+    @Autowired
+    private InlongStreamEntityMapper streamMapper;
     @Autowired
     private StreamSinkEntityMapper sinkMapper;
 
@@ -83,8 +89,17 @@ public class InnerSortConfigOperator implements SortConfigOperator {
             return;
         }
         String groupId = groupInfo.getInlongGroupId();
+        Set<String> streamSet = streamMapper.selectByGroupId(groupId).stream()
+                .filter(stream -> !StreamStatus.CONFIG_SUCCESSFUL.getCode().equals(stream.getStatus()))
+                .map(InlongStreamEntity::getInlongStreamId)
+                .collect(Collectors.toSet());
         List<String> streamIds = streamInfos.stream()
-                .map(InlongStreamInfo::getInlongStreamId).collect(Collectors.toList());
+                .map(InlongStreamInfo::getInlongStreamId)
+                .filter(streamSet::contains).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(streamIds)) {
+            return;
+        }
+
         List<SinkInfo> configList = sinkMapper.selectAllConfig(groupId, streamIds);
         List<InnerHiveFullInfo> hiveInfos = new ArrayList<>();
         List<InnerClickHouseSink> clickHouseSinkList = new ArrayList<>();
