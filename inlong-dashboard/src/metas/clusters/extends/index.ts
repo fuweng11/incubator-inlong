@@ -28,6 +28,11 @@ export const allExtendsClusters: MetaExportWithBackendList<ClusterMetaType> = [
     LoadEntity: () => import('./ZooKeeper'),
   },
   {
+    label: 'DbsyncZK',
+    value: 'DBSYNC_ZK',
+    LoadEntity: () => import('./DbsyncZK'),
+  },
+  {
     label: 'SortCKTask',
     value: 'SORT_CK',
     LoadEntity: () => import('./sort/SortCKTask'),
