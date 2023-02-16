@@ -37,8 +37,8 @@ public class DbSyncHeartbeat {
     @ApiModelProperty(value = "Agent address")
     private String instance;
 
-    @ApiModelProperty(value = "ServerId of the task, is the ID of data_node table")
-    private String serverId;
+    @ApiModelProperty(value = "ServerName of the task, is the name of data_node table")
+    private String serverName;
 
     @ApiModelProperty(value = "Currently collected DB")
     private String currentDb;

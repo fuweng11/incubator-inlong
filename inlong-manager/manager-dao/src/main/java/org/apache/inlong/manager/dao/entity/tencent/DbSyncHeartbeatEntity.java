@@ -28,7 +28,7 @@ public class DbSyncHeartbeatEntity implements Serializable {
     private static final long serialVersionUID = 1L;
     private Integer id;
     private String instance;
-    private String serverId;
+    private String serverName;
     private String currentDb;
     private String url;
     private String backupUrl;

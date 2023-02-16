@@ -492,7 +492,7 @@ public class DBSyncReadOperator {
 
         DbSyncHeartbeat hbInfo = new DbSyncHeartbeat();
         hbInfo.setInstance(AgentUtils.getLocalIp());
-        hbInfo.setServerId(jobconf.getServerId());
+        hbInfo.setServerName(jobconf.getServerId());
         hbInfo.setTaskIds(jobconf.getTaskIdList());
         hbInfo.setCurrentDb(jobconf.getCurMysqlIp());
         hbInfo.setUrl(jobconf.getCurMysqlUrl());

@@ -798,7 +798,7 @@ CREATE TABLE IF NOT EXISTS `dbsync_heartbeat`
 (
     `id`               int(11)      NOT NULL AUTO_INCREMENT COMMENT 'Incremental primary key',
     `instance`         varchar(64)  NOT NULL DEFAULT '' COMMENT 'Component instance, can be ip, name...',
-    `server_id`        varchar(64)  NOT NULL DEFAULT '' COMMENT 'ServerId of the task, is the ID of data_node table',
+    `server_name`      varchar(64)  NOT NULL DEFAULT '' COMMENT 'ServerName of the task, is the ID of data_node table',
     `current_db`       varchar(256) NOT NULL DEFAULT '' COMMENT 'Currently collected DB',
     `url`              varchar(256) NOT NULL DEFAULT '' COMMENT 'URL of the DB server, such as 127.0.0.1:3306',
     `backup_url`       varchar(256) NOT NULL DEFAULT '' COMMENT 'URL of the standby DB server',
@@ -812,7 +812,7 @@ CREATE TABLE IF NOT EXISTS `dbsync_heartbeat`
     `create_time`      timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
     `modify_time`      timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Modify time',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `unique_dbsync_heartbeat` (`instance`, `server_id`)
+    UNIQUE KEY `unique_dbsync_heartbeat` (`instance`, `server_name`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Dbsync_heartbeat';
 

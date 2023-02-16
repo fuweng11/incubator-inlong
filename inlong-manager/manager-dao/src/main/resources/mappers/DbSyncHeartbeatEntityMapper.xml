@@ -23,7 +23,7 @@
         type="org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity">
         <id column="id" jdbcType="INTEGER" property="id"/>
         <result column="instance" jdbcType="VARCHAR" property="instance"/>
-        <result column="server_id" jdbcType="VARCHAR" property="serverId"/>
+        <result column="server_name" jdbcType="VARCHAR" property="serverName"/>
         <result column="current_db" jdbcType="VARCHAR" property="currentDb"/>
         <result column="url" jdbcType="VARCHAR" property="url"/>
         <result column="backup_url" jdbcType="VARCHAR" property="backupUrl"/>
@@ -38,17 +38,17 @@
         <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
     </resultMap>
     <sql id="Base_Column_List">
-        id, instance, server_id, current_db, url, backup_url, agent_status, task_ids,
+        id, instance, server_name, current_db, url, backup_url, agent_status, task_ids,
         db_dump_index, dump_position, max_log_position, error_msg, report_time, create_time, modify_time
     </sql>
 
     <insert id="insert" parameterType="org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity">
-        insert into dbsync_heartbeat (id, instance, server_id,
+        insert into dbsync_heartbeat (id, instance, server_name,
                                       current_db, url, backup_url,
                                       agent_status, task_ids, db_dump_index,
                                       dump_position, max_log_position,
                                       error_msg, report_time)
-        values (#{id,jdbcType=INTEGER}, #{instance,jdbcType=VARCHAR}, #{serverId,jdbcType=VARCHAR},
+        values (#{id,jdbcType=INTEGER}, #{instance,jdbcType=VARCHAR}, #{serverName,jdbcType=VARCHAR},
                 #{currentDb,jdbcType=VARCHAR}, #{url,jdbcType=VARCHAR},
                 #{backupUrl,jdbcType=VARCHAR}, #{agentStatus,jdbcType=VARCHAR},
                 #{taskIds,jdbcType=LONGVARCHAR}, #{dbDumpIndex,jdbcType=BIGINT},
@@ -66,16 +66,16 @@
         select
         <include refid="Base_Column_List"/>
         from dbsync_heartbeat
-        where server_id = #{serverId, jdbcType=VARCHAR}
+        where server_name = #{serverName, jdbcType=VARCHAR}
         and find_in_set(#{taskId, jdbcType=INTEGER}, task_ids)
         order by modify_time desc
         limit 1
     </select>
-    <select id="getHeartbeatByServerId" resultType="org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity">
+    <select id="getHeartbeatByServerName" resultType="org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity">
         select
         <include refid="Base_Column_List"/>
         from dbsync_heartbeat
-        where server_id = #{serverId, jdbcType=INTEGER}
+        where server_name = #{serverName, jdbcType=VARCHAR}
         order by modify_time desc
         limit 1
     </select>
@@ -83,7 +83,7 @@
     <update id="updateByPrimaryKey" parameterType="org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity">
         update dbsync_heartbeat
         set instance         = #{instance,jdbcType=VARCHAR},
-            server_id        = #{serverId,jdbcType=VARCHAR},
+            server_name      = #{serverName,jdbcType=VARCHAR},
             current_db       = #{currentDb,jdbcType=VARCHAR},
             url              = #{url,jdbcType=VARCHAR},
             backup_url       = #{backupUrl,jdbcType=VARCHAR},
@@ -98,7 +98,7 @@
     </update>
     <update id="insertOrUpdateHeartbeat">
         insert into dbsync_heartbeat
-        (instance, server_id,
+        (instance, server_name,
         current_db, url,
         backup_url, agent_status,
         task_ids, db_dump_index,
@@ -106,7 +106,7 @@
         error_msg, report_time)
         values
         <foreach collection="entityList" separator="," index="index" item="item">
-            (#{item.instance, jdbcType=VARCHAR}, #{item.serverId, jdbcType=VARCHAR},
+            (#{item.instance, jdbcType=VARCHAR}, #{item.serverName, jdbcType=VARCHAR},
             #{item.currentDb, jdbcType=VARCHAR}, #{item.url, jdbcType=VARCHAR},
             #{item.backupUrl, jdbcType=VARCHAR}, #{item.agentStatus, jdbcType=VARCHAR},
             #{item.taskIds,jdbcType=LONGVARCHAR}, #{item.dbDumpIndex,jdbcType=BIGINT},

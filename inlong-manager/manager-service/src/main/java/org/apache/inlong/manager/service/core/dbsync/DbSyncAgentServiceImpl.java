@@ -265,7 +265,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             return message;
         }
         message.setInstance(entity.getInstance());
-        message.setServerId(entity.getServerId());
+        message.setServerName(entity.getServerName());
         message.setCurrentDb(entity.getCurrentDb());
         message.setUrl(entity.getUrl());
         message.setBackupUrl(entity.getBackupUrl());
@@ -810,7 +810,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                     for (DbSyncHeartbeat message : request.getHeartbeats()) {
                         DbSyncHeartbeatEntity entity = new DbSyncHeartbeatEntity();
                         entity.setInstance(ip);
-                        entity.setServerId(message.getServerId());
+                        entity.setServerName(message.getServerName());
                         entity.setCurrentDb(message.getCurrentDb());
                         entity.setUrl(message.getUrl());
                         entity.setBackupUrl(message.getBackupUrl());
