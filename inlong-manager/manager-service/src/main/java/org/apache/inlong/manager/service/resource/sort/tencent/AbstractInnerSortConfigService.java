@@ -28,6 +28,7 @@ import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgBinlogDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgPbV1DeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgSeaCubeDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.source.KafkaSourceInfo;
@@ -199,6 +200,9 @@ public class AbstractInnerSortConfigService {
             case TencentConstants.DATA_TYPE_INLONG_MSG_V1:
                 DeserializationInfo inner = new CsvDeserializationInfo(separator, escape);
                 deserializationInfo = new InlongMsgPbV1DeserializationInfo(Constants.CompressionType.GZIP, inner);
+                break;
+            case TencentConstants.DATA_TYPE_SEA_CUBE:
+                deserializationInfo = new InlongMsgSeaCubeDeserializationInfo(streamId);
                 break;
             default:
                 throw new IllegalArgumentException("unsupported data type: " + dataType);
