@@ -43,7 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/openapi")
 @Api(tags = "Open-DbSync-API")
-public class DbSyncController {
+public class OpenDbSyncController {
 
     @Autowired
     private DbSyncAgentService dbSyncAgentService;
