@@ -71,6 +71,7 @@ export default class InnerThiveSink
     props: values => ({
       showSearch: true,
       requestTrigger: ['onOpen', 'onSearch'],
+      disabled: [110, 130].includes(values?.status),
       options: {
         requestService: {
           url: '/sc/database/list',
