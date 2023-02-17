@@ -18,7 +18,7 @@
  */
 
 import React from 'react';
-import { Card } from 'tea-component';
+import { Card } from '@tencent/tea-component';
 import styles from './Page.module.less';
 
 export interface ContainerProps {

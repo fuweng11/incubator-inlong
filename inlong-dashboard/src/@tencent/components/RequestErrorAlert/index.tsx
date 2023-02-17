@@ -17,6 +17,6 @@
  * under the License.
  */
 
-import { message } from 'tea-component';
+import { message } from '@tencent/tea-component';
 
 export const requestErrorAlert = (msg: string) => message.error({ content: msg });

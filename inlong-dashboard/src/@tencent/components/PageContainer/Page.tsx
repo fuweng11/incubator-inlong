@@ -19,7 +19,7 @@
 
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Layout, Breadcrumb, Card } from 'tea-component';
+import { Layout, Breadcrumb } from '@tencent/tea-component';
 import { State } from '@/models';
 import Container from './Container';
 import styles from './Page.module.less';

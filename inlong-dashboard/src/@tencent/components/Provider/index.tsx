@@ -19,7 +19,7 @@
 
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import 'tea-component/dist/tea.css';
+import '@tencent/tea-component/dist/tea.css';
 
 const Provider = ({ children }) => {
   const dispatch = useDispatch();

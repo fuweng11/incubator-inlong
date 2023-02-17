@@ -18,7 +18,7 @@
  */
 
 import React, { useState } from 'react';
-import { Button, Tag, Tabs, TabPanel } from 'tea-component';
+import { Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
 import Info from './Info';

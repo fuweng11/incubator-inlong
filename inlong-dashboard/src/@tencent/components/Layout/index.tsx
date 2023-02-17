@@ -19,7 +19,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { config } from '@/configs/default';
-import { Layout, Menu, NavMenu } from 'tea-component';
+import { Layout, Menu, NavMenu } from '@tencent/tea-component';
 import menuTree, { MenuItemType } from '@/configs/menus';
 import { useSelector } from '@/hooks';
 import { Link } from 'react-router-dom';
