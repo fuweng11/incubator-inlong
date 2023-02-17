@@ -22,10 +22,9 @@ import { config } from '@/configs/default';
 import { Layout, Menu, NavMenu } from '@tencent/tea-component';
 import menuTree, { MenuItemType } from '@/configs/menus';
 import { useSelector } from '@/hooks';
-import { Link } from 'react-router-dom';
 import { State } from '@/models';
-
-const { Header, Body, Sider, Content } = Layout;
+import Header from './Header';
+import Body from './Body';
 
 const BasicLayout: React.FC = props => {
   const currentMenu = useSelector<State, State['currentMenu']>(state => state.currentMenu);
@@ -33,7 +32,7 @@ const BasicLayout: React.FC = props => {
 
   const subMenuTree = useMemo(() => {
     const TopKey = currentMenu?.deepKey?.[0];
-    return menuTree.find(item => item.key === TopKey);
+    return menuTree.find(item => item.key === TopKey)?.children;
   }, [currentMenu]);
 
   const getFirstChildRoute = useCallback((menuItem: MenuItemType) => {
@@ -42,45 +41,9 @@ const BasicLayout: React.FC = props => {
   }, []);
 
   return (
-    <Layout>
-      <Header>
-        <NavMenu
-          left={
-            <>
-              <NavMenu.Item type="logo">
-                <img src={config.logo} alt="logo" style={{ maxHeight: '100%', width: 120 }} />
-              </NavMenu.Item>
-
-              {menuTree.map(item => (
-                <NavMenu.Item key={item.key} selected={item.key === currentMenu?.deepKey?.[0]}>
-                  <Link to={getFirstChildRoute(item)}>{item.name}</Link>
-                </NavMenu.Item>
-              ))}
-            </>
-          }
-          right={
-            <>
-              <NavMenu.Item>{userName}</NavMenu.Item>
-            </>
-          }
-        />
-      </Header>
-      <Body>
-        <Sider>
-          <Menu collapsable theme="dark" title="产品名称">
-            {subMenuTree?.children?.map(item => (
-              <Menu.Item
-                key={item.key}
-                title={item.name}
-                selected={item.key === currentMenu?.deepKey?.[1]}
-                render={children => <Link to={item.path}>{children}</Link>}
-              />
-            ))}
-          </Menu>
-        </Sider>
-
-        <Content>{props.children}</Content>
-      </Body>
+    <Layout style={{ minWidth: 1000 }}>
+      <Header currentMenu={currentMenu} userName={userName} />
+      <Body children={props.children} subMenuTree={subMenuTree} currentMenu={currentMenu} />
     </Layout>
   );
 };
