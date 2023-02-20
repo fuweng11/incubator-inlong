@@ -18,16 +18,80 @@
  */
 
 import React, { useState } from 'react';
-import Description from '@/@tencent/components/Description';
+import { Col, Row, Form, Table, StatusTip } from '@tencent/tea-component';
 
-export default function Info() {
+const Info = () => {
+  const fields = [];
+
   return (
-    <Description column={3}>
-      <Description.Item title="接入方式">SDK</Description.Item>
-      <Description.Item title="单日峰值">2022-01-01</Description.Item>
-      <Description.Item title="单日最大接入量">aa</Description.Item>
-      <Description.Item title="单条数据最大值">bb</Description.Item>
-      <Description.Item title="采集类型">cc</Description.Item>
-    </Description>
+    <Form layout="fixed" style={{ display: 'flex' }} fixedLabelWidth={100}>
+      <Row>
+        <Col span={24}>
+          <Form.Item label="接入方式">
+            <Form.Text>SDK</Form.Text>
+          </Form.Item>
+        </Col>
+
+        <Col span={24}>
+          <Form.Title>数据流量</Form.Title>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="单日峰值" tips="tips">
+            <Form.Text>Tea</Form.Text>
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="单日最大接入量">
+            <Form.Text>Tea</Form.Text>
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="单条数据最大值">
+            <Form.Text>Tea</Form.Text>
+          </Form.Item>
+        </Col>
+
+        <Col span={24}>
+          <Form.Title>数据格式</Form.Title>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="编码类型">
+            <Form.Text>Tessssa</Form.Text>
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="分隔符">
+            <Form.Text>空格</Form.Text>
+          </Form.Item>
+        </Col>
+        <Col span={24}>
+          <Form.Item label="数据字段">
+            <Table
+              bordered
+              verticalTop
+              records={fields}
+              recordKey="instanceId"
+              columns={[
+                {
+                  key: 'fieldName',
+                  header: '字段名',
+                },
+                {
+                  key: 'fieldKey',
+                  header: '字段类型',
+                },
+                {
+                  key: 'fieldComment',
+                  header: '字段描述',
+                },
+              ]}
+              topTip={!fields.length && <StatusTip status="empty" />}
+            />
+          </Form.Item>
+        </Col>
+      </Row>
+    </Form>
   );
-}
+};
+
+export default Info;

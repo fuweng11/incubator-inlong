@@ -21,7 +21,7 @@ import { Dropdown, Layout, List, NavMenu } from '@tencent/tea-component';
 import styles from './index.module.less';
 import menuTree, { MenuItemType } from '@/configs/menus';
 import { Link } from 'react-router-dom';
-import { HeaderDropdown } from '@tencent/tea-dcpg';
+import HeaderDropdown from '@tencent/tea-dcpg/dist/Header';
 
 const { Header } = Layout;
 

@@ -17,148 +17,27 @@
  * under the License.
  */
 
-import React, { memo } from 'react';
-// import { Button, DatePicker, Table, Form, Input } from 'tea-component';
+import React, { useState } from 'react';
+import { Button } from '@tencent/tea-component';
 import { PageContainer } from '@/@tencent/components/PageContainer';
+import FieldsParse from '@/@tencent/components/FieldsParse';
 
 const DashBoard = () => {
-  // const [form] = Form.useForm();
-  // const formRef = useRef<FormInstanceFunctions>();
-
-  // const onSubmit = async (e: SubmitContext) => {
-  //   const formValue = formRef.current?.getFieldsValue?.(true) || {};
-  //   console.log(formValue);
-
-  //   const test = await formRef.current?.validate();
-  //   console.log('validate return: ', test);
-  // };
-
-  // const onValueChange = val => {
-  //   console.log(val);
-  // };
-
-  // const getFormContent = useCallback(
-  //   defaultValues => [
-  //     {
-  //       label: 'keyword',
-  //       type: 'input',
-  //       name: 'keyword',
-  //     },
-  //     {
-  //       type: 'select',
-  //       name: 'type',
-  //       label: 'type',
-  //       initialValue: defaultValues.type,
-  //       props: {
-  //         dropdownMatchSelectWidth: false,
-  //         options: [
-  //           {
-  //             key: '1',
-  //             value: 'test',
-  //           },
-  //         ],
-  //       },
-  //     },
-  //   ],
-  //   [],
-  // );
-
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     form.setFieldsValue({
-  //       name: 'tde',
-  //     });
-  //   }, 1000);
-  // }, [form]);
+  const [visible, setVisible] = useState(false);
 
   return (
     <PageContainer useDefaultContainer>
-      {/* <div>FormGenerator 测试</div>
-      <FormGenerator form={form} content={formConfig} /> */}
-
-      {/* <div>Form 测试</div>
-      <Form
-        form={form}
-        ref={formRef}
-        onValuesChange={(a, b) => console.log('onValuesChange: ', a, b)}
-        layout="inline"
-        onSubmit={onSubmit}
-      >
-        <FormItem label="name" name="name" rules={[{ required: true }]}>
-          <Input />
-        </FormItem>
-        <FormItem label="tel" name="tel">
-          <Input />
-        </FormItem>
-        <FormItem label="deep obj" name={['obj', 'deepKey']}>
-          <Input />
-        </FormItem>
-        <FormItem label="deep obj" name={['obj', 'deepKey2']}>
-          <Input />
-        </FormItem>
-        <FormItem label="deep obj" name={['obj', 'deepKey3']}>
-          <DatePicker
-            allowInput={false}
-            clearable={false}
-            defaultValue=""
-            enableTimePicker={false}
-            format={undefined}
-            mode="date"
-            placeholder={undefined}
-            presetsPlacement="bottom"
-          />
-        </FormItem>
-        <FormItem>
-          <Button type="submit">submit</Button>
-        </FormItem>
-      </Form> */}
-
-      {/* <div>普通 Table 测试</div>
-      <Table
-        rowKey="id"
-        data={[]}
-        columns={[
-          { colKey: 'applicant', title: 'applicant' },
-          { colKey: 'createTime', title: 'createTime' },
-        ]}
-      /> */}
-
-      {/* <div>HighTable 测试</div>
-      <HighTable
-        filterForm={{
-          content: getFormContent({
-            keyword: '',
-            pageSize: 5,
-            pageNum: 1,
-            type: 1,
-          }),
+      <Button onClick={() => setVisible(true)}>字段解析组件</Button>
+      <FieldsParse
+        visible={visible}
+        onOk={data => {
+          console.log('get: ', data);
+          setVisible(false);
         }}
-        suffix={<Button type="submit">test</Button>}
-        table={{
-          rowKey: 'taskId',
-          stripe: true,
-          data: [
-            {
-              test: '111',
-              time: '2022-07-09',
-            },
-            {
-              test: '111',
-              time: '2022-07-09',
-            },
-          ],
-          pagination: {
-            total: 2,
-            current: 1,
-          },
-          columns: [
-            { colKey: 'test', title: 'test' },
-            { colKey: 'time', title: 'time' },
-          ],
-        }}
-      /> */}
+        onClose={() => setVisible(false)}
+      />
     </PageContainer>
   );
 };
 
-export default memo(DashBoard);
+export default DashBoard;
