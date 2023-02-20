@@ -89,12 +89,12 @@ public class UPSOperator {
                 hiveType, clusterTag, originalUser, dbName, tableName);
         TdwUps tdwUps = this.getTdwUps(hiveType, originalUser);
         String queryResult = tdwUps.queryTableInfo(clusterTag, null, null, dbName, tableName);
-        log.info("query table info result: {}", queryResult);
+
         if (StringUtils.isEmpty(queryResult)) {
             throw new Exception("failed to query hive/thive table, the result is null");
         }
-
         UpsTableInfo resultInfo = JsonUtils.parseObject(queryResult, UpsTableInfo.class);
+        log.info("query table info, code={}, message={}", resultInfo.getCode(), resultInfo.getMessage());
         switch (resultInfo.getCode()) {
             case "0":
                 // return table structure
