@@ -73,6 +73,8 @@ public enum TaskTypeEnum {
                 return MONGODB;
             case 10:
                 return TUBEMQ;
+            case 11:
+                return REDIS;
             case 12:
                 return MQTT;
             case 13:
