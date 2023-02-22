@@ -17,11 +17,14 @@
 
 package org.apache.inlong.manager.service.node;
 
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.apache.inlong.manager.pojo.common.PageResult;
+import org.apache.inlong.manager.pojo.common.Response;
 import org.apache.inlong.manager.pojo.common.UpdateResult;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodePageRequest;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
+import org.apache.inlong.manager.pojo.node.tencent.DataNodeSummaryResponse;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 
 import java.util.List;
@@ -155,4 +158,11 @@ public interface DataNodeService {
      */
     Boolean testConnection(DataNodeRequest request);
 
+    DataNodeSummaryResponse getDataNodeUsageInfo(String dataNodeName);
+
+    List<String> listDataNodeName(String ip);
+
+    DbSyncHeartbeat getHeartBeatByDataNodeName(String dataNodeName);
+
+    List<DataNodeInfo> listByUrlAndType(String url, String type);
 }

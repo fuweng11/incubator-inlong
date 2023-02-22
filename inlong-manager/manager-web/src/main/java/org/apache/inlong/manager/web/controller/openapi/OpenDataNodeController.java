@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.web.controller.openapi;
 
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.OperationType;
 import org.apache.inlong.manager.common.util.Preconditions;
@@ -26,6 +27,7 @@ import org.apache.inlong.manager.pojo.common.Response;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodePageRequest;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
+import org.apache.inlong.manager.pojo.node.tencent.DataNodeSummaryResponse;
 import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.operationlog.OperationLog;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
@@ -37,6 +39,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -99,5 +103,29 @@ public class OpenDataNodeController {
         Preconditions.expectNotNull(id, ErrorCodeEnum.INVALID_PARAMETER, "data node id cannot be null");
         Preconditions.expectNotNull(LoginUserUtils.getLoginUser(), ErrorCodeEnum.LOGIN_USER_EMPTY);
         return Response.success(dataNodeService.delete(id, LoginUserUtils.getLoginUser()));
+    }
+
+    @GetMapping("/node/getUsageInfo/{name}")
+    @ApiOperation(value = "According to the data node name, query all the group information and the stream information below the data node")
+    public Response<DataNodeSummaryResponse> getUsageInfo(@PathVariable String name) {
+        return Response.success(dataNodeService.getDataNodeUsageInfo(name));
+    }
+
+    @GetMapping("/node/listNodeName/{transferIp}")
+    @ApiOperation(value = "get data node name by transferIp")
+    public Response<List<String>> listDataNodeName(@PathVariable String transferIp) {
+        return Response.success(dataNodeService.listDataNodeName(transferIp));
+    }
+
+    @PostMapping("/node/getHeartbeatByDataNodeName")
+    @ApiOperation(value = "get heartbeat by data node name")
+    public Response<DbSyncHeartbeat> getHeartBeatByDataNodeName(@RequestParam String dataNodeName) {
+        return Response.success(dataNodeService.getHeartBeatByDataNodeName(dataNodeName));
+    }
+
+    @PostMapping("/node/listByUrlAndType")
+    @ApiOperation(value = "list data node by url and type")
+    public Response<List<DataNodeInfo>> listByUrl(@RequestParam String url, @RequestParam String type) {
+        return Response.success(dataNodeService.listByUrlAndType(url, type));
     }
 }

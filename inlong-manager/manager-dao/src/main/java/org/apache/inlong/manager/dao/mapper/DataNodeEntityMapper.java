@@ -39,6 +39,10 @@ public interface DataNodeEntityMapper {
 
     List<DataNodeEntity> selectByCondition(DataNodePageRequest request);
 
+    List<String> selectByTransferIpAndType(@Param("ip") String ip, @Param("type") String type);
+
+    List<DataNodeEntity> selectByUrlAndType(@Param("url") String url, @Param("type") String type);
+
     @Options(resultSetType = ResultSetType.FORWARD_ONLY, fetchSize = Integer.MIN_VALUE)
     Cursor<DataNodeEntity> selectAllDataNodes();
 

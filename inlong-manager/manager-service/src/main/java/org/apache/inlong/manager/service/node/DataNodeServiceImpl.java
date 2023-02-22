@@ -19,20 +19,34 @@ package org.apache.inlong.manager.service.node;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
-
 import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncDumpPosition;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
+import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
+import org.apache.inlong.manager.common.consts.SourceType;
+import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.UserTypeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
+import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
+import org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity;
 import org.apache.inlong.manager.dao.mapper.DataNodeEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongClusterNodeEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSourceEntityMapper;
+import org.apache.inlong.manager.dao.mapper.tencent.DbSyncHeartbeatEntityMapper;
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.UpdateResult;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodePageRequest;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
+import org.apache.inlong.manager.pojo.node.tencent.DataNodeSummaryResponse;
+import org.apache.inlong.manager.pojo.node.tencent.DataNodeSummaryResponse.GroupBriefResponse;
+import org.apache.inlong.manager.pojo.node.tencent.DataNodeSummaryResponse.GroupBriefResponse.InlongStreamBriefResponse;
+import org.apache.inlong.manager.pojo.source.SourcePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +54,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +74,10 @@ public class DataNodeServiceImpl implements DataNodeService {
     private DataNodeEntityMapper dataNodeMapper;
     @Autowired
     private DataNodeOperatorFactory operatorFactory;
+    @Autowired
+    private StreamSourceEntityMapper sourceEntityMapper;
+    @Autowired
+    private DbSyncHeartbeatEntityMapper dbSyncHeartbeatMapper;
 
     @Override
     public Integer save(DataNodeRequest request, String operator) {
@@ -334,6 +357,88 @@ public class DataNodeServiceImpl implements DataNodeService {
         Boolean result = dataNodeOperator.testConnection(request);
         LOGGER.info("connection [{}] for: {}", result ? "success" : "failed", request);
         return result;
+    }
+
+    @Override
+    public DataNodeSummaryResponse getDataNodeUsageInfo(String dataNodeName) {
+        Preconditions.expectNotBlank(dataNodeName, ErrorCodeEnum.INVALID_PARAMETER,
+                "please input valid data node name");
+        SourcePageRequest request = new SourcePageRequest();
+        request.setDataNodeName(dataNodeName);
+        request.setSourceType(SourceType.HA_BINLOG);
+        List<StreamSourceEntity> sourceEntitiestities = sourceEntityMapper.selectByCondition(request);
+        DataNodeSummaryResponse response = new DataNodeSummaryResponse();
+        response.setDataNodeName(dataNodeName);
+        response.setDataNodeType(DataNodeType.MYSQL);
+
+        // group by inlong group id
+        Map<String, List<StreamSourceEntity>> collect = sourceEntitiestities.stream()
+                .collect(Collectors.groupingBy(StreamSourceEntity::getInlongGroupId));
+
+        // get all group id
+        Set<Entry<String, List<StreamSourceEntity>>> entities = collect.entrySet();
+        for (Entry<String, List<StreamSourceEntity>> entry : entities) {
+            GroupBriefResponse groupBriefResponse = new GroupBriefResponse();
+            groupBriefResponse.setInlongGroupId(entry.getKey());
+            groupBriefResponse.setInlongStreamBriefResponses(
+                    new HashSet<>(entry.getValue().stream().map(sourceEntity -> new InlongStreamBriefResponse(
+                                    sourceEntity.getInlongGroupId(),
+                                    sourceEntity.getInlongStreamId()))
+                            .collect(Collectors.toList()))
+            );
+            response.addGroupBriefResponse(groupBriefResponse);
+        }
+        return response;
+    }
+
+    @Override
+    public List<String> listDataNodeName(String ip) {
+        Preconditions.expectNotBlank(ip, "transfer ip can not be null");
+        return dataNodeMapper.selectByTransferIpAndType(ip, ClusterType.AGENT);
+    }
+
+    @Override
+    public DbSyncHeartbeat getHeartBeatByDataNodeName(String dataNodeName) {
+        DbSyncHeartbeat dbSyncHeartbeat = new DbSyncHeartbeat();
+        DbSyncHeartbeatEntity entity = dbSyncHeartbeatMapper.getHeartbeatByServerName(dataNodeName);
+        if (entity == null) {
+            LOGGER.warn("no heartbeat message found, serverName={}", dataNodeName);
+            return dbSyncHeartbeat;
+        }
+        dbSyncHeartbeat.setInstance(entity.getInstance());
+        dbSyncHeartbeat.setServerName(entity.getServerName());
+        dbSyncHeartbeat.setCurrentDb(entity.getCurrentDb());
+        dbSyncHeartbeat.setUrl(entity.getUrl());
+        dbSyncHeartbeat.setBackupUrl(entity.getBackupUrl());
+        dbSyncHeartbeat.setAgentStatus(entity.getAgentStatus());
+        if (StringUtils.isNotBlank(entity.getTaskIds())) {
+            List<Integer> taskIds = Arrays.stream(entity.getTaskIds().split(InlongConstants.COMMA))
+                    .map(Integer::parseInt).collect(Collectors.toList());
+            dbSyncHeartbeat.setTaskIds(taskIds);
+        }
+        dbSyncHeartbeat.setDumpIndex(entity.getDbDumpIndex());
+        if (StringUtils.isNotBlank(entity.getDumpPosition())) {
+            dbSyncHeartbeat.setDumpPosition(JsonUtils.parseObject(entity.getDumpPosition(), DbSyncDumpPosition.class));
+        }
+        if (StringUtils.isNotBlank(entity.getMaxLogPosition())) {
+            dbSyncHeartbeat.setMaxLogPosition(
+                    JsonUtils.parseObject(entity.getMaxLogPosition(), DbSyncDumpPosition.class));
+        }
+        dbSyncHeartbeat.setErrorMsg(entity.getErrorMsg());
+        dbSyncHeartbeat.setReportTime(entity.getReportTime());
+        LOGGER.debug("success get heartbeat message, serverName={}", dataNodeName);
+        return dbSyncHeartbeat;
+    }
+
+    @Override
+    public List<DataNodeInfo> listByUrlAndType(String url, String type) {
+        // query result
+        List<DataNodeEntity> nodeEntities = dataNodeMapper.selectByUrlAndType(url, type);
+        return nodeEntities.stream()
+                .map(entity -> {
+                    DataNodeOperator dataNodeOperator = operatorFactory.getInstance(entity.getType());
+                    return dataNodeOperator.getFromEntity(entity);
+                }).collect(Collectors.toList());
     }
 
 }

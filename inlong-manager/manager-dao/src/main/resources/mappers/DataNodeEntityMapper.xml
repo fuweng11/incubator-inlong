@@ -96,6 +96,28 @@
         </where>
         order by modify_time desc
     </select>
+
+    <select id="selectByTransferIpAndType" resultType="java.lang.String">
+        select distinct source.data_node_name as data_node_name
+        from stream_source source
+        left join inlong_cluster cluster on source.inlong_cluster_name = cluster.name
+        left join inlong_cluster_node node on node.parent_id = cluster.id
+        where node.ip = #{ip,jdbcType=VARCHAR}
+          and cluster.type = #{type,jdbcType=VARCHAR}
+          and source.is_deleted = 0
+    </select>
+    <select id="selectByUrlAndType"  resultType="org.apache.inlong.manager.dao.entity.DataNodeEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from data_node
+        where is_deleted = 0
+        <if test="url != null and url != ''">
+            and (url = #{url, jdbcType=VARCHAR} or ext_params like CONCAT('%','backupUrl":"',#{url, jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="type != null and type != ''">
+            and type = #{type, jdbcType=VARCHAR}
+        </if>
+    </select>
     <select id="selectAllSinkParams" resultType="org.apache.inlong.manager.pojo.sort.standalone.SortSinkInfo">
         select name, type, ext_params
         from data_node
