@@ -21,13 +21,19 @@ import type { RouteProps } from '.';
 
 const conf: RouteProps[] = [
   {
-    path: '/group',
+    path: '/demo',
     component: () => import('@/@tencent/pages/Example'),
     // childRoutes: [],
   },
   {
-    path: '/report',
-    component: () => import('@/@tencent/pages/ReportDetail'),
+    path: '/stream',
+    component: () => import('@/@tencent/pages/Stream'),
+    childRoutes: [
+      {
+        path: '/:id?',
+        component: () => import('@/@tencent/pages/ReportDetail'),
+      },
+    ],
   },
 ];
 

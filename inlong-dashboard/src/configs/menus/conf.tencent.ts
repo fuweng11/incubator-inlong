@@ -21,15 +21,15 @@ import type { MenuItemType } from '.';
 
 const conf: MenuItemType[] = [
   {
-    path: '/group',
+    path: '/demo',
     name: 'Example',
   },
   {
-    name: '数据上报',
+    name: '数据接入',
     children: [
       {
-        path: '/report',
-        name: '上报管理',
+        path: '/stream',
+        name: '接入管理',
       },
       {
         path: '/subscribe',

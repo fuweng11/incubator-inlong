@@ -27,7 +27,7 @@ const conf = {
   logo: '/logo.svg',
   useLogin: false,
   redirectRoutes: {
-    '/': '/report',
+    '/': '/stream',
   } as Record<string, string>,
   loginUrl: '/',
   AppProvider: Provider,

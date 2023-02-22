@@ -19,6 +19,7 @@
 
 import React from 'react';
 import { useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { Layout, Breadcrumb } from '@tencent/tea-component';
 import { State } from '@/models';
 import Container from './Container';
@@ -44,11 +45,14 @@ export interface PageContainerProps {
 }
 
 const Page: React.FC<PageContainerProps> = ({
+  className = '',
+  style,
   children,
   useDefaultBreadcrumb = true,
   useDefaultContainer = true,
   breadcrumb = [],
 }) => {
+  const history = useHistory();
   const currentMenu = useSelector<State, State['currentMenu']>(state => state.currentMenu);
 
   // const defaultBreadcrumb = [{ name: 'Home', path: '/' }] as BreadcrumbItem[];
@@ -61,14 +65,18 @@ const Page: React.FC<PageContainerProps> = ({
   const breadcrumbs = useDefaultBreadcrumb ? defaultBreadcrumb.concat(breadcrumb) : breadcrumb;
 
   return (
-    <Content className={styles.panel}>
+    <Content className={`${styles.panel} ${className}`} style={style}>
       <Content.Header
+        showBackButton={breadcrumbs.length > 1}
+        onBackButtonClick={() => history.goBack()}
         title={
-          <Breadcrumb>
-            {breadcrumbs?.map(item => (
-              <Breadcrumb.Item key={item.path || item.name}>{item.name}</Breadcrumb.Item>
-            ))}
-          </Breadcrumb>
+          <>
+            <Breadcrumb>
+              {breadcrumbs?.map(item => (
+                <Breadcrumb.Item key={item.path || item.name}>{item.name}</Breadcrumb.Item>
+              ))}
+            </Breadcrumb>
+          </>
         }
       />
 

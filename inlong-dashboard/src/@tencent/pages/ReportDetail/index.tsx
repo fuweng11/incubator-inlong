@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import React, { useState } from 'react';
-import { Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
+import React from 'react';
+import { Alert, Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
 import Info from './Info';
@@ -35,7 +35,14 @@ export default function TabsExample() {
   ];
 
   return (
-    <PageContainer useDefaultContainer={false}>
+    <PageContainer useDefaultContainer={false} breadcrumb={[{ name: '接入详情' }]}>
+      <Alert type="info">
+        当前日志尚未配置数据订阅，如有数据消费需求，请进入【数据订阅】配置。
+        <Button type="link" style={{ textDecoration: 'underline' }}>
+          立即配置
+        </Button>
+      </Alert>
+
       <Container>
         <Description
           column={5}
