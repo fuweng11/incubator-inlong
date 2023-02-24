@@ -75,14 +75,23 @@ const fieldsConf = {
 };
 
 const Comp: React.FC<Props> = ({ id, dataNodeName, children }) => {
-  const { data, run: getData } = useRequest({
-    url: `/dbsync/getHeartbeat`,
-    method: 'POST',
-    params: {
-      id,
-      dataNodeName,
+  const { data, run: getData } = useRequest(
+    {
+      url: `/dbsync/getHeartbeat`,
+      method: 'POST',
+      params: {
+        id,
+        dataNodeName,
+      },
     },
-  });
+    {
+      manual: true,
+    },
+  );
+
+  const onVisibleChange = visible => {
+    if (visible) getData();
+  };
 
   return (
     <Popover
@@ -97,7 +106,7 @@ const Comp: React.FC<Props> = ({ id, dataNodeName, children }) => {
           return <div>{text}</div>;
         })
       }
-      trigger="click"
+      onVisibleChange={onVisibleChange}
     >
       {children}
     </Popover>
