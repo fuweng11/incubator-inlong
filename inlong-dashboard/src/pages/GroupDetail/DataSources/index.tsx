@@ -25,6 +25,7 @@ import {
   TableOutlined,
   EditOutlined,
   DeleteOutlined,
+  SlidersTwoTone,
 } from '@ant-design/icons';
 import HighTable from '@/components/HighTable';
 import { defaultSize } from '@/configs/pagination';
@@ -35,6 +36,7 @@ import i18n from '@/i18n';
 import request from '@/utils/request';
 import { pickObjectArray } from '@/utils';
 import { CommonInterface } from '../common';
+import HeartbeatPopover from '@/components/HeartbeatPopover';
 
 interface Props extends CommonInterface {
   inlongStreamId?: string;
@@ -171,6 +173,11 @@ const Comp = ({ inlongGroupId, inlongStreamId, readonly }: Props, ref) => {
               <Button type="link" onClick={() => onDelete(record)}>
                 {i18n.t('basic.Delete')}
               </Button>
+              {record?.sourceType && record.sourceType === 'HA_BINLOG' && (
+                <HeartbeatPopover id={record.id} dataNodeName={record.dataNodeName}>
+                  <Button type="link">{i18n.t('components.HeartbeatPopover.Schedule')}</Button>
+                </HeartbeatPopover>
+              )}
             </>
           ),
       },
@@ -226,6 +233,13 @@ const Comp = ({ inlongGroupId, inlongStreamId, readonly }: Props, ref) => {
                   <Button key="del" type="link" onClick={() => onDelete(item)}>
                     <DeleteOutlined />
                   </Button>,
+                  item.sourceType === 'HA_BINLOG' && (
+                    <HeartbeatPopover id={item.id} dataNodeName={item.dataNodeName}>
+                      <Button type="link">
+                        <SlidersTwoTone />
+                      </Button>
+                    </HeartbeatPopover>
+                  ),
                 ]}
                 className="test"
               >
