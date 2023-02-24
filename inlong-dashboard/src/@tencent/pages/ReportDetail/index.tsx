@@ -23,11 +23,12 @@ import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
 import Info from './Info';
 import SubscribeList from './Subscribe';
+import Test from './Test';
 
 export default function TabsExample() {
   const tabs = [
     { id: 'info', label: '基本信息', Component: Info },
-    { id: 'test', label: '数据测试', Component: Info },
+    { id: 'test', label: '数据测试', Component: Test },
     { id: 'subscribe', label: '数据订阅', Component: SubscribeList },
     { id: 'statistic', label: '数据统计', Component: Info, disabled: true },
     { id: 'schema', label: 'schema管理', Component: Info, disabled: true },
