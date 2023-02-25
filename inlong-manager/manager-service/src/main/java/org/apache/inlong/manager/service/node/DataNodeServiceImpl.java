@@ -283,11 +283,8 @@ public class DataNodeServiceImpl implements DataNodeService {
     @Override
     public Boolean delete(Integer id, String operator) {
         DataNodeEntity entity = dataNodeMapper.selectById(id);
-        if (entity == null || entity.getIsDeleted() > InlongConstants.UN_DELETED) {
-            LOGGER.error("data node not found or was already deleted for id={}", id);
-            return false;
-        }
-
+        Preconditions.expectNotNull(entity, ErrorCodeEnum.DATA_NODE_NOT_FOUND,
+                ErrorCodeEnum.DATA_NODE_NOT_FOUND.getMessage());
         return delete(entity, operator);
     }
 
@@ -298,9 +295,8 @@ public class DataNodeServiceImpl implements DataNodeService {
             throw new BusinessException(ErrorCodeEnum.PERMISSION_REQUIRED);
         }
         DataNodeEntity entity = dataNodeMapper.selectById(id);
-        if (entity == null || entity.getIsDeleted() > InlongConstants.UN_DELETED) {
-            return true;
-        }
+        Preconditions.expectNotNull(entity, ErrorCodeEnum.DATA_NODE_NOT_FOUND,
+                ErrorCodeEnum.DATA_NODE_NOT_FOUND.getMessage());
         // delete record
         entity.setIsDeleted(entity.getId());
         entity.setModifier(opInfo.getName());
@@ -340,10 +336,8 @@ public class DataNodeServiceImpl implements DataNodeService {
     @Override
     public Boolean deleteByKey(String name, String type, String operator) {
         DataNodeEntity entity = dataNodeMapper.selectByUniqueKey(name, type);
-        if (entity == null || entity.getIsDeleted() > InlongConstants.UN_DELETED) {
-            LOGGER.error("data node not found or was already deleted for name={}", name);
-            return false;
-        }
+        Preconditions.expectNotNull(entity, ErrorCodeEnum.DATA_NODE_NOT_FOUND,
+                ErrorCodeEnum.DATA_NODE_NOT_FOUND.getMessage());
         return delete(entity, operator);
     }
 
