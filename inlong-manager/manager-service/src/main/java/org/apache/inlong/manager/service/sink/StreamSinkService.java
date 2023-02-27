@@ -24,6 +24,7 @@ import org.apache.inlong.manager.pojo.common.UpdateResult;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.SinkApproveDTO;
 import org.apache.inlong.manager.pojo.sink.SinkBriefInfo;
+import org.apache.inlong.manager.pojo.sink.SinkField;
 import org.apache.inlong.manager.pojo.sink.SinkPageRequest;
 import org.apache.inlong.manager.pojo.sink.SinkRequest;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
@@ -125,7 +126,7 @@ public interface StreamSinkService {
      * Paging query stream sink info based on conditions.
      *
      * @param request paging request
-     * @param opInfo  userinfo of operator
+     * @param opInfo userinfo of operator
      * @return sink page list
      */
     List<? extends StreamSink> listByCondition(SinkPageRequest request, UserInfo opInfo);
@@ -249,4 +250,12 @@ public interface StreamSinkService {
 
     void addFieldForSink(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
             InlongStreamEntity streamEntity);
+
+    /**
+     * Converts a json string to a sinkFields
+     *
+     * @param fieldsJson JSON string for the field information
+     * @return list of sink field
+     */
+    List<SinkField> parseFields(String fieldsJson);
 }
