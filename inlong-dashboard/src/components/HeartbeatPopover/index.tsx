@@ -98,14 +98,17 @@ const Comp: React.FC<Props> = ({ id, dataNodeName, children }) => {
       placement="topRight"
       overlayInnerStyle={{ width: 400 }}
       content={
-        data &&
-        Object.keys(fieldsConf).map(key => {
-          const config = fieldsConf[key];
-          const text =
-            typeof config === 'string' ? `${config}${data[key]}` : config(data[key], data);
-          return <div>{text}</div>;
-        })
+        <div>
+          {data &&
+            Object.keys(fieldsConf).map(key => {
+              const config = fieldsConf[key];
+              const text =
+                typeof config === 'string' ? `${config}${data[key]}` : config(data[key], data);
+              return <div>{text}</div>;
+            })}
+        </div>
       }
+      trigger="click"
       onVisibleChange={onVisibleChange}
     >
       {children}
