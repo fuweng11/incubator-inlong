@@ -115,7 +115,7 @@ public interface ScService {
      * @param accessType access type
      * @return true or false
      */
-    boolean checkPermissions(String username, String database, String table, String accessType);
+    boolean checkPermissions(String username, String database, String table, String accessType, String clusterTag);
 
     /**
      * Grant permission according to the username

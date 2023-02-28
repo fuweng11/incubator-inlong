@@ -76,7 +76,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InnerBaseHiveResourceOperator.class);
     private static final Gson GSON = new GsonBuilder().create();
-    private static final int MAX_RETRY_TIMES = 20;
+    private static final int MAX_RETRY_TIMES = 10;
 
     @Autowired
     private ScService scService;
@@ -227,7 +227,8 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             }
 
             // after the table is created successfully, need to set the table alter and select permission for the super user
-            grantPrivilegeBySc(hiveFullInfo, superUser, "alter", false);
+            String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
+            scService.grant(superUser, dbName, tbName, "alter", hiveType, hiveFullInfo.getClusterTag());
 
             // give the responsible person query permission
             // and the write permission is only required by cluster level users of sort side write partition
@@ -562,7 +563,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         String clusterTag = hiveFullInfo.getClusterTag();
         LOGGER.info("check whether the user has permission to {} a table for user={}, database={}", accessType,
                 username, dbName);
-        boolean hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType);
+        boolean hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType, clusterTag);
         AtomicInteger retryTimes = new AtomicInteger(0);
         while (!hasPermissions && retryTimes.get() < MAX_RETRY_TIMES) {
             LOGGER.info("check permission with user={}, hasPermission={}, retryTimes={}, maxRetryTimes={}",
@@ -573,7 +574,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             LOGGER.info("finish to grant hive privilege {} for user={}", accessType, username);
             Thread.sleep(500 * 60);
             retryTimes.incrementAndGet();
-            hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType);
+            hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType, clusterTag);
         }
         return hasPermissions;
     }

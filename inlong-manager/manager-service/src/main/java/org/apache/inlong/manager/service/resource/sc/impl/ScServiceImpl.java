@@ -254,7 +254,8 @@ public class ScServiceImpl implements ScService {
     }
 
     @Override
-    public boolean checkPermissions(String username, String database, String table, String accessType) {
+    public boolean checkPermissions(String username, String database, String table, String accessType,
+            String clusterTag) {
         List<Map<String, Object>> list = new ArrayList<>();
         Map<String, Object> params = Maps.newHashMap();
         params.put("type", "HIVE");
@@ -262,6 +263,7 @@ public class ScServiceImpl implements ScService {
         params.put("table", table);
         params.put("user", username);
         params.put("accessType", accessType);
+        params.put("clusterIdentifier", clusterTag);
         list.add(params);
         String url = scOpenApiUrl + CHECK_PERMISSIONS_API;
         ScPage<ScDbPermission> rsp = HttpUtils.postRequest(restTemplate, url, list, scApiRequestService.getHeader(),
