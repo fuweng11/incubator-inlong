@@ -61,6 +61,7 @@ import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.group.GroupCheckService;
 import org.apache.inlong.manager.service.resource.sort.FieldTypeUtils;
 import org.apache.inlong.manager.service.stream.InlongStreamProcessService;
+import org.apache.inlong.manager.service.user.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,6 +102,8 @@ public class StreamSinkServiceImpl implements StreamSinkService {
     private StreamSinkFieldEntityMapper sinkFieldMapper;
     @Autowired
     private AutowireCapableBeanFactory autowireCapableBeanFactory;
+    @Autowired
+    private UserService userService;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -169,12 +172,8 @@ public class StreamSinkServiceImpl implements StreamSinkService {
                     String.format("InlongGroup does not exist with InlongGroupId=%s", request.getInlongGroupId()));
         }
         // only the person in charges can query
-        if (!opInfo.getAccountType().equals(UserTypeEnum.ADMIN.getCode())) {
-            List<String> inCharges = Arrays.asList(entity.getInCharges().split(InlongConstants.COMMA));
-            if (!inCharges.contains(opInfo.getName())) {
-                throw new BusinessException(ErrorCodeEnum.GROUP_PERMISSION_DENIED);
-            }
-        }
+        userService.checkUser(entity.getInCharges(), opInfo.getName(),
+                ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         // check group status
         GroupStatus curState = GroupStatus.forCode(entity.getStatus());
         if (GroupStatus.notAllowedUpdate(curState)) {
@@ -244,12 +243,8 @@ public class StreamSinkServiceImpl implements StreamSinkService {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND);
         }
         // only the person in charges can query
-        if (!opInfo.getAccountType().equals(UserTypeEnum.ADMIN.getCode())) {
-            List<String> inCharges = Arrays.asList(groupEntity.getInCharges().split(InlongConstants.COMMA));
-            if (!inCharges.contains(opInfo.getName())) {
-                throw new BusinessException(ErrorCodeEnum.GROUP_PERMISSION_DENIED);
-            }
-        }
+        userService.checkUser(groupEntity.getInCharges(), opInfo.getName(),
+                ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         StreamSinkOperator sinkOperator = operatorFactory.getInstance(entity.getSinkType());
         return sinkOperator.getFromEntity(entity);
     }
@@ -427,12 +422,8 @@ public class StreamSinkServiceImpl implements StreamSinkService {
                     String.format("InlongGroup does not exist with InlongGroupId=%s", curEntity.getInlongGroupId()));
         }
         // only the person in charges can query
-        if (!opInfo.getAccountType().equals(UserTypeEnum.ADMIN.getCode())) {
-            List<String> inCharges = Arrays.asList(curGroupEntity.getInCharges().split(InlongConstants.COMMA));
-            if (!inCharges.contains(opInfo.getName())) {
-                throw new BusinessException(ErrorCodeEnum.GROUP_PERMISSION_DENIED);
-            }
-        }
+        userService.checkUser(curGroupEntity.getInCharges(), opInfo.getName(),
+                ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         // Check if group status can be modified
         GroupStatus curState = GroupStatus.forCode(curEntity.getStatus());
         if (GroupStatus.notAllowedUpdate(curState)) {
@@ -540,12 +531,8 @@ public class StreamSinkServiceImpl implements StreamSinkService {
                     String.format("InlongGroup does not exist with InlongGroupId=%s", sinkEntity.getInlongGroupId()));
         }
         // only the person in charges can query
-        if (!opInfo.getAccountType().equals(UserTypeEnum.ADMIN.getCode())) {
-            List<String> inCharges = Arrays.asList(groupEntity.getInCharges().split(InlongConstants.COMMA));
-            if (!inCharges.contains(opInfo.getName())) {
-                throw new BusinessException(ErrorCodeEnum.GROUP_PERMISSION_DENIED);
-            }
-        }
+        userService.checkUser(groupEntity.getInCharges(), opInfo.getName(),
+                ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         // Check if group status can be modified
         GroupStatus curState = GroupStatus.forCode(groupEntity.getStatus());
         if (GroupStatus.notAllowedUpdate(curState)) {
