@@ -17,15 +17,23 @@
  * under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Alert, Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
+import PublishModal from '@/@tencent/pages/Stream/PublishModal';
 import Info from './Info';
 import SubscribeList from './Subscribe';
 import Test from './Test';
 
-export default function TabsExample() {
+export default function StreamDetail() {
+  const { id } = useParams<{ id: string }>();
+
+  const [publishModal, setPublishModal] = useState<{ visible: boolean; id?: string }>({
+    visible: false,
+  });
+
   const tabs = [
     { id: 'info', label: '基本信息', Component: Info },
     { id: 'test', label: '数据测试', Component: Test },
@@ -55,7 +63,11 @@ export default function TabsExample() {
               <span>数据流AAAA我是日志名称（ID:907181027）</span>
             </>
           }
-          extra={<Button type="primary">发布上线</Button>}
+          extra={
+            <Button type="link" onClick={() => setPublishModal({ visible: true, id })}>
+              发布上线
+            </Button>
+          }
         >
           <Description.Item title="创建人">admin</Description.Item>
           <Description.Item title="创建时间">2022-01-01</Description.Item>
@@ -74,6 +86,12 @@ export default function TabsExample() {
           ))}
         </Tabs>
       </Container>
+
+      <PublishModal
+        {...publishModal}
+        onOk={data => setPublishModal({ visible: false })}
+        onClose={() => setPublishModal({ visible: false })}
+      />
     </PageContainer>
   );
 }

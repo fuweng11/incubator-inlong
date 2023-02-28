@@ -18,35 +18,31 @@
  */
 
 import React, { useRef, useState } from 'react';
-import { Alert, Button, Justify, Status } from '@tencent/tea-component';
+import { useHistory } from 'react-router-dom';
+import { Alert, Button, Justify, Status, Badge } from '@tencent/tea-component';
 import { ProForm, FieldConfig, Form } from '@tencent/tea-material-pro-form';
 import { ProTable, ActionType } from '@tencent/tea-material-pro-table';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
+import ProCheckbox from '@/@tencent/components/ProCheckbox';
+import { statusMap, accessTypeMap } from '@/@tencent/enums/stream';
+import PublishModal from './PublishModal';
 
 const fields: FieldConfig[] = [
   {
     type: 'array',
-    component: 'checkbox',
+    component: ProCheckbox,
     name: 'status',
     title: '接入状态',
-    options: [
-      { name: '', title: '全部' },
-      { name: '0', title: '待上线' },
-      { name: '1', title: '已上线' },
-      { name: '2', title: '异常' },
-      { name: '3', title: '下线' },
-    ],
+    allOption: true,
+    options: Array.from(statusMap).map(([key, ctx]) => ({ name: key, title: ctx.label })),
   },
   {
     type: 'array',
-    component: 'checkbox',
+    component: ProCheckbox,
     name: 'type',
     title: '接入方式',
-    options: [
-      { name: '', title: '全部' },
-      { name: 'SDK', title: 'SDK' },
-      { name: 'AGENT', title: 'Agent' },
-    ],
+    allOption: true,
+    options: Array.from(accessTypeMap).map(([key, ctx]) => ({ name: key, title: ctx })),
   },
   {
     type: 'string',
@@ -65,9 +61,9 @@ const testData = current =>
   Array.from({ length: 10 }).map((_, index) => ({
     id: (current - 1) * 10 + index,
     name: `Hongkong VPN`,
-    status: 'running',
+    status: index < 3 ? 1 : index < 5 ? 2 : 3,
     owner: '香港一区',
-    type: 'SDK',
+    type: index < 5 ? 'SDK' : 'AGENT',
     createTime: '2023-01-01',
   }));
 
@@ -77,11 +73,17 @@ const myQuery = async ({ current }) => {
   return { list: testData(current), total: 100 };
 };
 
-export default function ProTableExample() {
+export default function StreamList() {
   const formRef = useRef<Form>();
   const actionRef = useRef<ActionType>();
 
+  const history = useHistory();
+
   const [options, setOptions] = useState(fieldsDefaultValues);
+
+  const [publishModal, setPublishModal] = useState<{ visible: boolean; id?: number }>({
+    visible: false,
+  });
 
   return (
     <PageContainer useDefaultContainer={false}>
@@ -112,7 +114,9 @@ export default function ProTableExample() {
       <Justify
         left={
           <>
-            <Button type="primary">新建接入</Button>
+            <Button type="primary" onClick={() => history.push('/stream/create')}>
+              新建接入
+            </Button>
             <Button disabled>接入指引</Button>
           </>
         }
@@ -150,17 +154,21 @@ export default function ProTableExample() {
             {
               key: 'type',
               header: '接入方式',
+              render: row => accessTypeMap.get(row.type) || row.type,
             },
             {
               key: 'status',
               header: '接入状态',
-              width: 100,
               render: row => {
-                if (row.status === 'running') {
-                  return <span style={{ color: 'green' }}>运行中</span>;
-                }
-                if (row.status === 'stopped') {
-                  return <span style={{ color: 'red' }}>已关机</span>;
+                const ctx = statusMap.get(row.status);
+                if (ctx) {
+                  const { label, colorTheme } = ctx;
+                  return (
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <Badge dot theme={colorTheme} style={{ marginRight: 5 }} />
+                      <span>{label}</span>
+                    </span>
+                  );
                 }
                 return row.status;
               },
@@ -177,10 +185,14 @@ export default function ProTableExample() {
               key: 'actions',
               header: '操作',
               render: row => [
-                <Button type="link" key="detail">
+                <Button type="link" key="detail" onClick={() => history.push(`/stream/${row.id}`)}>
                   详情
                 </Button>,
-                <Button type="link" key="up">
+                <Button
+                  type="link"
+                  key="up"
+                  onClick={() => setPublishModal({ visible: true, id: row.id })}
+                >
                   发布上线
                 </Button>,
               ],
@@ -188,6 +200,12 @@ export default function ProTableExample() {
           ]}
         />
       </div>
+
+      <PublishModal
+        {...publishModal}
+        onOk={data => setPublishModal({ visible: false })}
+        onClose={() => setPublishModal({ visible: false })}
+      />
     </PageContainer>
   );
 }
