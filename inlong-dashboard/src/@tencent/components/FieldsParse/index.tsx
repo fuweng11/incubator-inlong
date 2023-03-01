@@ -232,8 +232,8 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ onOk, onClose, ...rest }) => 
             />
           </Form.Item>
         </Form>
-        <Text theme="primary" style={{ display: 'flex', alignItems: 'center', marginTop: 10 }}>
-          <Icon type="infoblue" />
+        <Text theme="label" style={{ display: 'flex', alignItems: 'center', marginTop: 10 }}>
+          <Icon type="info" />
           <span style={{ marginLeft: 5 }}>解析代码后，选择解析字段覆盖表单中原有内容</span>
         </Text>
       </Modal.Body>

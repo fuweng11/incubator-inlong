@@ -25,6 +25,7 @@ export interface FooterToolbarProps {
   style?: React.CSSProperties;
   className?: string;
   children?: React.ReactNode;
+  align?: 'center' | 'left' | 'right';
 }
 
 const FooterToolbar: React.FC<FooterToolbarProps> = ({
@@ -32,11 +33,19 @@ const FooterToolbar: React.FC<FooterToolbarProps> = ({
   extra,
   children,
   style,
+  align = 'center',
 }) => (
   <>
     {/* Use empty dom to support the fixed height */}
     <div className={styles.footerHeightDom} />
-    <div className={styles.footer} style={style}>
+    <div
+      className={`${styles.footer} ${className}`}
+      style={{
+        justifyContent:
+          align === 'center' ? 'center' : align === 'left' ? 'flex-start' : 'flex-end',
+        ...style,
+      }}
+    >
       {children}
       {extra}
     </div>

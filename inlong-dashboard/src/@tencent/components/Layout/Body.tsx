@@ -32,7 +32,7 @@ export interface LayoutBodyProps {
 const LayoutBody: React.FC<LayoutBodyProps> = ({ subMenuTree, currentMenu, children }) => {
   return (
     <Body>
-      <Sider>
+      <Sider style={{ zIndex: 100 }}>
         <Menu collapsable theme="dark">
           {subMenuTree &&
             subMenuTree.map((menu, i) => {
