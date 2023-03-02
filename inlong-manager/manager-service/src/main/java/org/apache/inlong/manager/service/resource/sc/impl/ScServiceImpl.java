@@ -242,7 +242,7 @@ public class ScServiceImpl implements ScService {
         InlongGroupInfo groupInfo = groupService.get(groupId);
         Map<String, Object> params = Maps.newHashMap();
         params.put("pageNum", 1);
-        params.put("pageSize", 20);
+        params.put("pageSize", 9999);
         params.put("clusterIdentifier", dataNodeInfo.getClusterTag());
         params.put("groupList", groupInfo.getAppGroupName());
         String url = scOpenApiUrl + LIST_DATABASE_API;

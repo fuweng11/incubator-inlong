@@ -21,9 +21,12 @@ import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeatRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncInitInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskFullInfo;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.InitTaskRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.ReportTaskRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.RunningTaskRequest;
+import org.apache.inlong.manager.pojo.common.PageResult;
+import org.apache.inlong.manager.pojo.source.SourcePageRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 
 /**
@@ -78,5 +81,13 @@ public interface DbSyncAgentService {
      * @return success or failure
      */
     Boolean addFields(AddFieldsRequest request);
+
+    /**
+     * Paging query dbsync task information based on conditions.
+     *
+     * @param request paging request.
+     * @return dbsync task list
+     */
+    PageResult<DbSyncTaskInfo> listTask(SourcePageRequest request);
 
 }

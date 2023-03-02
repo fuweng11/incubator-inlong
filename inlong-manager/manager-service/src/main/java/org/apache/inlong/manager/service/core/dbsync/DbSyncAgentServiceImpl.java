@@ -17,6 +17,8 @@
 
 package org.apache.inlong.manager.service.core.dbsync;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -40,8 +42,10 @@ import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.enums.ClusterType;
+import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.SourceStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
@@ -60,13 +64,20 @@ import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.ClusterPageRequest;
 import org.apache.inlong.manager.pojo.cluster.agent.AgentClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
+import org.apache.inlong.manager.pojo.common.OrderFieldEnum;
+import org.apache.inlong.manager.pojo.common.OrderTypeEnum;
+import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.node.mysql.MySQLDataNodeInfo;
+import org.apache.inlong.manager.pojo.source.SourcePageRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
+import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSource;
 import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSourceDTO;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
 import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
+import org.apache.inlong.manager.service.source.SourceOperatorFactory;
+import org.apache.inlong.manager.service.source.StreamSourceOperator;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,6 +180,8 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     private InlongClusterNodeEntityMapper clusterNodeMapper;
     @Autowired
     private DbSyncHeartbeatEntityMapper dbSyncHeartbeatMapper;
+    @Autowired
+    private SourceOperatorFactory operatorFactory;
 
     /**
      * Start the heartbeat task
@@ -401,6 +414,42 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         }
         LOGGER.info("received dbsync add fields request: {}", request);
         return addFieldQueue.add(request);
+    }
+
+    @Override
+    public PageResult<DbSyncTaskInfo> listTask(SourcePageRequest request) {
+        Preconditions.expectNotBlank(request.getInlongGroupId(), ErrorCodeEnum.GROUP_ID_IS_EMPTY);
+        Preconditions.expectTrue(Objects.equals(request.getSourceType(), SourceType.HA_BINLOG),
+                "current interface only support HA_BINLOG");
+
+        PageHelper.startPage(request.getPageNum(), request.getPageSize());
+        OrderFieldEnum.checkOrderField(request);
+        OrderTypeEnum.checkOrderType(request);
+        Page<StreamSourceEntity> entityPage = (Page<StreamSourceEntity>) sourceMapper.selectByCondition(request);
+        StreamSourceOperator sourceOperator = operatorFactory.getInstance(SourceType.HA_BINLOG);
+        List<DbSyncTaskInfo> list = entityPage.stream()
+                .map(entity -> {
+                    HaBinlogSource source = (HaBinlogSource) sourceOperator.getFromEntity(entity);
+                    DbSyncTaskInfo taskInfo = CommonBeanUtils.copyProperties(source, DbSyncTaskInfo::new);
+                    String serverName = entity.getDataNodeName();
+                    taskInfo.setServerName(serverName);
+                    MySQLDataNodeInfo mySqlNode = (MySQLDataNodeInfo) dataNodeService.get(serverName,
+                            DataNodeType.MYSQL);
+                    taskInfo.setDbServerInfo(DBServerInfo.builder()
+                            .id(mySqlNode.getId())
+                            .dbType(DataNodeType.MYSQL)
+                            .url(mySqlNode.getUrl())
+                            .backupUrl(mySqlNode.getBackupUrl())
+                            .username(mySqlNode.getUsername())
+                            .password(mySqlNode.getToken())
+                            .build());
+                    return taskInfo;
+                }).collect(Collectors.toList());
+
+        PageResult<DbSyncTaskInfo> pageResult = new PageResult<>(list, entityPage.getTotal(),
+                entityPage.getPageNum(), entityPage.getPageSize());
+        LOGGER.debug("success to list dbsync task info page, result size {}", pageResult.getList().size());
+        return pageResult;
     }
 
     /**

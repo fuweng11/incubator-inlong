@@ -23,10 +23,13 @@ import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeatRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncInitInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskFullInfo;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.InitTaskRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.ReportTaskRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.RunningTaskRequest;
+import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.Response;
+import org.apache.inlong.manager.pojo.source.SourcePageRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.service.core.dbsync.DbSyncAgentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +37,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -82,6 +86,12 @@ public class OpenDbSyncController {
     @ApiOperation(value = "Report the newly fields")
     public Response<Boolean> reportNewFields(@Validated @RequestBody AddFieldsRequest request) {
         return Response.success(dbSyncAgentService.addFields(request));
+    }
+
+    @RequestMapping(value = "/dbsync/listTask", method = RequestMethod.GET)
+    @ApiOperation(value = "Paging query streamSource task info")
+    public Response<PageResult<DbSyncTaskInfo>> listByCondition(SourcePageRequest request) {
+        return Response.success(dbSyncAgentService.listTask(request));
     }
 
 }
