@@ -36,6 +36,7 @@ import i18n from '@/i18n';
 import request from '@/utils/request';
 import { pickObjectArray } from '@/utils';
 import { CommonInterface } from '../common';
+import { sources } from '@/metas/sources';
 import HeartbeatPopover from '@/components/HeartbeatPopover';
 
 interface Props extends CommonInterface {
@@ -245,7 +246,7 @@ const Comp = ({ inlongGroupId, inlongStreamId, readonly }: Props, ref) => {
               >
                 <span>
                   <span style={{ marginRight: 10 }}>{item.sourceName}</span>
-                  <Tag>{item.sourceType}</Tag>
+                  <Tag>{sources.find(c => c.value === item.sourceType)?.label}</Tag>
                 </span>
               </List.Item>
             )}
