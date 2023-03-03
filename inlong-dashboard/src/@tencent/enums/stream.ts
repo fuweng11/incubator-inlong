@@ -18,11 +18,11 @@
  */
 
 export enum DataLevelEnum {
-  L1,
-  L2,
-  L3,
-  L4,
-  L5,
+  L1 = '1',
+  L2 = '2',
+  L3 = '3',
+  L4 = '4',
+  L5 = '5',
 }
 
 export const dataLevelMap: Map<DataLevelEnum, string> = (() => {
@@ -91,14 +91,14 @@ export const dataEncodingMap: Map<DataEncodingEnum, string> = (() => {
 })();
 
 export enum DayMaxEnum {
-  L1,
-  L2,
-  L3,
-  L4,
-  L5,
-  L6,
-  L7,
-  L8,
+  L1 = '1',
+  L2 = '2',
+  L3 = '3',
+  L4 = '4',
+  L5 = '5',
+  L6 = '6',
+  L7 = '7',
+  L8 = '8',
 }
 
 export const dayMaxMap: Map<DayMaxEnum, string> = (() => {

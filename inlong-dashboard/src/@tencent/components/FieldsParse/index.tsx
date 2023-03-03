@@ -17,19 +17,20 @@
  * under the License.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Modal,
   ModalProps,
   Button,
   Form,
   Input,
-  Segment,
+  Radio,
   Select,
   Table,
   Text,
   Icon,
   StatusTip,
+  message,
 } from '@tencent/tea-component';
 import Editor from '@monaco-editor/react';
 
@@ -50,7 +51,7 @@ interface FieldsParseProps extends ModalProps {
   onOk: (data: ParsedData) => void;
 }
 
-const FieldsParse: React.FC<FieldsParseProps> = ({ onOk, onClose, ...rest }) => {
+const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...rest }) => {
   const [parseType, setParseType] = useState('JSON');
 
   const [input, setInput] = useState(defaultJSON);
@@ -117,26 +118,35 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ onOk, onClose, ...rest }) => 
 
   const clear = () => {
     setInput('');
+    setInputErrMsg('');
   };
 
   const handleOk = () => {
     const selectedParsedData = parsedData.filter(({ id }) => selectedKeys.includes(id.toString()));
+    if (selectedParsedData.some(item => !item.fieldName)) {
+      message.error({ content: '选择的解析数据中，存在空字段' });
+      return;
+    }
     onOk(selectedParsedData);
   };
 
+  useEffect(() => {
+    if (!visible) {
+      clear();
+      setSelectedKeys([]);
+      setParsedData([]);
+    }
+  }, [visible]);
+
   return (
-    <Modal caption="批量解析字段" onClose={onClose} {...rest}>
+    <Modal caption="批量解析字段" visible={visible} onClose={onClose} {...rest}>
       <Modal.Body>
         <Form>
           <Form.Item label="添加方式">
-            <Segment
-              value={parseType}
-              onChange={value => setParseType(value)}
-              options={[
-                { text: 'Json解析', value: 'JSON' },
-                { text: 'SQL解析', value: 'SQL' },
-              ]}
-            />
+            <Radio.Group value={parseType} onChange={value => setParseType(value)}>
+              <Radio name="JSON">Json解析</Radio>
+              <Radio name="SQL">SQL解析</Radio>
+            </Radio.Group>
           </Form.Item>
           <Form.Item
             label="编辑框"
@@ -160,10 +170,10 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ onOk, onClose, ...rest }) => 
             </div>
           </Form.Item>
           <Form.Item>
-            <Button type="weak" onClick={parse}>
+            <Button type="link" onClick={parse}>
               解析
             </Button>
-            <Button type="text" onClick={clear} style={{ marginLeft: 10 }}>
+            <Button type="link" onClick={clear} disabled={!input.length} style={{ marginLeft: 10 }}>
               清空
             </Button>
           </Form.Item>
@@ -239,7 +249,7 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ onOk, onClose, ...rest }) => 
       </Modal.Body>
 
       <Modal.Footer>
-        <Button type="primary" onClick={handleOk}>
+        <Button type="primary" disabled={!selectedKeys.length} onClick={handleOk}>
           确定
         </Button>
         <Button type="weak" onClick={onClose}>

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import React, { forwardRef, useImperativeHandle, Ref } from 'react';
+import React, { forwardRef, useImperativeHandle, Ref, useEffect } from 'react';
 import { Form, Table, TableProps, Button, Icon, TableColumn } from '@tencent/tea-component';
 import { useForm, useFieldArray, Controller, ControllerProps, FieldValues } from 'react-hook-form';
 import styles from './index.module.less';
@@ -28,10 +28,11 @@ interface ColumnItemProps extends Omit<TableColumn, 'render'> {
   rules?: ControllerProps['rules'];
 }
 
-interface EditableTableProps extends Omit<TableProps, 'columns'> {
+export interface EditableTableProps extends Omit<TableProps, 'columns'> {
   defaultValues: FieldValues[];
   columns: ColumnItemProps[];
   showRowIndex?: boolean;
+  onChange?: <T>(values: T) => void;
 }
 
 export interface EditableTableRef {
@@ -41,7 +42,7 @@ export interface EditableTableRef {
 }
 
 const EditableTable = forwardRef((props: EditableTableProps, ref: Ref<EditableTableRef>) => {
-  const { defaultValues, columns, showRowIndex = false } = props;
+  const { defaultValues, columns, showRowIndex = false, onChange } = props;
 
   const {
     control,
@@ -49,6 +50,7 @@ const EditableTable = forwardRef((props: EditableTableProps, ref: Ref<EditableTa
     reset,
     handleSubmit,
     setValue: setV,
+    watch,
   } = useForm({
     defaultValues: {
       array: defaultValues,
@@ -79,6 +81,11 @@ const EditableTable = forwardRef((props: EditableTableProps, ref: Ref<EditableTa
     reset,
     setValue,
   }));
+
+  useEffect(() => {
+    const { unsubscribe } = watch(values => onChange?.(values));
+    return () => unsubscribe();
+  }, [watch, onChange]);
 
   return (
     <div>
