@@ -68,7 +68,8 @@ const Comp = ({ inlongGroupId, inlongStreamId, readonly }: Props, ref) => {
   } = useRequest(
     {
       url: '/source/list',
-      params: {
+      method: 'POST',
+      data: {
         ...options,
         inlongGroupId,
         inlongStreamId,
