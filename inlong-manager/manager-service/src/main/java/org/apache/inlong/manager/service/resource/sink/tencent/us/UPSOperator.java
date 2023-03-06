@@ -288,7 +288,7 @@ public class UPSOperator {
         boolean result = false;
         log.info("begin check table exist");
         Map<String, Object> params = Maps.newHashMap();
-        params.put("clusterName", hiveFullInfo.getClusterTag());
+        params.put("clusterName", getClusterName(hiveFullInfo.getClusterTag()));
         String type = hiveFullInfo.getIsThive() == TencentConstants.HIVE_TYPE ? "HIVE" : "THIVE";
         params.put("type", type);
         params.put("database", database);
@@ -305,6 +305,36 @@ public class UPSOperator {
             result = true;
         }
         return result;
+    }
+
+    public String getClusterName(String clusterTag) {
+        String clusterName;
+        switch (clusterTag) {
+            case "cft":
+                clusterName = "财付通";
+                break;
+            case "hk":
+                clusterName = "沙田";
+                break;
+            case "wxpay":
+                clusterName = "支付账单库";
+                break;
+            case "cftwx":
+                clusterName = "财付通微信";
+                break;
+            case "paycft":
+                clusterName = "支付财付通";
+                break;
+            case "wallet":
+                clusterName = "香港钱包";
+                break;
+            case "cftzx":
+                clusterName = "财付通香港振星";
+                break;
+            default:
+                clusterName = "同乐";
+        }
+        return clusterName;
     }
 
 }
