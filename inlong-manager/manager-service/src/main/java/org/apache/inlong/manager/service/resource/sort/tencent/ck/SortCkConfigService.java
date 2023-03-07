@@ -41,7 +41,7 @@ import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
-import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
+import org.apache.inlong.manager.pojo.sink.ck.ClickHouseSink;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
@@ -63,6 +63,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SortCkConfigService.class);
 
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper(); // thread safe
+    private static final String CLICKHOUSE_JDBC_PREFIX = "jdbc:clickhouse://";
 
     @Autowired
     private InlongClusterEntityMapper clusterMapper;
@@ -75,7 +76,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     @Autowired
     private StreamSinkService sinkService;
 
-    public void buildCkConfig(InlongGroupInfo groupInfo, List<InnerClickHouseSink> clickHouseSinkList)
+    public void buildCkConfig(InlongGroupInfo groupInfo, List<ClickHouseSink> clickHouseSinkList)
             throws Exception {
         if (CollectionUtils.isEmpty(clickHouseSinkList)) {
             return;
@@ -93,7 +94,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
 
         String zkUrl = zkCluster.getUrl();
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
-        for (InnerClickHouseSink clickHouseSink : clickHouseSinkList) {
+        for (ClickHouseSink clickHouseSink : clickHouseSinkList) {
             String sortClusterName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
                     clickHouseSink.getId(), ClusterType.SORT_CK);
             log.info("begin to push sort ck config to zkUrl={}, ckTopo={}", zkUrl, sortClusterName);
@@ -104,7 +105,6 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
                 // Add data under clusters on ZK
                 ZkTools.addDataFlowToCluster(sortClusterName, flowInfo.getId(), zkUrl, zkRoot);
                 String info = "success to push clickhouse sort config";
-                sinkService.updateStatus(clickHouseSink.getId(), SinkStatus.CONFIG_SUCCESSFUL.getCode(), info);
                 log.info("success to push ck sort config {}", JSON_MAPPER.writeValueAsString(flowInfo));
             } catch (Exception e) {
                 String errMsg = "failed to push clickhouse sort config: " + e.getMessage();
@@ -118,7 +118,7 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     /**
      * Get DataFlowInfo for Sort
      */
-    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink,
+    private DataFlowInfo getDataFlowInfo(InlongGroupInfo groupInfo, ClickHouseSink clickHouseSink,
             String sortClusterName) throws Exception {
         List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(clickHouseSink.getId());
         SourceInfo sourceInfo = getSourceInfo(groupInfo, clickHouseSink, sortClusterName, fieldList);
@@ -143,23 +143,23 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
     /**
      * Assembling sink information
      */
-    private ClickHouseSinkInfo getCkSinkInfo(InlongGroupInfo groupInfo, InnerClickHouseSink clickHouseSink)
+    private ClickHouseSinkInfo getCkSinkInfo(InlongGroupInfo groupInfo, ClickHouseSink clickHouseSink)
             throws Exception {
         String groupId = groupInfo.getInlongGroupId();
         String streamId = clickHouseSink.getInlongStreamId();
-        if (StringUtils.isBlank(clickHouseSink.getUrl())) {
+        if (StringUtils.isBlank(clickHouseSink.getJdbcUrl())) {
             DataNodeEntity ckCluster = dataNodeEntityMapper.selectByUniqueKey(clickHouseSink.getDataNodeName(),
-                    DataNodeType.INNER_CK);
+                    DataNodeType.CLICKHOUSE);
             if (ckCluster == null) {
                 log.error("can not find click house cluster for {} - {} ", groupId, streamId);
                 throw new Exception("can not find click house cluster");
             }
-            clickHouseSink.setUrl(ckCluster.getUrl());
+            clickHouseSink.setJdbcUrl(ckCluster.getUrl());
             clickHouseSink.setUsername(ckCluster.getUsername());
             clickHouseSink.setPassword(ckCluster.getToken());
         }
         ClickHouseSinkInfo.PartitionStrategy partition = ClickHouseSinkInfo.PartitionStrategy.HASH;
-        if (clickHouseSink.getIsDistribute() == 1) {
+        if (clickHouseSink.getIsDistributed() == 1) {
             String strategy = clickHouseSink.getPartitionStrategy();
             /*
              * if (strategy.equalsIgnoreCase("HASH")) { partition = ClickHouseSinkInfo.PartitionStrategy.HASH; } else
@@ -171,10 +171,14 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
             }
         }
         List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(clickHouseSink.getId());
+        String url = clickHouseSink.getJdbcUrl();
+        if (url.startsWith(CLICKHOUSE_JDBC_PREFIX)) {
+            url = StringUtils.substringAfter(url, CLICKHOUSE_JDBC_PREFIX);
+        }
         return new ClickHouseSinkInfo(
-                "clickhouse://" + clickHouseSink.getUrl(), clickHouseSink.getDbName(),
+                "clickhouse://" + url, clickHouseSink.getDbName(),
                 clickHouseSink.getTableName(), clickHouseSink.getUsername(), clickHouseSink.getPassword(),
-                clickHouseSink.getIsDistribute() != 0, partition,
+                clickHouseSink.getIsDistributed() != 0, partition,
                 clickHouseSink.getPartitionFields() == null ? "" : clickHouseSink.getPartitionFields(),
                 fieldList.stream().map(f -> {
                     FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());
@@ -182,8 +186,8 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
                 }).toArray(FieldInfo[]::new),
                 new String[0],
                 clickHouseSink.getFlushInterval(),
-                clickHouseSink.getPackageSize(),
-                clickHouseSink.getRetryTime());
+                clickHouseSink.getFlushRecord(),
+                clickHouseSink.getRetryTimes());
     }
 
 }

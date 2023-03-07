@@ -312,7 +312,7 @@ public class PulsarResourceOperator implements QueueResourceOperator {
             case SinkType.INNER_HIVE:
                 sortTaskType = ClusterType.SORT_HIVE;
                 break;
-            case SinkType.INNER_CK:
+            case SinkType.CLICKHOUSE:
                 sortTaskType = ClusterType.SORT_CK;
                 break;
             case SinkType.INNER_ICEBERG:

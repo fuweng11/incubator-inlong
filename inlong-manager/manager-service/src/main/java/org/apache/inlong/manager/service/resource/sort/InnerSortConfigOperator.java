@@ -28,8 +28,8 @@ import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
+import org.apache.inlong.manager.pojo.sink.ck.ClickHouseSink;
 import org.apache.inlong.manager.pojo.sink.es.ElasticsearchSink;
-import org.apache.inlong.manager.pojo.sink.tencent.ck.InnerClickHouseSink;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
@@ -102,7 +102,7 @@ public class InnerSortConfigOperator implements SortConfigOperator {
 
         List<SinkInfo> configList = sinkMapper.selectAllConfig(groupId, streamIds);
         List<InnerHiveFullInfo> hiveInfos = new ArrayList<>();
-        List<InnerClickHouseSink> clickHouseSinkList = new ArrayList<>();
+        List<ClickHouseSink> clickHouseSinkList = new ArrayList<>();
         List<InnerIcebergSink> icebergSinkList = new ArrayList<>();
         List<ElasticsearchSink> elasticsearchSinkList = new ArrayList<>();
         for (SinkInfo sinkInfo : configList) {
@@ -117,8 +117,8 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                             dataNodeInfo);
                     hiveInfos.add(hiveFullInfo);
                     break;
-                case SinkType.INNER_CK:
-                    InnerClickHouseSink clickHouseSink = (InnerClickHouseSink) sinkService.get(sinkInfo.getId());
+                case SinkType.CLICKHOUSE:
+                    ClickHouseSink clickHouseSink = (ClickHouseSink) sinkService.get(sinkInfo.getId());
                     clickHouseSinkList.add(clickHouseSink);
                     break;
                 case SinkType.INNER_ICEBERG:

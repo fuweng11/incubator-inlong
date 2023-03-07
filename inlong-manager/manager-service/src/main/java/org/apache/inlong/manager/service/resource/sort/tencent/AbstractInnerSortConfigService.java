@@ -232,7 +232,7 @@ public class AbstractInnerSortConfigService {
             case SinkType.INNER_THIVE:
                 topoType = ClusterType.SORT_THIVE;
                 break;
-            case SinkType.INNER_CK:
+            case SinkType.CLICKHOUSE:
                 topoType = ClusterType.SORT_CK;
                 break;
             case SinkType.INNER_ICEBERG:
