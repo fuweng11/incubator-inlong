@@ -53,7 +53,12 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
                 alt="logo"
               />
             </NavMenu.Item>
-            <span style={{ color: '#bbb', margin: ' 0 10px' }}>数据集成</span>
+            <div style={{ marginLeft: '5px', color: 'rgba(255, 255, 255, 0.45)', opacity: '0.6' }}>
+              |
+            </div>
+            <span style={{ color: '#FFFFFF', opacity: 0.8, margin: ' 0 15px', fontSize: '14px' }}>
+              数据集成
+            </span>
             <Dropdown
               className={styles.dropdown}
               children={projectList}
@@ -61,15 +66,23 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
               boxClassName={styles.dropdownBox}
               button={<div className={styles.dropdownButton}>当前项目</div>}
             ></Dropdown>
+            <div style={{ marginLeft: '15px', color: 'rgba(255, 255, 255, 0.45)', opacity: '0.6' }}>
+              |
+            </div>
             {menuTree.map((menu, i) => {
               return (
                 currentMenu && (
-                  <NavMenu.Item
-                    selected={menu.key == currentMenu.key}
-                    className={styles.headerMenuItem}
-                    key={i}
-                  >
-                    <Link to={menu.path}>{menu.name}</Link>
+                  <NavMenu.Item className={styles.headerMenuItem} key={i}>
+                    <Link
+                      to={menu.path || menu.children[0]?.path}
+                      className={
+                        menu.key == currentMenu.key || menu.key == currentMenu.deepKey[0]
+                          ? styles.activeText
+                          : styles.noActiveText
+                      }
+                    >
+                      {menu.name}
+                    </Link>
                   </NavMenu.Item>
                 )
               );

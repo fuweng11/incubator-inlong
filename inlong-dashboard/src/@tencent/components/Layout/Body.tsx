@@ -42,6 +42,7 @@ const LayoutBody: React.FC<LayoutBodyProps> = ({ subMenuTree, currentMenu, child
                   selected={menu.key == currentMenu.key}
                   key={menu.key}
                   title={menu.name}
+                  icon={[<div style={{ marginRight: '15px' }}>{menu.icon}</div>]}
                   render={children => <Link to={menu.path as string}>{children}</Link>}
                 ></Menu.Item>
               );

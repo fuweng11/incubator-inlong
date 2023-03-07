@@ -16,34 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-.leftCol{
-    display: flex;
-    width: calc(100% + 30px);
-    .sourceTable{
-        width: calc(100% - 30px);
-    }
-}
-.actions{
-    font-size: 12px;
-    font-weight: normal;
-    display: flex;
-    align-items: center;
-    .action{
-        display: flex;
-        align-items: center;
-        margin-left: 10px;
-        color: #006EFF;
-        .icon{
-            line-height: 2px;
-        }
-    }
-}
-.tableTitle{
-    height: 15px;
-    display: flex;
-    align-items: center;
-    justify-content:space-between;
-    font-size: 12px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
+export { ReactComponent as StreamManage } from './svg/StreamManage.svg';
+export { ReactComponent as SubscribeManage } from './svg/SubscribeManage.svg';
+export { ReactComponent as AcquisitionManage } from './svg/AcquisitionManage.svg';
+export { ReactComponent as ConvertTip } from './svg/ConvertTip.svg';
+export { ReactComponent as AutoAdd } from './svg/AutoAdd.svg';
+export { ReactComponent as Delete } from './svg/Delete.svg';

@@ -17,6 +17,7 @@
  * under the License.
  */
 
+import { StreamManage, SubscribeManage, AcquisitionManage } from '@/@tencent/components/Icons';
 import type { MenuItemType } from '.';
 
 const conf: MenuItemType[] = [
@@ -30,10 +31,17 @@ const conf: MenuItemType[] = [
       {
         path: '/stream',
         name: '接入管理',
+        icon: StreamManage({}),
       },
       {
         path: '/subscribe',
         name: '数据订阅',
+        icon: SubscribeManage({}),
+      },
+      {
+        path: '/collector',
+        name: '采集器管理',
+        icon: AcquisitionManage({}),
       },
     ],
   },

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_12227_27859)">
+<path d="M13.4015 13.203L6.92654 10.9753L0.451538 13.203V0.96875H13.4015V13.203ZM6.92654 9.864L12.3515 11.7313V2.01875H1.50154V11.7313L6.92654 9.864Z" fill="#BFC0C4"/>
+<path d="M8.99856 9.15469L7.11556 8.15544L5.21681 9.12844L5.58606 7.02494L4.07581 5.53744L6.18806 5.23644L7.16106 3.33594L8.08681 5.25744L10.1991 5.58294L8.64681 7.06519L8.99856 9.15469ZM7.12081 7.36619L8.07456 7.87194L7.89781 6.81319L8.69056 6.05544L7.61781 5.89094L7.14356 4.90744L6.64656 5.87694L5.57381 6.03094L6.33856 6.78344L6.14781 7.86494L7.12081 7.36619Z" fill="#BFC0C4"/>
+</g>
+<defs>
+<clipPath id="clip0_12227_27859">
+<rect width="14" height="14" fill="white"/>
+</clipPath>
+</defs>
+</svg>

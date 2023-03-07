@@ -31,6 +31,7 @@ import {
 import styles from './index.module.less';
 import FieldsParse from '../FieldsParse';
 import LongText from '../LongText';
+import { AutoAdd, ConvertTip, Delete } from '../Icons';
 
 const { injectable, selectable, draggable } = Table.addons;
 
@@ -80,11 +81,11 @@ const FieldsMap = ({
       onClick: () => {
         setFieldParseVisible(true);
       },
-      icon: <Icon type="convertip--blue" />,
+      icon: <ConvertTip />,
     },
     {
       text: '自动添加',
-      icon: <Icon type="and" />,
+      icon: <AutoAdd />,
       onClick: async () => {
         setStatus('loading');
         const newTargetFields = await getTargetFields();
@@ -95,7 +96,7 @@ const FieldsMap = ({
     },
     {
       text: '全部删除',
-      icon: <Icon type="delete" />,
+      icon: <Delete />,
       onClick: () => {
         setTargetFields([]);
       },
@@ -227,7 +228,7 @@ const FieldsMap = ({
             <div className={styles.actions}>
               {actions.map((action, i) => (
                 <span className={styles.action} key={i}>
-                  {action.icon}
+                  <div className={styles.icon}>{action.icon}</div>
                   <Button type="link" onClick={action.onClick} disabled={action.disabled}>
                     {action.text}
                   </Button>

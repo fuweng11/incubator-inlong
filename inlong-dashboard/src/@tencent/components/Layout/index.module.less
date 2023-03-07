@@ -26,6 +26,11 @@
       overflow: hidden;
     }
   }
+  .tea-nav__logo{
+    &::before{
+      border: none;
+    } 
+  }
 }
 .avatar {
   width: 28px;
@@ -41,6 +46,22 @@
     color: rgba(255, 255, 255, 1);
   }
 }
+.activeText{
+  color: #fff;
+  // opacity: 1 !important;
+  &:hover{
+    color: #fff !important;
+    opacity: 0.8 !important;
+  }
+}
+.noActiveText{
+  color: #fff;
+  opacity: 0.5;
+  &:hover{
+    color: #fff !important;
+  }
+}
+
 .dropdownButton {
   color: rgba(255, 255, 255, 0.8);
   border-radius: 10px;
@@ -53,11 +74,11 @@
 
 .dropdown{
   margin-left: 10px;
-  border-radius: 30px;
+  border-radius: 3px;
   text-align: center;
   padding: 0 8px;
   border:1px solid #344158;
-  background-color: #262F3E;
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .projectList{
@@ -71,11 +92,15 @@
 }
 
 .headerMenuItem{
-  margin-left: 20px;
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .subMenuItem{
   margin-top: 5px;
+  :global{
+    .tea-menu__item{
+      align-items: center;
+    }
+  }
 }
