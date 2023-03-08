@@ -18,6 +18,7 @@
 package org.apache.inlong.manager.service.resource.sort.tencent.hive;
 
 import com.tencent.flink.formats.common.FormatInfo;
+import com.tencent.flink.formats.common.StringFormatInfo;
 import com.tencent.flink.formats.common.TimestampFormatInfo;
 import com.tencent.oceanus.etl.ZkTools;
 import com.tencent.oceanus.etl.configuration.Constants.CompressionType;
@@ -247,6 +248,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         Character separator = (char) Integer.parseInt(hiveFullInfo.getTargetSeparator());
         HiveFileFormatInfo fileFormat;
         String format = hiveFullInfo.getFileFormat();
+
+        // when the file format is text, set all fields to string.
+        boolean isTextFormat = false;
         // Currently, sort does not support FILE_FORMAT_RC
         if (TencentConstants.FILE_FORMAT_ORC.equalsIgnoreCase(format)) {
             fileFormat = new HiveSinkInfo.OrcFileFormatInfo();
@@ -259,6 +263,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         } else if (TencentConstants.FILE_FORMAT_PARQUET.equalsIgnoreCase(format)) {
             fileFormat = new HiveSinkInfo.ParquetFileFormatInfo();
         } else {
+            isTextFormat = true;
             CompressionType compressionType = COMPRESSION_TYPE_MAP.get(hiveFullInfo.getCompressionType());
             if (!Objects.isNull(compressionType)) {
                 fileFormat = new HiveSinkInfo.TextFileFormatInfo(separator, compressionType,
@@ -293,7 +298,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         sortExtConfig.setConsistency(consistency);
 
         // Get the sink field. If there is no partition field in the source field, add the partition field to the last
-        List<FieldInfo> fieldInfoList = getSinkFields(fieldList, hiveFullInfo.getPrimaryPartition());
+        List<FieldInfo> fieldInfoList = getSinkFields(fieldList, hiveFullInfo.getPrimaryPartition(), isTextFormat);
 
         com.tencent.oceanus.etl.protocol.sink.SinkInfo sinkInfo;
         if (hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE) {
@@ -437,7 +442,10 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
      * Get the sink field information.
      * If there is a partition field in the common field, use it. Otherwise, add the partition field to the last
      */
-    private List<FieldInfo> getSinkFields(List<StreamSinkFieldEntity> fieldList, String partitionField) {
+    private List<FieldInfo> getSinkFields(
+            List<StreamSinkFieldEntity> fieldList,
+            String partitionField,
+            boolean isTextFormat) {
         boolean duplicate = false;
         List<FieldInfo> fieldInfoList = new ArrayList<>();
         for (StreamSinkFieldEntity field : fieldList) {
@@ -445,9 +453,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             if (fieldName.equals(partitionField)) {
                 duplicate = true;
             }
-
-            FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(field.getFieldType().toLowerCase(),
-                    field.getFieldFormat());
+            FormatInfo formatInfo = isTextFormat? new StringFormatInfo() : SortFieldFormatUtils.convertFieldFormat(
+                    field.getFieldType().toLowerCase(), field.getFieldFormat());
+            //In order to ensure the successful deserialization of etl2.0, we set source type of each fields to string
             FieldInfo fieldInfo = new FieldInfo(fieldName, formatInfo);
             fieldInfoList.add(fieldInfo);
         }
@@ -477,7 +485,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         // the number and order of source fields must be the same as the target fields
         SourceInfo sourceInfo = null;
         // Get the source field. If there is no partition field in the source, add the partition field to the last
-        List<FieldInfo> sourceFields = getSourceFields(fieldList, hiveFullInfo.getPrimaryPartition());
+        List<FieldInfo> sourceFields = getSourceFields(fieldList, hiveFullInfo.getPrimaryPartition(),
+                "TextFile".equalsIgnoreCase(hiveFullInfo.getFileFormat()));
 
         String groupId = groupInfo.getInlongGroupId();
         String mqType = groupInfo.getMqType();
@@ -578,12 +587,16 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
      *
      * @see <a href="https://iwiki.woa.com/pages/viewpage.action?pageId=989893490">Field info protocol</a>
      */
-    private List<FieldInfo> getSourceFields(List<StreamSinkFieldEntity> fieldList, String partitionField) {
+    private List<FieldInfo> getSourceFields(
+            List<StreamSinkFieldEntity> fieldList,
+            String partitionField,
+            boolean isTextFormat) {
         boolean duplicate = false;
         List<FieldInfo> fieldInfoList = new ArrayList<>();
         for (StreamSinkFieldEntity field : fieldList) {
-            FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
-                    field.getSourceFieldType().toLowerCase());
+            FormatInfo formatInfo = isTextFormat? new StringFormatInfo() : SortFieldFormatUtils.convertFieldFormat(
+                   field.getSourceFieldType().toLowerCase());
+            //In order to ensure the successful deserialization of etl2.0, we set source type of each fields to string
             String fieldName = field.getSourceFieldName();
 
             FieldInfo fieldInfo;
