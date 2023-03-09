@@ -58,6 +58,10 @@ public class InlongShiroImpl implements InlongShiro {
     private static final String FILTER_NAME_WEB = "authWeb";
     private static final String FILTER_NAME_API = "authAPI";
 
+
+    @Value("${openapi.auth.enabled:false}")
+    private Boolean openAPIAuthEnabled;
+
     @Autowired
     private RoleService roleService;
 
@@ -109,7 +113,6 @@ public class InlongShiroImpl implements InlongShiro {
         Map<String, Filter> filters = new LinkedHashMap<>();
         boolean allowMock = !Env.PROD.equals(Env.forName(env));
         filters.put(FILTER_NAME_WEB, new WebAuthenticationFilter(allowMock, userService, roleService));
-        filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, roleService));
         shiroFilterFactoryBean.setFilters(filters);
 
         // anon: can be accessed by anyone
@@ -124,6 +127,13 @@ public class InlongShiroImpl implements InlongShiro {
 
         // open api
         pathDefinitions.put("/openapi/**/*", FILTER_NAME_API);
+        // openapi
+        if (openAPIAuthEnabled) {
+            filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, roleService));
+            pathDefinitions.put("/openapi/**/*", FILTER_NAME_API);
+        } else {
+            pathDefinitions.put("/openapi/**/*", "anon");
+        }
 
         // other web
         pathDefinitions.put("/**", FILTER_NAME_WEB);
