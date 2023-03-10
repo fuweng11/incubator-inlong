@@ -161,6 +161,9 @@ public class InnerBaseHiveSinkDTO {
     @ApiModelProperty("Password encrypt version")
     private Integer encryptVersion;
 
+    @ApiModelProperty("Hadoop dfs replication ")
+    private Integer hadoopDfsReplication;
+
     /**
      * Get the dto instance from the request
      */
@@ -180,6 +183,8 @@ public class InnerBaseHiveSinkDTO {
      */
     public static InnerHiveFullInfo getFullInfo(InlongGroupInfo groupInfo, InnerBaseHiveSinkDTO innerHiveDTO,
             SinkInfo sinkInfo, InnerBaseHiveDataNodeInfo hiveDataNode) throws Exception {
+        Integer hadoopDfsReplication = Objects.isNull(innerHiveDTO.getHadoopDfsReplication()) ?
+                2 : innerHiveDTO.getHadoopDfsReplication();
         Integer isThive = Objects.equals(sinkInfo.getSinkType(), SinkType.INNER_THIVE) ? 1 : 0;
         String password = encryptPassword(hiveDataNode.getToken(), innerHiveDTO.getTableName());
         return InnerHiveFullInfo.builder()
@@ -224,6 +229,7 @@ public class InnerBaseHiveSinkDTO {
                 .hdfsDefaultFs(hiveDataNode.getHdfsDefaultFs())
                 .hdfsUgi(hiveDataNode.getHdfsUgi())
                 .clusterTag(hiveDataNode.getClusterTag())
+                .hadoopDfsReplication(hadoopDfsReplication)
                 .build();
     }
 

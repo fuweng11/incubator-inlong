@@ -110,6 +110,9 @@ public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
             + "and more than 1000 pieces of data can be reduced by 0.02%", notes = "the interval is left closed and right open, and cannot be overlapped")
     private String checkRelative;
 
+    @ApiModelProperty("Hadoop dfs replication ")
+    private Integer hadoopDfsReplication = 2;
+
     @ApiModelProperty("background operation log")
     private String optLog;
 

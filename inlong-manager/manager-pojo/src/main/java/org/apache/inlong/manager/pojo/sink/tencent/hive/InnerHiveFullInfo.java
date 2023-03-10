@@ -89,5 +89,6 @@ public class InnerHiveFullInfo {
     private String hdfsDefaultFs;
     private String hdfsUgi;
     private String clusterTag;
+    private Integer hadoopDfsReplication;
 
 }

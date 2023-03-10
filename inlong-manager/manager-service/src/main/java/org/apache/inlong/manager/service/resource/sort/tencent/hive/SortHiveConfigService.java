@@ -369,7 +369,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 hiveFullInfo.getUsername(), hiveFullInfo.getPassword(),
                 dataPath, sortExtConfig.getBackupDataPath(),
                 user, sortExtConfig.getBackupHadoopProxyUser(),
-                3,
+                hiveFullInfo.getHadoopDfsReplication(),
                 sortExtConfig.getCreationStrategy(),
                 partitionList.toArray(new HivePartitionInfo[0]),
                 sortExtConfig.getFormatInfo(),
@@ -435,7 +435,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 sortExtConfig.getConsistency(),
                 hiveFullInfo.getUsTaskId(),
                 sortExtConfig.getBackupDataPath(),
-                sortExtConfig.getBackupHadoopProxyUser(), 3);
+                sortExtConfig.getBackupHadoopProxyUser(),
+                hiveFullInfo.getHadoopDfsReplication());
     }
 
     /**
