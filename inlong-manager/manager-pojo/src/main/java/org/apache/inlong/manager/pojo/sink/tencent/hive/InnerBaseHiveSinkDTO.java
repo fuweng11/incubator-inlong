@@ -186,7 +186,8 @@ public class InnerBaseHiveSinkDTO {
         Integer hadoopDfsReplication = Objects.isNull(innerHiveDTO.getHadoopDfsReplication()) ?
                 2 : innerHiveDTO.getHadoopDfsReplication();
         Integer isThive = Objects.equals(sinkInfo.getSinkType(), SinkType.INNER_THIVE) ? 1 : 0;
-        String password = encryptPassword(hiveDataNode.getToken(), innerHiveDTO.getTableName());
+        String password = encryptPassword(hiveDataNode.getToken(), innerHiveDTO.getTableName(),
+                hiveDataNode.getOmsAddress());
         return InnerHiveFullInfo.builder()
                 .sinkId(sinkInfo.getId())
                 .productId(groupInfo.getProductId())
@@ -233,7 +234,10 @@ public class InnerBaseHiveSinkDTO {
                 .build();
     }
 
-    private static String encryptPassword(String password, String key) throws Exception {
+    private static String encryptPassword(String password, String key, String omsAddress) throws Exception {
+        if (StringUtils.isBlank(omsAddress)) {
+            return password;
+        }
         byte[] passwordBytes = Base64.encodeBase64(password.getBytes(StandardCharsets.UTF_8), false);
         byte[] cipheredBytes = AESUtils.encrypt(passwordBytes, key.trim().getBytes(StandardCharsets.UTF_8));
         return AESUtils.parseByte2HexStr(cipheredBytes);

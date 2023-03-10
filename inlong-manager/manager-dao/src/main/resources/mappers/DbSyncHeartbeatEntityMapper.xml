@@ -115,6 +115,7 @@
         </foreach>
         ON DUPLICATE KEY UPDATE
         current_db = values(current_db),
+        url = values(url),
         backup_url = values(backup_url),
         agent_status = values(agent_status),
         task_ids = values(task_ids),
