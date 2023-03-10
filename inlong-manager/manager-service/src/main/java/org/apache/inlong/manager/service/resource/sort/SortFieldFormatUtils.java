@@ -58,17 +58,23 @@ public class SortFieldFormatUtils {
                 formatInfo = new ShortFormatInfo();
                 break;
             case "int":
+            case "int8":
+            case "int16":
+            case "int32":
             case "integer":
                 formatInfo = new IntFormatInfo();
                 break;
             case "bigint":
             case "long":
+            case "int64":
                 formatInfo = new LongFormatInfo();
                 break;
             case "float":
+            case "float32":
                 formatInfo = new FloatFormatInfo();
                 break;
             case "double":
+            case "float64":
                 formatInfo = new DoubleFormatInfo();
                 break;
             case "decimal":

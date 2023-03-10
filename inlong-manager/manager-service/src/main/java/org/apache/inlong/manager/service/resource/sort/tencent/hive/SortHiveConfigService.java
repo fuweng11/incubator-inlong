@@ -240,9 +240,6 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
      */
     private com.tencent.oceanus.etl.protocol.sink.SinkInfo getSinkInfo(InnerHiveFullInfo hiveFullInfo,
             List<StreamSinkFieldEntity> fieldList, SortExtConfig sortExtConfig) {
-        if (hiveFullInfo.getHiveAddress() == null) {
-            throw new BusinessException("hive server url cannot be empty");
-        }
 
         // Must be the field separator in hive, and the default is text file
         Character separator = (char) Integer.parseInt(hiveFullInfo.getTargetSeparator());

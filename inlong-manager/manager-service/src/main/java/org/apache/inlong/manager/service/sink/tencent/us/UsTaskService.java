@@ -310,7 +310,6 @@ public class UsTaskService {
         List<TaskExt> extList = this.getDistinctTaskExtList(tableInfo);
         extList.add(new TaskExt(BID, inlongGroupId));
         extList.add(new TaskExt(TID, inlongStreamId));
-        extList.add(new TaskExt(HIVE_SERVER, tableInfo.getHiveAddress()));
         extList.add(new TaskExt(TDW_GROUP_NAME, tableInfo.getAppGroupName()));
         extList.add(new TaskExt(HIVE_DB, tableInfo.getDbName()));
         extList.add(new TaskExt(HIVE_TB, tableInfo.getTableName()));
