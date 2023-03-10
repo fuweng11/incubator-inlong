@@ -44,7 +44,7 @@ type ParsedData = {
   id: number;
   fieldName: string;
   fieldType: string;
-  fieldComment?: string;
+  remark?: string;
 }[];
 
 interface FieldsParseProps extends ModalProps {
@@ -218,12 +218,12 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...re
                   ),
                 },
                 parseType === 'SQL' && {
-                  key: 'fieldComment',
+                  key: 'remark',
                   header: '备注',
                   render: row => (
                     <Input
-                      value={row.fieldComment}
-                      onChange={value => onParsedDataChange(row.id, 'fieldComment', value)}
+                      value={row.remark}
+                      onChange={value => onParsedDataChange(row.id, 'remark', value)}
                     />
                   ),
                 },

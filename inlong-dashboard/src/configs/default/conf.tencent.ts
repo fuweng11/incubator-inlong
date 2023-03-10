@@ -24,7 +24,7 @@ import { requestErrorAlert } from '@/@tencent/components/RequestErrorAlert';
 
 const conf = {
   title: '',
-  logo: '/logo.svg',
+  logo: '//imgcache.qq.com/qcloud/tcloud_dtc/static/We_Data/cdccaf86-75d2-4c94-9ebd-4661a8271c95.svg',
   useLogin: false,
   redirectRoutes: {
     '/': '/stream',
@@ -33,7 +33,7 @@ const conf = {
   AppProvider: Provider,
   AppLoading: PageLoading,
   AppLayout: Layout,
-  requestPrefix: '/api',
+  requestPrefix: '/api/wedata/inlong/service',
   requestErrorAlert,
 };
 

@@ -18,11 +18,11 @@
  */
 
 export enum DataLevelEnum {
-  L1 = '1',
-  L2 = '2',
-  L3 = '3',
-  L4 = '4',
-  L5 = '5',
+  L1 = 0,
+  L2 = 1,
+  L3 = 2,
+  L4 = 3,
+  L5 = 4,
 }
 
 export const dataLevelMap: Map<DataLevelEnum, string> = (() => {
@@ -69,8 +69,8 @@ export const statusMap: Map<
 })();
 
 export enum AccessTypeEnum {
-  SDK = 'SDK',
-  AGENT = 'AGENT',
+  SDK = 1,
+  AGENT = 2,
 }
 
 export const accessTypeMap: Map<AccessTypeEnum, string> = (() => {
@@ -79,39 +79,39 @@ export const accessTypeMap: Map<AccessTypeEnum, string> = (() => {
   return map;
 })();
 
-export enum DataEncodingEnum {
+export enum EncodeTypeEnum {
   UTF8 = 'UTF-8',
   GBK = 'GBK',
 }
 
-export const dataEncodingMap: Map<DataEncodingEnum, string> = (() => {
+export const encodeTypeMap: Map<EncodeTypeEnum, string> = (() => {
   const map = new Map();
-  map.set(DataEncodingEnum.UTF8, 'UTF-8').set(DataEncodingEnum.GBK, 'GBK');
+  map.set(EncodeTypeEnum.UTF8, 'UTF-8').set(EncodeTypeEnum.GBK, 'GBK');
   return map;
 })();
 
-export enum DayMaxEnum {
-  L1 = '1',
-  L2 = '2',
-  L3 = '3',
-  L4 = '4',
-  L5 = '5',
-  L6 = '6',
-  L7 = '7',
-  L8 = '8',
+export enum PeakRateEnum {
+  L1 = 100,
+  L2 = 1000,
+  L3 = 5000,
+  L4 = 10000,
+  L5 = 50000,
+  L6 = 100000,
+  L7 = 500000,
+  L8 = 1000000,
 }
 
-export const dayMaxMap: Map<DayMaxEnum, string> = (() => {
+export const peakRateMap: Map<PeakRateEnum, string> = (() => {
   const map = new Map();
   map
-    .set(DayMaxEnum.L1, '100及以下')
-    .set(DayMaxEnum.L2, '100到1000之间')
-    .set(DayMaxEnum.L3, '1000到5000之间')
-    .set(DayMaxEnum.L4, '5000到1W之间')
-    .set(DayMaxEnum.L5, '1W到5W之间')
-    .set(DayMaxEnum.L6, '5W到10W之间')
-    .set(DayMaxEnum.L7, '10W到50W之间')
-    .set(DayMaxEnum.L8, '50W到100W之间');
+    .set(PeakRateEnum.L1, '100及以下')
+    .set(PeakRateEnum.L2, '100到1000之间')
+    .set(PeakRateEnum.L3, '1000到5000之间')
+    .set(PeakRateEnum.L4, '5000到1W之间')
+    .set(PeakRateEnum.L5, '1W到5W之间')
+    .set(PeakRateEnum.L6, '5W到10W之间')
+    .set(PeakRateEnum.L7, '10W到50W之间')
+    .set(PeakRateEnum.L8, '50W到100W之间');
   return map;
 })();
 

@@ -18,7 +18,8 @@
  */
 
 import React from 'react';
+import { StatusTip } from '@tencent/tea-component';
 
 export default function PageLoading() {
-  return 'Loading...';
+  return <StatusTip.LoadingTip />;
 }

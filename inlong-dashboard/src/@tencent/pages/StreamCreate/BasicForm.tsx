@@ -18,8 +18,9 @@
  */
 
 import React, { forwardRef, useImperativeHandle, Ref, useEffect } from 'react';
-import { Alert, Form, FormProps, Input, Segment, Switch } from '@tencent/tea-component';
+import { Alert, Form, FormProps, Input, Segment, Switch, Select } from '@tencent/tea-component';
 import { useForm, Controller } from 'react-hook-form';
+import { useRequest } from 'ahooks';
 import { dataLevelMap, DataLevelEnum } from '@/@tencent/enums/stream';
 
 export interface BasicFormRef {
@@ -35,20 +36,28 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
   const { control, formState, reset, handleSubmit, watch } = useForm({
     mode: 'onChange',
     defaultValues: {
-      cnName: '',
       name: '',
       dataLevel: DataLevelEnum.L3,
-      desc: '',
-      tdw: true,
+      remark: '',
+      autoCreateTable: true,
+      dbName: '',
     },
   });
 
   const { errors } = formState;
 
+  const { data: dbList = [] } = useRequest({
+    url: '/access/querydblist',
+    method: 'POST',
+  });
+
   const submit = () => {
     return new Promise((resolve, reject) => {
       handleSubmit(values => {
-        resolve(values);
+        resolve({
+          ...values,
+          dbTableName: values.dbName,
+        });
       }, reject)();
     });
   };
@@ -66,21 +75,6 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
   return (
     <Form {...props}>
       <Form.Item
-        label="数据流中文名"
-        align="middle"
-        required
-        status={errors.cnName?.message ? 'error' : undefined}
-        message={errors.cnName?.message}
-      >
-        <Controller
-          name="cnName"
-          control={control}
-          rules={{ validate: value => (value ? undefined : '请填写数据流中文名') }}
-          render={({ field }) => <Input {...field} />}
-        />
-      </Form.Item>
-
-      <Form.Item
         label="数据流英文名"
         align="middle"
         required
@@ -90,7 +84,13 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
         <Controller
           name="name"
           control={control}
-          rules={{ validate: value => (value ? undefined : '请填写数据流英文名') }}
+          rules={{
+            required: '请填写数据流英文名',
+            pattern: {
+              value: /^[a-zA-z_]+$/,
+              message: '仅支持英文字母、下划线',
+            },
+          }}
           render={({ field }) => <Input {...field} />}
         />
       </Form.Item>
@@ -106,10 +106,10 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
         <Controller
           name="dataLevel"
           control={control}
-          rules={{ validate: value => (value ? undefined : '请填写数据分级') }}
+          rules={{ required: '请填写数据分级' }}
           render={({ field }) => (
             <Segment
-              {...field}
+              {...(field as any)}
               options={Array.from(dataLevelMap).map(([key, ctx]) => ({
                 value: key,
                 text: key === DataLevelEnum.L3 ? `${ctx}（推荐）` : ctx,
@@ -120,17 +120,40 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
       </Form.Item>
 
       <Form.Item label="描述" align="middle">
-        <Controller name="desc" control={control} render={({ field }) => <Input {...field} />} />
+        <Controller name="remark" control={control} render={({ field }) => <Input {...field} />} />
       </Form.Item>
 
       <Form.Item label="默认写入TDW" required>
-        <Controller name="tdw" control={control} render={({ field }) => <Switch {...field} />} />
+        <Controller
+          name="autoCreateTable"
+          control={control}
+          render={({ field }) => <Switch {...field} />}
+        />
         <Alert type="info" hideIcon style={{ marginTop: 10 }}>
           <ul style={{ listStyle: 'initial' }}>
             <li>
               开启自动写入TDW,将自动生成一张和日志英文名同名的Hive表，表分区默认为“小时”，分区字段：hour，schema与接入源数据字段一致
             </li>
-            <li>默认选择 xxxxxxxx数据库</li>
+            <li>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ marginRight: 5 }}>默认选择</span>
+                <Controller
+                  name="dbName"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      appearance="default"
+                      options={dbList.map(item => ({
+                        text: item,
+                        value: item,
+                      }))}
+                    />
+                  )}
+                />
+                <span>数据库</span>
+              </div>
+            </li>
           </ul>
         </Alert>
       </Form.Item>

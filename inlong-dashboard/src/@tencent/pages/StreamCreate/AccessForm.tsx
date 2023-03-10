@@ -32,10 +32,10 @@ import { useForm, Controller } from 'react-hook-form';
 import {
   accessTypeMap,
   AccessTypeEnum,
-  dayMaxMap,
-  DayMaxEnum,
-  dataEncodingMap,
-  DataEncodingEnum,
+  peakRateMap,
+  PeakRateEnum,
+  encodeTypeMap,
+  EncodeTypeEnum,
   dataSeparatorMap,
   DataSeparatorEnum,
 } from '@/@tencent/enums/stream';
@@ -58,11 +58,11 @@ const AccessForm = forwardRef(
     const { control, formState, reset, handleSubmit, watch } = useForm({
       mode: 'onChange',
       defaultValues: {
-        accessType: AccessTypeEnum.SDK,
-        dayMax: DayMaxEnum.L2,
-        n1: 20,
-        n2: 20,
-        dataEncoding: DataEncodingEnum.UTF8,
+        accessModel: AccessTypeEnum.SDK,
+        peakRate: PeakRateEnum.L2,
+        peakTotalSize: 20,
+        msgMaxLength: 20,
+        encodeType: EncodeTypeEnum.UTF8,
         dataSeparator: DataSeparatorEnum.Comma,
       },
     });
@@ -82,7 +82,7 @@ const AccessForm = forwardRef(
         }),
         editableTable.current.submit(),
       ]);
-      const values = { ...v1, fields: v2 };
+      const values = { ...v1, fieldData: v2 };
       return values;
     };
 
@@ -102,16 +102,16 @@ const AccessForm = forwardRef(
           label="接入方式"
           align="middle"
           required
-          status={errors.accessType?.message ? 'error' : undefined}
-          message={errors.accessType?.message}
+          status={errors.accessModel?.message ? 'error' : undefined}
+          message={errors.accessModel?.message}
         >
           <Controller
-            name="accessType"
+            name="accessModel"
             control={control}
-            rules={{ validate: value => (value ? undefined : '请填写接入方式') }}
+            rules={{ required: '请填写接入方式' }}
             render={({ field }) => (
               <Segment
-                {...field}
+                {...(field as any)}
                 options={Array.from(accessTypeMap).map(([key, ctx]) => ({ value: key, text: ctx }))}
               />
             )}
@@ -125,18 +125,18 @@ const AccessForm = forwardRef(
           align="middle"
           tips="单日峰值（条/秒），请按照数据实际上报量以及后续增长情况，适当上浮20%-50%左右填写， 用于容量管理。如果上涨超过容量限制，平台在紧急情况下会抽样或拒绝数据"
           required
-          status={errors.dayMax?.message ? 'error' : undefined}
-          message={errors.dayMax?.message}
+          status={errors.peakRate?.message ? 'error' : undefined}
+          message={errors.peakRate?.message}
         >
           <Controller
-            name="dayMax"
+            name="peakRate"
             control={control}
-            rules={{ validate: value => (value ? undefined : '请填写单日峰值') }}
+            rules={{ required: '请填写单日峰值' }}
             render={({ field }) => (
               <Select
-                {...field}
+                {...(field as any)}
                 appearance="button"
-                options={Array.from(dayMaxMap).map(([key, ctx]) => ({
+                options={Array.from(peakRateMap).map(([key, ctx]) => ({
                   value: key,
                   text: ctx,
                 }))}
@@ -150,13 +150,13 @@ const AccessForm = forwardRef(
           align="middle"
           suffix="GB"
           required
-          status={errors.n1?.message ? 'error' : undefined}
-          message={errors.n1?.message}
+          status={errors.peakTotalSize?.message ? 'error' : undefined}
+          message={errors.peakTotalSize?.message}
         >
           <Controller
-            name="n1"
+            name="peakTotalSize"
             control={control}
-            rules={{ validate: value => (value ? undefined : '请填写单日最大接入量') }}
+            rules={{ required: '请填写单日最大接入量' }}
             render={({ field }) => <InputNumber {...field} />}
           />
         </Form.Item>
@@ -166,13 +166,13 @@ const AccessForm = forwardRef(
           align="middle"
           suffix="GB"
           required
-          status={errors.n2?.message ? 'error' : undefined}
-          message={errors.n2?.message}
+          status={errors.msgMaxLength?.message ? 'error' : undefined}
+          message={errors.msgMaxLength?.message}
         >
           <Controller
-            name="n2"
+            name="msgMaxLength"
             control={control}
-            rules={{ validate: value => (value ? undefined : '请填写单条数据最大值') }}
+            rules={{ required: '请填写单条数据最大值' }}
             render={({ field }) => <InputNumber {...field} />}
           />
         </Form.Item>
@@ -183,17 +183,17 @@ const AccessForm = forwardRef(
           label="编码类型"
           align="middle"
           required
-          status={errors.dataEncoding?.message ? 'error' : undefined}
-          message={errors.dataEncoding?.message}
+          status={errors.encodeType?.message ? 'error' : undefined}
+          message={errors.encodeType?.message}
         >
           <Controller
-            name="dataEncoding"
+            name="encodeType"
             control={control}
-            rules={{ validate: value => (value ? undefined : '请填写编码类型') }}
+            rules={{ required: '请填写编码类型' }}
             render={({ field }) => (
               <Segment
                 {...field}
-                options={Array.from(dataEncodingMap).map(([key, ctx]) => ({
+                options={Array.from(encodeTypeMap).map(([key, ctx]) => ({
                   value: key,
                   text: ctx,
                 }))}
@@ -212,7 +212,7 @@ const AccessForm = forwardRef(
           <Controller
             name="dataSeparator"
             control={control}
-            rules={{ validate: value => (value ? undefined : '请填写分隔符') }}
+            rules={{ required: '请填写分隔符' }}
             render={({ field }) => (
               <Segment
                 {...field}
@@ -246,20 +246,26 @@ const AccessForm = forwardRef(
               {
                 fieldName: '',
                 fieldType: '',
-                fieldComment: '',
+                remark: '',
               },
             ]}
             columns={[
               {
                 key: 'fieldName',
                 header: '字段名',
-                rules: { validate: value => (value ? undefined : '请填写字段名') },
+                rules: {
+                  required: '请填写字段名',
+                  pattern: {
+                    value: /^\w+$/,
+                    message: '仅支持英文字母、数字、下划线',
+                  },
+                },
                 render: ({ field }) => <Input {...field} placeholder="请输入字段名" />,
               },
               {
                 key: 'fieldType',
                 header: '类型',
-                rules: { validate: value => (value ? undefined : '请填写类型') },
+                rules: { required: '请填写类型' },
                 render: ({ field }) => (
                   <Select
                     {...field}
@@ -275,9 +281,9 @@ const AccessForm = forwardRef(
                 ),
               },
               {
-                key: 'fieldComment',
+                key: 'remark',
                 header: '备注',
-                rules: { validate: value => (value ? undefined : '请填写备注') },
+                rules: { required: '请填写备注' },
                 render: ({ field }) => <Input {...field} placeholder="请输入备注" />,
               },
             ]}

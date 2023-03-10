@@ -17,10 +17,9 @@
  * under the License.
  */
 
-import React, { useCallback, useMemo } from 'react';
-import { config } from '@/configs/default';
-import { Layout, Menu, NavMenu } from '@tencent/tea-component';
-import menuTree, { MenuItemType } from '@/configs/menus';
+import React, { useMemo } from 'react';
+import { Layout } from '@tencent/tea-component';
+import menuTree from '@/configs/menus';
 import { useSelector } from '@/hooks';
 import { State } from '@/models';
 import Header from './Header';
@@ -34,11 +33,6 @@ const BasicLayout: React.FC = props => {
     const TopKey = currentMenu?.deepKey?.[0];
     return menuTree.find(item => item.key === TopKey)?.children;
   }, [currentMenu]);
-
-  const getFirstChildRoute = useCallback((menuItem: MenuItemType) => {
-    if (!menuItem.children && menuItem.path) return menuItem.path;
-    if (menuItem.children) return getFirstChildRoute(menuItem.children[0]);
-  }, []);
 
   return (
     <Layout style={{ minWidth: 1000 }}>

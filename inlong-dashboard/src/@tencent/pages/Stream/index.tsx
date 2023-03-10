@@ -17,11 +17,12 @@
  * under the License.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Alert, Button, Justify, Status, Badge } from '@tencent/tea-component';
 import { ProForm, FieldConfig, Form } from '@tencent/tea-material-pro-form';
 import { ProTable, ActionType } from '@tencent/tea-material-pro-table';
+import request from '@/utils/request';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import ProCheckbox from '@/@tencent/components/ProCheckbox';
 import { statusMap, accessTypeMap } from '@/@tencent/enums/stream';
@@ -39,39 +40,33 @@ const fields: FieldConfig[] = [
   {
     type: 'array',
     component: ProCheckbox,
-    name: 'type',
+    name: 'accessModel',
     title: '接入方式',
     allOption: true,
     options: Array.from(accessTypeMap).map(([key, ctx]) => ({ name: key, title: ctx })),
   },
   {
     type: 'string',
-    name: 'owner',
+    name: 'principal',
     title: '负责人',
   },
 ];
 
 const fieldsDefaultValues = {
-  status: [''],
-  type: [''],
-  owner: '',
+  status: [],
+  accessModel: [],
+  principal: '',
 };
 
 const testData = current =>
   Array.from({ length: 10 }).map((_, index) => ({
-    id: (current - 1) * 10 + index,
+    streamID: (current - 1) * 10 + index,
     name: `Hongkong VPN`,
     status: index < 3 ? 1 : index < 5 ? 2 : 3,
-    owner: '香港一区',
-    type: index < 5 ? 'SDK' : 'AGENT',
+    principal: '香港一区',
+    accessModel: index < 5 ? 1 : 2,
     createTime: '2023-01-01',
   }));
-
-const myQuery = async ({ current }) => {
-  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-  await sleep(1000);
-  return { list: testData(current), total: 100 };
-};
 
 export default function StreamList() {
   const formRef = useRef<Form>();
@@ -84,6 +79,18 @@ export default function StreamList() {
   const [publishModal, setPublishModal] = useState<{ visible: boolean; id?: number }>({
     visible: false,
   });
+
+  const getList = useCallback(async options => {
+    const data = await request({
+      url: '/access/stream/search',
+      method: 'POST',
+      data: {
+        ...options,
+        projectID: '1608203753111777280',
+      },
+    });
+    return data;
+  }, []);
 
   return (
     <PageContainer useDefaultContainer={false}>
@@ -126,10 +133,10 @@ export default function StreamList() {
           actionRef={actionRef}
           request={async params => {
             console.log('request params: ', params, options);
-            const { current } = params;
-            const { list, total } = await myQuery({ current });
+            const { current, pageSize } = params;
+            const { records, total } = await getList({ ...options, pageNum: current, pageSize });
             return {
-              data: list,
+              data: records,
               success: true,
               total: total,
             };
@@ -144,7 +151,7 @@ export default function StreamList() {
           ]}
           columns={[
             {
-              key: 'id',
+              key: 'streamID',
               header: '数据流 ID',
             },
             {
@@ -152,9 +159,9 @@ export default function StreamList() {
               header: '数据流名称',
             },
             {
-              key: 'type',
+              key: 'accessModel',
               header: '接入方式',
-              render: row => accessTypeMap.get(row.type) || row.type,
+              render: row => accessTypeMap.get(row.accessModel) || row.accessModel,
             },
             {
               key: 'status',
@@ -174,7 +181,7 @@ export default function StreamList() {
               },
             },
             {
-              key: 'owner',
+              key: 'principal',
               header: '负责人',
             },
             {
@@ -185,13 +192,17 @@ export default function StreamList() {
               key: 'actions',
               header: '操作',
               render: row => [
-                <Button type="link" key="detail" onClick={() => history.push(`/stream/${row.id}`)}>
+                <Button
+                  type="link"
+                  key="detail"
+                  onClick={() => history.push(`/stream/${row.streamID}`)}
+                >
                   详情
                 </Button>,
                 <Button
                   type="link"
                   key="up"
-                  onClick={() => setPublishModal({ visible: true, id: row.id })}
+                  onClick={() => setPublishModal({ visible: true, id: row.streamID })}
                 >
                   发布上线
                 </Button>,

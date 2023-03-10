@@ -21,6 +21,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Button, Card, Modal, message } from '@tencent/tea-component';
 import { PageContainer, Container, FooterToolbar } from '@/@tencent/components/PageContainer';
+import request from '@/utils/request';
 import BasicForm, { BasicFormRef } from './BasicForm';
 import AccessForm, { AccessFormRef } from './AccessForm';
 
@@ -42,7 +43,14 @@ export default function StreamCreate() {
       ]);
       const values = { ...basicV, ...accessV };
 
-      console.log(values);
+      await request({
+        url: '/access/create',
+        method: 'POST',
+        data: {
+          ...values,
+          projectID: '1608203753111777280',
+        },
+      });
 
       setPrompt(false);
       history.push('/stream');

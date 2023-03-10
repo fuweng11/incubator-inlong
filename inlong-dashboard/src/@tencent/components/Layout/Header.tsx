@@ -16,12 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Dropdown, Layout, List, NavMenu } from '@tencent/tea-component';
 import styles from './index.module.less';
 import menuTree, { MenuItemType } from '@/configs/menus';
 import { Link } from 'react-router-dom';
 import HeaderDropdown from '@tencent/tea-dcpg/dist/Header';
+import { config } from '@/configs/default';
 
 const { Header } = Layout;
 
@@ -34,6 +35,11 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
   currentMenu,
   userName,
 }: LayoutHeaderProps) => {
+  const getFirstChildRoute = useCallback((menuItem: MenuItemType) => {
+    if (!menuItem.children && menuItem.path) return menuItem.path;
+    if (menuItem.children) return getFirstChildRoute(menuItem.children[0]);
+  }, []);
+
   const projectList = () => (
     <List className={styles.projectList}>
       <List.Item className={styles.projectListItem}>项目1</List.Item>
@@ -48,10 +54,7 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
               <HeaderDropdown />
             </NavMenu.Item>
             <NavMenu.Item type="logo" onClick={() => window.open('/', '_self')}>
-              <img
-                src="//imgcache.qq.com/qcloud/tcloud_dtc/static/We_Data/cdccaf86-75d2-4c94-9ebd-4661a8271c95.svg"
-                alt="logo"
-              />
+              <img src={config.logo} alt="logo" />
             </NavMenu.Item>
             <div style={{ marginLeft: '5px', color: 'rgba(255, 255, 255, 0.45)', opacity: '0.6' }}>
               |
@@ -74,7 +77,7 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
                 currentMenu && (
                   <NavMenu.Item className={styles.headerMenuItem} key={i}>
                     <Link
-                      to={menu.path || menu.children[0]?.path}
+                      to={getFirstChildRoute(menu)}
                       className={
                         menu.key == currentMenu.key || menu.key == currentMenu.deepKey[0]
                           ? styles.activeText
