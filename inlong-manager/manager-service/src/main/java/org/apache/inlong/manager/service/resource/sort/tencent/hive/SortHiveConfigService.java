@@ -47,6 +47,7 @@ import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.inlong.common.constant.ClusterSwitch;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.TencentConstants;
@@ -65,6 +66,7 @@ import org.apache.inlong.manager.pojo.cluster.kafka.KafkaClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
+import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.service.resource.sink.tencent.us.UPSOperator;
@@ -489,6 +491,15 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         String groupId = groupInfo.getInlongGroupId();
         String mqType = groupInfo.getMqType();
         String clusterTag = groupInfo.getInlongClusterTag();
+        // parse backup cluster tag
+        String backupClusterTag = "";
+        List<InlongGroupExtInfo> extInfoList = groupInfo.getExtList();
+        for (InlongGroupExtInfo extInfo : extInfoList) {
+            if (ClusterSwitch.BACKUP_CLUSTER_TAG.equals(extInfo.getKeyName())) {
+                backupClusterTag = extInfo.getKeyValue();
+                break;
+            }
+        }
         if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
             List<InlongClusterEntity> tubeClusters = clusterMapper.selectByKey(clusterTag, null, MQType.TUBEMQ);
             if (CollectionUtils.isEmpty(tubeClusters)) {
@@ -510,15 +521,13 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 throw new WorkflowListenerException("pulsar cluster not found for groupId=" + groupId);
             }
 
-            List<PulsarClusterInfo> pulsarClusterInfos = new ArrayList<>();
-            pulsarClusters.forEach(pulsarCluster -> {
-                // Multiple adminUrls should be configured for pulsar,
-                // otherwise all requests will be sent to the same broker
-                PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
-                String adminUrl = pulsarClusterDTO.getAdminUrl();
-                String serviceUrl = pulsarCluster.getUrl();
-                pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, pulsarCluster.getName(), null, null));
-            });
+            List<PulsarClusterInfo> pulsarClusterInfos = this.getPulsarClusterInfoList(pulsarClusters);
+            if (StringUtils.isNotBlank(backupClusterTag)) {
+                List<InlongClusterEntity> backupClusters = clusterMapper.selectByKey(backupClusterTag,
+                        null, MQType.PULSAR);
+                pulsarClusterInfos.addAll(this.getPulsarClusterInfoList(backupClusters));
+            }
+
             InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
             // Multiple adminUrls should be configured for pulsar,
             // otherwise all requests will be sent to the same broker
@@ -577,6 +586,26 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         }
 
         return sourceInfo;
+    }
+
+    private List<PulsarClusterInfo> getPulsarClusterInfoList(List<InlongClusterEntity> pulsarClusters) {
+        List<PulsarClusterInfo> pulsarClusterInfos = new ArrayList<>();
+        if (CollectionUtils.isEmpty(pulsarClusters)) {
+            return pulsarClusterInfos;
+        }
+        pulsarClusters.forEach(pulsarCluster -> {
+            // Multiple adminUrls should be configured for pulsar,
+            // otherwise all requests will be sent to the same broker
+            if (StringUtils.isBlank(pulsarCluster.getExtParams())) {
+                return;
+            }
+            PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
+            String adminUrl = pulsarClusterDTO.getAdminUrl();
+            String serviceUrl = pulsarCluster.getUrl();
+            pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, pulsarCluster.getName(),
+                    null, null));
+        });
+        return pulsarClusterInfos;
     }
 
     /**
