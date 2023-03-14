@@ -31,17 +31,17 @@ const conf: MenuItemType[] = [
       {
         path: '/stream',
         name: '接入管理',
-        icon: StreamManage({}),
+        // icon: StreamManage({}),
       },
       {
         path: '/subscribe',
         name: '数据订阅',
-        icon: SubscribeManage({}),
+        // icon: SubscribeManage({}),
       },
       {
         path: '/collector',
         name: '采集器管理',
-        icon: AcquisitionManage({}),
+        // icon: AcquisitionManage({}),
       },
     ],
   },

@@ -13,9 +13,31 @@
 
 * 若本地已配置 `.env.local`，可直接在本地执行 `npm run build`
 * 若使用 CI:
-    * 由于 `.env.local` 默认不提交到 git 版本库，因此可在 CI 中自动生成一个配置文件
-    * 直接配置系统环境变量:
-    ```sh
-        export INLONG_ENV=tencent
-        unset INLONG_ENV
-    ```
+
+  * 由于 `.env.local` 默认不提交到 git 版本库，因此可在 CI 中自动生成一个配置文件
+  * 直接配置系统环境变量:
+
+  ```sh
+      export INLONG_ENV=tencent
+      unset INLONG_ENV
+  ```
+* 使用docker:
+
+  * 本地构建镜像，请在 `.env.local`添加环境变量
+
+  ```sh
+      PUBLIC_URL=/inlong
+      INLONG_ENV=tencent
+  ```
+  * 打包构建、推送镜像的shell脚本:
+
+  ```sh
+      echo "打包代码"
+      npm run build
+
+      echo "制作并推送docker镜像"
+      tag=`date '+%Y%m%d_%H%M%S'`
+      echo "TAG=${tag}"
+      docker build -f src/@tencent/Dockerfile -t mirrors.tencent.com/wedata-oa/inlong-dev:$tag .
+      docker push mirrors.tencent.com/wedata-oa/inlong-dev:$tag
+  ```
