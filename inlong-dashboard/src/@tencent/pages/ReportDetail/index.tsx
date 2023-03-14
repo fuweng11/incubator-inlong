@@ -20,60 +20,85 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Alert, Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
+import { useRequest } from 'ahooks';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
 import PublishModal from '@/@tencent/pages/Stream/PublishModal';
+import { dataLevelMap } from '@/@tencent/enums/stream';
 import Info from './Info';
 import SubscribeList from './Subscribe';
 import Test from './Test';
 
+const tabs = [
+  { id: 'info', label: '基本信息', Component: Info },
+  { id: 'test', label: '数据测试', Component: Test },
+  { id: 'subscribe', label: '数据订阅', Component: SubscribeList },
+  { id: 'statistic', label: '数据统计', Component: () => <div />, disabled: true },
+  { id: 'schema', label: 'schema管理', Component: () => <div />, disabled: true },
+  { id: 'devops', label: '采集治理', Component: () => <div />, disabled: true },
+];
+
 export default function StreamDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id: streamId } = useParams<{ id: string }>();
 
   const [publishModal, setPublishModal] = useState<{ visible: boolean; id?: string }>({
     visible: false,
   });
 
-  const tabs = [
-    { id: 'info', label: '基本信息', Component: Info },
-    { id: 'test', label: '数据测试', Component: Test },
-    { id: 'subscribe', label: '数据订阅', Component: SubscribeList },
-    { id: 'statistic', label: '数据统计', Component: Info, disabled: true },
-    { id: 'schema', label: 'schema管理', Component: Info, disabled: true },
-    { id: 'devops', label: '采集治理', Component: Info, disabled: true },
-  ];
+  const { data = {} } = useRequest({
+    url: '/access/query/info',
+    method: 'POST',
+    data: {
+      projectID: '1',
+      streamID: streamId,
+    },
+  });
+
+  const { data: subscribeData = {} } = useRequest({
+    url: '/subscribe/all/list',
+    method: 'POST',
+    data: {
+      projectID: '1',
+      streamID: streamId,
+      pagesize: 1,
+      currPage: 1,
+    },
+  });
 
   return (
     <PageContainer useDefaultContainer={false} breadcrumb={[{ name: '接入详情' }]}>
-      <Alert type="info">
-        当前日志尚未配置数据订阅，如有数据消费需求，请进入【数据订阅】配置。
-        <Button type="link" style={{ textDecoration: 'underline' }}>
-          立即配置
-        </Button>
-      </Alert>
+      {!subscribeData?.total && (
+        <Alert type="info">
+          当前日志尚未配置数据订阅，如有数据消费需求，请进入【数据订阅】配置。
+          <Button type="link" style={{ textDecoration: 'underline' }}>
+            立即配置
+          </Button>
+        </Alert>
+      )}
 
       <Container>
         <Description
-          column={5}
+          column={4}
           title={
             <>
               <Tag theme="warning" style={{ marginTop: 0 }}>
-                这是一个标签
+                {data.status}
               </Tag>
-              <span>数据流AAAA我是日志名称（ID:907181027）</span>
+              <span>{`${data.name}（ID:${data.streamID}）`}</span>
             </>
           }
           extra={
-            <Button type="link" onClick={() => setPublishModal({ visible: true, id })}>
+            <Button type="link" onClick={() => setPublishModal({ visible: true, id: streamId })}>
               发布上线
             </Button>
           }
         >
-          <Description.Item title="创建人">admin</Description.Item>
-          <Description.Item title="创建时间">2022-01-01</Description.Item>
-          <Description.Item title="aa">aa</Description.Item>
-          <Description.Item title="bb">bb</Description.Item>
-          <Description.Item title="cc">cc</Description.Item>
+          <Description.Item title="创建人">创建人</Description.Item>
+          <Description.Item title="创建时间">{data.creatTime}</Description.Item>
+          <Description.Item title="数据分级">{dataLevelMap.get(data.dataLevel)}</Description.Item>
+          <Description.Item title="描述" span={3}>
+            {data.remark}
+          </Description.Item>
         </Description>
       </Container>
 
@@ -81,7 +106,7 @@ export default function StreamDetail() {
         <Tabs tabs={tabs}>
           {tabs.map(({ id, Component }) => (
             <TabPanel id={id} key={id}>
-              <Component />
+              <Component streamId={streamId} />
             </TabPanel>
           ))}
         </Tabs>

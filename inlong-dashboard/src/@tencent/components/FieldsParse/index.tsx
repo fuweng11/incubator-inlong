@@ -33,6 +33,7 @@ import {
   message,
 } from '@tencent/tea-component';
 import Editor from '@monaco-editor/react';
+import request from '@/utils/request';
 
 const { selectable, scrollable } = Table.addons;
 
@@ -51,8 +52,13 @@ interface FieldsParseProps extends ModalProps {
   onOk: (data: ParsedData) => void;
 }
 
+enum ParseTypeEnum {
+  JSON = 'json',
+  SQL = 'sql',
+}
+
 const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...rest }) => {
-  const [parseType, setParseType] = useState('JSON');
+  const [parseType, setParseType] = useState(ParseTypeEnum.JSON);
 
   const [input, setInput] = useState(defaultJSON);
   const [inputErrMsg, setInputErrMsg] = useState('');
@@ -104,16 +110,27 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...re
   const parse = async () => {
     setInputErrMsg(input ? '' : '请输入内容');
     if (!input) return;
-    try {
-      if (parseType === 'JSON') {
-        const result = await parseJSON(input);
-        setParsedData(result);
-      } else {
-        console.log('SQL暂未支持');
-      }
-    } catch (err) {
-      setInputErrMsg(err.message);
-    }
+
+    const result = await request({
+      url: '/access/parseFiledData',
+      method: 'POST',
+      data: {
+        fieldType: parseType,
+        fieldData: input,
+      },
+    });
+    setParsedData(result);
+
+    // try {
+    //   if (parseType === 'JSON') {
+    //     const result = await parseJSON(input);
+    //     setParsedData(result);
+    //   } else {
+    //     console.log('SQL暂未支持');
+    //   }
+    // } catch (err) {
+    //   setInputErrMsg(err.message);
+    // }
   };
 
   const clear = () => {
@@ -143,9 +160,9 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...re
       <Modal.Body>
         <Form>
           <Form.Item label="添加方式">
-            <Radio.Group value={parseType} onChange={value => setParseType(value)}>
-              <Radio name="JSON">Json解析</Radio>
-              <Radio name="SQL">SQL解析</Radio>
+            <Radio.Group value={parseType} onChange={(value: ParseTypeEnum) => setParseType(value)}>
+              <Radio name={ParseTypeEnum.JSON}>Json解析</Radio>
+              <Radio name={ParseTypeEnum.SQL}>SQL解析</Radio>
             </Radio.Group>
           </Form.Item>
           <Form.Item
@@ -217,7 +234,7 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...re
                     />
                   ),
                 },
-                parseType === 'SQL' && {
+                parseType === ParseTypeEnum.SQL && {
                   key: 'remark',
                   header: '备注',
                   render: row => (

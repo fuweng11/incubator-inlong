@@ -18,7 +18,16 @@
  */
 
 import React, { forwardRef, useImperativeHandle, Ref, useEffect } from 'react';
-import { Alert, Form, FormProps, Input, Segment, Switch, Select } from '@tencent/tea-component';
+import {
+  Alert,
+  Form,
+  FormProps,
+  Input,
+  Segment,
+  Switch,
+  Select,
+  Tooltip,
+} from '@tencent/tea-component';
 import { useForm, Controller } from 'react-hook-form';
 import { useRequest } from 'ahooks';
 import { dataLevelMap, DataLevelEnum } from '@/@tencent/enums/stream';
@@ -33,23 +42,32 @@ export interface BasicFormProps extends FormProps {
 }
 
 const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<BasicFormRef>) => {
-  const { control, formState, reset, handleSubmit, watch } = useForm({
+  const { control, formState, reset, handleSubmit, watch, setValue } = useForm({
     mode: 'onChange',
     defaultValues: {
       name: '',
       dataLevel: DataLevelEnum.L3,
       remark: '',
-      autoCreateTable: true,
+      autoCreateTable: false,
       dbName: '',
     },
   });
 
   const { errors } = formState;
 
-  const { data: dbList = [] } = useRequest({
-    url: '/access/querydblist',
-    method: 'POST',
-  });
+  const { data: dbList = [] } = useRequest(
+    {
+      url: '/access/querydblist',
+      method: 'POST',
+    },
+    {
+      onSuccess: result => {
+        if (result?.length) {
+          setValue('autoCreateTable', true);
+        }
+      },
+    },
+  );
 
   const submit = () => {
     return new Promise((resolve, reject) => {
@@ -75,7 +93,7 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
   return (
     <Form {...props}>
       <Form.Item
-        label="数据流英文名"
+        label="数据流名称"
         align="middle"
         required
         status={errors.name?.message ? 'error' : undefined}
@@ -85,7 +103,7 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
           name="name"
           control={control}
           rules={{
-            required: '请填写数据流英文名',
+            required: '请填写数据流名称',
             pattern: {
               value: /^[a-zA-z_]+$/,
               message: '仅支持英文字母、下划线',
@@ -127,35 +145,52 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
         <Controller
           name="autoCreateTable"
           control={control}
-          render={({ field }) => <Switch {...field} />}
+          render={({ field }) => (
+            <>
+              <Tooltip
+                title={
+                  dbList?.length
+                    ? ''
+                    : '暂未申请接入库资源，不支持自动写入TDW，可到项目管理-资源管理中申请'
+                }
+                placement="top"
+              >
+                <Switch {...field} disabled={!dbList?.length}>
+                  {field.value ? '开启' : '关闭'}
+                </Switch>
+              </Tooltip>
+              {field.value && (
+                <Alert type="info" hideIcon style={{ marginTop: 10 }}>
+                  <ul style={{ listStyle: 'initial' }}>
+                    <li>
+                      开启自动写入TDW,将自动生成一张和日志名称同名的Hive表，表分区默认为“小时”，分区字段：hour，schema与接入源数据字段一致
+                    </li>
+                    <li>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ marginRight: 5 }}>默认选择</span>
+                        <Controller
+                          name="dbName"
+                          control={control}
+                          render={({ field }) => (
+                            <Select
+                              {...field}
+                              appearance="default"
+                              options={dbList.map(item => ({
+                                text: item,
+                                value: item,
+                              }))}
+                            />
+                          )}
+                        />
+                        <span>数据库</span>
+                      </div>
+                    </li>
+                  </ul>
+                </Alert>
+              )}
+            </>
+          )}
         />
-        <Alert type="info" hideIcon style={{ marginTop: 10 }}>
-          <ul style={{ listStyle: 'initial' }}>
-            <li>
-              开启自动写入TDW,将自动生成一张和日志英文名同名的Hive表，表分区默认为“小时”，分区字段：hour，schema与接入源数据字段一致
-            </li>
-            <li>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ marginRight: 5 }}>默认选择</span>
-                <Controller
-                  name="dbName"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      {...field}
-                      appearance="default"
-                      options={dbList.map(item => ({
-                        text: item,
-                        value: item,
-                      }))}
-                    />
-                  )}
-                />
-                <span>数据库</span>
-              </div>
-            </li>
-          </ul>
-        </Alert>
       </Form.Item>
     </Form>
   );

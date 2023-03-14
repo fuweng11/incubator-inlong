@@ -26,6 +26,7 @@ import request from '@/utils/request';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import ProCheckbox from '@/@tencent/components/ProCheckbox';
 import { statusMap, accessTypeMap } from '@/@tencent/enums/stream';
+import { useProjectComputeResources } from '@/@tencent/components/UseOtherModuleAPIs/platform';
 import PublishModal from './PublishModal';
 
 const fields: FieldConfig[] = [
@@ -58,21 +59,13 @@ const fieldsDefaultValues = {
   principal: '',
 };
 
-const testData = current =>
-  Array.from({ length: 10 }).map((_, index) => ({
-    streamID: (current - 1) * 10 + index,
-    name: `Hongkong VPN`,
-    status: index < 3 ? 1 : index < 5 ? 2 : 3,
-    principal: '香港一区',
-    accessModel: index < 5 ? 1 : 2,
-    createTime: '2023-01-01',
-  }));
-
 export default function StreamList() {
   const formRef = useRef<Form>();
   const actionRef = useRef<ActionType>();
 
   const history = useHistory();
+
+  const [loading, setLoading] = useState<boolean>(false);
 
   const [options, setOptions] = useState(fieldsDefaultValues);
 
@@ -80,26 +73,38 @@ export default function StreamList() {
     visible: false,
   });
 
+  const { data: projectComputeResources = [] } = useProjectComputeResources('1608203753111777280');
+
   const getList = useCallback(async options => {
-    const data = await request({
-      url: '/access/stream/search',
-      method: 'POST',
-      data: {
-        ...options,
-        projectID: '1608203753111777280',
-      },
-    });
-    return data;
+    setLoading(true);
+    try {
+      const data = await request({
+        url: '/access/stream/search',
+        method: 'POST',
+        data: {
+          ...options,
+          projectID: '1608203753111777280',
+        },
+      });
+      return data;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   return (
     <PageContainer useDefaultContainer={false}>
-      <Alert type="error">
-        项目还未申请计算资源，为保证功能的完整性，请优先申请接入库资源。
-        <Button type="link" style={{ textDecoration: 'underline' }}>
-          立即申请
-        </Button>
-      </Alert>
+      {!projectComputeResources.length && (
+        <Alert type="error">
+          项目还未申请计算资源，为保证功能的完整性，请优先申请接入库资源。
+          <a
+            target="_blank"
+            href="/manage/resource/create?ProjectId=1608203753111777280&from=compute"
+          >
+            立即申请
+          </a>
+        </Alert>
+      )}
 
       <Container>
         <div style={{ display: 'flex', marginBottom: -10, background: '#fff' }}>
@@ -134,7 +139,8 @@ export default function StreamList() {
           request={async params => {
             console.log('request params: ', params, options);
             const { current, pageSize } = params;
-            const { records, total } = await getList({ ...options, pageNum: current, pageSize });
+            const data = await getList({ ...options, pageNum: current, pageSize });
+            const { records, total } = data;
             return {
               data: records,
               success: true,
@@ -145,7 +151,7 @@ export default function StreamList() {
           addons={[
             {
               type: 'autotip',
-              // isLoading: true,
+              isLoading: loading,
               emptyText: <Status size="s" icon="blank" description="暂无数据" />,
             },
           ]}

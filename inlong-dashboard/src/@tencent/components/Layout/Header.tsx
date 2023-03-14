@@ -103,7 +103,7 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
               }
               alt="avatar"
             />
-            <span>jinghao</span>
+            <span>{userName}</span>
           </div>
         }
       />

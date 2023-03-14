@@ -30,7 +30,7 @@ export default function StreamCreate() {
   const accessFormRef = useRef<AccessFormRef>();
 
   const [loading, setLoading] = useState<boolean>(false);
-  const [prompt, setPrompt] = useState<boolean>(false);
+  const [changed, setChanged] = useState<boolean>(false);
 
   const history = useHistory();
 
@@ -52,7 +52,7 @@ export default function StreamCreate() {
         },
       });
 
-      setPrompt(false);
+      history.block(() => null);
       history.push('/stream');
       message.success({ content: '新建成功' });
     } catch (err) {
@@ -64,7 +64,7 @@ export default function StreamCreate() {
 
   useEffect(() => {
     const unblock = history.block(location => {
-      if (prompt) {
+      if (changed) {
         Modal.confirm({
           message: '取消新建接入',
           description: '取消新建接入，所有编辑数据将丢失，确定取消新建接入操作吗？',
@@ -79,7 +79,7 @@ export default function StreamCreate() {
     });
 
     const beforeunload = event => {
-      if (prompt) {
+      if (changed) {
         event.preventDefault();
         event.returnValue = '';
       }
@@ -90,14 +90,14 @@ export default function StreamCreate() {
       unblock();
       window.removeEventListener('beforeunload', beforeunload);
     };
-  }, [prompt, history]);
+  }, [changed, history]);
 
   return (
     <PageContainer useDefaultContainer={false} breadcrumb={[{ name: '新建接入' }]}>
       <Container useDefaultBackground={false}>
         <Card>
           <Card.Body title="基本信息">
-            <BasicForm ref={basicFormRef} onChange={() => !prompt && setPrompt(true)} />
+            <BasicForm ref={basicFormRef} onChange={() => !changed && setChanged(true)} />
           </Card.Body>
         </Card>
       </Container>
@@ -105,7 +105,7 @@ export default function StreamCreate() {
       <Container useDefaultBackground={false}>
         <Card>
           <Card.Body title="接入信息">
-            <AccessForm ref={accessFormRef} onChange={() => !prompt && setPrompt(true)} />
+            <AccessForm ref={accessFormRef} onChange={() => !changed && setChanged(true)} />
           </Card.Body>
         </Card>
       </Container>

@@ -21,6 +21,7 @@ import Provider from '@/@tencent/components/Provider';
 import Layout from '@/@tencent/components/Layout';
 import PageLoading from '@/@tencent/components/PageLoading';
 import { requestErrorAlert } from '@/@tencent/components/RequestErrorAlert';
+import type { SuccessResponse } from '@/utils/request';
 
 const conf = {
   title: '',
@@ -35,6 +36,11 @@ const conf = {
   AppLayout: Layout,
   requestPrefix: '/api/wedata/inlong/service',
   requestErrorAlert,
+  responseParse: (res: any): SuccessResponse => ({
+    success: res.code === 0,
+    errMsg: res.msg,
+    data: res.data,
+  }),
 };
 
 export default conf;

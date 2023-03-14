@@ -17,21 +17,23 @@
  * under the License.
  */
 
-import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { useCurrentUser } from '@/@tencent/components/UseOtherModuleAPIs/platform';
 import '@tencent/tea-component/dist/tea.css';
 
 const Provider = ({ children }) => {
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    dispatch({
-      type: 'setUserInfo',
-      payload: {
-        userName: 'mockUser',
-      },
-    });
-  }, [dispatch]);
+  useCurrentUser({
+    onSuccess: result => {
+      dispatch({
+        type: 'setUserInfo',
+        payload: {
+          userName: result.UserName,
+        },
+      });
+    },
+  });
 
   return children;
 };

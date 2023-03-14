@@ -41,7 +41,7 @@ const conf = [
     title: '基本信息',
     fields: [
       { label: '数据流中文名', value: 'cnName' },
-      { label: '数据流英文名', value: 'name' },
+      { label: '数据流名称', value: 'name' },
       { label: '数据流ID', value: 'id' },
       { label: '创建人', value: 'creator' },
       { label: '创建时间', value: 'createTime' },

@@ -82,7 +82,7 @@ const AccessForm = forwardRef(
         }),
         editableTable.current.submit(),
       ]);
-      const values = { ...v1, fieldData: v2 };
+      const values = { ...v1, fieldsData: v2 };
       return values;
     };
 

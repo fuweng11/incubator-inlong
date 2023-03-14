@@ -17,18 +17,32 @@
  * under the License.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Col, Row, Form, Table, StatusTip } from '@tencent/tea-component';
+import { useRequest } from 'ahooks';
+import {
+  accessTypeMap,
+  encodeTypeMap,
+  dataSeparatorMap,
+  peakRateMap,
+} from '@/@tencent/enums/stream';
 
-const Info = () => {
-  const fields = [];
+const Info = ({ streamId }) => {
+  const { data = {} } = useRequest({
+    url: '/access/query/info',
+    method: 'POST',
+    data: {
+      projectID: '1',
+      streamID: streamId,
+    },
+  });
 
   return (
     <Form layout="fixed" style={{ display: 'flex' }} fixedLabelWidth={100}>
       <Row>
         <Col span={24}>
           <Form.Item label="接入方式">
-            <Form.Text>SDK</Form.Text>
+            <Form.Text>{accessTypeMap.get(data.accessModel)}</Form.Text>
           </Form.Item>
         </Col>
 
@@ -37,17 +51,17 @@ const Info = () => {
         </Col>
         <Col span={8}>
           <Form.Item label="单日峰值" tips="tips">
-            <Form.Text>Tea</Form.Text>
+            <Form.Text>{peakRateMap.get(data.peakRate)}</Form.Text>
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item label="单日最大接入量">
-            <Form.Text>Tea</Form.Text>
+            <Form.Text>{data.peakTotalSize} GB</Form.Text>
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item label="单条数据最大值">
-            <Form.Text>Tea</Form.Text>
+            <Form.Text>{data.msgMaxLength} GB</Form.Text>
           </Form.Item>
         </Col>
 
@@ -56,12 +70,12 @@ const Info = () => {
         </Col>
         <Col span={8}>
           <Form.Item label="编码类型">
-            <Form.Text>Tessssa</Form.Text>
+            <Form.Text>{encodeTypeMap.get(data.encodeType)}</Form.Text>
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item label="分隔符">
-            <Form.Text>空格</Form.Text>
+            <Form.Text>{dataSeparatorMap.get(data.dataSeparator)}</Form.Text>
           </Form.Item>
         </Col>
         <Col span={24}>
@@ -69,23 +83,23 @@ const Info = () => {
             <Table
               bordered
               verticalTop
-              records={fields}
-              recordKey="instanceId"
+              records={data.fieldsData || []}
+              recordKey="fieldName"
               columns={[
                 {
                   key: 'fieldName',
                   header: '字段名',
                 },
                 {
-                  key: 'fieldKey',
+                  key: 'fieldType',
                   header: '字段类型',
                 },
                 {
-                  key: 'fieldComment',
+                  key: 'remark',
                   header: '字段描述',
                 },
               ]}
-              topTip={!fields.length && <StatusTip status="empty" />}
+              topTip={!data.fieldsData?.length && <StatusTip status="empty" />}
             />
           </Form.Item>
         </Col>
