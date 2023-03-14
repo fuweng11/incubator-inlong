@@ -510,6 +510,9 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
     public DealResult grantPrivilege(String selectors, InnerHiveFullInfo hiveInfo, String privilegeType) {
         String clusterTag = hiveInfo.getClusterTag();
         String[] accounts = selectors.split(",");
+        if (selectors.contains(";")) {
+            accounts = selectors.split(";");
+        }
 
         String hiveType = (hiveInfo.getIsThive() == TencentConstants.HIVE_TYPE
                 ? ScHiveResource.TYPE_HIVE
