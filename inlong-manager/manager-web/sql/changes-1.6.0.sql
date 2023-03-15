@@ -91,3 +91,10 @@ VALUES ('audit_sdk_collect', 'SDK', 0, '1'),
        ('audit_sort_mysql_output', 'MYSQL', 1, '24'),
        ('audit_sort_kudu_input', 'KUDU', 0, '25'),
        ('audit_sort_kudu_output', 'KUDU', 1, '26');
+
+ALTER  TABLE dbsync_heartbeat CHANGE server_id server_name varchar(64)  NOT NULL DEFAULT '' COMMENT 'ServerName of the task, is the ID of data_node table';
+ALTER  TABLE dbsync_heartbeat CHANGE backup_url backup_url varchar(256) DEFAULT NULL COMMENT 'URL of the standby DB server';
+ALTER  TABLE dbsync_heartbeat CHANGE agent_status agent_status varchar(256) DEFAULT NULL COMMENT 'Agent running status, NORMAL, STOPPED, SWITCHED...';
+ALTER  TABLE dbsync_heartbeat CHANGE db_dump_index db_dump_index bigint(20) DEFAULT NULL COMMENT 'BinLog index currently collected';
+ALTER  TABLE dbsync_heartbeat CHANGE dump_position dump_position text DEFAULT NULL COMMENT 'ServerName of the task, is the ID of data_node table';
+
