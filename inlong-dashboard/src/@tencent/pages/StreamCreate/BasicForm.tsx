@@ -31,6 +31,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { useRequest } from 'ahooks';
 import { dataLevelMap, DataLevelEnum } from '@/@tencent/enums/stream';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 export interface BasicFormRef {
   submit: () => Promise<Record<string, any>>;
@@ -42,6 +43,8 @@ export interface BasicFormProps extends FormProps {
 }
 
 const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<BasicFormRef>) => {
+  const [projectId] = useProjectId();
+
   const { control, formState, reset, handleSubmit, watch, setValue } = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -57,8 +60,11 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
 
   const { data: dbList = [] } = useRequest(
     {
-      url: '/access/querydblist',
+      url: '/project/database/list',
       method: 'POST',
+      data: {
+        projectID: projectId,
+      },
     },
     {
       onSuccess: result => {
@@ -105,8 +111,8 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
           rules={{
             required: '请填写数据流名称',
             pattern: {
-              value: /^[a-zA-z_]+$/,
-              message: '仅支持英文字母、下划线',
+              value: /^\w+$/,
+              message: '仅支持英文字母、数字、下划线',
             },
           }}
           render={({ field }) => <Input {...field} />}
@@ -138,7 +144,11 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
       </Form.Item>
 
       <Form.Item label="描述" align="middle">
-        <Controller name="remark" control={control} render={({ field }) => <Input {...field} />} />
+        <Controller
+          name="remark"
+          control={control}
+          render={({ field }) => <Input {...field} maxLength={100} />}
+        />
       </Form.Item>
 
       <Form.Item label="默认写入TDW" required>

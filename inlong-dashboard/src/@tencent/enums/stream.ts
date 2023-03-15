@@ -18,11 +18,11 @@
  */
 
 export enum DataLevelEnum {
-  L1 = 0,
-  L2 = 1,
-  L3 = 2,
-  L4 = 3,
-  L5 = 4,
+  L1 = 1,
+  L2 = 2,
+  L3 = 3,
+  L4 = 4,
+  L5 = 5,
 }
 
 export const dataLevelMap: Map<DataLevelEnum, string> = (() => {
@@ -69,8 +69,8 @@ export const statusMap: Map<
 })();
 
 export enum AccessTypeEnum {
-  SDK = 1,
-  AGENT = 2,
+  SDK = 'SDK',
+  AGENT = 'AGENT',
 }
 
 export const accessTypeMap: Map<AccessTypeEnum, string> = (() => {

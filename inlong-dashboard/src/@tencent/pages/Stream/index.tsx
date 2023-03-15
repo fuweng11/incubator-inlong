@@ -26,7 +26,7 @@ import request from '@/utils/request';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import ProCheckbox from '@/@tencent/components/ProCheckbox';
 import { statusMap, accessTypeMap } from '@/@tencent/enums/stream';
-import { useProjectComputeResources } from '@/@tencent/components/UseOtherModuleAPIs/platform';
+import { useProjectComputeResources } from '@/@tencent/components/Use/usePlatformAPIs';
 import PublishModal from './PublishModal';
 
 const fields: FieldConfig[] = [

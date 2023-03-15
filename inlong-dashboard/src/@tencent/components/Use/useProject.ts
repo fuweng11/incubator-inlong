@@ -17,25 +17,14 @@
  * under the License.
  */
 
-import { useDispatch } from 'react-redux';
-import { useCurrentUser } from '@/@tencent/components/Use/usePlatformAPIs';
-import '@tencent/tea-component/dist/tea.css';
+import { useMemo } from 'react';
+import { parse } from 'qs';
 
-const Provider = ({ children }) => {
-  const dispatch = useDispatch();
+export const useProjectId = () => {
+  const projectId = useMemo(() => {
+    const query = parse(window.location.search?.slice(1));
+    return query?.ProjectId;
+  }, []);
 
-  useCurrentUser({
-    onSuccess: result => {
-      dispatch({
-        type: 'setUserInfo',
-        payload: {
-          userName: result.UserName,
-        },
-      });
-    },
-  });
-
-  return children;
+  return [projectId];
 };
-
-export default Provider;

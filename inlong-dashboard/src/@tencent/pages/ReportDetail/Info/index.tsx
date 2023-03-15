@@ -26,13 +26,16 @@ import {
   dataSeparatorMap,
   peakRateMap,
 } from '@/@tencent/enums/stream';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 const Info = ({ streamId }) => {
+  const [projectId] = useProjectId();
+
   const { data = {} } = useRequest({
     url: '/access/query/info',
     method: 'POST',
     data: {
-      projectID: '1',
+      projectID: projectId,
       streamID: streamId,
     },
   });
@@ -50,7 +53,10 @@ const Info = ({ streamId }) => {
           <Form.Title>数据流量</Form.Title>
         </Col>
         <Col span={8}>
-          <Form.Item label="单日峰值" tips="tips">
+          <Form.Item
+            label="单日峰值"
+            tips="单日峰值（条/秒），请按照数据实际上报量以及后续增长情况，适当上浮20%-50%左右填写，用于容量管理。如果上涨超过容量限制，平台在紧急情况下会抽样或拒绝数据"
+          >
             <Form.Text>{peakRateMap.get(data.peakRate)}</Form.Text>
           </Form.Item>
         </Col>

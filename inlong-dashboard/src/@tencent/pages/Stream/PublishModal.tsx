@@ -30,47 +30,67 @@ import {
   Input,
 } from '@tencent/tea-component';
 import { useForm, Controller } from 'react-hook-form';
+import { useRequest } from 'ahooks';
+import {
+  dataLevelMap,
+  accessTypeMap,
+  peakRateMap,
+  encodeTypeMap,
+  dataSeparatorMap,
+} from '@/@tencent/enums/stream';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 interface FieldsParseProps extends ModalProps {
   id?: number | string;
   onOk: (values: Record<string, unknown>) => void;
 }
 
-const conf = [
+type ConfItem = {
+  title: string;
+  fields: {
+    label: string;
+    value: string;
+    unit?: string;
+    enumMap?: Map<unknown, unknown>;
+  }[];
+};
+
+const conf: ConfItem[] = [
   {
     title: '基本信息',
     fields: [
-      { label: '数据流中文名', value: 'cnName' },
       { label: '数据流名称', value: 'name' },
-      { label: '数据流ID', value: 'id' },
+      { label: '数据流ID', value: 'streamID' },
       { label: '创建人', value: 'creator' },
-      { label: '创建时间', value: 'createTime' },
-      { label: '数据分级', value: 'level' },
-      { label: '描述', value: 'desc' },
+      { label: '创建时间', value: 'creatTime' },
+      { label: '数据分级', value: 'dataLevel', enumMap: dataLevelMap },
+      { label: '描述', value: 'remark' },
     ],
   },
   {
     title: '接入信息',
-    fields: [{ label: '接入方式', value: 'type' }],
+    fields: [{ label: '接入方式', value: 'accessModel', enumMap: accessTypeMap }],
   },
   {
     title: '数据流量',
     fields: [
-      { label: '单日峰值', value: 'a' },
-      { label: '单日最大接入量', value: 'b' },
-      { label: '单条数据最大值', value: 'c' },
+      { label: '单日峰值', value: 'peakRate', enumMap: peakRateMap },
+      { label: '单日最大接入量', value: 'peakTotalSize', unit: 'GB' },
+      { label: '单条数据最大值', value: 'msgMaxLength', unit: 'GB' },
     ],
   },
   {
     title: '数据格式',
     fields: [
-      { label: '编码类型', value: 'a' },
-      { label: '分隔符', value: 'b' },
+      { label: '编码类型', value: 'encodeType', enumMap: encodeTypeMap },
+      { label: '分隔符', value: 'dataSeparator', enumMap: dataSeparatorMap },
     ],
   },
 ];
 
 const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, ...rest }) => {
+  const [projectId] = useProjectId();
+
   const { control, formState, reset, handleSubmit } = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -80,7 +100,19 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
 
   const { errors } = formState;
 
-  const fields = [];
+  const { data = {}, run } = useRequest(
+    {
+      url: '/access/query/info',
+      method: 'POST',
+      data: {
+        projectID: projectId,
+        streamID: id,
+      },
+    },
+    {
+      manual: true,
+    },
+  );
 
   const handleOk = handleSubmit(values => {
     onOk(values);
@@ -88,11 +120,11 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
 
   useEffect(() => {
     if (visible) {
-      console.log('open');
+      run();
     } else {
       reset();
     }
-  }, [visible, reset]);
+  }, [visible, reset, run]);
 
   return (
     <Modal size="xl" caption="发布上线审批" visible={visible} onClose={onClose} {...rest}>
@@ -106,7 +138,10 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
                     acc.concat(
                       <Col span={8} key={cur.value} style={{ padding: '0 10px' }}>
                         <Form.Item label={cur.label}>
-                          <Form.Text>{cur.value}</Form.Text>
+                          <Form.Text>
+                            {cur.enumMap ? cur.enumMap.get(data?.[cur.value]) : data?.[cur.value]}
+                            {cur.unit}
+                          </Form.Text>
                         </Form.Item>
                       </Col>,
                     ),
@@ -124,7 +159,7 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
                 <Table
                   bordered
                   verticalTop
-                  records={fields}
+                  records={data?.fieldsData || []}
                   recordKey="instanceId"
                   columns={[
                     {
@@ -132,15 +167,15 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
                       header: '字段名',
                     },
                     {
-                      key: 'fieldKey',
+                      key: 'fieldType',
                       header: '字段类型',
                     },
                     {
-                      key: 'fieldComment',
+                      key: 'remark',
                       header: '字段描述',
                     },
                   ]}
-                  topTip={!fields.length && <StatusTip status="empty" />}
+                  topTip={!data?.fieldsData?.length && <StatusTip status="empty" />}
                 />
               </Form.Item>
 

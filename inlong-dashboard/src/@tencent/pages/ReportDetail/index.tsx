@@ -25,6 +25,7 @@ import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
 import PublishModal from '@/@tencent/pages/Stream/PublishModal';
 import { dataLevelMap } from '@/@tencent/enums/stream';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 import Info from './Info';
 import SubscribeList from './Subscribe';
 import Test from './Test';
@@ -39,6 +40,8 @@ const tabs = [
 ];
 
 export default function StreamDetail() {
+  const [projectId] = useProjectId();
+
   const { id: streamId } = useParams<{ id: string }>();
 
   const [publishModal, setPublishModal] = useState<{ visible: boolean; id?: string }>({
@@ -49,7 +52,7 @@ export default function StreamDetail() {
     url: '/access/query/info',
     method: 'POST',
     data: {
-      projectID: '1',
+      projectID: projectId,
       streamID: streamId,
     },
   });
@@ -58,7 +61,7 @@ export default function StreamDetail() {
     url: '/subscribe/all/list',
     method: 'POST',
     data: {
-      projectID: '1',
+      projectID: projectId,
       streamID: streamId,
       pagesize: 1,
       currPage: 1,
