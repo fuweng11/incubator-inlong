@@ -28,9 +28,11 @@ import {
   Table,
   StatusTip,
   Input,
+  message,
 } from '@tencent/tea-component';
 import { useForm, Controller } from 'react-hook-form';
 import { useRequest } from 'ahooks';
+import { dateFormat } from '@/utils';
 import {
   dataLevelMap,
   accessTypeMap,
@@ -39,6 +41,7 @@ import {
   dataSeparatorMap,
 } from '@/@tencent/enums/stream';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
+import request from '@/utils/request';
 
 interface FieldsParseProps extends ModalProps {
   id?: number | string;
@@ -52,6 +55,7 @@ type ConfItem = {
     value: string;
     unit?: string;
     enumMap?: Map<unknown, unknown>;
+    render?: (text: string, row: Record<string, unknown>) => string | React.ReactNode;
   }[];
 };
 
@@ -62,7 +66,7 @@ const conf: ConfItem[] = [
       { label: '数据流名称', value: 'name' },
       { label: '数据流ID', value: 'streamID' },
       { label: '创建人', value: 'creator' },
-      { label: '创建时间', value: 'creatTime' },
+      { label: '创建时间', value: 'creatTime', render: text => text && dateFormat(new Date(text)) },
       { label: '数据分级', value: 'dataLevel', enumMap: dataLevelMap },
       { label: '描述', value: 'remark' },
     ],
@@ -94,7 +98,7 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
   const { control, formState, reset, handleSubmit } = useForm({
     mode: 'onChange',
     defaultValues: {
-      remark: '',
+      reason: '',
     },
   });
 
@@ -114,7 +118,18 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
     },
   );
 
-  const handleOk = handleSubmit(values => {
+  const handleOk = handleSubmit(async values => {
+    await request({
+      url: '/approval/submitApprove',
+      method: 'POST',
+      data: {
+        ...data,
+        reason: values.reason,
+      },
+    });
+    message.success({
+      content: '申请发布上线提交成功，点击查看审批单',
+    });
     onOk(values);
   });
 
@@ -139,8 +154,16 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
                       <Col span={8} key={cur.value} style={{ padding: '0 10px' }}>
                         <Form.Item label={cur.label}>
                           <Form.Text>
-                            {cur.enumMap ? cur.enumMap.get(data?.[cur.value]) : data?.[cur.value]}
-                            {cur.unit}
+                            {(() => {
+                              if (cur.render) {
+                                return cur.render(data?.[cur.value], cur);
+                              }
+                              const text = cur.enumMap
+                                ? cur.enumMap.get(data?.[cur.value]) || data?.[cur.value]
+                                : data?.[cur.value];
+                              const unit = cur.unit;
+                              return unit ? `${text} ${unit}` : text;
+                            })()}
                           </Form.Text>
                         </Form.Item>
                       </Col>,
@@ -183,11 +206,11 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
                 label="申请原因"
                 align="middle"
                 required
-                status={errors.remark?.message ? 'error' : undefined}
-                message={errors.remark?.message}
+                status={errors.reason?.message ? 'error' : undefined}
+                message={errors.reason?.message}
               >
                 <Controller
-                  name="remark"
+                  name="reason"
                   control={control}
                   rules={{ validate: value => (value ? undefined : '请填写申请原因') }}
                   render={({ field }) => (

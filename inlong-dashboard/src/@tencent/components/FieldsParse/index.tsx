@@ -111,15 +111,21 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...re
     setInputErrMsg(input ? '' : '请输入内容');
     if (!input) return;
 
+    const obj = JSON.parse(input);
     const result = await request({
       url: '/access/parseFiledData',
       method: 'POST',
       data: {
         fieldType: parseType,
-        fieldData: input,
+        fieldData: obj,
       },
     });
-    setParsedData(result);
+    setParsedData(
+      result.map((item, id) => ({
+        ...item,
+        id,
+      })),
+    );
 
     // try {
     //   if (parseType === 'JSON') {
@@ -162,7 +168,9 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...re
           <Form.Item label="添加方式">
             <Radio.Group value={parseType} onChange={(value: ParseTypeEnum) => setParseType(value)}>
               <Radio name={ParseTypeEnum.JSON}>Json解析</Radio>
-              <Radio name={ParseTypeEnum.SQL}>SQL解析</Radio>
+              <Radio name={ParseTypeEnum.SQL} disabled>
+                SQL解析
+              </Radio>
             </Radio.Group>
           </Form.Item>
           <Form.Item

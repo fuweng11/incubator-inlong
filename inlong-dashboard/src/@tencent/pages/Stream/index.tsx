@@ -23,10 +23,12 @@ import { Alert, Button, Justify, Status, Badge } from '@tencent/tea-component';
 import { ProForm, FieldConfig, Form } from '@tencent/tea-material-pro-form';
 import { ProTable, ActionType } from '@tencent/tea-material-pro-table';
 import request from '@/utils/request';
+import { dateFormat } from '@/utils';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import ProCheckbox from '@/@tencent/components/ProCheckbox';
 import { statusMap, accessTypeMap } from '@/@tencent/enums/stream';
 import { useProjectComputeResources } from '@/@tencent/components/Use/usePlatformAPIs';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 import PublishModal from './PublishModal';
 
 const fields: FieldConfig[] = [
@@ -60,6 +62,8 @@ const fieldsDefaultValues = {
 };
 
 export default function StreamList() {
+  const [projectId] = useProjectId();
+
   const formRef = useRef<Form>();
   const actionRef = useRef<ActionType>();
 
@@ -73,24 +77,27 @@ export default function StreamList() {
     visible: false,
   });
 
-  const { data: projectComputeResources = [] } = useProjectComputeResources('1608203753111777280');
+  const { data: projectComputeResources = [] } = useProjectComputeResources(projectId);
 
-  const getList = useCallback(async options => {
-    setLoading(true);
-    try {
-      const data = await request({
-        url: '/access/stream/search',
-        method: 'POST',
-        data: {
-          ...options,
-          projectID: '1608203753111777280',
-        },
-      });
-      return data;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const getList = useCallback(
+    async options => {
+      setLoading(true);
+      try {
+        const data = await request({
+          url: '/access/stream/search',
+          method: 'POST',
+          data: {
+            ...options,
+            projectID: projectId,
+          },
+        });
+        return data;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [projectId],
+  );
 
   return (
     <PageContainer useDefaultContainer={false}>
@@ -178,7 +185,11 @@ export default function StreamList() {
                   const { label, colorTheme } = ctx;
                   return (
                     <span style={{ display: 'flex', alignItems: 'center' }}>
-                      <Badge dot theme={colorTheme} style={{ marginRight: 5 }} />
+                      <Badge
+                        dot
+                        theme={colorTheme === 'error' ? 'danger' : colorTheme}
+                        style={{ marginRight: 5 }}
+                      />
                       <span>{label}</span>
                     </span>
                   );
@@ -193,6 +204,7 @@ export default function StreamList() {
             {
               key: 'createTime',
               header: '创建时间',
+              render: row => row.createTime && dateFormat(new Date(row.createTime)),
             },
             {
               key: 'actions',

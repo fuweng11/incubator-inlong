@@ -19,12 +19,13 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Alert, Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
+import { Alert, Button, Tag, Tabs, TabPanel, Badge } from '@tencent/tea-component';
 import { useRequest } from 'ahooks';
+import { dateFormat } from '@/utils';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
 import PublishModal from '@/@tencent/pages/Stream/PublishModal';
-import { dataLevelMap } from '@/@tencent/enums/stream';
+import { dataLevelMap, statusMap } from '@/@tencent/enums/stream';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import Info from './Info';
 import SubscribeList from './Subscribe';
@@ -78,15 +79,21 @@ export default function StreamDetail() {
           </Button>
         </Alert>
       )}
-
       <Container>
         <Description
           column={4}
           title={
             <>
-              <Tag theme="warning" style={{ marginTop: 0 }}>
-                {data.status}
-              </Tag>
+              {(() => {
+                const ctx = statusMap.get(data.status);
+                const label = ctx?.label || data.status;
+                const colorTheme = ctx?.colorTheme || 'default';
+                return (
+                  <Tag theme={colorTheme} style={{ marginTop: 0 }}>
+                    {label}
+                  </Tag>
+                );
+              })()}
               <span>{`${data.name}（ID:${data.streamID}）`}</span>
             </>
           }
@@ -97,7 +104,9 @@ export default function StreamDetail() {
           }
         >
           <Description.Item title="创建人">创建人</Description.Item>
-          <Description.Item title="创建时间">{data.creatTime}</Description.Item>
+          <Description.Item title="创建时间">
+            {data.creatTime && dateFormat(new Date(data.creatTime))}
+          </Description.Item>
           <Description.Item title="数据分级">{dataLevelMap.get(data.dataLevel)}</Description.Item>
           <Description.Item title="描述" span={3}>
             {data.remark}

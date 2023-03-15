@@ -157,7 +157,7 @@ const AccessForm = forwardRef(
             name="peakTotalSize"
             control={control}
             rules={{ required: '请填写单日最大接入量' }}
-            render={({ field }) => <InputNumber {...field} />}
+            render={({ field }) => <InputNumber {...field} min={0} />}
           />
         </Form.Item>
 
@@ -173,7 +173,7 @@ const AccessForm = forwardRef(
             name="msgMaxLength"
             control={control}
             rules={{ required: '请填写单条数据最大值' }}
-            render={({ field }) => <InputNumber {...field} />}
+            render={({ field }) => <InputNumber {...field} min={0} />}
           />
         </Form.Item>
 

@@ -45,7 +45,7 @@ const Info = ({ streamId }) => {
       <Row>
         <Col span={24}>
           <Form.Item label="接入方式">
-            <Form.Text>{accessTypeMap.get(data.accessModel)}</Form.Text>
+            <Form.Text>{accessTypeMap.get(data.accessModel) || data.accessModel}</Form.Text>
           </Form.Item>
         </Col>
 
@@ -57,7 +57,7 @@ const Info = ({ streamId }) => {
             label="单日峰值"
             tips="单日峰值（条/秒），请按照数据实际上报量以及后续增长情况，适当上浮20%-50%左右填写，用于容量管理。如果上涨超过容量限制，平台在紧急情况下会抽样或拒绝数据"
           >
-            <Form.Text>{peakRateMap.get(data.peakRate)}</Form.Text>
+            <Form.Text>{peakRateMap.get(data.peakRate) || data.peakRate}</Form.Text>
           </Form.Item>
         </Col>
         <Col span={8}>
@@ -76,12 +76,12 @@ const Info = ({ streamId }) => {
         </Col>
         <Col span={8}>
           <Form.Item label="编码类型">
-            <Form.Text>{encodeTypeMap.get(data.encodeType)}</Form.Text>
+            <Form.Text>{encodeTypeMap.get(data.encodeType) || data.encodeType}</Form.Text>
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item label="分隔符">
-            <Form.Text>{dataSeparatorMap.get(data.dataSeparator)}</Form.Text>
+            <Form.Text>{dataSeparatorMap.get(data.dataSeparator) || data.dataSeparator}</Form.Text>
           </Form.Item>
         </Col>
         <Col span={24}>

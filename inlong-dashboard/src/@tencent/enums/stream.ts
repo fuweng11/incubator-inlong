@@ -37,45 +37,45 @@ export const dataLevelMap: Map<DataLevelEnum, string> = (() => {
 })();
 
 export enum StatusEnum {
-  WAIT_ONLINE = 0,
-  ONLINE = 1,
-  ERROR = 2,
-  OUTLINE = 3,
+  New = 100,
+  Success = 130,
+  Deleted = 40,
+  Abnormal = 0,
 }
 
 export const statusMap: Map<
   StatusEnum,
-  { label: string; colorTheme: 'success' | 'warning' | 'default' | 'danger' }
+  { label: string; colorTheme: 'success' | 'warning' | 'default' | 'error' }
 > = (() => {
   const map = new Map();
   map
-    .set(StatusEnum.WAIT_ONLINE, {
+    .set(StatusEnum.New, {
       label: '待上线',
-      colorTheme: 'default',
+      colorTheme: 'warning',
     })
-    .set(StatusEnum.ONLINE, {
+    .set(StatusEnum.Success, {
       label: '已上线',
       colorTheme: 'success',
     })
-    .set(StatusEnum.ERROR, {
-      label: '异常',
-      colorTheme: 'warning',
-    })
-    .set(StatusEnum.OUTLINE, {
+    .set(StatusEnum.Deleted, {
       label: '下线',
+      colorTheme: 'default',
+    })
+    .set(StatusEnum.Abnormal, {
+      label: '异常',
       colorTheme: 'error',
     });
   return map;
 })();
 
 export enum AccessTypeEnum {
-  SDK = 'SDK',
-  AGENT = 'AGENT',
+  SDK = 'AUTO_PUSH',
+  FILE = 'FILE',
 }
 
 export const accessTypeMap: Map<AccessTypeEnum, string> = (() => {
   const map = new Map();
-  map.set(AccessTypeEnum.SDK, 'SDK').set(AccessTypeEnum.AGENT, 'Agent');
+  map.set(AccessTypeEnum.SDK, 'SDK').set(AccessTypeEnum.FILE, 'File');
   return map;
 })();
 
