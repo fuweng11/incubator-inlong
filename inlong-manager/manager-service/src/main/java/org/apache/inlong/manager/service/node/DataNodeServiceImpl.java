@@ -224,7 +224,7 @@ public class DataNodeServiceImpl implements DataNodeService {
         }
         DataNodeOperator dataNodeOperator = operatorFactory.getInstance(request.getType());
         dataNodeOperator.updateOpt(request, operator);
-
+        dataNodeOperator.updateRelatedStreamSource(request, curEntity, operator);
         LOGGER.info("success to update data node={}", request);
         return true;
     }
@@ -262,6 +262,7 @@ public class DataNodeServiceImpl implements DataNodeService {
         }
         DataNodeOperator dataNodeOperator = operatorFactory.getInstance(request.getType());
         dataNodeOperator.updateOpt(request, opInfo.getName());
+        dataNodeOperator.updateRelatedStreamSource(request, curEntity, opInfo.getName());
         return true;
     }
 

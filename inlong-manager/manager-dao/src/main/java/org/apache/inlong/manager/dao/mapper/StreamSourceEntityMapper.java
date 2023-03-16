@@ -121,6 +121,12 @@ public interface StreamSourceEntityMapper {
     List<String> selectSourceType(@Param("groupId") String groupId, @Param("streamId") String streamId);
 
     /**
+     * Query need update source according to the dataNodeName , clusterName, sourceType
+     */
+    List<Integer> selectNeedUpdateIdsByClusterAndDataNode(@Param("clusterName") String clusterName,
+            @Param("nodeName") String nodeName, @Param("sourceType") String sourceType);
+
+    /**
      * Query the data node names in the non-failed/frozen status based on the associated clusterName and sourceType.
      * The data with is_deleted != 0 also needs to be returned, because it may be deleted, but the status is still
      * [ToBeIssuedDelete](204) / [BeenIssuedDelete](304), and it has not changed to [Disabled](99).
@@ -181,6 +187,16 @@ public interface StreamSourceEntityMapper {
             @Param("changeTime") Boolean changeModifyTime);
 
     int updateSnapshot(StreamSourceEntity entity);
+
+    /**
+     * Update the source status
+     *
+     * @param idList source id list
+     * @param status modify the status to this
+     * @param operator operator name
+     */
+    void updateStatusByIds(@Param("idList") List<Integer> idList, @Param("status") Integer status,
+            @Param("operator") String operator);
 
     /**
      * Physical delete stream sources by group id and stream id
