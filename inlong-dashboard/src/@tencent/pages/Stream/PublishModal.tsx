@@ -125,10 +125,18 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
       data: {
         ...data,
         reason: values.reason,
+        projectID: projectId,
       },
     });
     message.success({
-      content: '申请发布上线提交成功，点击查看审批单',
+      content: (
+        <div>
+          申请发布上线提交成功，点击
+          <a target="_blank" rel="noreferrer" href="/audit?tab=apply">
+            查看审批单
+          </a>
+        </div>
+      ),
     });
     onOk(values);
   });

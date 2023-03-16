@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import React, { forwardRef, useImperativeHandle, Ref, useEffect } from 'react';
+import React, { forwardRef, useImperativeHandle, Ref, useEffect, useState } from 'react';
 import {
   Alert,
   Form,
@@ -45,14 +45,18 @@ export interface BasicFormProps extends FormProps {
 const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<BasicFormRef>) => {
   const [projectId] = useProjectId();
 
+  const [readyWatch, setReadyWatch] = useState(false);
+
   const { control, formState, reset, handleSubmit, watch, setValue } = useForm({
     mode: 'onChange',
     defaultValues: {
       name: '',
       dataLevel: DataLevelEnum.L3,
       remark: '',
-      autoCreateTable: false,
-      dbName: '',
+      sinkInnerHive: false,
+      subscribeTHive: {
+        dbName: '',
+      },
     },
   });
 
@@ -69,7 +73,9 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
     {
       onSuccess: result => {
         if (result?.length) {
-          setValue('autoCreateTable', true);
+          setValue('sinkInnerHive', true);
+          setValue('subscribeTHive.dbName', result[0].dbName);
+          setReadyWatch(true);
         }
       },
     },
@@ -80,7 +86,11 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
       handleSubmit(values => {
         resolve({
           ...values,
-          dbTableName: values.dbName,
+          autoCreateTable: values.sinkInnerHive,
+          subscribeTHive: {
+            ...values.subscribeTHive,
+            dbTableName: values.subscribeTHive.dbName,
+          },
         });
       }, reject)();
     });
@@ -92,9 +102,11 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
   }));
 
   useEffect(() => {
-    const { unsubscribe } = watch(values => onChange?.(values));
-    return () => unsubscribe();
-  }, [watch, onChange]);
+    if (readyWatch) {
+      const { unsubscribe } = watch(values => onChange?.(values));
+      return () => unsubscribe();
+    }
+  }, [watch, onChange, readyWatch]);
 
   return (
     <Form {...props}>
@@ -153,7 +165,7 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
 
       <Form.Item label="默认写入TDW" required>
         <Controller
-          name="autoCreateTable"
+          name="sinkInnerHive"
           control={control}
           render={({ field }) => (
             <>
@@ -179,15 +191,17 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         <span style={{ marginRight: 5 }}>默认选择</span>
                         <Controller
-                          name="dbName"
+                          name="subscribeTHive.dbName"
                           control={control}
                           render={({ field }) => (
                             <Select
                               {...field}
+                              searchable
                               appearance="default"
                               options={dbList.map(item => ({
-                                text: item,
-                                value: item,
+                                text: item.dbName,
+                                value: item.dbName,
+                                tooltip: item.dbType,
                               }))}
                             />
                           )}

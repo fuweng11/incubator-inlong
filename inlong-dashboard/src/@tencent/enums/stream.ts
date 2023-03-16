@@ -40,7 +40,7 @@ export enum StatusEnum {
   New = 100,
   Success = 130,
   Deleted = 40,
-  Abnormal = 0,
+  Abnormal = 500,
 }
 
 export const statusMap: Map<
@@ -70,12 +70,12 @@ export const statusMap: Map<
 
 export enum AccessTypeEnum {
   SDK = 'AUTO_PUSH',
-  FILE = 'FILE',
+  // FILE = 'FILE',
 }
 
 export const accessTypeMap: Map<AccessTypeEnum, string> = (() => {
   const map = new Map();
-  map.set(AccessTypeEnum.SDK, 'SDK').set(AccessTypeEnum.FILE, 'File');
+  map.set(AccessTypeEnum.SDK, 'SDK');
   return map;
 })();
 

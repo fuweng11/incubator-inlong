@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Checkbox, CheckboxGroupProps, CheckboxProps } from '@tencent/tea-component';
 
 interface CustomCheckboxProps extends CheckboxProps {
@@ -68,6 +68,10 @@ const ProCheckbox: React.FC<ProCheckboxProps> = ({
   );
 
   const innerOptions = allOption ? [allOptionObj].concat(options) : options;
+
+  useEffect(() => {
+    setInnerValue(value);
+  }, [value]);
 
   return (
     <Checkbox.Group value={innerValue} onChange={innerOnChange} {...rest}>

@@ -26,7 +26,7 @@ import request from '@/utils/request';
 import { dateFormat } from '@/utils';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import ProCheckbox from '@/@tencent/components/ProCheckbox';
-import { statusMap, accessTypeMap } from '@/@tencent/enums/stream';
+import { statusMap, StatusEnum, accessTypeMap } from '@/@tencent/enums/stream';
 import { useProjectComputeResources } from '@/@tencent/components/Use/usePlatformAPIs';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import PublishModal from './PublishModal';
@@ -77,7 +77,11 @@ export default function StreamList() {
     visible: false,
   });
 
-  const { data: projectComputeResources = [] } = useProjectComputeResources(projectId);
+  const { data: projectComputeResources } = useProjectComputeResources(projectId);
+
+  const noProjectComputeResources = projectComputeResources
+    ? !projectComputeResources.length
+    : false;
 
   const getList = useCallback(
     async options => {
@@ -101,12 +105,13 @@ export default function StreamList() {
 
   return (
     <PageContainer useDefaultContainer={false}>
-      {!projectComputeResources.length && (
+      {noProjectComputeResources && (
         <Alert type="error">
           项目还未申请计算资源，为保证功能的完整性，请优先申请接入库资源。
           <a
             target="_blank"
-            href="/manage/resource/create?ProjectId=1608203753111777280&from=compute"
+            rel="noreferrer"
+            href={`/manage/resource/create?ProjectId=${projectId}&from=compute`}
           >
             立即申请
           </a>
@@ -217,13 +222,15 @@ export default function StreamList() {
                 >
                   详情
                 </Button>,
-                <Button
-                  type="link"
-                  key="up"
-                  onClick={() => setPublishModal({ visible: true, id: row.streamID })}
-                >
-                  发布上线
-                </Button>,
+                row.status === StatusEnum.New && (
+                  <Button
+                    type="link"
+                    key="up"
+                    onClick={() => setPublishModal({ visible: true, id: row.streamID })}
+                  >
+                    发布上线
+                  </Button>
+                ),
               ],
             },
           ]}

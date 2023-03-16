@@ -19,13 +19,13 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Alert, Button, Tag, Tabs, TabPanel, Badge } from '@tencent/tea-component';
+import { Alert, Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
 import { useRequest } from 'ahooks';
 import { dateFormat } from '@/utils';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
 import PublishModal from '@/@tencent/pages/Stream/PublishModal';
-import { dataLevelMap, statusMap } from '@/@tencent/enums/stream';
+import { dataLevelMap, statusMap, StatusEnum } from '@/@tencent/enums/stream';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import Info from './Info';
 import SubscribeList from './Subscribe';
@@ -58,23 +58,23 @@ export default function StreamDetail() {
     },
   });
 
-  const { data: subscribeData = {} } = useRequest({
+  const { data: subscribeData } = useRequest({
     url: '/subscribe/all/list',
     method: 'POST',
     data: {
       projectID: projectId,
       streamID: streamId,
-      pagesize: 1,
-      currPage: 1,
+      pageSize: 1,
+      pageNum: 1,
     },
   });
 
   return (
     <PageContainer useDefaultContainer={false} breadcrumb={[{ name: '接入详情' }]}>
-      {!subscribeData?.total && (
+      {subscribeData?.total === 0 && (
         <Alert type="info">
           当前日志尚未配置数据订阅，如有数据消费需求，请进入【数据订阅】配置。
-          <Button type="link" style={{ textDecoration: 'underline' }}>
+          <Button type="link" style={{ textDecoration: 'underline' }} tooltip="暂未支持" disabled>
             立即配置
           </Button>
         </Alert>
@@ -98,12 +98,14 @@ export default function StreamDetail() {
             </>
           }
           extra={
-            <Button type="link" onClick={() => setPublishModal({ visible: true, id: streamId })}>
-              发布上线
-            </Button>
+            data.status === StatusEnum.New && (
+              <Button type="link" onClick={() => setPublishModal({ visible: true, id: streamId })}>
+                发布上线
+              </Button>
+            )
           }
         >
-          <Description.Item title="创建人">创建人</Description.Item>
+          <Description.Item title="创建人">{data.creator}</Description.Item>
           <Description.Item title="创建时间">
             {data.creatTime && dateFormat(new Date(data.creatTime))}
           </Description.Item>

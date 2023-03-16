@@ -110,14 +110,21 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...re
   const parse = async () => {
     setInputErrMsg(input ? '' : '请输入内容');
     if (!input) return;
-
-    const obj = JSON.parse(input);
+    let fieldData = input;
+    if (parseType === ParseTypeEnum.JSON) {
+      try {
+        fieldData = JSON.parse(input);
+      } catch (err) {
+        setInputErrMsg(err.message);
+        return;
+      }
+    }
     const result = await request({
       url: '/access/parseFiledData',
       method: 'POST',
       data: {
         fieldType: parseType,
-        fieldData: obj,
+        fieldData,
       },
     });
     setParsedData(
@@ -128,7 +135,7 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ visible, onOk, onClose, ...re
     );
 
     // try {
-    //   if (parseType === 'JSON') {
+    //   if (parseType === ParseTypeEnum.JSON) {
     //     const result = await parseJSON(input);
     //     setParsedData(result);
     //   } else {

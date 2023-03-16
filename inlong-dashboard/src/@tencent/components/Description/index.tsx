@@ -62,9 +62,9 @@ const DescriptionItem: React.FC<DescriptionItemType> = ({ title, span = 1, child
   const column = context.column;
 
   return (
-    <div style={{ flex: `0 0 ${(100 / column) * span}%`, margin: '7px 0' }}>
+    <div style={{ flex: `0 0 ${(100 / column) * span}%`, margin: '7px 0', display: 'flex' }}>
       <span className={styles.descriptionItemTitle}>{title}:</span>
-      <span>{children}</span>
+      <span className={styles.descriptionItemContent}>{children}</span>
     </div>
   );
 };
