@@ -32,6 +32,7 @@ import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
+import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 
 import javax.validation.constraints.NotNull;
 import java.nio.charset.StandardCharsets;
@@ -181,10 +182,11 @@ public class InnerBaseHiveSinkDTO {
     /**
      * Get Hive table info
      */
-    public static InnerHiveFullInfo getFullInfo(InlongGroupInfo groupInfo, InnerBaseHiveSinkDTO innerHiveDTO,
-            SinkInfo sinkInfo, InnerBaseHiveDataNodeInfo hiveDataNode) throws Exception {
-        Integer hadoopDfsReplication = Objects.isNull(innerHiveDTO.getHadoopDfsReplication()) ?
-                2 : innerHiveDTO.getHadoopDfsReplication();
+    public static InnerHiveFullInfo getFullInfo(InlongGroupInfo groupInfo, InlongStreamInfo streamInfo,
+            InnerBaseHiveSinkDTO innerHiveDTO, SinkInfo sinkInfo,
+            InnerBaseHiveDataNodeInfo hiveDataNode) throws Exception {
+        Integer hadoopDfsReplication =
+                Objects.isNull(innerHiveDTO.getHadoopDfsReplication()) ? 2 : innerHiveDTO.getHadoopDfsReplication();
         Integer isThive = Objects.equals(sinkInfo.getSinkType(), SinkType.INNER_THIVE) ? 1 : 0;
         String password = encryptPassword(hiveDataNode.getToken(), innerHiveDTO.getTableName(),
                 hiveDataNode.getOmsAddress());
@@ -210,7 +212,8 @@ public class InnerBaseHiveSinkDTO {
                 .partitionCreationStrategy(innerHiveDTO.getPartitionCreationStrategy())
                 .fileFormat(innerHiveDTO.getFileFormat())
                 .compressionType(innerHiveDTO.getCompressionType())
-                .dataEncoding(innerHiveDTO.getDataEncoding())
+                .sinkEncoding(innerHiveDTO.getDataEncoding())
+                .sourceEncoding(streamInfo.getDataEncoding())
                 .targetSeparator(innerHiveDTO.getDataSeparator())
                 .virtualUser(innerHiveDTO.getVirtualUser())
                 .dataConsistency(innerHiveDTO.getDataConsistency())

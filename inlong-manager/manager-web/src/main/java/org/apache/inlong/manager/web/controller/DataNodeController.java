@@ -157,5 +157,4 @@ public class DataNodeController {
         return Response.success(dataNodeService.listByUrlAndType(url, type));
     }
 
-
 }

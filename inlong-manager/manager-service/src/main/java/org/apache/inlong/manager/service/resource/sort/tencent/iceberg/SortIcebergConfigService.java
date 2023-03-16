@@ -146,6 +146,7 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
                 fieldList.stream().map(f -> {
                     FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());
                     return new FieldInfo(f.getFieldName(), formatInfo);
-                }).toArray(FieldInfo[]::new));
+                }).toArray(FieldInfo[]::new),
+                icebergSink.getDataEncoding());
     }
 }

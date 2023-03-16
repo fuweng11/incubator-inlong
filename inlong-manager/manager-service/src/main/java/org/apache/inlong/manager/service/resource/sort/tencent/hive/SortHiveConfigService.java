@@ -372,7 +372,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 sortExtConfig.getCreationStrategy(),
                 partitionList.toArray(new HivePartitionInfo[0]),
                 sortExtConfig.getFormatInfo(),
-                sortExtConfig.getConsistency());
+                sortExtConfig.getConsistency(),
+                hiveFullInfo.getSinkEncoding());
     }
 
     /**
@@ -435,7 +436,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 hiveFullInfo.getUsTaskId(),
                 sortExtConfig.getBackupDataPath(),
                 sortExtConfig.getBackupHadoopProxyUser(),
-                hiveFullInfo.getHadoopDfsReplication());
+                hiveFullInfo.getHadoopDfsReplication(),
+                hiveFullInfo.getSinkEncoding());
     }
 
     /**
@@ -453,9 +455,10 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             if (fieldName.equals(partitionField)) {
                 duplicate = true;
             }
-            FormatInfo formatInfo = isTextFormat? new StringFormatInfo() : SortFieldFormatUtils.convertFieldFormat(
-                    field.getFieldType().toLowerCase(), field.getFieldFormat());
-            //In order to ensure the successful deserialization of etl2.0, we set source type of each fields to string
+            FormatInfo formatInfo = isTextFormat ? new StringFormatInfo()
+                    : SortFieldFormatUtils.convertFieldFormat(
+                            field.getFieldType().toLowerCase(), field.getFieldFormat());
+            // In order to ensure the successful deserialization of etl2.0, we set source type of each fields to string
             FieldInfo fieldInfo = new FieldInfo(fieldName, formatInfo);
             fieldInfoList.add(fieldInfo);
         }
@@ -514,7 +517,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             String topic = groupInfo.getMqResource();
             String consumerGroup = getConsumerGroup(groupInfo, topic, sortClusterName, hiveFullInfo.getSinkId());
             sourceInfo = new TubeSourceInfo(topic, masterAddress, consumerGroup,
-                    deserializationInfo, sourceFields.toArray(new FieldInfo[0]));
+                    deserializationInfo, sourceFields.toArray(new FieldInfo[0]), hiveFullInfo.getSourceEncoding());
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
             List<InlongClusterEntity> pulsarClusters = clusterMapper.selectByKey(clusterTag, null, MQType.PULSAR);
             if (CollectionUtils.isEmpty(pulsarClusters)) {
@@ -545,7 +548,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 String subscription = getConsumerGroup(groupInfo, topic, sortClusterName, hiveFullInfo.getSinkId());
                 sourceInfo = new PulsarSourceInfo(null, null, fullTopic, subscription,
                         deserializationInfo, sourceFields.toArray(new FieldInfo[0]),
-                        pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null);
+                        pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null, hiveFullInfo.getSourceEncoding());
             } catch (Exception e) {
                 LOGGER.error("get pulsar information failed", e);
                 throw new WorkflowListenerException("get pulsar admin failed, reason: " + e.getMessage());
@@ -578,7 +581,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                             FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
                                     f.getSourceFieldType().toLowerCase());
                             return new FieldInfo(f.getSourceFieldType(), formatInfo);
-                        }).toArray(FieldInfo[]::new));
+                        }).toArray(FieldInfo[]::new),
+                        hiveFullInfo.getSourceEncoding());
             } catch (Exception e) {
                 LOGGER.error("get kafka information failed", e);
                 throw new WorkflowListenerException("get kafka admin failed, reason: " + e.getMessage());
@@ -621,9 +625,10 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         boolean duplicate = false;
         List<FieldInfo> fieldInfoList = new ArrayList<>();
         for (StreamSinkFieldEntity field : fieldList) {
-            FormatInfo formatInfo = isTextFormat? new StringFormatInfo() : SortFieldFormatUtils.convertFieldFormat(
-                   field.getSourceFieldType().toLowerCase());
-            //In order to ensure the successful deserialization of etl2.0, we set source type of each fields to string
+            FormatInfo formatInfo = isTextFormat ? new StringFormatInfo()
+                    : SortFieldFormatUtils.convertFieldFormat(
+                            field.getSourceFieldType().toLowerCase());
+            // In order to ensure the successful deserialization of etl2.0, we set source type of each fields to string
             String fieldName = field.getSourceFieldName();
 
             FieldInfo fieldInfo;

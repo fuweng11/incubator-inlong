@@ -32,6 +32,7 @@ import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.DataNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
@@ -154,6 +155,7 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
         List<EsSinkInfo.EsClusterInfo> esClusterInfoList = new ArrayList<>();
         esClusterInfoList.add(esClusterInfo);
         List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(elasticsearchSink.getId());
+        InlongStreamEntity streamInfo = streamEntityMapper.selectByIdentifier(groupId, streamId);
         return new EsSinkInfo(
                 fieldList.stream().map(f -> {
                     FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(f.getFieldType().toLowerCase());
@@ -161,7 +163,8 @@ public class SortEsConfigService extends AbstractInnerSortConfigService {
                 }).toArray(FieldInfo[]::new),
                 esDataNode.getUsername(), esDataNode.getToken(), elasticsearchSink.getIndexName(),
                 null, String.valueOf(elasticsearchSink.getEsVersion()),
-                esClusterInfoList.toArray(new EsClusterInfo[0]));
+                esClusterInfoList.toArray(new EsClusterInfo[0]),
+                streamInfo.getDataEncoding());
     }
 
 }

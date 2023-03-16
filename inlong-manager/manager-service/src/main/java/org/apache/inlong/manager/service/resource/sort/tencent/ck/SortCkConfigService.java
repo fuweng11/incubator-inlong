@@ -45,6 +45,7 @@ import org.apache.inlong.manager.pojo.sink.ck.ClickHouseSink;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
+import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +68,8 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
 
     @Autowired
     private InlongClusterEntityMapper clusterMapper;
+    @Autowired
+    private InlongStreamService streamService;
     @Autowired
     private InlongStreamEntityMapper streamEntityMapper;
     @Autowired
@@ -187,7 +190,8 @@ public class SortCkConfigService extends AbstractInnerSortConfigService {
                 new String[0],
                 clickHouseSink.getFlushInterval(),
                 clickHouseSink.getFlushRecord(),
-                clickHouseSink.getRetryTimes());
+                clickHouseSink.getRetryTimes(),
+                clickHouseSink.getDataEncoding());
     }
 
 }

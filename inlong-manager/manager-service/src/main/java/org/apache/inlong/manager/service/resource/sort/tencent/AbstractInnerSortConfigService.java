@@ -328,7 +328,8 @@ public class AbstractInnerSortConfigService {
                         FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
                                 f.getSourceFieldType().toLowerCase());
                         return new FieldInfo(f.getSourceFieldName(), formatInfo);
-                    }).toArray(FieldInfo[]::new));
+                    }).toArray(FieldInfo[]::new),
+                    stream.getDataEncoding());
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
             List<InlongClusterEntity> pulsarClusters = clusterMapper.selectByKey(
                     groupInfo.getInlongClusterTag(), null, MQType.PULSAR);
@@ -343,7 +344,8 @@ public class AbstractInnerSortConfigService {
                 PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
                 String adminUrl = pulsarClusterDTO.getAdminUrl();
                 String serviceUrl = pulsarCluster.getUrl();
-                pulsarClusterInfos.add(new PulsarClusterInfo(adminUrl, serviceUrl, pulsarCluster.getName(), null, null));
+                pulsarClusterInfos
+                        .add(new PulsarClusterInfo(adminUrl, serviceUrl, pulsarCluster.getName(), null, null));
             });
 
             InlongClusterEntity pulsarCluster = pulsarClusters.get(0);
@@ -369,7 +371,8 @@ public class AbstractInnerSortConfigService {
                             FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
                                     f.getSourceFieldType().toLowerCase());
                             return new FieldInfo(f.getSourceFieldName(), formatInfo);
-                        }).toArray(FieldInfo[]::new), pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null);
+                        }).toArray(FieldInfo[]::new), pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null,
+                        stream.getDataEncoding());
             } catch (Exception e) {
                 LOGGER.error("get pulsar information failed", e);
                 throw new WorkflowListenerException("get pulsar admin failed, reason: " + e.getMessage());
@@ -402,7 +405,8 @@ public class AbstractInnerSortConfigService {
                             FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
                                     f.getSourceFieldType().toLowerCase());
                             return new FieldInfo(f.getSourceFieldName(), formatInfo);
-                        }).toArray(FieldInfo[]::new));
+                        }).toArray(FieldInfo[]::new),
+                        stream.getDataEncoding());
             } catch (Exception e) {
                 LOGGER.error("get kafka information failed", e);
                 throw new WorkflowListenerException("get kafka admin failed, reason: " + e.getMessage());

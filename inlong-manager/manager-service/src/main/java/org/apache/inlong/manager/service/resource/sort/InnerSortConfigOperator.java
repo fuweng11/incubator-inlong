@@ -47,6 +47,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -96,6 +97,8 @@ public class InnerSortConfigOperator implements SortConfigOperator {
         List<String> streamIds = streamInfos.stream()
                 .map(InlongStreamInfo::getInlongStreamId)
                 .filter(streamSet::contains).collect(Collectors.toList());
+        Map<String, InlongStreamInfo> streamInfoMap = streamInfos.stream()
+                .collect(Collectors.toMap(InlongStreamInfo::getInlongStreamId, v -> v));
         if (CollectionUtils.isEmpty(streamIds)) {
             return;
         }
@@ -106,6 +109,7 @@ public class InnerSortConfigOperator implements SortConfigOperator {
         List<InnerIcebergSink> icebergSinkList = new ArrayList<>();
         List<ElasticsearchSink> elasticsearchSinkList = new ArrayList<>();
         for (SinkInfo sinkInfo : configList) {
+            InlongStreamInfo streamInfo = streamInfoMap.get(sinkInfo.getInlongStreamId());
             switch (sinkInfo.getSinkType()) {
                 case SinkType.INNER_HIVE:
                 case SinkType.INNER_THIVE:
@@ -113,8 +117,8 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                     StreamSinkEntity sink = sinkMapper.selectByPrimaryKey(sinkInfo.getId());
                     InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) dataNodeService.get(
                             sink.getDataNodeName(), sink.getSinkType());
-                    InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo, hiveInfo, sinkInfo,
-                            dataNodeInfo);
+                    InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo, streamInfo, hiveInfo,
+                            sinkInfo, dataNodeInfo);
                     hiveInfos.add(hiveFullInfo);
                     break;
                 case SinkType.CLICKHOUSE:

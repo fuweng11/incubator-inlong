@@ -59,7 +59,8 @@ public class InnerHiveFullInfo {
 
     private String fileFormat;
     private String compressionType;
-    private String dataEncoding;
+    private String sourceEncoding;
+    private String sinkEncoding;
     // target separator configured in data store
     private String targetSeparator;
     private Integer status;

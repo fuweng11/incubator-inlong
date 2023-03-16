@@ -37,6 +37,7 @@ import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.hive.HiveColumnInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
+import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.pojo.tencent.sc.AppGroup;
 import org.apache.inlong.manager.pojo.tencent.sc.ResourceGrantRequest;
 import org.apache.inlong.manager.pojo.tencent.sc.ResourceGrantRequest.DataAccessType;
@@ -54,6 +55,7 @@ import org.apache.inlong.manager.service.resource.sink.SinkResourceOperator;
 import org.apache.inlong.manager.service.resource.sink.tencent.us.UPSOperator;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.sink.tencent.us.UsTaskService;
+import org.apache.inlong.manager.service.stream.InlongStreamService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -89,6 +91,8 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
 
     @Autowired
     private InlongGroupService groupService;
+    @Autowired
+    private InlongStreamService streamService;
     @Autowired
     private StreamSinkService sinkService;
     @Autowired
@@ -189,11 +193,12 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
 
             // get bg id
             InlongGroupInfo groupInfo = groupService.get(groupId);
+            InlongStreamInfo streamInfo = streamService.get(groupId, streamId);
             Integer clusterId = scService.getClusterIdByIdentifier(dataNodeInfo.getClusterTag());
             AppGroup appGroup = scService.getAppGroup(clusterId, groupInfo.getAppGroupName());
             hiveInfo.setBgId(appGroup.getBgId());
 
-            InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo, hiveInfo, sinkInfo,
+            InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo, streamInfo, hiveInfo, sinkInfo,
                     dataNodeInfo);
             String dbName = hiveFullInfo.getDbName();
             String tbName = hiveFullInfo.getTableName();
@@ -226,7 +231,8 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                 throw new WorkflowException(errMsg);
             }
 
-            // after the table is created successfully, need to set the table alter and select permission for the super user
+            // after the table is created successfully, need to set the table alter and select permission for the super
+            // user
             String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
             scService.grant(superUser, dbName, tbName, "alter", hiveType, hiveFullInfo.getClusterTag());
 
@@ -275,7 +281,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                 .tableName(innerHiveInfo.getTableName())
                 .fileFormat(innerHiveInfo.getFileFormat())
                 .partKey(innerHiveInfo.getPrimaryPartition())
-                .dataEncoding(innerHiveInfo.getDataEncoding())
+                .dataEncoding(innerHiveInfo.getSinkEncoding())
                 .build();
 
         // use the super user used by sort to create the table (configured in the cluster)
@@ -553,7 +559,6 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
 
         return dealResult;
     }
-
 
     /**
      * check permission for database or table through security center
