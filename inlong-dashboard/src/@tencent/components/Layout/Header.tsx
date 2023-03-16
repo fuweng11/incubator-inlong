@@ -16,14 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useCallback } from 'react';
-import { Dropdown, Layout, List, NavMenu } from '@tencent/tea-component';
+import React, { useCallback, useMemo } from 'react';
+import { Layout, NavMenu, Select } from '@tencent/tea-component';
 import styles from './index.module.less';
 import menuTree, { MenuItemType } from '@/configs/menus';
 import { Link } from 'react-router-dom';
 import HeaderDropdown from '@tencent/tea-dcpg/dist/Header';
 import { config } from '@/configs/default';
+import { useProjectInfo, useProjectList } from '@/@tencent/components/Use/usePlatformAPIs';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
+import { stringify } from 'qs';
 
 const { Header } = Layout;
 
@@ -37,15 +39,29 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
   userName,
 }: LayoutHeaderProps) => {
   const [projectId] = useProjectId();
+  const { data: projectListData } = useProjectList();
+  const { data: curProjectInfo } = useProjectInfo(projectId);
   const getFirstChildRoute = useCallback((menuItem: MenuItemType) => {
     if (!menuItem.children && menuItem.path) return menuItem.path;
     if (menuItem.children) return getFirstChildRoute(menuItem.children[0]);
   }, []);
 
-  const projectList = () => (
-    <List className={styles.projectList}>
-      <List.Item className={styles.projectListItem}>项目1</List.Item>
-    </List>
+  const projectList = useMemo(
+    () =>
+      curProjectInfo && projectListData
+        ? [
+            {
+              value: curProjectInfo.ProjectId,
+              text: curProjectInfo.ProjectName,
+            },
+          ].concat(
+            projectListData.Rows.map(item => ({
+              value: item.ProjectId,
+              text: item.ProjectName,
+            })),
+          )
+        : [],
+    [projectListData, curProjectInfo],
   );
   return (
     <Header>
@@ -64,13 +80,22 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
             <span style={{ color: '#FFFFFF', opacity: 0.8, margin: ' 0 15px', fontSize: '14px' }}>
               数据集成
             </span>
-            <Dropdown
-              className={styles.dropdown}
-              children={projectList}
-              trigger="hover"
-              boxClassName={styles.dropdownBox}
-              button={<div className={styles.dropdownButton}>当前项目</div>}
-            ></Dropdown>
+            {curProjectInfo && (
+              <Select
+                className={styles.projectSelector}
+                searchable
+                matchButtonWidth
+                size="s"
+                appearance="button"
+                options={projectList}
+                defaultValue={curProjectInfo.ProjectId}
+                onChange={value => {
+                  window.location.search = stringify({
+                    ProjectId: value,
+                  });
+                }}
+              />
+            )}
             <div style={{ marginLeft: '15px', color: 'rgba(255, 255, 255, 0.45)', opacity: '0.6' }}>
               |
             </div>

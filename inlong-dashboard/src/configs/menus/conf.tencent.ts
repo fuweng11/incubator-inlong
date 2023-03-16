@@ -21,27 +21,27 @@ import { StreamManage, SubscribeManage, AcquisitionManage } from '@/@tencent/com
 import type { MenuItemType } from '.';
 
 const conf: MenuItemType[] = [
-  {
-    path: '/demo',
-    name: 'Example',
-  },
+  // {
+  //   path: '/demo',
+  //   name: 'Example',
+  // },
   {
     name: '数据接入',
     children: [
       {
         path: '/stream',
         name: '接入管理',
-        // icon: StreamManage({}),
+        icon: StreamManage,
       },
       {
         path: '/subscribe',
         name: '数据订阅',
-        // icon: SubscribeManage({}),
+        icon: SubscribeManage,
       },
       {
         path: '/collector',
         name: '采集器管理',
-        // icon: AcquisitionManage({}),
+        icon: AcquisitionManage,
       },
     ],
   },

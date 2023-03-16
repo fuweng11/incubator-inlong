@@ -62,23 +62,23 @@
   }
 }
 
-.dropdownButton {
-  color: rgba(255, 255, 255, 0.8);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  &:hover {
-    color: rgba(255, 255, 255, 1);
+.projectSelector{
+  color: rgba(255, 255, 255, 0.8) !important;
+  :global{
+    .tea-dropdown-btn.tea-dropdown__header{
+      background-color: #262F3E !important;
+      border:1px solid #344158;
+      border-radius: 3px;
+      text-align: center;
+      padding: 0 8px;
+      &:hover {
+        border:1px solid rgba(255, 255, 255, 0.3);;
+      }
+    }
+    .tea-text-weak{
+      color: rgba(255, 255, 255, 0.8) !important;
+    }
   }
-}
-
-.dropdown{
-  margin-left: 10px;
-  border-radius: 3px;
-  text-align: center;
-  padding: 0 8px;
-  border:1px solid #344158;
-  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .projectList{

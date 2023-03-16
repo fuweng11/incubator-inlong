@@ -58,3 +58,38 @@ export const useProjectComputeResources = (projectId, options?: BaseOptions<any,
     },
     options,
   );
+
+export const useProjectList = (options?: BaseOptions<any, any>) =>
+  useRequest(
+    {
+      url: '/DescribeUserProjects',
+      method: 'POST',
+      prefix: PlatformPrefix,
+      data: {
+        Action: 'DescribeUserProjects',
+        Params: {
+          DescribeCreator: true,
+        },
+      },
+      responseParse: PlatformResponseParse,
+    },
+    options,
+  );
+
+export const useProjectInfo = (projectId, options?: BaseOptions<any, any>) =>
+  useRequest(
+    {
+      url: '/DescribeProject',
+      method: 'POST',
+      prefix: PlatformPrefix,
+      data: {
+        Action: 'DescribeProject',
+        Params: {
+          DescribeCreator: true,
+          ProjectId: projectId,
+        },
+      },
+      responseParse: PlatformResponseParse,
+    },
+    options,
+  );

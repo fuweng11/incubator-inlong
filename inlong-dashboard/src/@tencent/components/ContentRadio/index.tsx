@@ -22,6 +22,7 @@ import React from 'react';
 type radios = {
   value: string;
   text: string;
+  disabled?: boolean;
   operations?: string | React.ReactNode;
 }[];
 
@@ -35,23 +36,24 @@ export interface ContentRadioProps {
 const ContentRadio = ({ radios, value, ...props }: ContentRadioProps) => {
   return (
     <Radio.Group layout="column" value={value} {...props}>
-      {radios.map(radio => (
-        <div
-          style={{
-            background: '#f2f2f2',
-            padding: '10px 5px',
-            marginBottom: '10px',
-            position: 'relative',
-            top: '-10px',
-          }}
-          key={radio.value}
-        >
-          <Radio name={radio.value} key={radio.value}>
-            <div style={{ marginBottom: '5px' }}>{radio.text}</div>
-            {value == radio.value && radio.operations}
-          </Radio>
-        </div>
-      ))}
+      {radios &&
+        radios.map(radio => (
+          <div
+            style={{
+              background: '#f2f2f2',
+              padding: '10px 5px',
+              marginBottom: '10px',
+              position: 'relative',
+              top: '-10px',
+            }}
+            key={radio.value}
+          >
+            <Radio name={radio.value} key={radio.value} disabled={radio.disabled || false}>
+              <div style={{ marginBottom: '5px' }}>{radio.text}</div>
+              {value == radio.value && radio.operations}
+            </Radio>
+          </div>
+        ))}
     </Radio.Group>
   );
 };

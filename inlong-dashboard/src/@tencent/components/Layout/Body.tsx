@@ -36,13 +36,18 @@ const LayoutBody: React.FC<LayoutBodyProps> = ({ subMenuTree, currentMenu, child
         <Menu collapsable theme="dark">
           {subMenuTree &&
             subMenuTree.map((menu, i) => {
+              const MenuIcon: any = menu.icon;
               return (
                 <Menu.Item
                   className={styles.subMenuItem}
                   selected={menu.key == currentMenu.key}
                   key={menu.key}
                   title={menu.name}
-                  icon={[<div style={{ marginRight: '15px' }}>{menu.icon}</div>]}
+                  icon={[
+                    <div style={{ marginRight: '15px' }}>
+                      <MenuIcon />
+                    </div>,
+                  ]}
                   render={children => <Link to={menu.path as string}>{children}</Link>}
                 ></Menu.Item>
               );

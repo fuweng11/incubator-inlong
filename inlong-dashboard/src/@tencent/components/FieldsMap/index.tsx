@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Icon,
   Table,
@@ -37,12 +37,13 @@ const { injectable, selectable, draggable } = Table.addons;
 
 export type FieldData = {
   id: number;
+  sequence?: number;
   fieldName: string;
   fieldType: string;
-  fieldComment?: string;
+  remark?: string;
 }[];
 
-type selectedFieldsProps = {
+export type selectedFieldsProps = {
   sourceField: FieldData[0];
   targetField: FieldData[0];
 }[];
@@ -72,7 +73,7 @@ const FieldsMap = ({
 }: ConnectTableProps) => {
   const [fieldsParseVisible, setFieldParseVisible] = useState<boolean>(false);
   const [selectedFields, setSelectedFields] = useState<selectedFieldsProps>([]);
-  const [targetFields, setTargetFields] = useState<FieldData>(defaultTargetFields);
+  const [targetFields, setTargetFields] = useState<FieldData>([]);
   const [status, setStatus] = useState<string>('');
 
   const actions: actionsProps = [
@@ -146,10 +147,10 @@ const FieldsMap = ({
           ),
       },
       {
-        key: 'fieldComment',
+        key: 'remark',
         header: '备注',
         width: 50,
-        render: records => <LongText text={records.fieldComment} />,
+        render: records => <LongText text={records.remark} />,
       },
     ];
   };
@@ -164,6 +165,19 @@ const FieldsMap = ({
     }
     setTargetFields(copyTargetFields);
   };
+
+  useEffect(() => {
+    setTargetFields(defaultTargetFields);
+  }, [defaultTargetFields]);
+
+  useEffect(() => {
+    const newSelectedFields = selectedFields.map(item => ({
+      sourceField: item.sourceField,
+      targetField: targetFields.filter(target => target.id == item.sourceField?.id)[0],
+    }));
+    setSelectedFields(newSelectedFields);
+    onSelect(newSelectedFields);
+  }, [targetFields]);
 
   return (
     <>
@@ -189,12 +203,6 @@ const FieldsMap = ({
                       }));
                       setSelectedFields(valueMaps);
                       onSelect(valueMaps);
-                    },
-                    rowSelectable(rowKey, context) {
-                      if (targetFields[Number(rowKey)]) {
-                        return true;
-                      }
-                      return false;
                     },
                   }),
                 ]}
