@@ -35,7 +35,7 @@ const fields: FieldConfig[] = [
   {
     type: 'array',
     component: ProCheckbox,
-    name: 'status',
+    name: 'statuses',
     title: '接入状态',
     allOption: true,
     options: Array.from(statusMap).map(([key, ctx]) => ({ name: key, title: ctx.label })),
@@ -43,7 +43,7 @@ const fields: FieldConfig[] = [
   {
     type: 'array',
     component: ProCheckbox,
-    name: 'accessModel',
+    name: 'accessModels',
     title: '接入方式',
     allOption: true,
     options: Array.from(accessTypeMap).map(([key, ctx]) => ({ name: key, title: ctx })),
@@ -56,8 +56,8 @@ const fields: FieldConfig[] = [
 ];
 
 const fieldsDefaultValues = {
-  status: [],
-  accessModel: [],
+  statuses: [],
+  accessModels: [],
   principal: '',
 };
 
