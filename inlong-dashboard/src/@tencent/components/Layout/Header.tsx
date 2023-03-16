@@ -23,6 +23,7 @@ import menuTree, { MenuItemType } from '@/configs/menus';
 import { Link } from 'react-router-dom';
 import HeaderDropdown from '@tencent/tea-dcpg/dist/Header';
 import { config } from '@/configs/default';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 const { Header } = Layout;
 
@@ -35,6 +36,7 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
   currentMenu,
   userName,
 }: LayoutHeaderProps) => {
+  const [projectId] = useProjectId();
   const getFirstChildRoute = useCallback((menuItem: MenuItemType) => {
     if (!menuItem.children && menuItem.path) return menuItem.path;
     if (menuItem.children) return getFirstChildRoute(menuItem.children[0]);
@@ -51,7 +53,7 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
         left={
           <>
             <NavMenu.Item>
-              <HeaderDropdown />
+              <HeaderDropdown projectId={projectId as string} />
             </NavMenu.Item>
             <NavMenu.Item type="logo" onClick={() => window.open('/', '_self')}>
               <img src={config.logo} alt="logo" />

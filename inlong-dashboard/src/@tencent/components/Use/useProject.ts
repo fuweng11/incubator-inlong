@@ -23,7 +23,7 @@ import { parse } from 'qs';
 export const useProjectId = () => {
   const projectId = useMemo(() => {
     const query = parse(window.location.search?.slice(1));
-    return query?.ProjectId;
+    return query?.ProjectId || query?.projectId;
   }, []);
 
   return [projectId];
