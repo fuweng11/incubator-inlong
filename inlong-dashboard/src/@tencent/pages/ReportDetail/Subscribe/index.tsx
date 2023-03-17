@@ -26,7 +26,7 @@ import { dateFormat } from '@/utils';
 import { Badge } from '@tencent/tea-component';
 import { statusMap } from '@/@tencent/enums/stream';
 
-const SubscribeList = ({ streamId }) => {
+const SubscribeList = ({ streamId, info }) => {
   const [projectId] = useProjectId();
   const [records, setRecords] = useState([]);
   const [addDrawerVisible, setAddDrawerVisible] = useState(false);
@@ -47,6 +47,11 @@ const SubscribeList = ({ streamId }) => {
     },
     [streamId],
   );
+
+  const refreshSubscribeList = async () => {
+    const res = await getSubscribeList({ pageSize: 10, current: 1 });
+    setRecords(res.list);
+  };
 
   const onClose = () => {
     setAddDrawerVisible(false);
@@ -120,7 +125,13 @@ const SubscribeList = ({ streamId }) => {
         pageable
       />
       {addDrawerVisible && (
-        <AddSubscribeDrawer visible={addDrawerVisible} onClose={onClose} streamId={streamId} />
+        <AddSubscribeDrawer
+          visible={addDrawerVisible}
+          onClose={onClose}
+          streamId={streamId}
+          refreshSubscribeList={refreshSubscribeList}
+          info={info}
+        />
       )}
     </>
   );

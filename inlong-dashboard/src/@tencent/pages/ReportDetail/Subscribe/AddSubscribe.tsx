@@ -21,7 +21,6 @@ import FieldsMap, { selectedFieldsProps } from '@/@tencent/components/FieldsMap'
 import { FieldData } from '@/@tencent/components/FieldsMap';
 import { Drawer, Button, Row, Col, Form } from '@tencent/tea-component';
 import { ProForm, ProFormProps } from '@tencent/tea-material-pro-form';
-import { useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   accessTypeMap,
@@ -37,30 +36,30 @@ export interface AddSubscribeDrawerProps {
   visible: boolean;
   onClose: () => void;
   streamId: string;
+  refreshSubscribeList: () => any;
+  info: Record<string, any>;
 }
 
 const insertIndex = (data: Array<any>) =>
   data ? data.map((item, index) => ({ ...item, id: index })) : [];
 
-const AddSubscribeDrawer = ({ visible, onClose, streamId }: AddSubscribeDrawerProps) => {
+const AddSubscribeDrawer = ({
+  visible,
+  onClose,
+  streamId,
+  refreshSubscribeList,
+  info,
+}: AddSubscribeDrawerProps) => {
   const [projectId] = useProjectId();
   const [targetFields, setTargetFields] = useState<FieldData>([]);
   const [selectedFields, setSelectedFields] = useState<selectedFieldsProps>([]);
   const [isFieldsMapVisible, setIsFieldsMapVisible] = useState<boolean>(false);
   const [isCreateTable, setIsCreateTable] = useState<boolean>(false);
   const [selectedTable, setSelectedTable] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const formRef = useRef<any>();
   const autoCreateTableRef = useRef<any>();
   const selectTableRef = useRef<any>();
-
-  const { data: info = {} } = useRequest({
-    url: '/access/query/info',
-    method: 'POST',
-    data: {
-      projectID: projectId,
-      streamID: streamId,
-    },
-  });
 
   //get table
   const getTableList = useCallback(async (db: string) => {
@@ -195,7 +194,7 @@ const AddSubscribeDrawer = ({ visible, onClose, streamId }: AddSubscribeDrawerPr
                       type: 'string',
                       title: '表名称',
                       required: true,
-                      defaultValue: 'test_table_name',
+                      defaultValue: info.name,
                     },
                   ]}
                   onRef={form => (autoCreateTableRef.current = form)}
@@ -261,6 +260,7 @@ const AddSubscribeDrawer = ({ visible, onClose, streamId }: AddSubscribeDrawerPr
 
   //handle add subscrible
   const handleOk = async () => {
+    setLoading(true);
     const [basicFrom, tableForm] = await Promise.all([
       formRef.current.submit(),
       autoCreateTableRef.current.submit(),
@@ -297,8 +297,12 @@ const AddSubscribeDrawer = ({ visible, onClose, streamId }: AddSubscribeDrawerPr
       message.success({
         content: '新建订阅成功！',
       });
+      onClose();
+      refreshSubscribeList();
     } catch (e) {
       console.warn(e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -314,7 +318,7 @@ const AddSubscribeDrawer = ({ visible, onClose, streamId }: AddSubscribeDrawerPr
       title="新增订阅"
       footer={
         <div style={{ float: 'right' }}>
-          <Button type="primary" onClick={handleOk}>
+          <Button type="primary" onClick={handleOk} loading={loading}>
             新增
           </Button>
           <Button style={{ marginLeft: '10px' }} type="weak" onClick={onClose}>

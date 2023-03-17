@@ -28,7 +28,7 @@ import {
 } from '@/@tencent/enums/stream';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 
-const Info = ({ streamId }) => {
+const Info = ({ streamId, info }) => {
   const [projectId] = useProjectId();
 
   const { data = {} } = useRequest({

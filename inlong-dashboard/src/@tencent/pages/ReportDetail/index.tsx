@@ -120,7 +120,7 @@ export default function StreamDetail() {
         <Tabs tabs={tabs}>
           {tabs.map(({ id, Component }) => (
             <TabPanel id={id} key={id}>
-              <Component streamId={streamId} />
+              <Component streamId={streamId} info={data} />
             </TabPanel>
           ))}
         </Tabs>

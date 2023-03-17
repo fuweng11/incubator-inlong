@@ -52,12 +52,12 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
         ? [
             {
               value: curProjectInfo.ProjectId,
-              text: curProjectInfo.ProjectName,
+              text: curProjectInfo.DisplayName,
             },
           ].concat(
             projectListData.Rows.map(item => ({
               value: item.ProjectId,
-              text: item.ProjectName,
+              text: item.DisplayName,
             })),
           )
         : [],
@@ -85,7 +85,6 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
                 className={styles.projectSelector}
                 searchable
                 matchButtonWidth
-                size="s"
                 appearance="button"
                 options={projectList}
                 defaultValue={curProjectInfo.ProjectId}
