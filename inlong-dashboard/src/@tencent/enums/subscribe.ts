@@ -16,29 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+export enum partitionUnitEnum {
+  hour = 'H',
+  day = 'D',
+  minute = 'i',
+}
 
-import type { RouteProps } from '.';
-
-const conf: RouteProps[] = [
-  {
-    path: '/demo',
-    component: () => import('@/@tencent/pages/Example'),
-    // childRoutes: [],
-  },
-  {
-    path: '/stream',
-    component: () => import('@/@tencent/pages/Stream'),
-    childRoutes: [
-      {
-        path: '/create',
-        component: () => import('@/@tencent/pages/StreamCreate'),
-      },
-      {
-        path: '/:id',
-        component: () => import('@/@tencent/pages/StreamDetail'),
-      },
-    ],
-  },
-];
-
-export default conf;
+export const partitionUnitMap: Map<partitionUnitEnum, string> = (() => {
+  const map = new Map();
+  map
+    .set(partitionUnitEnum.hour, 'hour')
+    .set(partitionUnitEnum.day, 'day')
+    .set(partitionUnitEnum.minute, 'minute');
+  return map;
+})();

@@ -80,7 +80,7 @@ const conf: ConfItem[] = [
     fields: [
       { label: '单日峰值', value: 'peakRate', enumMap: peakRateMap },
       { label: '单日最大接入量', value: 'peakTotalSize', unit: 'GB' },
-      { label: '单条数据最大值', value: 'msgMaxLength', unit: 'GB' },
+      { label: '单条数据最大值', value: 'msgMaxLength', unit: 'Byte' },
     ],
   },
   {

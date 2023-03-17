@@ -164,7 +164,7 @@ const AccessForm = forwardRef(
         <Form.Item
           label="单条数据最大值"
           align="middle"
-          suffix="GB"
+          suffix="Byte"
           required
           status={errors.msgMaxLength?.message ? 'error' : undefined}
           message={errors.msgMaxLength?.message}

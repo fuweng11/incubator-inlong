@@ -28,6 +28,7 @@ import {
   dataSeparatorMap,
   peakRateMap,
 } from '@/@tencent/enums/stream';
+import { partitionUnitMap } from '@/@tencent/enums/subscribe';
 import request from '@/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { message } from '@tencent/tea-component';
@@ -122,14 +123,14 @@ const AddSubscribeDrawer = ({
       title: '分区间隔',
       required: true,
       component: 'radio',
-      defaultValue: 'hour',
+      defaultValue: 'H',
       options: [
         {
-          name: 'hour',
+          name: 'H',
           title: '小时',
         },
         {
-          name: 'day',
+          name: 'D',
           title: '天',
         },
       ],
@@ -137,7 +138,7 @@ const AddSubscribeDrawer = ({
         fields.setComponentProps({
           suffix: (
             <span style={{ color: '#888', display: 'inline-block', marginLeft: '10px' }}>
-              分区字段：{values.partitionUnit}
+              分区字段：{partitionUnitMap.get(values.partitionUnit)}
             </span>
           ),
         });
@@ -349,7 +350,7 @@ const AddSubscribeDrawer = ({
                 <Form.Text>{info.peakTotalSize} GB</Form.Text>
               </Form.Item>
               <Form.Item label="平均每条数据大小">
-                <Form.Text>{info.msgMaxLength} GB</Form.Text>
+                <Form.Text>{info.msgMaxLength} Byte</Form.Text>
               </Form.Item>
               <Form.Item label="采集类型">
                 <Form.Text>{encodeTypeMap.get(info.encodeType) || info.encodeType}</Form.Text>

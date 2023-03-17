@@ -67,7 +67,7 @@ const Info = ({ streamId, info }) => {
         </Col>
         <Col span={8}>
           <Form.Item label="单条数据最大值">
-            <Form.Text>{data.msgMaxLength} GB</Form.Text>
+            <Form.Text>{data.msgMaxLength} Byte</Form.Text>
           </Form.Item>
         </Col>
 
