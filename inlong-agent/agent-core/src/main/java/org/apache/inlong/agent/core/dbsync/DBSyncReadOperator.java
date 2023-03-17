@@ -245,7 +245,9 @@ public class DBSyncReadOperator {
     }
 
     private void setState(State state) {
+        LOGGER.debug("setState  current status {}, change state {}: ", state, state);
         STATUS_UPDATER.set(DBSyncReadOperator.this, state);
+        status = state;
     }
 
     public synchronized void restart() {
@@ -537,6 +539,7 @@ public class DBSyncReadOperator {
                 restart();
             }
             hbInfo.setErrorMsg(getErrorMsg());
+            hbInfo.setAgentStatus(status.name());
         }
 
         return hbInfo;
