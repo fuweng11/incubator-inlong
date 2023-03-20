@@ -27,6 +27,7 @@ import {
   Switch,
   Select,
   Tooltip,
+  Bubble,
 } from '@tencent/tea-component';
 import { useForm, Controller } from 'react-hook-form';
 import { useRequest } from 'ahooks';
@@ -56,6 +57,7 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
       sinkInnerHive: false,
       subscribeTHive: {
         dbName: '',
+        dbTableName: `table_${new Date().getTime().toString()}`,
       },
     },
   });
@@ -87,10 +89,6 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
         resolve({
           ...values,
           autoCreateTable: values.sinkInnerHive,
-          subscribeTHive: {
-            ...values.subscribeTHive,
-            dbTableName: values.subscribeTHive.dbName,
-          },
         });
       }, reject)();
     });
@@ -185,7 +183,32 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
                 <Alert type="info" hideIcon style={{ marginTop: 10 }}>
                   <ul style={{ listStyle: 'initial' }}>
                     <li>
-                      开启自动写入TDW,将自动生成一张和日志名称同名的Hive表，表分区默认为“小时”，分区字段：hour，schema与接入源数据字段一致
+                      开启自动写入TDW，将自动生成表：
+                      <Form.Item
+                        align="middle"
+                        required
+                        style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                        status={errors.subscribeTHive?.dbTableName?.message ? 'error' : undefined}
+                        showStatusIcon={false}
+                      >
+                        <Controller
+                          name="subscribeTHive.dbTableName"
+                          control={control}
+                          rules={{
+                            required: '请填写表名称',
+                            pattern: {
+                              value: /^\w+$/,
+                              message: '仅支持英文字母、数字、下划线',
+                            },
+                          }}
+                          render={({ field }) => (
+                            <Bubble error content={errors.subscribeTHive?.dbTableName?.message}>
+                              <Input {...field} style={{ background: 'transparent', height: 22 }} />
+                            </Bubble>
+                          )}
+                        />
+                      </Form.Item>
+                      ，表分区默认为“小时”，分区字段：hour，schema与接入源数据字段一致
                     </li>
                     <li>
                       <div style={{ display: 'flex', alignItems: 'center' }}>
