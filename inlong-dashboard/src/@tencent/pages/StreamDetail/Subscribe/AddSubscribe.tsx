@@ -163,7 +163,7 @@ const AddSubscribeDrawer = ({
         field.setComponentProps({
           options: data.map(item => ({ text: item.dbName, value: item.dbName })),
         });
-        values.dbName = data[0].dbName;
+        values.dbName = data[0]?.dbName;
       },
       suffix: (
         <a href="/" target="_blank">

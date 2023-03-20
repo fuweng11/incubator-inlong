@@ -46,23 +46,33 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
     if (menuItem.children) return getFirstChildRoute(menuItem.children[0]);
   }, []);
 
-  const projectList = useMemo(
-    () =>
-      curProjectInfo && projectListData
-        ? [
-            {
-              value: curProjectInfo.ProjectId,
-              text: curProjectInfo.DisplayName,
-            },
-          ].concat(
-            projectListData.Rows.map(item => ({
-              value: item.ProjectId,
-              text: item.DisplayName,
-            })),
-          )
-        : [],
-    [projectListData, curProjectInfo],
-  );
+  const projectList = useMemo(() => {
+    if (curProjectInfo && projectListData) {
+      if (
+        projectListData.Rows?.length &&
+        projectListData.Rows.some(item => item.ProjectId === curProjectInfo.ProjectId)
+      ) {
+        return projectListData.Rows.map(item => ({
+          value: item.ProjectId,
+          text: item.DisplayName,
+        }));
+      } else {
+        return [
+          {
+            value: curProjectInfo.ProjectId,
+            text: curProjectInfo.DisplayName,
+          },
+        ].concat(
+          projectListData.Rows.map(item => ({
+            value: item.ProjectId,
+            text: item.DisplayName,
+          })),
+        );
+      }
+    } else {
+      return [];
+    }
+  }, [projectListData, curProjectInfo]);
   return (
     <Header>
       <NavMenu
