@@ -23,13 +23,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.util.HttpUtils;
+import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.pojo.common.Response;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.tencent.sc.AppGroup;
 import org.apache.inlong.manager.pojo.tencent.sc.Product;
+import org.apache.inlong.manager.pojo.tencent.sc.ScDataBaseInfo;
 import org.apache.inlong.manager.pojo.tencent.sc.ScDbPermission;
 import org.apache.inlong.manager.pojo.tencent.sc.ScHiveResource;
 import org.apache.inlong.manager.pojo.tencent.sc.ScPage;
@@ -68,7 +71,7 @@ public class ScServiceImpl implements ScService {
     private static final String LIST_ALL_GROUP_API = "/api/authz/group/listAllGroupsPage";
     private static final String CHECK_PERMISSIONS_API = "/openapi/sc/authz/ranger/checkPermissions";
     private static final String GRANT_AUTH = "/openapi/sc/authz/management/grant/AUTH_HIVE_RS";
-    private static final String LIST_DATABASE_API = "/openapi/sc/authz/resource/hive/listDatabases";
+    private static final String LIST_DATABASE_API = "/openapi/sc/authz/resourceauth/hive/listAuthHiveDatabase";
 
     private static final Gson GSON = new GsonBuilder().create();
     private final ScApiRequestService scApiRequestService;
@@ -243,14 +246,23 @@ public class ScServiceImpl implements ScService {
         Map<String, Object> params = Maps.newHashMap();
         params.put("pageNum", 1);
         params.put("pageSize", 9999);
+        String hiveType = SinkType.INNER_THIVE.equals(sinkType) ? "THIVE" : "HIVE";
+        params.put("resourceType", hiveType);
+        params.put("access1", "all");
+        params.put("access2", "create");
         params.put("clusterIdentifier", dataNodeInfo.getClusterTag());
-        params.put("groupList", groupInfo.getAppGroupName());
+        params.put("groups", groupInfo.getAppGroupName());
         String url = scOpenApiUrl + LIST_DATABASE_API;
-        Response<ScPage<ScHiveResource>> response = HttpUtils.getRequest(restTemplate, url, params,
+        String rsp = HttpUtils.getRequest(restTemplate, url, params,
                 scApiRequestService.getHeader(),
-                new ParameterizedTypeReference<Response<ScPage<ScHiveResource>>>() {
+                new ParameterizedTypeReference<String>() {
                 });
-        return scApiRequestService.checkAndGetResponseBody(response).getData();
+        ScDataBaseInfo str = JsonUtils.parseObject(rsp, ScDataBaseInfo.class);
+        Preconditions.expectNotNull(str, "can not get database from" + url);
+        for (ScHiveResource sc : str.getData()) {
+            log.info("test {}", sc.getDatabase());
+        }
+        return str.getData();
     }
 
     @Override
