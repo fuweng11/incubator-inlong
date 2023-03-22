@@ -17,13 +17,20 @@
  * under the License.
  */
 
-import React from 'react';
-import { StatusTip } from '@tencent/tea-component';
+.dbTableNameFormItem {
+  display: inline-block;
+  vertical-align: middle;
 
-export default function PageLoading() {
-  return (
-    <span style={{ display: 'flex', justifyContent: 'center', height: '100%' }}>
-      <StatusTip.LoadingTip />
-    </span>
-  );
+  :global {
+    .tea-form__label {
+      display: none;
+    }
+    .tea-form__controls > .tea-icon-valid {
+      margin-top: 3px;
+      margin-left: 5px;
+    }
+    .tea-form__controls:not(.is-error) {
+      padding-right: 2px;
+    }
+  }
 }

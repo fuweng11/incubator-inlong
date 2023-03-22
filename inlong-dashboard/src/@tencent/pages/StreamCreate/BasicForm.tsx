@@ -33,6 +33,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useRequest } from 'ahooks';
 import { dataLevelMap, DataLevelEnum } from '@/@tencent/enums/stream';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
+import styles from './index.module.less';
 
 export interface BasicFormRef {
   submit: () => Promise<Record<string, any>>;
@@ -187,9 +188,8 @@ const BasicForm = forwardRef(({ onChange, ...props }: BasicFormProps, ref: Ref<B
                       <Form.Item
                         align="middle"
                         required
-                        style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                        className={styles.dbTableNameFormItem}
                         status={errors.subscribeTHive?.dbTableName?.message ? 'error' : undefined}
-                        showStatusIcon={false}
                       >
                         <Controller
                           name="subscribeTHive.dbTableName"
