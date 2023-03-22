@@ -90,7 +90,15 @@ VALUES ('audit_sdk_collect', 'SDK', 0, '1'),
        ('audit_sort_mysql_input', 'MYSQL', 0, '23'),
        ('audit_sort_mysql_output', 'MYSQL', 1, '24'),
        ('audit_sort_kudu_input', 'KUDU', 0, '25'),
-       ('audit_sort_kudu_output', 'KUDU', 1, '26');
+       ('audit_sort_kudu_output', 'KUDU', 1, '26'),
+       ('audit_id_sort_inner_hive_input', 'INNER_HIVE', 0, '7'),
+       ('audit_id_sort_inner_hive_output', 'INNER_HIVE', 1, '8'),
+       ('audit_id_sort_inner_thive_input', 'INNER_THIVE', 0, '7'),
+       ('audit_id_sort_inner_thive_output', 'INNER_THIVE', 1, '8'),
+       ('audit_id_sort_inner_clickhouse_input', 'INNER_CK', 0, '9'),
+       ('audit_id_sort_inner_clickhouse_output', 'INNER_CK', 1, '10'),
+       ('audit_id_sort_inner_iceberg_input', 'INNER_ICEBERG', 0, '17'),
+       ('audit_id_sort_inner_iceberg_output', 'INNER_ICEBERG', 1, '18');
 
 ALTER  TABLE dbsync_heartbeat CHANGE server_id server_name varchar(64)  NOT NULL DEFAULT '' COMMENT 'ServerName of the task, is the ID of data_node table';
 ALTER  TABLE dbsync_heartbeat CHANGE backup_url backup_url varchar(256) DEFAULT NULL COMMENT 'URL of the standby DB server';
