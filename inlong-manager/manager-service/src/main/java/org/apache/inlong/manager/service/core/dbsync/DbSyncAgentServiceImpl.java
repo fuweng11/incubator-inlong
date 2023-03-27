@@ -246,8 +246,8 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 Integer localTaskStatus = entry.getValue();
                 if (!taskIdSet.contains(localTaskId)) {
                     // change the to be frozen to frozen(102)
-                    if (Objects.equals(localTaskStatus, SourceStatus.BEEN_ISSUED_FROZEN.getCode())) {
-                        sourceMapper.updateStatus(localTaskId, SourceStatus.SOURCE_FROZEN.getCode(), null, null);
+                    if (Objects.equals(localTaskStatus, SourceStatus.BEEN_ISSUED_STOP.getCode())) {
+                        sourceMapper.updateStatus(localTaskId, SourceStatus.SOURCE_STOP.getCode(), null, null);
                     } else if (Objects.equals(localTaskStatus, SourceStatus.BEEN_ISSUED_DELETE.getCode())) {
                         // change the to be deleted to disabled(99)
                         sourceMapper.updateStatus(localTaskId, SourceStatus.SOURCE_DISABLE.getCode(), null, null);
@@ -810,8 +810,8 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                      * SourceStatus.AGENT_ISSUED_UPDATE.getCode()) { // Starting 301 / Unfreezing 303 / Update been
                      * issued 305, will change to normal(101) // ignore } else
                      */
-                    if (previousStatus == SourceStatus.BEEN_ISSUED_FROZEN.getCode()) {
-                        nextStatus = SourceStatus.SOURCE_FROZEN.getCode();
+                    if (previousStatus == SourceStatus.BEEN_ISSUED_STOP.getCode()) {
+                        nextStatus = SourceStatus.SOURCE_STOP.getCode();
                     } else if (previousStatus == SourceStatus.BEEN_ISSUED_DELETE.getCode()) {
                         nextStatus = SourceStatus.SOURCE_DISABLE.getCode();
                     }
