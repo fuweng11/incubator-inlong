@@ -897,6 +897,7 @@ public class DBSyncReadOperator {
         Thread dumperThread = new Thread(() -> {
             MysqlConnection erosaConnection = null;
             boolean bNeedClearParseThread = false;
+            tryExecFromLast();
             while (running) {
                 InetSocketAddress dbConnectionAddress = null;
                 try {
@@ -931,7 +932,7 @@ public class DBSyncReadOperator {
                         synchronized (syncObject) {
                             LogPosition tmpPos = getMaxParseLogPosition();
                             if (tmpPos != null) {
-                                lastLog = tmpPos;
+                                lastLog = new LogPosition(tmpPos);
                                 LOGGER.info("Job {} HA reset pos to {}!", jobName, tmpPos.getJsonObj().toJSONString());
                             }
                         }
@@ -1151,6 +1152,41 @@ public class DBSyncReadOperator {
         });
 
         return dumperThread;
+    }
+
+    private void tryExecFromLast() {
+        LogPosition startPos = jobconf.getStartPos();
+        if (startPos != null && startPos.getIdentity() != null) {
+            InetSocketAddress sourceAddress = startPos.getIdentity().getSourceAddress();
+            if (sourceAddress != null) {
+                String mstMysqlIp = getIp(jobconf.getMstMysqlIp());
+                int mstMysqlPort = jobconf.getMstMysqlPort();
+
+                String bakMysqlIp = getIp(jobconf.getBakMysqlIp());
+                int bakMysqlPort = jobconf.getBakMysqlPort();
+
+                String lastHostAddress = sourceAddress.getAddress().getHostAddress();
+                int lastPort = sourceAddress.getPort();
+
+                //if last equal bak then do switch
+                if ((!lastHostAddress.equals(mstMysqlIp) || lastPort != mstMysqlPort)
+                        && (lastHostAddress.equals(bakMysqlIp) && lastPort == bakMysqlPort)) {
+                    try {
+                        doSwitch();
+                    } catch (IOException e) {
+                        LOGGER.error("doSwitch error", e);
+                    }
+                }
+            }
+        }
+    }
+
+    private String getIp(String host) {
+        try {
+            return InetAddress.getByName(host).getHostAddress();
+        } catch (UnknownHostException e) {
+            return host;
+        }
     }
 
     protected void afterDump(MysqlConnection connection) {
@@ -1814,7 +1850,7 @@ public class DBSyncReadOperator {
         });
         // for the first record which is not binlog, start to scan from it
         if (reDump.get()) {
-            final AtomicLong preTransactionStartPosition = new AtomicLong(0L);
+            final AtomicLong preTransactionStartPosition = new AtomicLong(DBSYNC_BINLOG_START_OFFEST);
             mysqlConnection.reconnect();
             mysqlConnection.seek(entryPosition.getJournalName(), DBSYNC_BINLOG_START_OFFEST,
                     new SinkFunction<LogEvent>() {
@@ -1829,6 +1865,14 @@ public class DBSyncReadOperator {
                                     return true;
                                 }
 
+                                if (logHead.getType() == LogEvent.ROTATE_EVENT) {
+                                    String binlogFileName = ((RotateLogEvent) event).getFilename();
+                                    // if rotated to the next binlog,break
+                                    if (!entryPosition.getJournalName().equals(binlogFileName)) {
+                                        return false;
+                                    }
+                                }
+
                                 Entry entry = parseAndProfilingIfNecessary(event, jobconf);
                                 if (entry == null) {
                                     return true;
@@ -1841,7 +1885,7 @@ public class DBSyncReadOperator {
                                     preTransactionStartPosition.set(entry.getHeader().getLogfileOffset());
                                 }
 
-                                if (entry.getHeader().getLogfileOffset() >= entryPosition.getPosition()) {
+                                if (logHead.getLogPos() >= entryPosition.getPosition()) {
                                     LOGGER.info("JobName [{}] find first start position before entry "
                                             + "position {}", jobName, entryPosition.getJsonObj());
                                     return false;// exit

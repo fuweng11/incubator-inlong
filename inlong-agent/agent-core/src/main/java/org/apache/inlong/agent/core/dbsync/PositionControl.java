@@ -287,8 +287,10 @@ public class PositionControl {
      * Clear all sendLogPosition and eventLogPosition.
      */
     public void clearCache() {
+        int needReleasePermit = sendLogPositionCache.size();
         sendLogPositionCache.clear();
         eventLogPositionCache.clear();
+        semaphore.release(needReleasePermit);
     }
 
     private class AckLogPositionThread extends Thread {

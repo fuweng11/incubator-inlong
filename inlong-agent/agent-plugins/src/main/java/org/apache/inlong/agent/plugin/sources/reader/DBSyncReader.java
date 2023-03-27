@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.plugin.sources.reader;
 
 import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
 import org.apache.inlong.agent.plugin.Message;
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.inlong.agent.constant.JobConstants.DBSYNC_TASK_ID;
 
@@ -45,6 +47,11 @@ public class DBSyncReader extends AbstractReader {
     public Message read() {
         if (!messageQueue.isEmpty()) {
             return messageQueue.poll();
+        }
+        try {
+            return messageQueue.poll(JobConstants.DEFAULT_JOB_READ_WAIT_TIMEOUT, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            LOGGER.warn("read data get interruptted.", e);
         }
         return null;
     }
