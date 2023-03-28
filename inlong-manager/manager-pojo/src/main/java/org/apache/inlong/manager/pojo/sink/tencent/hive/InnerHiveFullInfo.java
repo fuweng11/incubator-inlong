@@ -42,6 +42,8 @@ public class InnerHiveFullInfo {
     private String inlongStreamId;
     private Integer isThive;
     private String usTaskId;
+    private String usCheckId;
+    private String usImportId;
     private String verifiedTaskId; // the US task of verifying data is a sub task of the above task
     private String appGroupName;
     private String defaultSelectors;
