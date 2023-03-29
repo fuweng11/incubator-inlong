@@ -36,7 +36,7 @@ export default class PulsarSource
     rules: [{ required: true }],
     props: values => ({
       showSearch: true,
-      disabled: values?.status === 101,
+      disabled: ![101, 102, 104, 110].includes(values?.status),
       options: {
         requestTrigger: ['onOpen', 'onSearch'],
         requestService: keyword => ({
@@ -69,7 +69,7 @@ export default class PulsarSource
     rules: [{ required: true }],
     props: values => ({
       showSearch: true,
-      disabled: values?.status === 101,
+      disabled: ![101, 102, 104, 110].includes(values?.status),
       options: {
         requestTrigger: ['onOpen', 'onSearch'],
         requestService: keyword => ({
@@ -100,7 +100,7 @@ export default class PulsarSource
     type: 'input',
     rules: [{ required: true }],
     props: values => ({
-      disabled: values?.status === 101,
+      disabled: ![101, 102, 104, 110].includes(values?.status),
     }),
   })
   @I18n('meta.Sources.HaBinlog.DBName')
@@ -110,7 +110,7 @@ export default class PulsarSource
     type: 'input',
     rules: [{ required: true }],
     props: values => ({
-      disabled: values?.status === 101,
+      disabled: ![101, 102, 104, 110].includes(values?.status),
     }),
   })
   @I18n('meta.Sources.HaBinlog.TableName')
@@ -121,7 +121,7 @@ export default class PulsarSource
     rules: [{ required: true }],
     initialValue: 'UTF-8',
     props: values => ({
-      disabled: values?.status === 101,
+      disabled: ![101, 102, 104, 110].includes(values?.status),
       options: [
         {
           label: 'UTF-8',
@@ -142,7 +142,7 @@ export default class PulsarSource
     rules: [{ required: true }],
     initialValue: 1,
     props: values => ({
-      disabled: values?.status === 101,
+      disabled: ![101, 102, 104, 110].includes(values?.status),
       options: [
         {
           label: i18n.t('basic.Yes'),
@@ -161,7 +161,7 @@ export default class PulsarSource
   @FieldDecorator({
     type: 'input',
     props: values => ({
-      disabled: values?.status === 101,
+      disabled: ![101, 102, 104, 110].includes(values?.status),
     }),
   })
   @I18n('meta.Sources.HaBinlog.FileName')
@@ -170,7 +170,7 @@ export default class PulsarSource
   @FieldDecorator({
     type: 'inputnumber',
     props: values => ({
-      disabled: values?.status === 101,
+      disabled: ![101, 102, 104, 110].includes(values?.status),
       min: 1,
       max: 1000000000,
       precision: 0,
