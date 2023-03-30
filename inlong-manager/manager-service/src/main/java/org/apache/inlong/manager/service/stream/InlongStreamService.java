@@ -21,6 +21,7 @@ import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
 import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
+import org.apache.inlong.manager.pojo.sink.ParseFieldRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamApproveRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamBriefInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
@@ -238,10 +239,10 @@ public interface InlongStreamService {
             InlongStreamEntity streamEntity);
 
     /**
-     * Converts a json string to a streamFields
+     * Converts a statement to a streamFields
      *
-     * @param fieldsJson JSON string for the field information
+     * @param parseFieldRequest    parse field request
      * @return list of stream field
      */
-    List<StreamField> parseFields(String fieldsJson);
+    List<StreamField> parseFields(ParseFieldRequest parseFieldRequest);
 }
