@@ -1168,7 +1168,7 @@ public class DBSyncReadOperator {
                 String lastHostAddress = sourceAddress.getAddress().getHostAddress();
                 int lastPort = sourceAddress.getPort();
 
-                //if last equal bak then do switch
+                // if last equal bak then do switch
                 if ((!lastHostAddress.equals(mstMysqlIp) || lastPort != mstMysqlPort)
                         && (lastHostAddress.equals(bakMysqlIp) && lastPort == bakMysqlPort)) {
                     try {

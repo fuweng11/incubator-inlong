@@ -35,7 +35,6 @@ import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
 import org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity;
 import org.apache.inlong.manager.dao.mapper.DataNodeEntityMapper;
-import org.apache.inlong.manager.dao.mapper.InlongClusterNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSourceEntityMapper;
 import org.apache.inlong.manager.dao.mapper.tencent.DbSyncHeartbeatEntityMapper;
 import org.apache.inlong.manager.pojo.common.PageResult;
@@ -390,10 +389,9 @@ public class DataNodeServiceImpl implements DataNodeService {
             groupBriefResponse.setInlongGroupId(entry.getKey());
             groupBriefResponse.setInlongStreamBriefResponses(
                     new HashSet<>(entry.getValue().stream().map(sourceEntity -> new InlongStreamBriefResponse(
-                                    sourceEntity.getInlongGroupId(),
-                                    sourceEntity.getInlongStreamId()))
-                            .collect(Collectors.toList()))
-            );
+                            sourceEntity.getInlongGroupId(),
+                            sourceEntity.getInlongStreamId()))
+                            .collect(Collectors.toList())));
             response.addGroupBriefResponse(groupBriefResponse);
         }
         return response;

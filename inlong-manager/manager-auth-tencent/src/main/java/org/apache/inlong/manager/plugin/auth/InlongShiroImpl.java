@@ -58,7 +58,6 @@ public class InlongShiroImpl implements InlongShiro {
     private static final String FILTER_NAME_WEB = "authWeb";
     private static final String FILTER_NAME_API = "authAPI";
 
-
     @Value("${openapi.auth.enabled:false}")
     private Boolean openAPIAuthEnabled;
 
