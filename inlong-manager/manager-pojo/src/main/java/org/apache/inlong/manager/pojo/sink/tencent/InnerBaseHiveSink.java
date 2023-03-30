@@ -39,6 +39,12 @@ public abstract class InnerBaseHiveSink extends StreamSink {
     @ApiModelProperty("us task id")
     private String usTaskId;
 
+    @ApiModelProperty(value = "us check task id", notes = "use for the under switching group")
+    private String usCheckTaskId;
+
+    @ApiModelProperty(value = "us import task id", notes = "use for the under switching group")
+    private String usImportTaskId;
+
     @ApiModelProperty("verified task id")
     private String verifiedTaskId; // the US task of verifying data is a sub task of the above task
 

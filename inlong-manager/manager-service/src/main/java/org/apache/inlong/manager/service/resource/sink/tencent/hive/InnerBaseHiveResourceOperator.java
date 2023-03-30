@@ -78,7 +78,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InnerBaseHiveResourceOperator.class);
     private static final Gson GSON = new GsonBuilder().create();
-    private static final int MAX_RETRY_TIMES = 10;
+    private static final int MAX_RETRY_TIMES = 20;
 
     @Autowired
     private ScService scService;
@@ -577,10 +577,8 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             LOGGER.info("check permission with user={}, hasPermission={}, retryTimes={}, maxRetryTimes={}",
                     username, hasPermissions, retryTimes.get(), MAX_RETRY_TIMES);
             // sleep 5 minute
-            LOGGER.info("begin to grant hive privilege {} for user={}", accessType, username);
             scService.grant(username, dbName, tableName, accessType, hiveType, clusterTag);
-            LOGGER.info("finish to grant hive privilege {} for user={}", accessType, username);
-            Thread.sleep(500 * 60);
+            Thread.sleep(3 * 1000);
             retryTimes.incrementAndGet();
             hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType, clusterTag);
         }
