@@ -19,33 +19,20 @@
 
 import React from 'react';
 import { Col, Row, Form, Table, StatusTip } from '@tencent/tea-component';
-import { useRequest } from 'ahooks';
 import {
   accessTypeMap,
   encodeTypeMap,
   dataSeparatorMap,
   peakRateMap,
 } from '@/@tencent/enums/stream';
-import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 const Info = ({ streamId, info }) => {
-  const [projectId] = useProjectId();
-
-  const { data = {} } = useRequest({
-    url: '/access/query/info',
-    method: 'POST',
-    data: {
-      projectID: projectId,
-      streamID: streamId,
-    },
-  });
-
   return (
     <Form layout="fixed" style={{ display: 'flex' }} fixedLabelWidth={100}>
       <Row>
         <Col span={24}>
           <Form.Item label="接入方式">
-            <Form.Text>{accessTypeMap.get(data.accessModel) || data.accessModel}</Form.Text>
+            <Form.Text>{accessTypeMap.get(info?.accessModel) || info?.accessModel}</Form.Text>
           </Form.Item>
         </Col>
 
@@ -57,17 +44,17 @@ const Info = ({ streamId, info }) => {
             label="单日峰值"
             tips="单日峰值（条/秒），请按照数据实际上报量以及后续增长情况，适当上浮20%-50%左右填写，用于容量管理。如果上涨超过容量限制，平台在紧急情况下会抽样或拒绝数据"
           >
-            <Form.Text>{peakRateMap.get(data.peakRate) || data.peakRate}</Form.Text>
+            <Form.Text>{peakRateMap.get(info?.peakRate) || info?.peakRate}</Form.Text>
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item label="单日最大接入量">
-            <Form.Text>{data.peakTotalSize} GB</Form.Text>
+            <Form.Text>{info?.peakTotalSize} GB</Form.Text>
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item label="单条数据最大值">
-            <Form.Text>{data.msgMaxLength} Byte</Form.Text>
+            <Form.Text>{info?.msgMaxLength} Byte</Form.Text>
           </Form.Item>
         </Col>
 
@@ -76,12 +63,14 @@ const Info = ({ streamId, info }) => {
         </Col>
         <Col span={8}>
           <Form.Item label="编码类型">
-            <Form.Text>{encodeTypeMap.get(data.encodeType) || data.encodeType}</Form.Text>
+            <Form.Text>{encodeTypeMap.get(info?.encodeType) || info?.encodeType}</Form.Text>
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item label="分隔符">
-            <Form.Text>{dataSeparatorMap.get(data.dataSeparator) || data.dataSeparator}</Form.Text>
+            <Form.Text>
+              {dataSeparatorMap.get(info?.dataSeparator) || info?.dataSeparator}
+            </Form.Text>
           </Form.Item>
         </Col>
         <Col span={24}>
@@ -89,7 +78,7 @@ const Info = ({ streamId, info }) => {
             <Table
               bordered
               verticalTop
-              records={data.fieldsData || []}
+              records={info?.fieldsData || []}
               recordKey="fieldName"
               columns={[
                 {
@@ -105,7 +94,7 @@ const Info = ({ streamId, info }) => {
                   header: '字段描述',
                 },
               ]}
-              topTip={!data.fieldsData?.length && <StatusTip status="empty" />}
+              topTip={!info?.fieldsData?.length && <StatusTip status="empty" />}
             />
           </Form.Item>
         </Col>
