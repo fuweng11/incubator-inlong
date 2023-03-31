@@ -32,7 +32,7 @@ import {
 } from '@tencent/tea-component';
 import { useForm, Controller } from 'react-hook-form';
 import { useRequest } from 'ahooks';
-import { dateFormat } from '@/utils';
+import { dateFormat } from '@/core/utils';
 import {
   dataLevelMap,
   accessTypeMap,
@@ -41,7 +41,7 @@ import {
   dataSeparatorMap,
 } from '@/@tencent/enums/stream';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
-import request from '@/utils/request';
+import request from '@/core/utils/request';
 
 interface FieldsParseProps extends ModalProps {
   id?: number | string;

@@ -21,7 +21,7 @@ import Provider from '@/@tencent/components/Provider';
 import Layout from '@/@tencent/components/Layout';
 import PageLoading from '@/@tencent/components/PageLoading';
 import { requestErrorAlert } from '@/@tencent/components/RequestErrorAlert';
-import type { SuccessResponse } from '@/utils/request';
+import type { SuccessResponse } from '@/core/utils/request';
 
 const conf = {
   title: '',

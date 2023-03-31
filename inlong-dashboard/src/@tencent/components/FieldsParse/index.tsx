@@ -33,7 +33,7 @@ import {
   message,
 } from '@tencent/tea-component';
 import Editor from '@monaco-editor/react';
-import request from '@/utils/request';
+import request from '@/core/utils/request';
 
 const { selectable, scrollable } = Table.addons;
 

@@ -20,8 +20,8 @@
 import React, { useMemo } from 'react';
 import { Layout } from '@tencent/tea-component';
 import menuTree from '@/configs/menus';
-import { useSelector } from '@/hooks';
-import { State } from '@/models';
+import { useSelector } from 'react-redux';
+import { State } from '@/core/stores';
 import Header from './Header';
 import Body from './Body';
 

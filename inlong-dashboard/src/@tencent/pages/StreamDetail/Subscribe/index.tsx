@@ -20,9 +20,9 @@ import React, { useCallback } from 'react';
 import { ProTable } from '@tencent/tea-material-pro-table';
 import { useState } from 'react';
 import AddSubscribeDrawer from './AddSubscribe';
-import request from '@/utils/request';
+import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
-import { dateFormat } from '@/utils';
+import { dateFormat } from '@/core/utils';
 import { Badge } from '@tencent/tea-component';
 import { statusMap } from '@/@tencent/enums/stream';
 

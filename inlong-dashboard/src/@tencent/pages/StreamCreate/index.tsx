@@ -21,7 +21,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Button, Card, Modal, message } from '@tencent/tea-component';
 import { PageContainer, Container, FooterToolbar } from '@/@tencent/components/PageContainer';
-import request from '@/utils/request';
+import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import BasicForm, { BasicFormRef } from './BasicForm';
 import AccessForm, { AccessFormRef } from './AccessForm';

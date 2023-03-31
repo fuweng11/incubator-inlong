@@ -21,7 +21,7 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Alert, Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
 import { useRequest } from 'ahooks';
-import { dateFormat } from '@/utils';
+import { dateFormat } from '@/core/utils';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
 import PublishModal from '@/@tencent/pages/Stream/PublishModal';

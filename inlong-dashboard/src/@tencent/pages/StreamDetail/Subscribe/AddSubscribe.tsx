@@ -29,7 +29,7 @@ import {
   peakRateMap,
 } from '@/@tencent/enums/stream';
 import { partitionUnitMap } from '@/@tencent/enums/subscribe';
-import request from '@/utils/request';
+import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { message } from '@tencent/tea-component';
 
