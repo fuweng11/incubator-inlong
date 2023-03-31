@@ -49,17 +49,17 @@ public class SortFieldFormatUtils {
             case "boolean":
                 formatInfo = new BooleanFormatInfo();
                 break;
+            case "int8":
             case "tinyint":
             case "byte":
                 formatInfo = new ByteFormatInfo();
                 break;
             case "smallint":
             case "short":
+            case "int16":
                 formatInfo = new ShortFormatInfo();
                 break;
             case "int":
-            case "int8":
-            case "int16":
             case "int32":
             case "integer":
                 formatInfo = new IntFormatInfo();
