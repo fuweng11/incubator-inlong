@@ -70,7 +70,7 @@ public interface JobHaDispatcher {
      */
     void updateRunJobInfo(String syncId, JobRunNodeInfo jobRunNodeInfo);
 
-    void updateJobCoordinator(String clusterId, String changeCoordinatorPath);
+    void updateJobCoordinator(String clusterId, String changeCoordinatorPath ,boolean isRemoved);
 
     void updateZkStats(String clusterId, String syncId, boolean isConnected);
 
