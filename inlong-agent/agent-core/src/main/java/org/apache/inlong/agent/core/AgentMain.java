@@ -116,6 +116,8 @@ public class AgentMain {
             stopAgentIfKilled(manager);
             // metrics
             MetricObserver.init(AgentConfiguration.getAgentConf().getConfigProperties());
+            // jvm report
+            MetricObserver.reportJvmToBrain("Agent");
             manager.join();
         } catch (Exception ex) {
             LOGGER.error("agent running exception: ", ex);

@@ -211,6 +211,8 @@ public class Application {
             }
             // metrics
             MetricObserver.init(CommonPropertiesHolder.get());
+            // jvm report
+            MetricObserver.reportJvmToBrain("DataProxy");
             // audit
             AuditUtils.initAudit();
 

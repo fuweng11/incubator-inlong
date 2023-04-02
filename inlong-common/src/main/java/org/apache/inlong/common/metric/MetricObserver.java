@@ -20,6 +20,7 @@ package org.apache.inlong.common.metric;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.tencent.jmx.agent.metric.exporter.JavaAgent;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -78,6 +79,16 @@ public class MetricObserver {
 
     }
 
+    /**
+     * report JVM metrics to https://braingrafana.woa.com/
+     * refer to https://iwiki.woa.com/pages/viewpage.action?pageId=317013462
+     */
+    public static void reportJvmToBrain(String component) {
+        String jvmTaskId = "InLong_" + component;
+        String reportArgs = String.format("jvm_task_id=%s:product=InLong", jvmTaskId);
+        JavaAgent.premain(reportArgs);
+        LOG.info("the args for JVM reporter:" + reportArgs);
+    }
     /**
      * parseDomain
      */

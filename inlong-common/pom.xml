@@ -110,6 +110,11 @@
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.tencent.jmx</groupId>
+            <artifactId>metricAgent</artifactId>
+            <version>${tencent.brain.jmx.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

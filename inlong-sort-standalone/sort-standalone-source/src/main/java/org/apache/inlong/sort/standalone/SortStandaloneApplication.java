@@ -50,6 +50,8 @@ public class SortStandaloneApplication {
             cluster.start();
             // metrics
             MetricObserver.init(CommonPropertiesHolder.get());
+            // jvm report
+            MetricObserver.reportJvmToBrain("SortStandalone");
             AuditUtils.initAudit();
             Thread.sleep(5000);
         } catch (Exception e) {
