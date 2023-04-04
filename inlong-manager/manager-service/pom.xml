@@ -572,6 +572,10 @@
             <groupId>org.apache.kudu</groupId>
             <artifactId>kudu-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+        </dependency>
 
         <!-- Tencent inner dependencies -->
         <!-- interacting with Sort-ETL needs to use curator-client -->
