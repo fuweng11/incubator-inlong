@@ -39,8 +39,19 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
   userName,
 }: LayoutHeaderProps) => {
   const [projectId] = useProjectId();
-  const { data: projectListData } = useProjectList();
+
+  const { data: projectListData } = useProjectList({
+    onSuccess: result => {
+      if (result?.Rows?.[0] && !projectId) {
+        window.location.search = stringify({
+          ProjectId: result.Rows[0]?.ProjectId,
+        });
+      }
+    },
+  });
+
   const { data: curProjectInfo } = useProjectInfo(projectId);
+
   const getFirstChildRoute = useCallback((menuItem: MenuItemType) => {
     if (!menuItem.children && menuItem.path) return menuItem.path;
     if (menuItem.children) return getFirstChildRoute(menuItem.children[0]);
@@ -73,6 +84,7 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
       return [];
     }
   }, [projectListData, curProjectInfo]);
+
   return (
     <Header>
       <NavMenu
@@ -115,7 +127,7 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
                     <Link
                       to={getFirstChildRoute(menu)}
                       className={
-                        menu.key == currentMenu.key || menu.key == currentMenu.deepKey[0]
+                        menu.key === currentMenu.deepKey[0]
                           ? styles.activeText
                           : styles.noActiveText
                       }

@@ -20,6 +20,8 @@ import { MenuItemType } from '@/configs/menus';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Layout, Menu } from '@tencent/tea-component';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
+import PageLoading from '@/@tencent/components/PageLoading';
 import styles from './index.module.less';
 
 const { Body, Sider, Content } = Layout;
@@ -30,6 +32,8 @@ export interface LayoutBodyProps {
 }
 
 const LayoutBody: React.FC<LayoutBodyProps> = ({ subMenuTree, currentMenu, children }) => {
+  const [projectId] = useProjectId();
+
   return (
     <Body>
       <Sider style={{ zIndex: 100 }}>
@@ -54,7 +58,7 @@ const LayoutBody: React.FC<LayoutBodyProps> = ({ subMenuTree, currentMenu, child
             })}
         </Menu>
       </Sider>
-      <Content>{children}</Content>
+      <Content>{projectId ? children : <PageLoading />}</Content>
     </Body>
   );
 };
