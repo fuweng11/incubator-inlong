@@ -348,7 +348,7 @@ public class HaBinlogFetcher extends AbstractDaemon implements ProfileFetcher {
                     }
                 } else if (status == ManagerOpEnum.FROZEN.getType()) {
                     if (isHaEnable) {
-                        jobHaDispatcher.stopJob(taskConf.getServerName(), taskConf.getId());
+                        jobHaDispatcher.stopJob(taskConf.getServerName(), taskConf.getId(), taskConf);
                         future.complete(null);
                     } else {
                         deleteTask(taskConf, future);

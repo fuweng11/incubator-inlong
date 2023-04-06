@@ -49,7 +49,7 @@ public interface JobHaDispatcher {
     /**
      * stop job
      */
-    void stopJob(String syncId, Integer taskId);
+    void stopJob(String syncId, Integer taskId, DbSyncTaskInfo taskConf);
 
     /**
      * delete job

@@ -228,9 +228,9 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
      * @param syncId syncId
      */
     @Override
-    public void stopJob(String syncId, Integer taskId) {
+    public void stopJob(String syncId, Integer taskId, DbSyncTaskInfo taskConf) {
         LOGGER.info("stop job syncId[{}], taskId[{}]", syncId, taskId);
-        deleteJob(syncId, taskId, null);
+        deleteJob(syncId, taskId, taskConf);
     }
 
     /**
@@ -298,14 +298,9 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                     }
                 });
             } else {
-                LOGGER.error("fail to find local taskId[{}], current taskList{}", taskId,
-                        jobHaInfo.getTaskConfMap().keys());
-                if (taskConfFromTdm != null) {
-                    synchronized (errorTaskInfoList) {
-                        errorTaskInfoList.add(taskConfFromTdm);
-                    }
-                }
-
+                // not exist, delete ok!
+                LOGGER.info("cannot find local job, delete conf {}", taskConfFromTdm.getId());
+                correctTaskInfoList.add(taskConfFromTdm);
             }
             // delete job when there is no any task
             synchronized (jobHaInfo) {
