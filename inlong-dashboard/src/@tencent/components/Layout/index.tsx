@@ -17,15 +17,18 @@
  * under the License.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, Suspense, lazy } from 'react';
 import { Layout } from '@tencent/tea-component';
 import menuTree from '@/configs/menus';
 import { useSelector } from 'react-redux';
 import { State } from '@/core/stores';
+import { isDevelopEnv } from '@/core/utils';
 import Header from './Header';
 import Body from './Body';
 
 const BasicLayout: React.FC = props => {
+  const isDev = isDevelopEnv();
+
   const currentMenu = useSelector<State, State['currentMenu']>(state => state.currentMenu);
   const userName = useSelector<State, State['userName']>(state => state.userName);
 
@@ -34,10 +37,17 @@ const BasicLayout: React.FC = props => {
     return menuTree.find(item => item.key === TopKey)?.children;
   }, [currentMenu]);
 
+  const LazyDevDrawer = lazy(() => import('./DevDrawer'));
+
   return (
     <Layout style={{ minWidth: 1000 }}>
       <Header currentMenu={currentMenu} userName={userName} />
       <Body children={props.children} subMenuTree={subMenuTree} currentMenu={currentMenu} />
+      {isDev && (
+        <Suspense fallback="loading dev utils...">
+          <LazyDevDrawer />
+        </Suspense>
+      )}
     </Layout>
   );
 };

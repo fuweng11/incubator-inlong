@@ -19,15 +19,15 @@
 
 import React, { useState } from 'react';
 import { Button } from '@tencent/tea-component';
-import { PageContainer } from '@/@tencent/components/PageContainer';
-import FieldsParse from '@/@tencent/components/FieldsParse';
+import FieldsParse from '.';
 
-const DashBoard = () => {
+export default () => {
   const [visible, setVisible] = useState(false);
 
   return (
-    <PageContainer useDefaultContainer>
+    <>
       <Button onClick={() => setVisible(true)}>字段解析组件</Button>
+
       <FieldsParse
         visible={visible}
         onOk={data => {
@@ -36,8 +36,6 @@ const DashBoard = () => {
         }}
         onClose={() => setVisible(false)}
       />
-    </PageContainer>
+    </>
   );
 };
-
-export default DashBoard;

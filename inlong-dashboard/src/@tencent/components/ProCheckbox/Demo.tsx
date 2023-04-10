@@ -17,23 +17,27 @@
  * under the License.
  */
 
-import type { RouteProps } from '.';
+import React, { useState } from 'react';
+import ProCheckbox from '.';
 
-const conf: RouteProps[] = [
-  {
-    path: '/stream',
-    component: () => import('@/@tencent/pages/Stream'),
-    childRoutes: [
-      {
-        path: '/create',
-        component: () => import('@/@tencent/pages/StreamCreate'),
-      },
-      {
-        path: '/:id',
-        component: () => import('@/@tencent/pages/StreamDetail'),
-      },
-    ],
-  },
-];
+export default () => {
+  const [value, setValue] = useState([]);
 
-export default conf;
+  return (
+    <ProCheckbox
+      value={value}
+      onChange={v => setValue(v)}
+      allOption
+      options={[
+        {
+          name: '1',
+          title: '1',
+        },
+        {
+          name: '2',
+          title: '2',
+        },
+      ]}
+    />
+  );
+};

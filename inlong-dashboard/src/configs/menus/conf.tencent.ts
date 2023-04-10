@@ -21,10 +21,6 @@ import { StreamManage, SubscribeManage, AcquisitionManage } from '@/@tencent/com
 import type { MenuItemType } from '.';
 
 const conf: MenuItemType[] = [
-  // {
-  //   path: '/demo',
-  //   name: 'Example',
-  // },
   {
     name: '数据接入',
     children: [
