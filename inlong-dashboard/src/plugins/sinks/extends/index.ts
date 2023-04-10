@@ -23,7 +23,7 @@ import type { SinkMetaType } from '../types';
 export const allExtendsSinks: MetaExportWithBackendList<SinkMetaType> = [
   // You can extends at here...
   {
-    label: 'InnerCK',
+    label: 'InnerClickHouse',
     value: 'INNER_CK',
     LoadEntity: () => import('./InnerClickHouse'),
   },
@@ -33,7 +33,7 @@ export const allExtendsSinks: MetaExportWithBackendList<SinkMetaType> = [
     LoadEntity: () => import('./InnerHive'),
   },
   {
-    label: 'InnerTHive',
+    label: 'THive',
     value: 'INNER_THIVE',
     LoadEntity: () => import('./InnerTHive'),
   },

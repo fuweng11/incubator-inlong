@@ -18,7 +18,36 @@
  */
 
 import { NodeDefaultLoader } from './NodeDefaultLoader';
+import { MetaExportWithBackendList } from '@/plugins/types';
 
 export class NodeLoader extends NodeDefaultLoader {
   // You can extends NodeLoader at here...
+  loadPluginList<T>(
+    defaultsList: MetaExportWithBackendList<T>,
+    extendsList: MetaExportWithBackendList<T>,
+  ): MetaExportWithBackendList<T> {
+    const defaultsValueToExtValue = (defaultsValue: string) => {
+      const specMaps = {
+        CLICKHOUSE: 'INNER_CK',
+      };
+      if (specMaps[defaultsValue]) return specMaps[defaultsValue];
+      return `INNER_${defaultsValue}`;
+    };
+
+    const extendsListMap = new Map(extendsList.map(item => [item.value, item]));
+    let output = defaultsList.map(item => {
+      const extValue = defaultsValueToExtValue(item.value);
+      if (extendsListMap.get(extValue)) {
+        const extItem = extendsListMap.get(extValue);
+        extendsListMap.delete(extValue);
+        return {
+          ...extItem,
+          label: item.label,
+        };
+      }
+      return item;
+    });
+    extendsListMap.forEach(item => output.push(item));
+    return output;
+  }
 }

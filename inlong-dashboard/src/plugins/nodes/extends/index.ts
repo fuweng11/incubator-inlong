@@ -33,7 +33,7 @@ export const allExtendsNodes: MetaExportWithBackendList<NodeMetaType> = [
     LoadEntity: () => import('./InnerHive'),
   },
   {
-    label: 'InnerTHive',
+    label: 'THive',
     value: 'INNER_THIVE',
     LoadEntity: () => import('./InnerTHive'),
   },
