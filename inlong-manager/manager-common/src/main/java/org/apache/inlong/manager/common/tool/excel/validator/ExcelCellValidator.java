@@ -15,22 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.sort.base.dirty;
+package org.apache.inlong.manager.common.tool.excel.validator;
 
-import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
-import org.junit.Test;
+import java.io.Serializable;
+import java.util.List;
 
-@Slf4j
-public class RegexReplaceTest {
+/**
+ * Interface for validating Excel cell values
+ */
+public interface ExcelCellValidator<T> extends Serializable {
 
-    @Test
-    public void testRegexReplacement() {
-        String database = "database1";
-        String table = "table2";
-        String pattern = "${source.table}-${source.database}-${DIRTY_MESSAGE}";
-        String answer = DirtySinkHelper.regexReplace(pattern, DirtyType.BATCH_LOAD_ERROR, "mock message", database,
-                table, null);
-        Assert.assertEquals("table2-database1-mock message", answer);
-    }
+    /**
+     * Returns the data validation constraint for the cell
+     */
+    List<String> constraint();
 }

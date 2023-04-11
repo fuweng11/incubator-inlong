@@ -15,22 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.sort.base.dirty;
+package org.apache.inlong.manager.pojo.stream;
 
-import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
-import org.junit.Test;
+import org.apache.inlong.manager.common.tool.excel.validator.ExcelCellValidator;
 
-@Slf4j
-public class RegexReplaceTest {
+import java.util.ArrayList;
+import java.util.List;
 
-    @Test
-    public void testRegexReplacement() {
-        String database = "database1";
-        String table = "table2";
-        String pattern = "${source.table}-${source.database}-${DIRTY_MESSAGE}";
-        String answer = DirtySinkHelper.regexReplace(pattern, DirtyType.BATCH_LOAD_ERROR, "mock message", database,
-                table, null);
-        Assert.assertEquals("table2-database1-mock message", answer);
+import static org.apache.inlong.manager.common.consts.InlongConstants.STREAM_FIELD_TYPES;
+
+/**
+ * This class is used to validate the stream field type in the business product.
+ */
+public class StreamFieldTypeCellValidator implements ExcelCellValidator<String> {
+
+    public StreamFieldTypeCellValidator() {
+        // do nothing
     }
+
+    @Override
+    public List<String> constraint() {
+        return new ArrayList<>(STREAM_FIELD_TYPES);
+    }
+
 }

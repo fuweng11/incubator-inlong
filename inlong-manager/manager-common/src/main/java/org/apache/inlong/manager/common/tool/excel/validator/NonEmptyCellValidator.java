@@ -15,22 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.sort.base.dirty;
+package org.apache.inlong.manager.common.tool.excel.validator;
 
-import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.List;
 
-@Slf4j
-public class RegexReplaceTest {
+/**
+ * This class is used to validate the field name in the Excel file.
+ */
+public class NonEmptyCellValidator implements ExcelCellValidator<String> {
 
-    @Test
-    public void testRegexReplacement() {
-        String database = "database1";
-        String table = "table2";
-        String pattern = "${source.table}-${source.database}-${DIRTY_MESSAGE}";
-        String answer = DirtySinkHelper.regexReplace(pattern, DirtyType.BATCH_LOAD_ERROR, "mock message", database,
-                table, null);
-        Assert.assertEquals("table2-database1-mock message", answer);
+    public NonEmptyCellValidator() {
+        // do nothing
+    }
+
+    /**
+     * Get the constraint of the validator.
+     */
+    @Override
+    public List<String> constraint() {
+        return null;
     }
 }
