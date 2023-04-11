@@ -23,11 +23,6 @@ import type { NodeMetaType } from '../types';
 export const allExtendsNodes: MetaExportWithBackendList<NodeMetaType> = [
   // You can extends at here...
   {
-    label: 'InnerCK',
-    value: 'INNER_CK',
-    LoadEntity: () => import('./InnerClickHouse'),
-  },
-  {
     label: 'InnerHive',
     value: 'INNER_HIVE',
     LoadEntity: () => import('./InnerHive'),
