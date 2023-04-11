@@ -32,6 +32,7 @@ import org.apache.inlong.agent.constant.OracleConstants;
 import org.apache.inlong.agent.constant.SnapshotModeConstants;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.sources.snapshot.OracleSnapshotBase;
 import org.apache.inlong.agent.plugin.utils.InLongDatabaseHistory;
@@ -251,6 +252,11 @@ public class OracleReader extends AbstractReader {
         executor.execute(engine);
 
         LOGGER.info("get initial snapshot of job {}, snapshot {}", instanceId, getSnapshot());
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     private Properties getEngineProps() {

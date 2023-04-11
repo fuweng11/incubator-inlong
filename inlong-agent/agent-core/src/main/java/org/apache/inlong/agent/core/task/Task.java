@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.core.task;
 
 import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Channel;
 import org.apache.inlong.agent.plugin.Reader;
 import org.apache.inlong.agent.plugin.Sink;
@@ -33,6 +34,7 @@ public class Task {
     private final Channel channel;
     private final JobProfile jobConf;
     private volatile boolean isInited = false;
+    private AbstractJob job;
 
     public Task(String taskId, Reader reader, Sink sink, Channel channel,
             JobProfile jobConf) {
@@ -41,6 +43,16 @@ public class Task {
         this.taskId = taskId;
         this.channel = channel;
         this.jobConf = jobConf;
+    }
+
+    public Task(String taskId, Reader reader, Sink sink, Channel channel,
+            JobProfile jobConf, AbstractJob job) {
+        this.reader = reader;
+        this.sink = sink;
+        this.taskId = taskId;
+        this.channel = channel;
+        this.jobConf = jobConf;
+        this.job = job;
     }
 
     public boolean isReadFinished() {
@@ -73,7 +85,7 @@ public class Task {
 
     public void init() {
         this.channel.init(jobConf);
-        this.sink.init(jobConf);
+        this.sink.init(jobConf, job);
         this.reader.init(jobConf);
         isInited = true;
     }

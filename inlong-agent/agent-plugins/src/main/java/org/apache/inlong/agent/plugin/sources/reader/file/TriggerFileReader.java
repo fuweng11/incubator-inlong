@@ -20,6 +20,7 @@ package org.apache.inlong.agent.plugin.sources.reader.file;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.JobConstants;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.Reader;
 
@@ -84,6 +85,11 @@ public class TriggerFileReader implements Reader {
     @Override
     public void init(JobProfile jobConf) {
         this.triggerId = jobConf.get(JobConstants.JOB_TRIGGER);
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     @Override

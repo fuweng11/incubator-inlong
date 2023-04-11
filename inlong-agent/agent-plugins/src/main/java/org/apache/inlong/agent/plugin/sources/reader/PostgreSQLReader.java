@@ -29,6 +29,7 @@ import org.apache.inlong.agent.constant.AgentConstants;
 import org.apache.inlong.agent.constant.PostgreSQLConstants;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.sources.snapshot.PostgreSQLSnapshotBase;
 import org.apache.inlong.agent.plugin.utils.InLongFileOffsetBackingStore;
@@ -177,6 +178,11 @@ public class PostgreSQLReader extends AbstractReader {
         executor.execute(engine);
 
         LOGGER.info("get initial snapshot of job {}, snapshot {}", instanceId, getSnapshot());
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     private String tryToInitAndGetHistoryPath() {

@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -161,6 +162,11 @@ public class MqttReader extends AbstractReader {
         LOGGER.info("init mqtt reader with jobConf {}", jobConf.toJsonStr());
         setGlobalParamsValue(jobConf);
         connect();
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     private void reconnect() {

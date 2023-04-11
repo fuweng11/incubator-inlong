@@ -28,6 +28,7 @@ import org.apache.inlong.common.pojo.agent.dbsync.DBServerInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.pulsar.client.api.CompressionType;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -415,5 +416,26 @@ public class DBSyncUtils {
             return -1;
         }
         return Integer.parseInt(ipPort[1]);
+    }
+
+    /**
+     * convert string compress type to enum compress type
+     * @param type
+     * @return
+     */
+    public static CompressionType convertType(String type) {
+        switch (type) {
+            case "lz4":
+                return CompressionType.LZ4;
+            case "zlib":
+                return CompressionType.ZLIB;
+            case "zstd":
+                return CompressionType.ZSTD;
+            case "snappy":
+                return CompressionType.SNAPPY;
+            case "none":
+            default:
+                return CompressionType.NONE;
+        }
     }
 }

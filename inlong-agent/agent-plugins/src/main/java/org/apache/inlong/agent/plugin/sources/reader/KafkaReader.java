@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.Validator;
 import org.apache.inlong.agent.plugin.validator.PatternValidator;
@@ -176,6 +177,11 @@ public class KafkaReader<K, V> extends AbstractReader {
         initReadTimeout(jobConf);
         // fetch data
         fetchData(5000);
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     @Override

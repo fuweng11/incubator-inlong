@@ -41,6 +41,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,6 +138,11 @@ public class RedisReader extends AbstractReader {
             readerMetric.pluginReadFailCount.addAndGet(1);
             LOGGER.error("Connect to redis {}:{} failed.", hostName, port);
         }
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     private String getRedisUri() {

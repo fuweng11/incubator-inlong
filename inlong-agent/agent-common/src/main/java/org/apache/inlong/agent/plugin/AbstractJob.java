@@ -17,29 +17,5 @@
 
 package org.apache.inlong.agent.plugin;
 
-import org.apache.inlong.agent.conf.JobProfile;
-
-/**
- * Stage definition.
- */
-public interface Stage {
-
-    /**
-     * Init job.
-     *
-     * @param jobConf job config
-     */
-    void init(JobProfile jobConf);
-
-    /**
-     * Init job.
-     *
-     * @param jobConf job config
-     */
-    void init(JobProfile jobConf, AbstractJob job);
-
-    /**
-     * Destroy job.
-     */
-    void destroy();
+public interface AbstractJob {
 }

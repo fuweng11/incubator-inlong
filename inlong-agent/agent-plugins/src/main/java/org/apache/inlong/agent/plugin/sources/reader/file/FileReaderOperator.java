@@ -24,6 +24,7 @@ import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.except.FileException;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.Validator;
 import org.apache.inlong.agent.plugin.sources.reader.AbstractReader;
@@ -231,6 +232,11 @@ public class FileReaderOperator extends AbstractReader {
         } catch (Exception ex) {
             throw new FileException("error init stream for " + file.getPath(), ex);
         }
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     // default value is -1 and never stop task

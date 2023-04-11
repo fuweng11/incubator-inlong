@@ -21,6 +21,7 @@ import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.AgentConstants;
 import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Channel;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.common.metric.MetricRegister;
@@ -119,6 +120,11 @@ public class MemoryChannel implements Channel {
                 String.valueOf(METRIC_INDEX.incrementAndGet()));
         this.metricItemSet = new AgentMetricItemSet(metricName);
         MetricRegister.register(metricItemSet);
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     @Override

@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.plugin.sinks;
 
 import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.MessageFilter;
 
@@ -57,6 +58,11 @@ public class ConsoleSink extends AbstractSink {
     @Override
     public void init(JobProfile jobConf) {
         super.init(jobConf);
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     @Override

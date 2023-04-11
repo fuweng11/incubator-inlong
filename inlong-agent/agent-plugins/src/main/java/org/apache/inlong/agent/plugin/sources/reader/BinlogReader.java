@@ -30,6 +30,7 @@ import org.apache.inlong.agent.constant.AgentConstants;
 import org.apache.inlong.agent.constant.SnapshotModeConstants;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.sources.snapshot.BinlogSnapshotBase;
 import org.apache.inlong.agent.plugin.utils.InLongDatabaseHistory;
@@ -185,6 +186,11 @@ public class BinlogReader extends AbstractReader {
         executor.execute(engine);
 
         LOGGER.info("get initial snapshot of job {}, snapshot {}", jobConf.getInstanceId(), getSnapshot());
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     private Properties getEngineProps() {

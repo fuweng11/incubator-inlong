@@ -55,7 +55,8 @@ public class JobCoordinatorChangeListener
             case CHILD_ADDED:
             case CHILD_REMOVED:
                 try {
-                    dispatcher.updateJobCoordinator(clusterId, eventPath, event.getType() == PathChildrenCacheEvent.Type.CHILD_REMOVED);
+                    dispatcher.updateJobCoordinator(clusterId, eventPath,
+                            event.getType() == PathChildrenCacheEvent.Type.CHILD_REMOVED);
                 } catch (Exception e) {
                     logger.error("updateJobLeaderShip has exception e = {}", e);
                 }

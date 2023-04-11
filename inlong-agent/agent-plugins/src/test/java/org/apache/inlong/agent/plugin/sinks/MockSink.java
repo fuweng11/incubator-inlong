@@ -19,6 +19,7 @@ package org.apache.inlong.agent.plugin.sinks;
 
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.message.BatchProxyMessage;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.MessageFilter;
 import org.apache.inlong.agent.utils.AgentUtils;
@@ -80,6 +81,11 @@ public class MockSink extends AbstractSink {
                 jobConf.get(JOB_CYCLE_UNIT, ""));
         sourceFileName = "test";
         LOGGER.info("get dataTime is : {}", dataTime);
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     @Override

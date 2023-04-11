@@ -31,6 +31,7 @@ import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.SnapshotModeConstants;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.sources.snapshot.MongoDBSnapshotBase;
 import org.apache.inlong.agent.plugin.utils.InLongFileOffsetBackingStore;
@@ -196,6 +197,11 @@ public class MongoDBReader extends AbstractReader {
         super.init(jobConf);
         this.setGlobalParamsValue(jobConf);
         this.startEmbeddedDebeziumEngine(jobConf);
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     /**

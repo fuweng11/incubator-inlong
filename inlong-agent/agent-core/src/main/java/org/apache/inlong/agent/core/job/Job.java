@@ -19,11 +19,12 @@ package org.apache.inlong.agent.core.job;
 
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.JobConstants;
+import org.apache.inlong.agent.plugin.AbstractJob;
 
 /**
  * job meta definition, job will be split into several tasks.
  */
-public class Job {
+public class Job implements AbstractJob {
 
     protected final JobProfile jobConf;
     // job name

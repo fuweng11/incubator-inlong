@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.utils.AgentDbUtils;
 import org.apache.inlong.agent.utils.AgentUtils;
@@ -225,6 +226,11 @@ public class SqlReader extends AbstractReader {
             destroy();
             throw new RuntimeException(ex);
         }
+
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
 
     }
 

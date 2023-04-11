@@ -46,11 +46,44 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import static org.apache.inlong.agent.constant.AgentConstants.*;
+import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_NAME;
+import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_TAG;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_COORDINATOR_MONITOR_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_JOB_STATE_MONITOR_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_LOADBALANCE_CHECK_LOAD_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_LOADBALANCE_COMPARE_LOAD_USAGE_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_POSITION_UPDATE_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_RUN_NODE_CHANGE_CANDIDATE_MAX_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HA_RUN_NODE_CHANGE_MAX_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_MAX_CON_DB_SIZE;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_SKIP_ZK_POSITION_ENABLE;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_HA_COORDINATOR_MONITOR_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_MAX_CON_DB_SIZE;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_SKIP_ZK_POSITION_ENABLE;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_JOB_STATE_MONITOR_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_LOADBALANCE_CHECK_LOAD_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_LOADBALANCE_COMPARE_LOAD_USAGE_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_POSITION_UPDATE_INTERVAL_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_RUN_NODE_CHANGE_CANDIDATE_MAX_THRESHOLD;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_HA_RUN_NODE_CHANGE_MAX_THRESHOLD;
 import static org.apache.inlong.agent.constant.FetcherConstants.DBSYNC_GET_RUNNING_TASKS;
 import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_DBSYNC_GET_RUNNING_TASKS;
 
@@ -347,7 +380,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                         String startPositionFromZk = getStartPositionFromZk(jobHaInfo);
                         for (DbSyncTaskInfo taskConf : confList) {
                             LOGGER.info("startJobWithAllTaskOnce add task syncId[{}] "
-                                            + ", taskId[{}]",
+                                    + ", taskId[{}]",
                                     taskConf.getServerName(), taskConf.getId());
                             CompletableFuture<Void> opFuture = new CompletableFuture<>();
                             initStartPosition(startPositionFromZk, taskConf);
@@ -357,7 +390,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
                                 dbJobsMap.putIfAbsent(jobHaInfo.getSyncId(), dbJob);
                             }
                             LOGGER.info("startJobWithAllTaskOnce add task syncId[{}] "
-                                            + ", taskId[{}] finished!",
+                                    + ", taskId[{}] finished!",
                                     taskConf.getServerName(), taskConf.getId());
                             opFuture.whenComplete((v, e) -> {
                                 if (e != null && !isJobExceedException(e)) {
@@ -652,7 +685,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher, AutoCloseable {
         if (clusterId == null) {
             return;
         }
-        //if session has expired, recreate localRegisterCoordinatorPath
+        // if session has expired, recreate localRegisterCoordinatorPath
         if (isRemoved && ZkUtil.getLastNodePath(changeCoordinatorPath).equals(localRegisterCoordinatorPath)) {
             while (true) {
                 try {

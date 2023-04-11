@@ -309,4 +309,56 @@ public class AgentConstants {
     public static final String PULSAR_SINK_SEND_QUEUE_SIZE = "agent.sink.pulsar.send.queue.size";
     public static final int DEFAULT_SEND_QUEUE_SIZE = 20000;
 
+    // dbsync metric config
+    public static final String DBSYNC_SEND_THREAD_SIZE = "dbsync.metric.send.thread.size";
+    public static final int DEFAULT_DBSYNC_SEND_THREAD_SIZE = 16;
+
+    public static final String DBSYNC_PULSAR_CLIENT_IO_THREAD_NUM = "dbsync.metric.pulsar.client.io.thread.num";
+    public static final int DEFAULT_DBSYNC_PULSAR_CLIENT_IO_THREAD_NUM = 10;
+
+    public static final String DBSYNC_SEND_QUEUE_SIZESEND_QUEUE_SIZE = "dbsync.metric.send.queue.size";
+    public static final int DEFAULT_DBSYNC_SEND_QUEUE_SIZESEND_QUEUE_SIZE = 5000;
+
+    public static final String DBSYNC_METRIC_PULSAR_CLIENT_CONNECTIONS_PRE_BROKER =
+            "dbsync.metric.pulsar.client.connections.pre.broker";
+    public static final int DEFAULT_METRIC_PULSAR_CLIENT_CONNECTIONS_PRE_BROKER = 2;
+
+    public static final String DBSYNC_METRIC_PULSAR_STATUS_MONITOR_INTERVAL_MINUTES =
+            "dbsync.metric.pulsar.status.monitor.interval.minutes";
+    public static final int DEFAULT_DBSYNC_METRIC_PULSAR_STATUS_MONITOR_INTERVAL_MINUTES = 1;
+
+    public static final String DBSYNC_METRIC_PULSAR_MAX_PENDING_MESSAGES = "dbsync.metric.pulsar.max.pending.messages";
+    public static final int DEFAULT_DBSYNC_METRIC_PULSAR_MAX_PENDING_MESSAGES = 1000;
+
+    public static final String DBSYNC_METRIC_PULSAR_MAX_PENDING_MESSAGES_ACROSS_PARTITIONS =
+            "dbsync.metric.max.pending.messages.across.partitions";
+    public static final int DEFAULT_DBSYNC_METRIC_PULSAR_MAX_PENDING_MESSAGES_ACROSS_PARTITIONS = 500000;
+
+    public static final String DBSYNC_PULSAR_MAX_BATCHING_PUBLISH_DELAY_MILLIS =
+            "dbsync.metric.max.batching.publish.delay.millis";
+    public static final int DEFAULT_PULSAR_MAX_BATCHING_PUBLISH_DELAY_MILLIS = 1;
+
+    public static final String DBSYNC_PULSAR_COMPRESSION_TYPE = "dbsync.metric.pulsar.compression.type";
+    public static final String DEFAULT_DBSYNC_PULSAR_COMPRESSION_TYPE = "snappy";
+
+    public static final String DBSYNC_PULSAR_MAX_BATCHING_SIZE = "dbsync.metric.pulsar.max.batch.size";
+    public static final int DEFAULT_DBSYNC_PULSAR_MAX_BATCHING_SIZE = 131072;
+
+    public static final String DBSYNC_PULSAR_ENABLE_BATCHING = "dbsync.metric.pulsar.enable.batching";
+    public static final Boolean DEFAULT_DBSYNC_PULSAR_ENABLE_BATCHING = false;
+
+    public static final String DBSYNC_PULSAR_BLOCKING_QUEUE = "dbsync.metric.pulsar.block.queue";
+    public static final Boolean DEFAULT_DBSYNC_PULSAR_BLOCKING_QUEUE = true;
+
+    public static final String PULSAR_ASYNC = "dbsync.metric.pulsar.async";
+    public static final Boolean DEFAULT_PULSAR_ASYNC = true;
+
+    public static final String PULSAR_BUSY_SIZE = "dbsync.metric.pulsar.queue.busy.size";
+    public static final int DEFAULT_PULSAR_BUSY_SIZE = 10000;
+
+    public static final String DBSYNC_PULSAR_CLUSTER = "dbsync.metric.pulsar.cluster";
+    public static final String DEFAULT_DBSYNC_PULSAR_CLUSTER = "";
+
+    public static final String DBSYNC_PULSAR_TOPIC = "dbsync.metric.pulsar.topic";
+    public static final String DEFAULT_DBSYNC_PULSAR_TOPIC = "persistent://dbsync/audit/dbsync_audit_metric";
 }

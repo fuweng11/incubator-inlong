@@ -15,31 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.plugin;
+package org.apache.inlong.agent.entites;
 
-import org.apache.inlong.agent.conf.JobProfile;
+import lombok.Builder;
+import lombok.Data;
 
-/**
- * Stage definition.
- */
-public interface Stage {
+@Data
+@Builder
+public class JobMetricInfo {
 
-    /**
-     * Init job.
-     *
-     * @param jobConf job config
-     */
-    void init(JobProfile jobConf);
-
-    /**
-     * Init job.
-     *
-     * @param jobConf job config
-     */
-    void init(JobProfile jobConf, AbstractJob job);
-
-    /**
-     * Destroy job.
-     */
-    void destroy();
+    private String ip;
+    private long cnt;
+    private long dataTime;
+    private long reportTime;
+    private String dbIp;
+    private long dbNewestPosition;
+    private String dbNewestBinlog;
+    private String dbOldestBinlog;
+    private long dbCurrentTime;
+    private long dbCurrentPosition;
+    private String dbCurrentBinlog;
+    private String groupID;
+    private String streamID;
+    private long idx;
+    private String serverId;
+    private String clusterId;
+    private String jobStat;
 }

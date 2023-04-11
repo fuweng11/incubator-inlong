@@ -23,6 +23,7 @@ import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.core.task.Task;
 import org.apache.inlong.agent.core.task.TaskWrapper;
 import org.apache.inlong.agent.message.DefaultMessage;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Channel;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.MessageFilter;
@@ -106,6 +107,11 @@ public class TestTaskWrapper {
         }
 
         @Override
+        public void init(JobProfile jobConf, AbstractJob job) {
+
+        }
+
+        @Override
         public void destroy() {
             queue.clear();
         }
@@ -170,6 +176,11 @@ public class TestTaskWrapper {
         }
 
         @Override
+        public void init(JobProfile jobConf, AbstractJob job) {
+
+        }
+
+        @Override
         public void destroy() {
 
         }
@@ -202,6 +213,11 @@ public class TestTaskWrapper {
 
         @Override
         public void init(JobProfile jobConf) {
+
+        }
+
+        @Override
+        public void init(JobProfile jobConf, AbstractJob job) {
 
         }
 

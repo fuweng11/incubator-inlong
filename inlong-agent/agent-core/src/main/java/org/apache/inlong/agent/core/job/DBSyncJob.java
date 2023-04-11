@@ -25,6 +25,8 @@ import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.core.dbsync.DBSyncReadOperator;
 import org.apache.inlong.agent.core.task.Task;
+import org.apache.inlong.agent.metrics.dbsync.DBSyncMetric;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Channel;
 import org.apache.inlong.agent.plugin.Reader;
 import org.apache.inlong.agent.plugin.Sink;
@@ -40,7 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class DBSyncJob {
+public class DBSyncJob implements AbstractJob {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DBSyncJob.class);
     private final AgentManager agentManager;
@@ -48,6 +50,7 @@ public class DBSyncJob {
     protected DBSyncJobConf dbSyncJobConf;
     protected String jobName;
     private DBSyncReadOperator readOperator;
+    private DBSyncMetric dbSyncMetric = new DBSyncMetric();
 
     public DBSyncJob(AgentManager agentManager, DBSyncJobConf dbSyncJobConf) {
         this.dbSyncJobConf = dbSyncJobConf;
@@ -55,6 +58,10 @@ public class DBSyncJob {
         dbSyncTasks = new ConcurrentHashMap<>();
         jobName = this.dbSyncJobConf.getJobName();
         readOperator = new DBSyncReadOperator(this);
+    }
+
+    public DBSyncMetric getDBSyncMetric() {
+        return dbSyncMetric;
     }
 
     public Task getTaskById(Integer taskId) {
@@ -93,8 +100,10 @@ public class DBSyncJob {
             DBSyncUtils.sleep(1000);
         } while (!dbSyncTasks.values().stream().allMatch(Task::isTaskFinishInit));
 
-        LOGGER.info("task{} init finished, start dbsyncReadOperator", dbSyncTasks.keySet());
+        LOGGER.info("task{} init finished, start dbsync ReadOperator", dbSyncTasks.keySet());
         readOperator.start();
+
+        dbSyncMetric.start();
     }
 
     public void createAndAddTask(MysqlTableConf taskConf) {
@@ -110,7 +119,7 @@ public class DBSyncJob {
                 writer.setSourceName(reader.getReadSource());
                 Channel channel = (Channel) Class.forName(taskProfile.get(JobConstants.JOB_CHANNEL)).newInstance();
                 taskProfile.set(reader.getReadSource(), DigestUtils.md5Hex(reader.getReadSource()));
-                Task task = new Task(String.valueOf(taskId), reader, writer, channel, taskProfile);
+                Task task = new Task(String.valueOf(taskId), reader, writer, channel, taskProfile, this);
                 dbSyncTasks.put(taskId, task);
                 agentManager.getTaskManager().submitTask(task);
                 LOGGER.info("task [{}-{}] create and start success", jobName, taskId);
@@ -121,6 +130,7 @@ public class DBSyncJob {
             throw new RuntimeException(e);
         }
 
+        dbSyncMetric.init(taskConf.getTaskInfo().getMqClusters().get(0).getUrl());
     }
 
     public CompletableFuture<Void> resetJob() {

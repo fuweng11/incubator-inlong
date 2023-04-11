@@ -15,31 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.plugin;
+package org.apache.inlong.agent.plugin.utils;
 
-import org.apache.inlong.agent.conf.JobProfile;
+public interface ReportStatus {
 
-/**
- * Stage definition.
- */
-public interface Stage {
-
-    /**
-     * Init job.
-     *
-     * @param jobConf job config
-     */
-    void init(JobProfile jobConf);
-
-    /**
-     * Init job.
-     *
-     * @param jobConf job config
-     */
-    void init(JobProfile jobConf, AbstractJob job);
-
-    /**
-     * Destroy job.
-     */
-    void destroy();
+    void report();
 }

@@ -21,6 +21,7 @@ import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
+import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.slf4j.Logger;
@@ -78,6 +79,11 @@ public class DBSyncReader extends AbstractReader {
         super.init(jobConf);
         LOGGER.info("dbsync-reader init finished, groupId[{}], streamId[{}], taskId[{}]", inlongGroupId, inlongStreamId,
                 taskId);
+    }
+
+    @Override
+    public void init(JobProfile jobConf, AbstractJob job) {
+
     }
 
     @Override
