@@ -38,8 +38,17 @@ public class ProtocolSwitchRequest {
     @NotBlank(message = "inlongStreamId cannot be blank")
     private String inlongStreamId;
 
-    @ApiModelProperty("Partition time")
-    private Long partitionTime;
+    @ApiModelProperty("Switch status. 1 for switching, 2 for replacing, 3 for rollback-ing")
+    private int status;
+
+    @ApiModelProperty("Switch time")
+    private Long switchTime;
+
+    @ApiModelProperty("Replace time")
+    private Long replaceTime;
+
+    @ApiModelProperty("Rollback time")
+    private Long rollbackTime;
 
     @ApiModelProperty("Etl un save to tmp")
     private Boolean etlUnSaveToTmp = false;

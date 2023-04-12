@@ -124,7 +124,9 @@ public class ProtocolSwitchServiceImpl extends AbstractInnerSortConfigService im
 
         try {
             ProtocolSwitchInfo protocolSwitchInfo = new ProtocolSwitchInfo();
-            protocolSwitchInfo.setPartitionTime(request.getPartitionTime());
+            protocolSwitchInfo.setSwitchTime(request.getSwitchTime());
+            protocolSwitchInfo.setReplaceTime(request.getReplaceTime());
+            protocolSwitchInfo.setRollbackTime(request.getRollbackTime());
             protocolSwitchInfo.setEtl(new UnSaveToTmp(request.getEtlUnSaveToTmp()));
             protocolSwitchInfo.setTdsort(new UnSaveToTmp(request.getTdsortUnSaveToTmp()));
             byte[] protocolSwitchInfoData = OBJECT_MAPPER.writeValueAsBytes(protocolSwitchInfo);
