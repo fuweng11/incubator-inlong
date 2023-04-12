@@ -20,8 +20,11 @@ package org.apache.inlong.manager.pojo.tencent.sp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.Range;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 
 /**
  * Protocol switch request.
@@ -39,22 +42,20 @@ public class ProtocolSwitchRequest {
     private String inlongStreamId;
 
     @ApiModelProperty("Switch status. 1 for switching, 2 for replacing, 3 for rollback-ing")
-    private int status;
+    @Range(min = 1, max = 3, message = "default is 1, only supports [1 : switching, 2 : replacing, 3 : rollback-ing]")
+    private Integer status;
 
     @ApiModelProperty("Switch time")
-    private Long switchTime;
+    @Length(min = 14, max = 14, message = "switchTime only support yyyyMMddHHmmss format")
+    private String switchTime;
 
     @ApiModelProperty("Replace time")
-    private Long replaceTime;
+    @Length(min = 14, max = 14, message = "replaceTime only support yyyyMMddHHmmss format")
+    private String replaceTime;
 
     @ApiModelProperty("Rollback time")
-    private Long rollbackTime;
-
-    @ApiModelProperty("Etl un save to tmp")
-    private Boolean etlUnSaveToTmp = false;
-
-    @ApiModelProperty("tdsort un save to tmp")
-    private Boolean tdsortUnSaveToTmp = false;
+    @Length(min = 14, max = 14, message = "rollbackTime only support yyyyMMddHHmmss format")
+    private String rollbackTime;
 
     @ApiModelProperty("zookeeper root path")
     private String zkRootPath;

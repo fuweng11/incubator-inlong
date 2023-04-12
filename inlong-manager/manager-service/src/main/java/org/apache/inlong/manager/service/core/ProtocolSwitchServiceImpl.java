@@ -35,7 +35,6 @@ import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.tencent.sp.ProtocolSwitchInfo;
-import org.apache.inlong.manager.pojo.tencent.sp.ProtocolSwitchInfo.UnSaveToTmp;
 import org.apache.inlong.manager.pojo.tencent.sp.ProtocolSwitchRequest;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
 import org.apache.zookeeper.CreateMode;
@@ -127,8 +126,6 @@ public class ProtocolSwitchServiceImpl extends AbstractInnerSortConfigService im
             protocolSwitchInfo.setSwitchTime(request.getSwitchTime());
             protocolSwitchInfo.setReplaceTime(request.getReplaceTime());
             protocolSwitchInfo.setRollbackTime(request.getRollbackTime());
-            protocolSwitchInfo.setEtl(new UnSaveToTmp(request.getEtlUnSaveToTmp()));
-            protocolSwitchInfo.setTdsort(new UnSaveToTmp(request.getTdsortUnSaveToTmp()));
             byte[] protocolSwitchInfoData = OBJECT_MAPPER.writeValueAsBytes(protocolSwitchInfo);
             if (zkClient.checkExists().forPath(zkPath) == null) {
                 ZooKeeperUtils.createRecursive(zkClient, zkPath, protocolSwitchInfoData, CreateMode.PERSISTENT);

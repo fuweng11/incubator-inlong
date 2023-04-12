@@ -33,28 +33,14 @@ import lombok.NoArgsConstructor;
 public class ProtocolSwitchInfo {
 
     @ApiModelProperty("Switch status. 1 for switching, 2 for replacing, 3 for rollback-ing")
-    private int status;
+    private Integer status;
 
     @ApiModelProperty("Switch time")
-    private Long switchTime;
+    private String switchTime;
 
     @ApiModelProperty("Replace time")
-    private Long replaceTime;
+    private String replaceTime;
 
     @ApiModelProperty("Rollback time")
-    private Long rollbackTime;
-
-    @ApiModelProperty("Etl temp path")
-    private UnSaveToTmp etl;
-
-    @ApiModelProperty("tdsort temp path")
-    private UnSaveToTmp tdsort;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class UnSaveToTmp {
-
-        private Boolean unSaveToTmp;
-    }
+    private String rollbackTime;
 }
