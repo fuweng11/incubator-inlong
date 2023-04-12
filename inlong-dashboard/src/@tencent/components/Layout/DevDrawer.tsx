@@ -21,6 +21,7 @@ import React, { useState } from 'react';
 import { Drawer, Button, Form } from '@tencent/tea-component';
 import FieldsParseDemo from '@/@tencent/components/FieldsParse/Demo';
 import ProCheckboxDemo from '@/@tencent/components/ProCheckbox/Demo';
+import FetchSelectDemo from '@/@tencent/components/FetchSelect/Demo';
 
 export default () => {
   const [visible, setVisible] = useState(false);
@@ -51,6 +52,10 @@ export default () => {
 
           <Form.Item label="ProCheckbox">
             <ProCheckboxDemo />
+          </Form.Item>
+
+          <Form.Item label="FetchSelect">
+            <FetchSelectDemo />
           </Form.Item>
         </Form>
       </Drawer>
