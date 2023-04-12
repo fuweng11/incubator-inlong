@@ -212,10 +212,6 @@ public class AbstractInnerSortConfigService {
     }
 
     public void deleteSortConfig(StreamSinkEntity sink) throws Exception {
-        if (!Objects.equals(sink.getStatus(), SinkStatus.CONFIG_SUCCESSFUL.getCode())) {
-            LOGGER.warn("sink is not configured successfully, do not need to delete config in zk");
-            return;
-        }
         InlongGroupEntity groupInfo = grouMapper.selectByGroupId(sink.getInlongGroupId());
         String groupId = sink.getInlongGroupId();
         List<InlongClusterEntity> zkClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
@@ -243,12 +239,6 @@ public class AbstractInnerSortConfigService {
                 break;
             default:
                 throw new BusinessException(ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT);
-        }
-        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                groupInfo.getInlongClusterTag(), null, topoType);
-        if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
-            LOGGER.warn("no matching sort cluster information for groupId=" + groupId);
-            return;
         }
         String sortClusterName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
                 sink.getId(),
