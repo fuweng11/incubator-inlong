@@ -238,10 +238,6 @@ public class PulsarSink extends AbstractSink {
                             try {
                                 sendQueueSemaphore.acquire();
                                 pulsarSendQueue.put(batchProxyMessage);
-                                LOGGER.info("send group id {}, message key {},with message size {}, the job id is {}, "
-                                        + "read source is {} sendTime is {}", inlongGroupId, batchKey,
-                                        batchProxyMessage.getDataList().size(), jobInstanceId, sourceName,
-                                        batchProxyMessage.getDataTime());
                             } catch (Exception e) {
                                 sendQueueSemaphore.release();
                                 LOGGER.error("flush data to send queue", e);

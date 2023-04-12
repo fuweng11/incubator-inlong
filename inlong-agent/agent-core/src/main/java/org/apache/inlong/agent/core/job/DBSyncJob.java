@@ -130,7 +130,11 @@ public class DBSyncJob implements AbstractJob {
             throw new RuntimeException(e);
         }
 
-        dbSyncMetric.init(taskConf.getTaskInfo().getMqClusters().get(0).getUrl());
+        if (taskConf.getTaskInfo() != null
+                && taskConf.getTaskInfo().getMqClusters() != null
+                && taskConf.getTaskInfo().getMqClusters().size() >= 1) {
+            dbSyncMetric.init(taskConf.getTaskInfo().getMqClusters().get(0).getUrl(), taskConf.getJobName());
+        }
     }
 
     public CompletableFuture<Void> resetJob() {

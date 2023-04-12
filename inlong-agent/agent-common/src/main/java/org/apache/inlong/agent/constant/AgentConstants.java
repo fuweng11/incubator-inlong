@@ -311,7 +311,7 @@ public class AgentConstants {
 
     // dbsync metric config
     public static final String DBSYNC_SEND_THREAD_SIZE = "dbsync.metric.send.thread.size";
-    public static final int DEFAULT_DBSYNC_SEND_THREAD_SIZE = 16;
+    public static final int DEFAULT_DBSYNC_SEND_THREAD_SIZE = 2;
 
     public static final String DBSYNC_PULSAR_CLIENT_IO_THREAD_NUM = "dbsync.metric.pulsar.client.io.thread.num";
     public static final int DEFAULT_DBSYNC_PULSAR_CLIENT_IO_THREAD_NUM = 10;
