@@ -211,7 +211,7 @@
         <os.maven.plugin.version>1.6.0</os.maven.plugin.version>
         <kudu.version>1.16.0</kudu.version>
         <tomcat.version>8.5.53</tomcat.version>
-        <tencent.brain.jmx.version>2.0.2-20230331.062112-2</tencent.brain.jmx.version>
+        <tencent.brain.jmx.version>2.0.3-20230412.093958-2</tencent.brain.jmx.version>
         <jedis.version>2.9.0</jedis.version>
         <poi.version>5.2.3</poi.version>
     </properties>
