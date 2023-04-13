@@ -123,6 +123,7 @@ public class ProtocolSwitchServiceImpl extends AbstractInnerSortConfigService im
 
         try {
             ProtocolSwitchInfo protocolSwitchInfo = new ProtocolSwitchInfo();
+            protocolSwitchInfo.setStatus(request.getStatus());
             protocolSwitchInfo.setSwitchTime(request.getSwitchTime());
             protocolSwitchInfo.setReplaceTime(request.getReplaceTime());
             protocolSwitchInfo.setRollbackTime(request.getRollbackTime());
