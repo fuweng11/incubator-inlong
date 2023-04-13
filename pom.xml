@@ -213,7 +213,7 @@
         <tomcat.version>8.5.53</tomcat.version>
         <tencent.brain.jmx.version>2.0.2-20230331.062112-2</tencent.brain.jmx.version>
         <jedis.version>2.9.0</jedis.version>
-        <poi.version>3.16</poi.version>
+        <poi.version>5.2.3</poi.version>
     </properties>
 
     <dependencyManagement>
