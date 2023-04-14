@@ -70,12 +70,13 @@ export const statusMap: Map<
 
 export enum AccessTypeEnum {
   SDK = 'AUTO_PUSH',
-  // FILE = 'FILE',
+  FILE = 'FILE',
+  DB = 'DB',
 }
 
 export const accessTypeMap: Map<AccessTypeEnum, string> = (() => {
   const map = new Map();
-  map.set(AccessTypeEnum.SDK, 'SDK');
+  map.set(AccessTypeEnum.SDK, 'SDK').set(AccessTypeEnum.FILE, '文件').set(AccessTypeEnum.DB, 'DB');
   return map;
 })();
 

@@ -41,6 +41,8 @@ import {
 } from '@/@tencent/enums/stream';
 import FieldsParse from '@/@tencent/components/FieldsParse';
 import EditableTable, { addons, EditableTableRef } from '@/@tencent/components/EditableTable';
+import File from './File';
+import Db from './Db';
 
 export interface AccessFormRef {
   submit: () => Promise<Record<string, any>>;
@@ -55,7 +57,7 @@ const AccessForm = forwardRef(
   ({ onChange, ...props }: AccessFormProps, ref: Ref<AccessFormRef>) => {
     const editableTable = useRef<EditableTableRef>();
 
-    const { control, formState, reset, handleSubmit, watch } = useForm({
+    const form = useForm({
       mode: 'onChange',
       defaultValues: {
         accessModel: AccessTypeEnum.SDK,
@@ -67,7 +69,11 @@ const AccessForm = forwardRef(
       },
     });
 
+    const { control, formState, reset, handleSubmit, watch } = form;
+
     const { errors } = formState;
+
+    const watchAccessModel = watch('accessModel', AccessTypeEnum.SDK);
 
     const [fieldsParse, setFieldsParse] = useState<{ visible: boolean }>({
       visible: false,
@@ -77,6 +83,7 @@ const AccessForm = forwardRef(
       const [v1, v2] = await Promise.all([
         new Promise<Record<string, any>>((resolve, reject) => {
           handleSubmit(values => {
+            console.log('OK: ', values);
             resolve(values);
           }, reject)();
         }),
@@ -176,6 +183,20 @@ const AccessForm = forwardRef(
             render={({ field }) => <InputNumber {...field} min={0} />}
           />
         </Form.Item>
+
+        {(() => {
+          const compMap = {
+            [AccessTypeEnum.FILE]: File,
+            [AccessTypeEnum.DB]: Db,
+          };
+          const Comp = compMap[watchAccessModel];
+          return Comp ? (
+            <>
+              <Form.Title>数据源信息</Form.Title>
+              <Comp form={form} />
+            </>
+          ) : null;
+        })()}
 
         <Form.Title>数据格式</Form.Title>
 
