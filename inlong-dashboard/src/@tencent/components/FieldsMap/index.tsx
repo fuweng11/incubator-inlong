@@ -16,9 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Icon,
   Table,
   TableProps,
   Button,
@@ -48,7 +47,7 @@ export type selectedFieldsProps = {
   targetField: FieldData[0];
 }[];
 
-export interface ConnectTableProps extends Omit<TableProps<any>, 'columns'> {
+export interface FieldsMapProps extends Omit<TableProps<any>, 'columns'> {
   sourceFields: FieldData;
   targetFields: FieldData;
   onSelect: (data: selectedFieldsProps) => void; //get selected fields
@@ -70,7 +69,7 @@ const FieldsMap = ({
   getTargetFields,
   candoAutoAdd = true,
   ...props
-}: ConnectTableProps) => {
+}: FieldsMapProps) => {
   const [fieldsParseVisible, setFieldParseVisible] = useState<boolean>(false);
   const [selectedFields, setSelectedFields] = useState<selectedFieldsProps>([]);
   const [targetFields, setTargetFields] = useState<FieldData>([]);
@@ -173,7 +172,7 @@ const FieldsMap = ({
   useEffect(() => {
     const newSelectedFields = selectedFields.map(item => ({
       sourceField: item.sourceField,
-      targetField: targetFields.filter(target => target.id == item.sourceField?.id)[0],
+      targetField: targetFields.filter(target => target.id === item.sourceField?.id)[0],
     }));
     setSelectedFields(newSelectedFields);
     onSelect(newSelectedFields);
