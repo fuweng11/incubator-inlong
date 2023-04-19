@@ -214,6 +214,7 @@
         <tencent.brain.jmx.version>2.0.3-20230412.093958-2</tencent.brain.jmx.version>
         <jedis.version>2.9.0</jedis.version>
         <poi.version>5.2.3</poi.version>
+        <jsqlparser.version>4.2</jsqlparser.version>
     </properties>
 
     <dependencyManagement>
@@ -238,6 +239,11 @@
                 <groupId>org.apache.flume</groupId>
                 <artifactId>flume-ng-configuration</artifactId>
                 <version>${flume.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.jsqlparser</groupId>
+                <artifactId>jsqlparser</artifactId>
+                <version>${jsqlparser.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.zaxxer</groupId>

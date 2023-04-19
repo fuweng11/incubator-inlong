@@ -115,6 +115,10 @@
             <artifactId>metricAgent</artifactId>
             <version>${tencent.brain.jmx.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.jsqlparser</groupId>
+            <artifactId>jsqlparser</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
