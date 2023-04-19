@@ -41,8 +41,8 @@ export default () => {
         });
 
         return result?.records.map(item => ({
-          text: item.name,
-          value: item.name,
+          text: item.name + item.streamID,
+          value: item.name + item.streamID,
         }));
       }}
     />

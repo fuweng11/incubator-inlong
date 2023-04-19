@@ -22,6 +22,8 @@ import { Drawer, Button, Form } from '@tencent/tea-component';
 import FieldsParseDemo from '@/@tencent/components/FieldsParse/Demo';
 import ProCheckboxDemo from '@/@tencent/components/ProCheckbox/Demo';
 import FetchSelectDemo from '@/@tencent/components/FetchSelect/Demo';
+import EditableTableDemo from '@/@tencent/components/EditableTable/Demo';
+import DescriptionDemo from '@/@tencent/components/Description/Demo';
 
 export default () => {
   const [visible, setVisible] = useState(false);
@@ -56,6 +58,14 @@ export default () => {
 
           <Form.Item label="FetchSelect">
             <FetchSelectDemo />
+          </Form.Item>
+
+          <Form.Item label="EditableTable">
+            <EditableTableDemo />
+          </Form.Item>
+
+          <Form.Item label="Description">
+            <DescriptionDemo />
           </Form.Item>
         </Form>
       </Drawer>

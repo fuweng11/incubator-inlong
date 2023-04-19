@@ -45,7 +45,7 @@ const SubscribeList = ({ streamId, info }) => {
       });
       return { list: data.records, total: data.total };
     },
-    [streamId],
+    [streamId, projectId],
   );
 
   const refreshSubscribeList = async () => {
@@ -116,11 +116,11 @@ const SubscribeList = ({ streamId, info }) => {
             header: '创建时间',
             render: row => row.createTime && dateFormat(new Date(row.createTime)),
           },
-          {
-            key: 'action',
-            header: '操作',
-            render: () => <a>详情</a>,
-          },
+          // {
+          //   key: 'action',
+          //   header: '操作',
+          //   render: () => <a>详情</a>,
+          // },
         ]}
         pageable
       />

@@ -18,7 +18,7 @@
  */
 
 import React from 'react';
-import { Form, Input, Select } from '@tencent/tea-component';
+import { Form, Select } from '@tencent/tea-component';
 import { Controller } from 'react-hook-form';
 import { DbTypeEnum, dbTypeMap } from '@/@tencent/enums/source/_dbBasic';
 import Mysql from './Mysql';
