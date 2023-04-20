@@ -34,7 +34,7 @@ const conf = {
   AppProvider: Provider,
   AppLoading: PageLoading,
   AppLayout: Layout,
-  requestPrefix: '/api/wedata/inlong/service',
+  requestPrefix: '/api/wedata/tdw/inlong',
   requestErrorAlert,
   responseParse: (res: any): SuccessResponse => ({
     success: res.code === 0,
