@@ -58,7 +58,6 @@ const FetchSelect: React.FC<FetchSelectProps> = ({ request, ...rest }) => {
       onOpen={fetch}
       onSearch={fetch}
       options={options}
-      onChange={value => console.log(value)}
       tips={status && <StatusTip status={status} onRetry={() => fetch(keywordRef.current)} />}
     />
   );

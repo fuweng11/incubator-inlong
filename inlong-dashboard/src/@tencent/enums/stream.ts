@@ -26,14 +26,13 @@ export enum DataLevelEnum {
 }
 
 export const dataLevelMap: Map<DataLevelEnum, string> = (() => {
-  const map = new Map();
-  map
-    .set(DataLevelEnum.L1, '一级')
-    .set(DataLevelEnum.L2, '二级')
-    .set(DataLevelEnum.L3, '三级')
-    .set(DataLevelEnum.L4, '四级')
-    .set(DataLevelEnum.L5, '五级');
-  return map;
+  return new Map([
+    [DataLevelEnum.L1, '一级'],
+    [DataLevelEnum.L2, '二级'],
+    [DataLevelEnum.L3, '三级'],
+    [DataLevelEnum.L4, '四级'],
+    [DataLevelEnum.L5, '五级'],
+  ]);
 })();
 
 export enum StatusEnum {
@@ -47,25 +46,36 @@ export const statusMap: Map<
   StatusEnum,
   { label: string; colorTheme: 'success' | 'warning' | 'default' | 'error' }
 > = (() => {
-  const map = new Map();
-  map
-    .set(StatusEnum.New, {
-      label: '待上线',
-      colorTheme: 'warning',
-    })
-    .set(StatusEnum.Success, {
-      label: '已上线',
-      colorTheme: 'success',
-    })
-    .set(StatusEnum.Deleted, {
-      label: '下线',
-      colorTheme: 'default',
-    })
-    .set(StatusEnum.Abnormal, {
-      label: '异常',
-      colorTheme: 'error',
-    });
-  return map;
+  return new Map([
+    [
+      StatusEnum.New,
+      {
+        label: '待上线',
+        colorTheme: 'warning',
+      },
+    ],
+    [
+      StatusEnum.Success,
+      {
+        label: '已上线',
+        colorTheme: 'success',
+      },
+    ],
+    [
+      StatusEnum.Deleted,
+      {
+        label: '下线',
+        colorTheme: 'default',
+      },
+    ],
+    [
+      StatusEnum.Abnormal,
+      {
+        label: '异常',
+        colorTheme: 'error',
+      },
+    ],
+  ]);
 })();
 
 export enum AccessTypeEnum {
@@ -75,9 +85,11 @@ export enum AccessTypeEnum {
 }
 
 export const accessTypeMap: Map<AccessTypeEnum, string> = (() => {
-  const map = new Map();
-  map.set(AccessTypeEnum.SDK, 'SDK').set(AccessTypeEnum.FILE, '文件').set(AccessTypeEnum.DB, 'DB');
-  return map;
+  return new Map([
+    [AccessTypeEnum.SDK, 'SDK'],
+    // [AccessTypeEnum.FILE, '文件'],
+    // [AccessTypeEnum.DB, 'DB'],
+  ]);
 })();
 
 export enum EncodeTypeEnum {
@@ -86,9 +98,10 @@ export enum EncodeTypeEnum {
 }
 
 export const encodeTypeMap: Map<EncodeTypeEnum, string> = (() => {
-  const map = new Map();
-  map.set(EncodeTypeEnum.UTF8, 'UTF-8').set(EncodeTypeEnum.GBK, 'GBK');
-  return map;
+  return new Map([
+    [EncodeTypeEnum.UTF8, 'UTF-8'],
+    [EncodeTypeEnum.GBK, 'GBK'],
+  ]);
 })();
 
 export enum PeakRateEnum {
@@ -103,17 +116,16 @@ export enum PeakRateEnum {
 }
 
 export const peakRateMap: Map<PeakRateEnum, string> = (() => {
-  const map = new Map();
-  map
-    .set(PeakRateEnum.L1, '100及以下')
-    .set(PeakRateEnum.L2, '100到1000之间')
-    .set(PeakRateEnum.L3, '1000到5000之间')
-    .set(PeakRateEnum.L4, '5000到1W之间')
-    .set(PeakRateEnum.L5, '1W到5W之间')
-    .set(PeakRateEnum.L6, '5W到10W之间')
-    .set(PeakRateEnum.L7, '10W到50W之间')
-    .set(PeakRateEnum.L8, '50W到100W之间');
-  return map;
+  return new Map([
+    [PeakRateEnum.L1, '100及以下'],
+    [PeakRateEnum.L2, '100到1000之间'],
+    [PeakRateEnum.L3, '1000到5000之间'],
+    [PeakRateEnum.L4, '5000到1W之间'],
+    [PeakRateEnum.L5, '1W到5W之间'],
+    [PeakRateEnum.L6, '5W到10W之间'],
+    [PeakRateEnum.L7, '10W到50W之间'],
+    [PeakRateEnum.L8, '50W到100W之间'],
+  ]);
 })();
 
 export enum DataSeparatorEnum {
@@ -126,13 +138,12 @@ export enum DataSeparatorEnum {
 }
 
 export const dataSeparatorMap: Map<DataSeparatorEnum, string> = (() => {
-  const map = new Map();
-  map
-    .set(DataSeparatorEnum.Space, '空格( )')
-    .set(DataSeparatorEnum.VerticalLine, '竖线(|)')
-    .set(DataSeparatorEnum.Comma, '逗号(,)')
-    .set(DataSeparatorEnum.Semicolon, '分号(;)')
-    .set(DataSeparatorEnum.Asterisk, '星号(*)')
-    .set(DataSeparatorEnum.DoubleQuotes, '双引号(“)');
-  return map;
+  return new Map([
+    [DataSeparatorEnum.Space, '空格( )'],
+    [DataSeparatorEnum.VerticalLine, '竖线(|)'],
+    [DataSeparatorEnum.Comma, '逗号(,)'],
+    [DataSeparatorEnum.Semicolon, '分号(;)'],
+    [DataSeparatorEnum.Asterisk, '星号(*)'],
+    [DataSeparatorEnum.DoubleQuotes, '双引号(“)'],
+  ]);
 })();
