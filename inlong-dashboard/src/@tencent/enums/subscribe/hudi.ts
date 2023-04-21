@@ -17,16 +17,14 @@
  * under the License.
  */
 
-export enum SinkTypeEnum {
-  Hive = 'HIVE',
-  Clickhouse = 'CLICKHOUSE',
-  Hudi = 'HUDI',
+export enum WriteModeEnum {
+  Append = 'Append',
+  Upsert = 'Upsert',
 }
 
-export const sinkTypeMap: Map<SinkTypeEnum, string> = (() => {
+export const writeModeMap: Map<WriteModeEnum, string> = (() => {
   return new Map([
-    [SinkTypeEnum.Hive, 'Hive'],
-    [SinkTypeEnum.Clickhouse, 'Clickhouse'],
-    [SinkTypeEnum.Hudi, 'Hudi'],
+    [WriteModeEnum.Append, 'Append'],
+    [WriteModeEnum.Upsert, 'Upsert'],
   ]);
 })();

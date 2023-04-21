@@ -34,6 +34,7 @@ import { message } from '@tencent/tea-component';
 import { SubscribeFormRef } from './common';
 import Clickhouse from './Clickhouse';
 import Hive from './Hive';
+import Hudi from './Hudi';
 
 export interface AddSubscribeDrawerProps {
   visible: boolean;
@@ -88,27 +89,26 @@ const AddSubscribeDrawer = ({
   //handle add subscrible
   const handleOk = async () => {
     setLoading(true);
-    const basicFrom = await formRef.current.submit();
-    const fieldMappings = selectedFields.map(item => ({
-      fieldName: item.targetField.fieldName,
-      fieldType: item.targetField.fieldType,
-      remark: item.targetField.remark,
-      sourceFieldName: item.sourceField.fieldName,
-      sourceFieldType: item.sourceField.fieldType,
-      sequence: item.targetField.id,
-    }));
-    const data = {
-      projectID: projectId,
-      streamID: streamId,
-      inLongGroupID: info.inLongGroupID,
-      inLongStreamID: info.inLongStreamID,
-      encodeType: info.encodeType,
-      dataSeparator: info.dataSeparator,
-      fieldMappings,
-      ...(basicFrom as object),
-    };
-
     try {
+      const basicFrom = await formRef.current.submit();
+      const fieldMappings = selectedFields.map(item => ({
+        fieldName: item.targetField.fieldName,
+        fieldType: item.targetField.fieldType,
+        remark: item.targetField.remark,
+        sourceFieldName: item.sourceField.fieldName,
+        sourceFieldType: item.sourceField.fieldType,
+        sequence: item.targetField.id,
+      }));
+      const data = {
+        projectID: projectId,
+        streamID: streamId,
+        inLongGroupID: info.inLongGroupID,
+        inLongStreamID: info.inLongStreamID,
+        encodeType: info.encodeType,
+        dataSeparator: info.dataSeparator,
+        fieldMappings,
+        ...(basicFrom as object),
+      };
       await request({
         url: '/subscribe/thive/create',
         method: 'POST',
@@ -153,7 +153,7 @@ const AddSubscribeDrawer = ({
           <p style={{ fontSize: '16px', fontWeight: 'bold' }}>配置数据源信息</p>
         </Col>
         <Col span={12}>
-          <div style={{ height: '300px', border: '1px solid #E2E2E2', padding: '20px 20px' }}>
+          <div style={{ border: '1px solid #E2E2E2', padding: '20px 20px' }}>
             <Form>
               <Form.Title>数据来源</Form.Title>
               <Form.Item label="接入方式">
@@ -183,12 +183,13 @@ const AddSubscribeDrawer = ({
           </div>
         </Col>
         <Col span={12}>
-          <div style={{ height: '300px', border: '1px solid #E2E2E2', padding: '20px 20px' }}>
+          <div style={{ border: '1px solid #E2E2E2', padding: '20px 20px' }}>
             <Form.Title>写入信息</Form.Title>
             {(() => {
               const dict = {
                 [SinkTypeEnum.Hive]: Hive,
                 [SinkTypeEnum.Clickhouse]: Clickhouse,
+                [SinkTypeEnum.Hudi]: Hudi,
               };
               const Form = dict[writeType];
               return (
