@@ -20,7 +20,7 @@
 import React from 'react';
 import { Form, Select } from '@tencent/tea-component';
 import { Controller } from 'react-hook-form';
-import { DbTypeEnum, dbTypeMap } from '@/@tencent/enums/source/_dbBasic';
+import { DbTypeEnum, dbTypeMap } from '@/@tencent/enums/source';
 import Mysql from './Mysql';
 import PostgreSql from './PostgreSql';
 

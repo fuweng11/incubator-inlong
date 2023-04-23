@@ -17,6 +17,22 @@
  * under the License.
  */
 
+export enum SourceTypeEnum {
+  SDK = 'AUTO_PUSH',
+  FILE = 'FILE',
+  MySQL = 'MYSQL_BINLOG',
+  PostgreSQL = 'POSTGRESQL',
+}
+
+export const sourceTypeMap: Map<SourceTypeEnum, string> = (() => {
+  return new Map([
+    [SourceTypeEnum.SDK, 'SDK'],
+    [SourceTypeEnum.FILE, '文件'],
+    [SourceTypeEnum.MySQL, 'MySQL'],
+    [SourceTypeEnum.PostgreSQL, 'PostgreSQL'],
+  ]);
+})();
+
 export enum DbTypeEnum {
   MySQL = 'MYSQL',
   PostgreSQL = 'POSTGRESQL',

@@ -26,7 +26,8 @@ import request from '@/core/utils/request';
 import { dateFormat } from '@/core/utils';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import ProCheckbox from '@/@tencent/components/ProCheckbox';
-import { statusMap, StatusEnum, accessTypeMap } from '@/@tencent/enums/stream';
+import { statusMap, StatusEnum, AccessTypeEnum } from '@/@tencent/enums/stream';
+import { SourceTypeEnum, sourceTypeMap } from '@/@tencent/enums/source';
 import { useProjectComputeResources } from '@/@tencent/components/Use/usePlatformAPIs';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import PublishModal from './PublishModal';
@@ -42,11 +43,22 @@ const fields: FieldConfig[] = [
   },
   {
     type: 'array',
-    component: ProCheckbox,
+    component: 'selectMultiple',
     name: 'accessModels',
     title: '接入方式',
-    allOption: true,
-    options: Array.from(accessTypeMap).map(([key, ctx]) => ({ name: key, title: ctx })),
+    appearance: 'button',
+    clearable: true,
+    groups: AccessTypeEnum,
+    options: Array.from(sourceTypeMap).map(([key, ctx]) => ({
+      groupKey: key !== SourceTypeEnum.SDK && key !== SourceTypeEnum.FILE ? 'DB' : '',
+      value: key,
+      text: ctx,
+    })),
+    allOption: {
+      value: 'all',
+      text: '全选',
+    },
+    style: { minWidth: 120 },
   },
   {
     type: 'string',
@@ -179,7 +191,7 @@ export default function StreamList() {
             {
               key: 'accessModel',
               header: '接入方式',
-              render: row => accessTypeMap.get(row.accessModel) || row.accessModel,
+              render: row => sourceTypeMap.get(row.accessModel) || row.accessModel,
             },
             {
               key: 'status',

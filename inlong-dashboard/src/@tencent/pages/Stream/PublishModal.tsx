@@ -35,11 +35,11 @@ import { useRequest } from 'ahooks';
 import { dateFormat } from '@/core/utils';
 import {
   dataLevelMap,
-  accessTypeMap,
   peakRateMap,
   encodeTypeMap,
   dataSeparatorMap,
 } from '@/@tencent/enums/stream';
+import { sourceTypeMap } from '@/@tencent/enums/source';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import request from '@/core/utils/request';
 
@@ -73,7 +73,7 @@ const conf: ConfItem[] = [
   },
   {
     title: '接入信息',
-    fields: [{ label: '接入方式', value: 'accessModel', enumMap: accessTypeMap }],
+    fields: [{ label: '接入方式', value: 'accessModel', enumMap: sourceTypeMap }],
   },
   {
     title: '数据流量',

@@ -21,12 +21,8 @@ import { FieldData } from '@/@tencent/components/FieldsMap';
 import { Drawer, Button, Row, Col, Form } from '@tencent/tea-component';
 import { Form as ProFormIns, ProFormProps } from '@tencent/tea-material-pro-form';
 import React, { useRef, useState } from 'react';
-import {
-  accessTypeMap,
-  encodeTypeMap,
-  dataSeparatorMap,
-  peakRateMap,
-} from '@/@tencent/enums/stream';
+import { encodeTypeMap, dataSeparatorMap, peakRateMap } from '@/@tencent/enums/stream';
+import { sourceTypeMap } from '@/@tencent/enums/source';
 import { SinkTypeEnum, sinkTypeMap } from '@/@tencent/enums/subscribe/_basic';
 import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
@@ -157,7 +153,7 @@ const AddSubscribeDrawer = ({
             <Form>
               <Form.Title>数据来源</Form.Title>
               <Form.Item label="接入方式">
-                <Form.Text>{accessTypeMap.get(info.accessModel) || info.accessModel}</Form.Text>
+                <Form.Text>{sourceTypeMap.get(info.accessModel) || info.accessModel}</Form.Text>
               </Form.Item>
               <Form.Item
                 label="单日峰值"

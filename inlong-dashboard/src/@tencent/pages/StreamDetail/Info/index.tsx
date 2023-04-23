@@ -17,64 +17,106 @@
  * under the License.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Col, Row, Form, Table, StatusTip } from '@tencent/tea-component';
 import {
-  accessTypeMap,
   encodeTypeMap,
   dataSeparatorMap,
   peakRateMap,
+  AccessTypeEnum,
 } from '@/@tencent/enums/stream';
+import { sourceTypeMap } from '@/@tencent/enums/source';
+
+type FormConfItem = {
+  title?: string;
+  fields: {
+    label: string;
+    value: string;
+    unit?: string;
+    enumMap?: Map<unknown, unknown>;
+    render?: (text: string, row: Record<string, unknown>) => string | React.ReactNode;
+  }[];
+};
+
+const getFormConf = (accessModel): FormConfItem[] =>
+  [
+    {
+      fields: [{ label: '接入方式', value: 'accessModel', enumMap: sourceTypeMap }],
+    },
+    {
+      title: '数据流量',
+      fields: [
+        { label: '单日峰值', value: 'peakRate', enumMap: peakRateMap },
+        { label: '单日最大接入量', value: 'peakTotalSize', unit: 'GB' },
+        { label: '单条数据最大值', value: 'msgMaxLength', unit: 'Byte' },
+      ],
+    },
+    accessModel &&
+      accessModel !== AccessTypeEnum.SDK && {
+        title: '数据源信息',
+        fields: {
+          [AccessTypeEnum.FILE]: [
+            { label: '集群名称', value: 'clusterName' },
+            { label: '数据源IP', value: 'clusterIP' },
+            { label: '文件路径', value: 'filePath' },
+            { label: '读取方式', value: 'readMode' },
+          ],
+        }[accessModel],
+      },
+    {
+      title: '数据格式',
+      fields: [
+        { label: '编码类型', value: 'encodeType', enumMap: encodeTypeMap },
+        { label: '分隔符', value: 'dataSeparator', enumMap: dataSeparatorMap },
+      ],
+    },
+  ].filter(Boolean);
 
 const Info = ({ streamId, info }) => {
+  const accessModel = info.accessModel;
+
+  const conf = useMemo(() => {
+    return getFormConf(accessModel);
+  }, [accessModel]);
+
   return (
-    <Form layout="fixed" style={{ display: 'flex' }} fixedLabelWidth={100}>
+    <Form layout="fixed" style={{ display: 'flex', marginTop: 10 }} fixedLabelWidth={100}>
       <Row>
-        <Col span={24}>
-          <Form.Item label="接入方式">
-            <Form.Text>{accessTypeMap.get(info?.accessModel) || info?.accessModel}</Form.Text>
-          </Form.Item>
-        </Col>
+        {
+          conf.map(item =>
+            item.fields?.reduce(
+              (acc, cur) =>
+                acc.concat(
+                  <Col span={8} key={cur.value} style={{ padding: '0 10px' }}>
+                    <Form.Item label={cur.label}>
+                      <Form.Text>
+                        {(() => {
+                          if (cur.render) {
+                            return cur.render(info?.[cur.value], cur);
+                          }
+                          const text = cur.enumMap
+                            ? cur.enumMap.get(info?.[cur.value]) || info?.[cur.value]
+                            : info?.[cur.value];
+                          const unit = cur.unit;
+                          return unit ? `${text} ${unit}` : text;
+                        })()}
+                      </Form.Text>
+                    </Form.Item>
+                  </Col>,
+                ),
+              [
+                item.title && (
+                  <Col span={24} key={item.title} style={{ padding: '0 10px' }}>
+                    <Form.Title>{item.title}</Form.Title>
+                  </Col>
+                ),
+              ],
+            ),
+          ) as any
+        }
 
         <Col span={24}>
-          <Form.Title>数据流量</Form.Title>
-        </Col>
-        <Col span={8}>
-          <Form.Item
-            label="单日峰值"
-            tips="单日峰值（条/秒），请按照数据实际上报量以及后续增长情况，适当上浮20%-50%左右填写，用于容量管理。如果上涨超过容量限制，平台在紧急情况下会抽样或拒绝数据"
-          >
-            <Form.Text>{peakRateMap.get(info?.peakRate) || info?.peakRate}</Form.Text>
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item label="单日最大接入量">
-            <Form.Text>{info?.peakTotalSize} GB</Form.Text>
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item label="单条数据最大值">
-            <Form.Text>{info?.msgMaxLength} Byte</Form.Text>
-          </Form.Item>
-        </Col>
-
-        <Col span={24}>
-          <Form.Title>数据格式</Form.Title>
-        </Col>
-        <Col span={8}>
-          <Form.Item label="编码类型">
-            <Form.Text>{encodeTypeMap.get(info?.encodeType) || info?.encodeType}</Form.Text>
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item label="分隔符">
-            <Form.Text>
-              {dataSeparatorMap.get(info?.dataSeparator) || info?.dataSeparator}
-            </Form.Text>
-          </Form.Item>
-        </Col>
-        <Col span={24}>
-          <Form.Item label="数据字段">
+          <Form.Item label="数据字段" align="middle">
             <Table
               bordered
               verticalTop
