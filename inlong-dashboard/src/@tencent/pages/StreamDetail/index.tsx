@@ -18,14 +18,16 @@
  */
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { Alert, Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
 import { useRequest } from 'ahooks';
+import { parse } from 'qs';
 import { dateFormat } from '@/core/utils';
 import { PageContainer, Container } from '@/@tencent/components/PageContainer';
 import Description from '@/@tencent/components/Description';
 import PublishModal from '@/@tencent/pages/Stream/PublishModal';
 import { dataLevelMap, statusMap, StatusEnum } from '@/@tencent/enums/stream';
+import { SourceTypeEnum, sourceTypeApiPathMap } from '@/@tencent/enums/source';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import Info from './Info';
 import SubscribeList from './Subscribe';
@@ -45,12 +47,18 @@ export default function StreamDetail() {
 
   const { id: streamId } = useParams<{ id: string }>();
 
+  const location = useLocation();
+
+  const { sourceType } = parse(location.search.slice(1));
+
   const [publishModal, setPublishModal] = useState<{ visible: boolean; id?: string }>({
     visible: false,
   });
 
   const { data = {} } = useRequest({
-    url: '/access/query/info',
+    url: sourceTypeApiPathMap.get(sourceType as SourceTypeEnum)
+      ? `/access/${sourceTypeApiPathMap.get(sourceType as SourceTypeEnum)}/query`
+      : '/access/query/info',
     method: 'POST',
     data: {
       projectID: projectId,

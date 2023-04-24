@@ -29,6 +29,7 @@ import {
   Icon,
 } from '@tencent/tea-component';
 import { useForm, Controller } from 'react-hook-form';
+import omit from 'lodash/omit';
 import {
   accessTypeMap,
   AccessTypeEnum,
@@ -50,28 +51,46 @@ export interface AccessFormRef {
 }
 
 export interface AccessFormProps extends FormProps {
+  isUpdate?: boolean;
+  savedData?: Record<string, any>;
   onChange?: <T>(values: T) => void;
 }
 
 const AccessForm = forwardRef(
-  ({ onChange, ...props }: AccessFormProps, ref: Ref<AccessFormRef>) => {
+  ({ isUpdate, savedData, onChange, ...props }: AccessFormProps, ref: Ref<AccessFormRef>) => {
     const editableTable = useRef<EditableTableRef>();
 
     const form = useForm({
       mode: 'onChange',
-      defaultValues: {
-        accessModel: AccessTypeEnum.SDK,
-        peakRate: PeakRateEnum.L2,
-        peakTotalSize: 20,
-        msgMaxLength: 20,
-        encodeType: EncodeTypeEnum.UTF8,
-        dataSeparator: DataSeparatorEnum.Comma,
-      },
+      defaultValues: isUpdate
+        ? undefined
+        : {
+            accessModel: AccessTypeEnum.SDK,
+            peakRate: PeakRateEnum.L2,
+            peakTotalSize: 20,
+            msgMaxLength: 20,
+            encodeType: EncodeTypeEnum.UTF8,
+            dataSeparator: DataSeparatorEnum.Comma,
+          },
     });
 
     const { control, formState, reset, handleSubmit, watch } = form;
 
     const { errors } = formState;
+
+    useEffect(() => {
+      if (isUpdate && savedData) {
+        const values = omit(savedData, [
+          'name',
+          'dataLevel',
+          'remark',
+          'sinkInnerHive',
+          'subscribeTHive',
+        ]);
+        reset(values);
+        editableTable.current.setValue(savedData.fieldsData);
+      }
+    }, [isUpdate, reset, savedData]);
 
     const watchAccessModel = watch('accessModel', AccessTypeEnum.SDK);
 
@@ -83,7 +102,6 @@ const AccessForm = forwardRef(
       const [v1, v2] = await Promise.all([
         new Promise<Record<string, any>>((resolve, reject) => {
           handleSubmit(values => {
-            console.log('OK: ', values);
             resolve(values);
           }, reject)();
         }),

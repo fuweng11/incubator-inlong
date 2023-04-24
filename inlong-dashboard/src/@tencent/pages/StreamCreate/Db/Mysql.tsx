@@ -18,20 +18,25 @@
  */
 
 import React from 'react';
-import { Form, Input, Radio } from '@tencent/tea-component';
+import { Form, Input, Radio, Button } from '@tencent/tea-component';
 import { Controller } from 'react-hook-form';
 import FetchSelect from '@/@tencent/components/FetchSelect';
 import request from '@/core/utils/request';
 import {
-  AllMigrationEnum,
-  allMigrationMap,
-  ReadTypeEnum,
-  readTypeMap,
+  AllSyncEnum,
+  allSyncMap,
+  SnapshotModeEnum,
+  snapshotModeMap,
 } from '@/@tencent/enums/source/mysql';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 export default function Mysql({ form }) {
-  const { control, formState } = form;
+  const { control, formState, watch } = form;
   const { errors } = formState;
+
+  const [projectId] = useProjectId();
+
+  const watchAllSync = watch('allSync', AllSyncEnum.YES);
 
   return (
     <>
@@ -39,12 +44,12 @@ export default function Mysql({ form }) {
         label="数据库"
         align="middle"
         required
+        suffix={<Button type="link">数据源管理</Button>}
         status={errors.dbName?.message ? 'error' : undefined}
         message={errors.dbName?.message}
       >
         <Controller
           name="dbName"
-          defaultValue="11"
           shouldUnregister
           control={control}
           rules={{ required: '请填写数据库' }}
@@ -53,25 +58,31 @@ export default function Mysql({ form }) {
               {...field}
               request={async () => {
                 const result = await request({
-                  url: '/test',
+                  url: '/project/database/list',
                   method: 'POST',
+                  data: {
+                    projectID: projectId,
+                  },
                 });
-                return result;
+                return result?.map(item => ({
+                  text: item.dbName,
+                  value: item.dbName,
+                }));
               }}
             />
           )}
         />
       </Form.Item>
 
-      <Form.Item label="是否整库迁移" required>
+      <Form.Item label="是否整库同步" required>
         <Controller
-          name="allMigration"
-          defaultValue={AllMigrationEnum.YES}
+          name="allSync"
+          defaultValue={AllSyncEnum.YES}
           shouldUnregister
           control={control}
           render={({ field }) => (
             <Radio.Group {...field}>
-              {Array.from(allMigrationMap).map(([key, ctx]) => (
+              {Array.from(allSyncMap).map(([key, ctx]) => (
                 <Radio name={key as any} key={ctx}>
                   {ctx}
                 </Radio>
@@ -81,22 +92,24 @@ export default function Mysql({ form }) {
         />
       </Form.Item>
 
-      <Form.Item
-        label="表名白名单"
-        tips="白名单应该是一个以逗号分隔的正则表达式列表，与要监控的表的完全限定名称相匹配。表的完全限定名称的格式为 <dbName>.<tableName>，其中 dbName 和 tablename 都可以配置正则表达式。比如：test_db.table*,inlong_db*.user*，表示采集 test_db 库中以 table 开头的所有表 + 以 inlong_db 开头的所有库下的以 user 开头的所有表。"
-        align="middle"
-        required
-        status={errors.tableName?.message ? 'error' : undefined}
-        message={errors.tableName?.message}
-      >
-        <Controller
-          name="tableName"
-          shouldUnregister
-          control={control}
-          rules={{ required: '请填写表名白名单' }}
-          render={({ field }) => <Input {...field} maxLength={1000} />}
-        />
-      </Form.Item>
+      {watchAllSync === AllSyncEnum.NO && (
+        <Form.Item
+          label="表名白名单"
+          tips="白名单应该是一个以逗号分隔的正则表达式列表，与要监控的表的完全限定名称相匹配。表的完全限定名称的格式为 <dbName>.<tableName>，其中 dbName 和 tablename 都可以配置正则表达式。比如：test_db.table*,inlong_db*.user*，表示采集 test_db 库中以 table 开头的所有表 + 以 inlong_db 开头的所有库下的以 user 开头的所有表。"
+          align="middle"
+          required
+          status={errors.tableWhiteList?.message ? 'error' : undefined}
+          message={errors.tableWhiteList?.message}
+        >
+          <Controller
+            name="tableWhiteList"
+            shouldUnregister
+            control={control}
+            rules={{ required: '请填写表名白名单' }}
+            render={({ field }) => <Input {...field} maxLength={1000} />}
+          />
+        </Form.Item>
+      )}
 
       <Form.Item
         label="读取方式"
@@ -109,13 +122,13 @@ export default function Mysql({ form }) {
         required
       >
         <Controller
-          name="readType"
-          defaultValue={ReadTypeEnum.FULL}
+          name="snapshotMode"
+          defaultValue={SnapshotModeEnum.FULL}
           shouldUnregister
           control={control}
           render={({ field }) => (
             <Radio.Group {...field}>
-              {Array.from(readTypeMap).map(([key, ctx]) => (
+              {Array.from(snapshotModeMap).map(([key, ctx]) => (
                 <Radio name={key as any} key={ctx}>
                   {ctx}
                 </Radio>

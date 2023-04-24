@@ -17,14 +17,16 @@
  * under the License.
  */
 
-export enum ReadTypeEnum {
-  FULL = '0',
-  INC = '1',
+export enum ReadModeEnum {
+  FULL = 'FULL',
+  INC = 'INCREMENT',
+  DIY = 'DIY',
 }
 
-export const readTypeMap: Map<ReadTypeEnum, string> = (() => {
+export const readModeMap: Map<ReadModeEnum, string> = (() => {
   return new Map([
-    [ReadTypeEnum.FULL, '全量'],
-    [ReadTypeEnum.INC, '增量'],
+    [ReadModeEnum.FULL, '全量'],
+    [ReadModeEnum.INC, '增量'],
+    [ReadModeEnum.DIY, '自定义开始时间'],
   ]);
 })();

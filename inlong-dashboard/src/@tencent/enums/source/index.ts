@@ -33,9 +33,18 @@ export const sourceTypeMap: Map<SourceTypeEnum, string> = (() => {
   ]);
 })();
 
+export const sourceTypeApiPathMap: Map<SourceTypeEnum, string> = (() => {
+  return new Map([
+    [SourceTypeEnum.SDK, 'sdk'],
+    [SourceTypeEnum.FILE, 'file'],
+    [SourceTypeEnum.MySQL, 'mysql'],
+    [SourceTypeEnum.PostgreSQL, 'pgsql'],
+  ]);
+})();
+
 export enum DbTypeEnum {
-  MySQL = 'MYSQL',
-  PostgreSQL = 'POSTGRESQL',
+  MySQL = SourceTypeEnum.MySQL,
+  PostgreSQL = SourceTypeEnum.PostgreSQL,
 }
 
 export const dbTypeMap: Map<DbTypeEnum, string> = (() => {

@@ -230,7 +230,9 @@ export default function StreamList() {
                 <Button
                   type="link"
                   key="detail"
-                  onClick={() => history.push(`/stream/${row.streamID}`)}
+                  onClick={() =>
+                    history.push(`/stream/${row.streamID}?sourceType=${row.accessModel}`)
+                  }
                 >
                   详情
                 </Button>,

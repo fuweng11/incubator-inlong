@@ -18,7 +18,7 @@
  */
 
 import React from 'react';
-import { Form, Input, Radio } from '@tencent/tea-component';
+import { Form, Input, Radio, Button } from '@tencent/tea-component';
 import { Controller } from 'react-hook-form';
 import FetchSelect from '@/@tencent/components/FetchSelect';
 import request from '@/core/utils/request';
@@ -34,11 +34,12 @@ export default function PostgreSql({ form }) {
         label="数据库"
         align="middle"
         required
-        status={errors.dbName?.message ? 'error' : undefined}
-        message={errors.dbName?.message}
+        suffix={<Button type="link">数据源管理</Button>}
+        status={errors.dataBaseName?.message ? 'error' : undefined}
+        message={errors.dataBaseName?.message}
       >
         <Controller
-          name="dbName"
+          name="dataBaseName"
           defaultValue="11"
           shouldUnregister
           control={control}
@@ -62,11 +63,11 @@ export default function PostgreSql({ form }) {
         label="模式"
         align="middle"
         required
-        status={errors.mode?.message ? 'error' : undefined}
-        message={errors.mode?.message}
+        status={errors.schema?.message ? 'error' : undefined}
+        message={errors.schema?.message}
       >
         <Controller
-          name="mode"
+          name="schema"
           shouldUnregister
           control={control}
           rules={{ required: '请填写模式' }}

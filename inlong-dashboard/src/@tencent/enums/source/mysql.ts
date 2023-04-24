@@ -17,26 +17,26 @@
  * under the License.
  */
 
-export enum ReadTypeEnum {
+export enum SnapshotModeEnum {
   FULL = '0',
   INC = '1',
 }
 
-export enum AllMigrationEnum {
+export enum AllSyncEnum {
   YES = 1,
   NO = 0,
 }
 
-export const readTypeMap: Map<ReadTypeEnum, string> = (() => {
+export const snapshotModeMap: Map<SnapshotModeEnum, string> = (() => {
   return new Map([
-    [ReadTypeEnum.FULL, '全量'],
-    [ReadTypeEnum.INC, '增量'],
+    [SnapshotModeEnum.FULL, '全量'],
+    [SnapshotModeEnum.INC, '增量'],
   ]);
 })();
 
-export const allMigrationMap: Map<AllMigrationEnum, string> = (() => {
+export const allSyncMap: Map<AllSyncEnum, string> = (() => {
   return new Map([
-    [AllMigrationEnum.YES, '是'],
-    [AllMigrationEnum.NO, '否'],
+    [AllSyncEnum.YES, '是'],
+    [AllSyncEnum.NO, '否'],
   ]);
 })();

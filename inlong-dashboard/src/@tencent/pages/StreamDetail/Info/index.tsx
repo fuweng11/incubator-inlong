@@ -26,6 +26,7 @@ import {
   AccessTypeEnum,
 } from '@/@tencent/enums/stream';
 import { sourceTypeMap } from '@/@tencent/enums/source';
+import { readModeMap } from '@/@tencent/enums/source/file';
 
 type FormConfItem = {
   title?: string;
@@ -57,9 +58,9 @@ const getFormConf = (accessModel): FormConfItem[] =>
         fields: {
           [AccessTypeEnum.FILE]: [
             { label: '集群名称', value: 'clusterName' },
-            { label: '数据源IP', value: 'clusterIP' },
+            { label: '数据源IP', value: 'clusterIPs' },
             { label: '文件路径', value: 'filePath' },
-            { label: '读取方式', value: 'readMode' },
+            { label: '读取方式', value: 'readMode', enumMap: readModeMap },
           ],
         }[accessModel],
       },

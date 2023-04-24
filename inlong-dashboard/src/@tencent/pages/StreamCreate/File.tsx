@@ -18,13 +18,15 @@
  */
 
 import React from 'react';
-import { Form, Input, Radio } from '@tencent/tea-component';
+import { Form, Input, Radio, Button, TagSelect } from '@tencent/tea-component';
 import { Controller } from 'react-hook-form';
-import { ReadTypeEnum, readTypeMap } from '@/@tencent/enums/source/file';
+import { ReadModeEnum, readModeMap } from '@/@tencent/enums/source/file';
 
 export default function File({ form }) {
-  const { control, formState } = form;
+  const { control, formState, watch } = form;
   const { errors } = formState;
+
+  const watchReadMode = watch('readMode', ReadModeEnum.FULL);
 
   return (
     <>
@@ -32,12 +34,12 @@ export default function File({ form }) {
         label="集群名称"
         align="middle"
         required
-        status={errors.cluster?.message ? 'error' : undefined}
-        message={errors.cluster?.message}
+        suffix={<Button type="link">数据源管理</Button>}
+        status={errors.clusterName?.message ? 'error' : undefined}
+        message={errors.clusterName?.message}
       >
         <Controller
-          name="cluster"
-          defaultValue="cluster"
+          name="clusterName"
           shouldUnregister
           control={control}
           rules={{ required: '请填写集群名称' }}
@@ -49,27 +51,28 @@ export default function File({ form }) {
         label="数据源IP"
         align="middle"
         required
-        status={errors.ips?.message ? 'error' : undefined}
-        message={errors.ips?.message}
+        status={errors.clusterIPs?.message ? 'error' : undefined}
+        message={errors.clusterIPs?.message}
       >
         <Controller
-          name="ips"
+          name="clusterIPs"
           shouldUnregister
           control={control}
           rules={{ required: '请填写数据源IP' }}
-          render={({ field }) => <Input {...field} maxLength={100} />}
+          render={({ field }) => <TagSelect {...field} tips="" style={{ width: 200 }} />}
         />
       </Form.Item>
 
       <Form.Item
         label="文件路径"
         align="middle"
+        tips="完整路径或通配符：/a/b/*.txt"
         required
-        status={errors.path?.message ? 'error' : undefined}
-        message={errors.path?.message}
+        status={errors.filePath?.message ? 'error' : undefined}
+        message={errors.filePath?.message}
       >
         <Controller
-          name="path"
+          name="filePath"
           shouldUnregister
           control={control}
           rules={{ required: '请填写文件路径' }}
@@ -86,18 +89,18 @@ export default function File({ form }) {
           </>
         }
         required
-        status={errors.readType?.message ? 'error' : undefined}
-        message={errors.readType?.message}
+        status={errors.readMode?.message ? 'error' : undefined}
+        message={errors.readMode?.message}
       >
         <Controller
-          name="readType"
-          defaultValue={ReadTypeEnum.FULL}
+          name="readMode"
+          defaultValue={ReadModeEnum.FULL}
           shouldUnregister
           control={control}
           rules={{ required: '请填写读取方式' }}
           render={({ field }) => (
             <Radio.Group {...field}>
-              {Array.from(readTypeMap).map(([key, ctx]) => (
+              {Array.from(readModeMap).map(([key, ctx]) => (
                 <Radio name={key} key={ctx}>
                   {ctx}
                 </Radio>
@@ -106,6 +109,23 @@ export default function File({ form }) {
           )}
         />
       </Form.Item>
+
+      {watchReadMode === ReadModeEnum.DIY && (
+        <Form.Item
+          label="时间偏移量"
+          align="middle"
+          tips="从文件的某个时间开始采集，'1m'表示1分钟之后，'-1m'表示1分钟之前，支持m(分钟)，h(小时)，d(天)，空则从当前时间开始采集"
+          status={errors.timeOffset?.message ? 'error' : undefined}
+          message={errors.timeOffset?.message}
+        >
+          <Controller
+            name="timeOffset"
+            shouldUnregister
+            control={control}
+            render={({ field }) => <Input {...field} />}
+          />
+        </Form.Item>
+      )}
     </>
   );
 }

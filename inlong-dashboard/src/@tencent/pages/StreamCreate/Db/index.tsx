@@ -28,7 +28,7 @@ export default function Db({ form }) {
   const { control, formState, watch } = form;
   const { errors } = formState;
 
-  const watchDbType = watch('dbType', DbTypeEnum.MySQL);
+  const watchDbType = watch('sourceType', DbTypeEnum.MySQL);
 
   return (
     <>
@@ -36,11 +36,11 @@ export default function Db({ form }) {
         label="数据源类型"
         align="middle"
         required
-        status={errors.dbType?.message ? 'error' : undefined}
-        message={errors.dbType?.message}
+        status={errors.sourceType?.message ? 'error' : undefined}
+        message={errors.sourceType?.message}
       >
         <Controller
-          name="dbType"
+          name="sourceType"
           defaultValue={DbTypeEnum.MySQL}
           shouldUnregister
           control={control}

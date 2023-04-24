@@ -18,22 +18,48 @@
  */
 
 import React, { useRef, useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams, useLocation } from 'react-router-dom';
 import { Button, Card, Modal, message } from '@tencent/tea-component';
 import { PageContainer, Container, FooterToolbar } from '@/@tencent/components/PageContainer';
 import request from '@/core/utils/request';
+import { useRequest } from 'ahooks';
+import { parse } from 'qs';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
+import { SourceTypeEnum, sourceTypeApiPathMap } from '@/@tencent/enums/source';
 import BasicForm, { BasicFormRef } from './BasicForm';
 import AccessForm, { AccessFormRef } from './AccessForm';
 
 export default function StreamCreate() {
+  const { id: streamId } = useParams<{ id: string }>();
+
   const [projectId] = useProjectId();
+
+  const location = useLocation();
+
+  const { sourceType } = parse(location.search.slice(1));
 
   const basicFormRef = useRef<BasicFormRef>();
   const accessFormRef = useRef<AccessFormRef>();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [changed, setChanged] = useState<boolean>(false);
+
+  const { data: savedData } = useRequest(
+    {
+      url: sourceTypeApiPathMap.get(sourceType as SourceTypeEnum)
+        ? `/access/${sourceTypeApiPathMap.get(sourceType as SourceTypeEnum)}/query`
+        : '/access/query/info',
+      method: 'POST',
+      data: {
+        projectID: projectId,
+        streamID: streamId,
+      },
+    },
+    {
+      ready: Boolean(streamId),
+      refreshDeps: [streamId],
+    },
+  );
 
   const history = useHistory();
 
@@ -45,16 +71,19 @@ export default function StreamCreate() {
         accessFormRef.current.submit(),
       ]);
       const values = { ...basicV, ...accessV };
-
+      console.log('values: ', values);
+      const path =
+        sourceTypeApiPathMap.get(values.accessModel) ||
+        sourceTypeApiPathMap.get(values.sourceType) ||
+        values.accessModel;
       await request({
-        url: '/access/create',
+        url: `/access/${path}/create`,
         method: 'POST',
         data: {
           ...values,
           projectID: projectId,
         },
       });
-
       history.block(() => null);
       history.push('/stream');
       message.success({ content: '新建成功' });
@@ -100,7 +129,12 @@ export default function StreamCreate() {
       <Container useDefaultBackground={false}>
         <Card>
           <Card.Body title="基本信息">
-            <BasicForm ref={basicFormRef} onChange={() => !changed && setChanged(true)} />
+            <BasicForm
+              ref={basicFormRef}
+              isUpdate={Boolean(streamId)}
+              savedData={savedData}
+              onChange={() => !changed && setChanged(true)}
+            />
           </Card.Body>
         </Card>
       </Container>
@@ -108,7 +142,12 @@ export default function StreamCreate() {
       <Container useDefaultBackground={false}>
         <Card>
           <Card.Body title="接入信息">
-            <AccessForm ref={accessFormRef} onChange={() => !changed && setChanged(true)} />
+            <AccessForm
+              ref={accessFormRef}
+              isUpdate={Boolean(streamId)}
+              savedData={savedData}
+              onChange={() => !changed && setChanged(true)}
+            />
           </Card.Body>
         </Card>
       </Container>
