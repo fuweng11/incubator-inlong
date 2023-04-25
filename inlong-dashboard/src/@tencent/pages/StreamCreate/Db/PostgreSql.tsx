@@ -23,10 +23,13 @@ import { Controller } from 'react-hook-form';
 import FetchSelect from '@/@tencent/components/FetchSelect';
 import request from '@/core/utils/request';
 import { ReadTypeEnum, readTypeMap } from '@/@tencent/enums/source/postgreSql';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 export default function PostgreSql({ form }) {
   const { control, formState } = form;
   const { errors } = formState;
+
+  const [projectId] = useProjectId();
 
   return (
     <>
@@ -49,10 +52,16 @@ export default function PostgreSql({ form }) {
               {...field}
               request={async () => {
                 const result = await request({
-                  url: '/test',
+                  url: '/project/database/list',
                   method: 'POST',
+                  data: {
+                    projectID: projectId,
+                  },
                 });
-                return result;
+                return result?.map(item => ({
+                  text: item.dbName,
+                  value: item.dbName,
+                }));
               }}
             />
           )}
@@ -88,16 +97,17 @@ export default function PostgreSql({ form }) {
           control={control}
           rules={{ required: '请填写表' }}
           render={({ field }) => (
-            <FetchSelect
-              {...field}
-              request={async () => {
-                const result = await request({
-                  url: '/test',
-                  method: 'POST',
-                });
-                return result;
-              }}
-            />
+            <Input {...field} />
+            // <FetchSelect
+            //   {...field}
+            //   request={async () => {
+            //     const result = await request({
+            //       url: '/test',
+            //       method: 'POST',
+            //     });
+            //     return result;
+            //   }}
+            // />
           )}
         />
       </Form.Item>

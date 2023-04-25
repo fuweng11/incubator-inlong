@@ -27,6 +27,12 @@ const conf: RouteProps[] = [
       {
         path: '/create',
         component: () => import('@/@tencent/pages/StreamCreate'),
+        childRoutes: [
+          {
+            path: '/:id',
+            component: () => import('@/@tencent/pages/StreamCreate'),
+          },
+        ],
       },
       {
         path: '/:id',

@@ -17,26 +17,12 @@
  * under the License.
  */
 
-export enum SnapshotModeEnum {
-  FULL = '0',
-  INC = '1',
-}
+import { readModeMap } from '@/@tencent/enums/source/file';
+import type { FormConfItem } from '.';
 
-export enum AllSyncEnum {
-  YES = true as any,
-  NO = false as any,
-}
-
-export const snapshotModeMap: Map<SnapshotModeEnum, string> = (() => {
-  return new Map([
-    [SnapshotModeEnum.FULL, '全量'],
-    [SnapshotModeEnum.INC, '增量'],
-  ]);
-})();
-
-export const allSyncMap: Map<AllSyncEnum, string> = (() => {
-  return new Map([
-    [AllSyncEnum.YES, '是'],
-    [AllSyncEnum.NO, '否'],
-  ]);
-})();
+export const fields: FormConfItem['fields'] = [
+  { label: '集群名称', value: 'clusterName' },
+  { label: '数据源IP', value: 'clusterIPs' },
+  { label: '文件路径', value: 'filePath' },
+  { label: '读取方式', value: 'readMode', enumMap: readModeMap },
+];

@@ -17,26 +17,13 @@
  * under the License.
  */
 
-export enum SnapshotModeEnum {
-  FULL = '0',
-  INC = '1',
-}
+import { readTypeMap } from '@/@tencent/enums/source/postgreSql';
+import type { FormConfItem } from '.';
 
-export enum AllSyncEnum {
-  YES = true as any,
-  NO = false as any,
-}
-
-export const snapshotModeMap: Map<SnapshotModeEnum, string> = (() => {
-  return new Map([
-    [SnapshotModeEnum.FULL, '全量'],
-    [SnapshotModeEnum.INC, '增量'],
-  ]);
-})();
-
-export const allSyncMap: Map<AllSyncEnum, string> = (() => {
-  return new Map([
-    [AllSyncEnum.YES, '是'],
-    [AllSyncEnum.NO, '否'],
-  ]);
-})();
+export const fields: FormConfItem['fields'] = [
+  { label: '数据库', value: 'dataBaseName' },
+  { label: '模式', value: 'schema' },
+  { label: '表', value: 'tableName' },
+  { label: '主键', value: 'primaryKey' },
+  { label: '读取方式', value: 'readType', enumMap: readTypeMap },
+];

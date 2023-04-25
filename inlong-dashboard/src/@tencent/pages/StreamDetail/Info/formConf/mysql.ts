@@ -17,26 +17,12 @@
  * under the License.
  */
 
-export enum SnapshotModeEnum {
-  FULL = '0',
-  INC = '1',
-}
+import { allSyncMap, snapshotModeMap } from '@/@tencent/enums/source/mysql';
+import type { FormConfItem } from '.';
 
-export enum AllSyncEnum {
-  YES = true as any,
-  NO = false as any,
-}
-
-export const snapshotModeMap: Map<SnapshotModeEnum, string> = (() => {
-  return new Map([
-    [SnapshotModeEnum.FULL, '全量'],
-    [SnapshotModeEnum.INC, '增量'],
-  ]);
-})();
-
-export const allSyncMap: Map<AllSyncEnum, string> = (() => {
-  return new Map([
-    [AllSyncEnum.YES, '是'],
-    [AllSyncEnum.NO, '否'],
-  ]);
-})();
+export const fields: FormConfItem['fields'] = [
+  { label: '数据库', value: 'dataBaseName' },
+  { label: '是否整库同步', value: 'allSync', enumMap: allSyncMap },
+  { label: '表名白名单', value: 'tableWhiteList' },
+  { label: '读取方式', value: 'snapshotMode', enumMap: snapshotModeMap },
+];

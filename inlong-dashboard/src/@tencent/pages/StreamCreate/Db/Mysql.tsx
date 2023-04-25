@@ -45,11 +45,11 @@ export default function Mysql({ form }) {
         align="middle"
         required
         suffix={<Button type="link">数据源管理</Button>}
-        status={errors.dbName?.message ? 'error' : undefined}
-        message={errors.dbName?.message}
+        status={errors.dataBaseName?.message ? 'error' : undefined}
+        message={errors.dataBaseName?.message}
       >
         <Controller
-          name="dbName"
+          name="dataBaseName"
           shouldUnregister
           control={control}
           rules={{ required: '请填写数据库' }}

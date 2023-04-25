@@ -19,59 +19,7 @@
 
 import React, { useMemo } from 'react';
 import { Col, Row, Form, Table, StatusTip } from '@tencent/tea-component';
-import {
-  encodeTypeMap,
-  dataSeparatorMap,
-  peakRateMap,
-  AccessTypeEnum,
-} from '@/@tencent/enums/stream';
-import { sourceTypeMap } from '@/@tencent/enums/source';
-import { readModeMap } from '@/@tencent/enums/source/file';
-
-type FormConfItem = {
-  title?: string;
-  fields: {
-    label: string;
-    value: string;
-    unit?: string;
-    enumMap?: Map<unknown, unknown>;
-    render?: (text: string, row: Record<string, unknown>) => string | React.ReactNode;
-  }[];
-};
-
-const getFormConf = (accessModel): FormConfItem[] =>
-  [
-    {
-      fields: [{ label: '接入方式', value: 'accessModel', enumMap: sourceTypeMap }],
-    },
-    {
-      title: '数据流量',
-      fields: [
-        { label: '单日峰值', value: 'peakRate', enumMap: peakRateMap },
-        { label: '单日最大接入量', value: 'peakTotalSize', unit: 'GB' },
-        { label: '单条数据最大值', value: 'msgMaxLength', unit: 'Byte' },
-      ],
-    },
-    accessModel &&
-      accessModel !== AccessTypeEnum.SDK && {
-        title: '数据源信息',
-        fields: {
-          [AccessTypeEnum.FILE]: [
-            { label: '集群名称', value: 'clusterName' },
-            { label: '数据源IP', value: 'clusterIPs' },
-            { label: '文件路径', value: 'filePath' },
-            { label: '读取方式', value: 'readMode', enumMap: readModeMap },
-          ],
-        }[accessModel],
-      },
-    {
-      title: '数据格式',
-      fields: [
-        { label: '编码类型', value: 'encodeType', enumMap: encodeTypeMap },
-        { label: '分隔符', value: 'dataSeparator', enumMap: dataSeparatorMap },
-      ],
-    },
-  ].filter(Boolean);
+import { getFormConf } from './formConf';
 
 const Info = ({ streamId, info }) => {
   const accessModel = info.accessModel;
