@@ -389,50 +389,6 @@ export default class InnerThiveSink
     }),
   })
   sinkFieldList: Record<string, unknown>[];
-
-  @FieldDecorator({
-    type: EditableTable,
-    tooltip: i18n.t('meta.Sinks.Hive.PartitionFieldListHelp'),
-    col: 24,
-    props: {
-      size: 'small',
-      required: false,
-      columns: [
-        {
-          title: i18n.t('meta.Sinks.Hive.FieldName'),
-          dataIndex: 'fieldName',
-          rules: [{ required: true }],
-        },
-        {
-          title: i18n.t('meta.Sinks.Hive.FieldType'),
-          dataIndex: 'fieldType',
-          type: 'select',
-          initialValue: 'string',
-          props: {
-            options: ['string', 'timestamp'].map(item => ({
-              label: item,
-              value: item,
-            })),
-          },
-        },
-        {
-          title: i18n.t('meta.Sinks.Hive.FieldFormat'),
-          dataIndex: 'fieldFormat',
-          type: 'autocomplete',
-          props: {
-            options: ['MICROSECONDS', 'MILLISECONDS', 'SECONDS', 'SQL', 'ISO_8601'].map(item => ({
-              label: item,
-              value: item,
-            })),
-          },
-          rules: [{ required: true }],
-          visible: (text, record) => record.fieldType === 'timestamp',
-        },
-      ],
-    },
-  })
-  @I18n('meta.Sinks.Hive.PartitionFieldList')
-  partitionFieldList: Record<string, unknown>[];
 }
 
 const getFieldListColumns = sinkValues => {

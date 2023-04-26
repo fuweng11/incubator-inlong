@@ -53,7 +53,7 @@ export default class PulsarSource
           formatResult: result =>
             result?.list?.map(item => ({
               ...item,
-              label: item.name,
+              label: item.displayName,
               value: item.name,
             })),
         },
@@ -85,7 +85,7 @@ export default class PulsarSource
           formatResult: result =>
             result?.list?.map(item => ({
               ...item,
-              label: item.name,
+              label: item.displayName,
               value: item.name,
             })),
         },
