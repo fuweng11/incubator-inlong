@@ -98,12 +98,12 @@ public class RemoteConfigManager implements IRepository {
      */
     @SuppressWarnings("unchecked")
     public static RemoteConfigManager getInstance() {
+        LOGGER.info("create repository for {}", RemoteConfigManager.class.getSimpleName());
         if (isInit && instance != null) {
             return instance;
         }
         synchronized (RemoteConfigManager.class) {
             if (!isInit) {
-                LOGGER.info("create repository for {}", RemoteConfigManager.class.getSimpleName());
                 instance = new RemoteConfigManager();
                 try {
                     String strReloadInterval = CommonPropertiesHolder.getString(KEY_CONFIG_CHECK_INTERVAL);
