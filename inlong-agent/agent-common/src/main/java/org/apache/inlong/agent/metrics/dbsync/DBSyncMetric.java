@@ -187,7 +187,7 @@ public class DBSyncMetric extends Thread {
         if (newestPosition == null || newestPosition.getPosition() == null) {
             if (logger.isDebugEnabled()) {
                 logger.debug("serverId:{} bid:{} tid:{} instName:{} newestPosition is null!",
-                        sInfo.getServerId(), sInfo.getGroupID(),
+                        sInfo.getJobId(), sInfo.getGroupID(),
                         sInfo.getStreamID(), sInfo.getInstName());
             }
         } else {
@@ -206,7 +206,7 @@ public class DBSyncMetric extends Thread {
         if (logPosition == null || logPosition.getPosition() == null) {
             if (logger.isDebugEnabled()) {
                 logger.debug("serverId:{} bid:{} tid:{} instName:{} no current position",
-                        sInfo.getServerId(), sInfo.getGroupID(),
+                        sInfo.getJobId(), sInfo.getGroupID(),
                         sInfo.getStreamID(), sInfo.getInstName());
             }
         } else {
@@ -234,7 +234,7 @@ public class DBSyncMetric extends Thread {
                         .ip(agentConf.get(AGENT_LOCAL_IP, DEFAULT_AGENT_UNIQ_ID))
                         .reportTime(System.currentTimeMillis())
                         .streamID(sInfo.getStreamID())
-                        .serverId(sInfo.getServerId())
+                        .jobId(sInfo.getJobId())
                         .jobStat(jobStat).build();
         if (lineCnt > 0) {
             jobSendMetricLogger.info(info);
@@ -245,12 +245,12 @@ public class DBSyncMetric extends Thread {
     }
 
     public void addStatisticInfo(String key, String groupID, String streamID, long timeStample,
-            long msgCnt, LogPosition latestLogPosition, String serverId) {
+            long msgCnt, LogPosition latestLogPosition, String jobID) {
         AtomicLong statistic = statisticData.get(key);
         if (statistic == null) {
             statisticData.putIfAbsent(key, new AtomicLong(msgCnt));
             try {
-                sInfos.put(new StatisticInfo(groupID, streamID, timeStample, latestLogPosition, serverId, key));
+                sInfos.put(new StatisticInfo(groupID, streamID, timeStample, latestLogPosition, jobID, key));
             } catch (InterruptedException e) {
                 logger.error("put {}#{} StatisticInfo {} error, ", groupID, streamID, timeStample,
                         e);

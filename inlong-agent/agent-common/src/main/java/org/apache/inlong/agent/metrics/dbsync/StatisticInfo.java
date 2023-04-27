@@ -30,16 +30,16 @@ public class StatisticInfo {
     private String streamID;
     private String topic;
     private long timestamp;
-    private String serverId;
+    private String jobId = "";
     private String instName;
 
     public StatisticInfo(String groupID, String streamID, long timestamp,
-            LogPosition logPosition, String serverId, String key) {
+            LogPosition logPosition, String jobId, String key) {
         this.groupID = groupID;
         this.streamID = streamID;
         this.timestamp = timestamp;
         this.latestLogPosition = logPosition;
-        this.serverId = serverId;
+        this.jobId = jobId;
         this.key = key;
     }
 
@@ -47,8 +47,8 @@ public class StatisticInfo {
         return latestLogPosition;
     }
 
-    public String getServerId() {
-        return serverId;
+    public String getJobId() {
+        return jobId;
     }
 
     public long getTimestamp() {
