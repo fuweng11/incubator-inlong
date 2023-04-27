@@ -199,7 +199,7 @@ public class DBSyncReadOperator {
         // prepare work
         binlogParser = buildParser();
         relayLog = mkRelayLog();
-        slaveId = DBSyncUtils.generateSlaveId(jobName, jobconf.getServerId());
+        slaveId = DBSyncUtils.generateSlaveId(jobName, jobconf.getServerName());
         parseThreadList = new ConcurrentHashMap<>();
         heartbeatManager = HeartbeatManager.getInstance();
         positionControl = new PositionControl(jobconf, this);
@@ -494,7 +494,7 @@ public class DBSyncReadOperator {
 
         DbSyncHeartbeat hbInfo = new DbSyncHeartbeat();
         hbInfo.setInstance(AgentUtils.getLocalIp());
-        hbInfo.setServerName(jobconf.getServerId());
+        hbInfo.setServerName(jobconf.getServerName());
         hbInfo.setTaskIds(jobconf.getTaskIdList());
         hbInfo.setCurrentDb(jobconf.getCurMysqlIp());
         hbInfo.setUrl(jobconf.getCurMysqlUrl());
@@ -1605,7 +1605,7 @@ public class DBSyncReadOperator {
     }
 
     private String updateCurrentDbInfo(String ipPortInfo) {
-        return currentDbInfo = ipPortInfo + ":" + jobconf.getServerId();
+        return currentDbInfo = ipPortInfo + ":" + jobconf.getServerName();
     }
 
     private String getDbIpAddress(InetSocketAddress dbConnectionAddress) {

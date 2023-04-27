@@ -117,7 +117,7 @@ public class DbSyncMetricSink {
 
     private String urlPrefix;
 
-    private String jobName;
+    private String serverName;
     // private AbstractJob job;
 
     private String pulsarMetricsTopic;
@@ -133,9 +133,9 @@ public class DbSyncMetricSink {
         logger.info("Initial pulsar [{}]", clusterUrl);
     }
 
-    public void start(String jobName) {
+    public void start(String serverName) {
         logger.info("Pulsar sender begin work!");
-        this.jobName = jobName;
+        this.serverName = serverName;
         int sendThreadSize = agentConf.getInt(DBSYNC_SEND_THREAD_SIZE, DEFAULT_DBSYNC_SEND_THREAD_SIZE);
         int pulsarSendQueueSize =
                 agentConf.getInt(DBSYNC_SEND_QUEUE_SIZESEND_QUEUE_SIZE, DEFAULT_DBSYNC_SEND_QUEUE_SIZESEND_QUEUE_SIZE);
@@ -195,7 +195,7 @@ public class DbSyncMetricSink {
 
         producerMonitorExecutor = Executors
                 .newSingleThreadScheduledExecutor(
-                        new DefaultThreadFactory(jobName + "-producer-monitor"));
+                        new DefaultThreadFactory(serverName + "-producer-monitor"));
         producerMonitorExecutor.scheduleWithFixedDelay(new Runnable() {
 
             @Override
@@ -251,7 +251,7 @@ public class DbSyncMetricSink {
                         entry.getValue().close();
                     }
                 } catch (Throwable e) {
-                    logger.error("[{}] Close producer has exception", jobName, e);
+                    logger.error("[{}] Close producer has exception", serverName, e);
                 }
             }
             runnerRunning = false;
@@ -336,7 +336,7 @@ public class DbSyncMetricSink {
 
     private void printMonitorInfo() {
         for (SenderRunner runner : senderThreadList) {
-            logger.info("[{}] Monitor info [{}]", jobName, runner.getMonitorInfo());
+            logger.info("[{}] Monitor info [{}]", serverName, runner.getMonitorInfo());
         }
     }
 
@@ -376,7 +376,7 @@ public class DbSyncMetricSink {
                 producerMonitorExecutor = null;
             }
         } catch (Throwable e) {
-            logger.error("[{}] producerMonitorExecutor shutdown has exception!", jobName, e);
+            logger.error("[{}] producerMonitorExecutor shutdown has exception!", serverName, e);
         }
 
         try {
@@ -385,7 +385,7 @@ public class DbSyncMetricSink {
                 client = null;
             }
         } catch (Exception e) {
-            logger.error("[{}] Close pulsar client has error !", jobName);
+            logger.error("[{}] Close pulsar client has error !", serverName);
         }
     }
 
@@ -423,7 +423,7 @@ public class DbSyncMetricSink {
 
     public void report() {
         StringBuilder bs = new StringBuilder();
-        bs.append("JobName:").append(jobName).append("|").append(getMetric());
+        bs.append("JobName:").append(serverName).append("|").append(getMetric());
         jobSenderReportLogger.info(bs.toString());
     }
 }

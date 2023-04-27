@@ -58,7 +58,7 @@ public class DBSyncMetric extends Thread {
 
     protected volatile boolean hasInited = false;
 
-    private String jobName;
+    private String serverName;
 
     private final AgentConfiguration agentConf = AgentConfiguration.getAgentConf();
 
@@ -81,17 +81,17 @@ public class DBSyncMetric extends Thread {
         this.idGeneratorMap = new ConcurrentHashMap<>();
     }
 
-    public void init(String pulsarCluster, String jobName) {
-        logger.info("DBSyncMetric pulsarCluster {}", pulsarCluster);
+    public void init(String pulsarCluster, String serverName) {
         synchronized (DBSyncMetric.this) {
             if (hasInited) {
                 return;
             }
             this.pulsarCluster = pulsarCluster;
-            this.jobName = jobName;
+            this.serverName = serverName;
             dbSyncMetricSink = new DbSyncMetricSink(pulsarCluster);
             hasInited = true;
         }
+        logger.info("DBSyncMetric [{}] ,pulsarCluster {}", serverName, pulsarCluster);
     }
 
     public void start() {
@@ -100,7 +100,7 @@ public class DBSyncMetric extends Thread {
             return;
         }
         logger.info("DBSyncMetric  start.");
-        dbSyncMetricSink.start(this.jobName);
+        dbSyncMetricSink.start(this.serverName);
         dbSyncMetricThread.start();
     }
 
@@ -235,6 +235,7 @@ public class DBSyncMetric extends Thread {
                         .reportTime(System.currentTimeMillis())
                         .streamID(sInfo.getStreamID())
                         .jobId(sInfo.getJobId())
+                        .serverName(serverName)
                         .jobStat(jobStat).build();
         if (lineCnt > 0) {
             jobSendMetricLogger.info(info);

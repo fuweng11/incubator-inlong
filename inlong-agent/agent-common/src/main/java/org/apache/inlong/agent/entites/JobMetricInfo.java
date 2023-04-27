@@ -42,4 +42,5 @@ public class JobMetricInfo {
     private String clusterId;
     private String jobStat;
     private String jobId;
+    private String serverName;
 }

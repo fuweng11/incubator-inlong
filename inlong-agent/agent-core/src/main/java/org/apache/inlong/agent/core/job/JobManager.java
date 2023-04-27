@@ -147,7 +147,7 @@ public class JobManager extends AbstractDaemon {
     }
 
     public List<String> getCurrentRunSyncIdList() {
-        List<String> set = runningJobs.values().stream().map((job) -> (job.getDBSyncJobConf().getServerId()))
+        List<String> set = runningJobs.values().stream().map((job) -> (job.getDBSyncJobConf().getServerName()))
                 .filter(StringUtils::isNotEmpty).collect(Collectors.toList());
         return set;
     }
@@ -167,7 +167,7 @@ public class JobManager extends AbstractDaemon {
     public boolean isRunningJob(String syncId) {
         if (StringUtils.isNotEmpty(syncId)) {
             List<String> list =
-                    runningJobs.values().stream().map((job) -> job.getDBSyncJobConf().getServerId()).collect(
+                    runningJobs.values().stream().map((job) -> job.getDBSyncJobConf().getServerName()).collect(
                             Collectors.toList());
             if (list != null && list.contains(syncId)) {
                 return true;

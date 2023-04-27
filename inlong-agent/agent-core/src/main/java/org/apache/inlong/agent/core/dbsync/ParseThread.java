@@ -285,7 +285,7 @@ public class ParseThread extends Thread {
                     positionControl.addLogPositionToSendCache(sendPosition);
 
                     boolean putResult = genSendDataByPbProtoc(rowChange, entry, dbName, tbName, myConf,
-                            sendPosition, parseMsgId, dbSyncReadOperator.jobconf.getServerId());
+                            sendPosition, parseMsgId, dbSyncReadOperator.jobconf.getServerName());
                     // if (putResult) {
                     // //TODO:puting data first is ok?
                     // dbSyncReadOperator.addLogPositionToCache(sendPosition);

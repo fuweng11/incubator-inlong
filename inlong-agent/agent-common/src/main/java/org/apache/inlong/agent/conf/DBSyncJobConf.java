@@ -85,23 +85,23 @@ public class DBSyncJobConf {
 
     private LogPosition startPos;
     private String jobName;
-    private String serverId;
+    private String serverName;
 
     public DBSyncJobConf(String ip, int port, String userName, String passwd, Charset charset, LogPosition startPos,
-            String serverId) {
+            String serverName) {
         this.dbAddrList = Lists.newArrayList(new InetSocketAddress(ip, port));
         this.currAddress = new InetSocketAddress(ip, port);
         this.mysqlUserName = userName;
         this.mysqlPassWd = passwd;
         this.charset = charset;
         this.startPos = startPos;
-        this.jobName = currAddress.getHostString() + ":" + currAddress.getPort() + ":" + serverId;
+        this.jobName = currAddress.getHostString() + ":" + currAddress.getPort() + ":" + serverName;
         this.namePatternMap = new ConcurrentHashMap<>();
         this.table2MysqlConf = new ConcurrentHashMap<>();
         this.lruCache = new LRUMap<>(24 * 60 * 60 * 1000L);
         this.jobAlarmPerson = new HashSet<>();
         this.filter = new TableNameFilter();
-        this.serverId = serverId;
+        this.serverName = serverName;
         STATUS_UPDATER.set(DBSyncJobConf.this, TaskStat.NORMAL);
     }
 
@@ -300,19 +300,19 @@ public class DBSyncJobConf {
         return mysqlPassWd;
     }
 
-    public String getServerId() {
-        return serverId;
+    public String getServerName() {
+        return serverName;
     }
 
     public String getJobName() {
         if (StringUtils.isEmpty(jobName)) {
-            jobName = currAddress.getHostString() + ":" + currAddress.getPort() + ":" + serverId;
+            jobName = currAddress.getHostString() + ":" + currAddress.getPort() + ":" + serverName;
         }
         return jobName;
     }
 
     public String getBakJobName() {
-        return getBakMysqlIp() + ":" + getBakMysqlPort() + ":" + getServerId();
+        return getBakMysqlIp() + ":" + getBakMysqlPort() + ":" + getServerName();
     }
 
     private InetSocketAddress getAddress(String instName) {

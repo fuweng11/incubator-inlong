@@ -61,7 +61,7 @@ public class JobConfManager {
     public synchronized DBSyncJobConf getConfigByDatabase(String url, String serverId) {
         return delegate.stream()
                 .filter(conf -> (conf.containsDatabase(url) && (serverId.equals(
-                        conf.getServerId()))))
+                        conf.getServerName()))))
                 .findFirst()
                 .orElse(null);
     }
