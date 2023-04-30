@@ -24,7 +24,7 @@ import com.tencent.teg.monitor.sdk.TegMonitor;
 import org.apache.inlong.common.metric.MetricItemValue;
 import org.apache.inlong.common.metric.MetricListener;
 import org.apache.inlong.common.metric.MetricValue;
-import org.apache.inlong.dataproxy.config.ConfigManager;
+import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.metrics.DataProxyMetricItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,8 +68,7 @@ public class ZhiyanMetricListener implements MetricListener {
     public ZhiyanMetricListener() {
         try {
             TegMonitor.init();
-            ConfigManager configManager = ConfigManager.getInstance();
-            Map<String, String> commonProperties = configManager.getCommonProperties();
+            Map<String, String> commonProperties = CommonConfigHolder.getInstance().getProperties();
             this.appMark = commonProperties.getOrDefault(ZHIYAN_APPMARK, DEFAULT_ZHIYAN_APPMARK);
             this.metricGroup = commonProperties.getOrDefault(ZHIYAN_METRICGROUP, DEFAULT_ZHIYAN_METRICGROUP);
             this.env = commonProperties.getOrDefault(ZHIYAN_ENV, DEFAULT_ZHIYAN_ENV);

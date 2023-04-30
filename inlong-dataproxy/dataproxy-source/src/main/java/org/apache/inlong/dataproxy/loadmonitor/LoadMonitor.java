@@ -17,6 +17,7 @@
 
 package org.apache.inlong.dataproxy.loadmonitor;
 
+import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.hyperic.sigar.Cpu;
@@ -76,8 +77,7 @@ public class LoadMonitor implements Runnable {
     }
 
     private LoadMonitor() {
-        Map<String, String> comPropMap =
-                ConfigManager.getInstance().getCommonProperties();
+        Map<String, String> comPropMap = CommonConfigHolder.getInstance().getProperties();
         if (comPropMap.containsKey(ConfigConstants.KEY_LOAD_NETWORK)) {
             this.netName = comPropMap.get(ConfigConstants.KEY_LOAD_NETWORK);
         }

@@ -26,7 +26,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.inlong.dataproxy.config.AuthUtils;
-import org.apache.inlong.dataproxy.config.ConfigManager;
+import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
@@ -52,7 +52,7 @@ public class HttpUtils {
     }
 
     public static HttpPost getHttPost(String url) throws SecureException {
-        Map<String, String> properties = ConfigManager.getInstance().getCommonProperties();
+        Map<String, String> properties = CommonConfigHolder.getInstance().getProperties();
         HttpPost httpPost = new HttpPost(url);
         httpPost.addHeader(HttpHeaders.CONNECTION, "close");
         httpPost.addHeader(HttpHeaders.AUTHORIZATION, AuthUtils.genBasicAuth());
