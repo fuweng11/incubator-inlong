@@ -679,6 +679,8 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         if (CollectionUtils.isNotEmpty(request.getBindClusters())) {
             request.getBindClusters().forEach(id -> {
                 InlongClusterEntity entity = clusterMapper.selectById(id);
+                userService.checkUser(entity.getInCharges(), operator,
+                        "Current user does not have permission to bind or unbind cluster tag");
                 Set<String> tagSet = Sets.newHashSet(entity.getClusterTags().split(InlongConstants.COMMA));
                 tagSet.add(clusterTag);
                 String updateTags = Joiner.on(",").join(tagSet);
@@ -696,6 +698,10 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         if (CollectionUtils.isNotEmpty(request.getUnbindClusters())) {
             request.getUnbindClusters().forEach(id -> {
                 InlongClusterEntity entity = clusterMapper.selectById(id);
+                String errMsg = String.format(
+                        "Current user does not have permission to bind or unbind cluster tag for cluster by id=%s, name=%s",
+                        entity.getId(), entity.getName());
+                userService.checkUser(entity.getInCharges(), operator, errMsg);
                 this.removeClusterTag(entity, clusterTag, operator);
             });
         }
@@ -712,6 +718,10 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         if (CollectionUtils.isNotEmpty(request.getBindClusters())) {
             request.getBindClusters().forEach(id -> {
                 InlongClusterEntity entity = clusterMapper.selectById(id);
+                String errMsg = String.format(
+                        "Current user does not have permission to bind or unbind cluster tag for cluster by id=%s, name=%s",
+                        entity.getId(), entity.getName());
+                userService.checkUser(entity.getInCharges(), opInfo.getName(), errMsg);
                 Set<String> tagSet = Sets.newHashSet(entity.getClusterTags().split(InlongConstants.COMMA));
                 tagSet.add(request.getClusterTag());
                 String updateTags = Joiner.on(",").join(tagSet);
@@ -728,6 +738,10 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         if (CollectionUtils.isNotEmpty(request.getUnbindClusters())) {
             request.getUnbindClusters().forEach(id -> {
                 InlongClusterEntity entity = clusterMapper.selectById(id);
+                String errMsg = String.format(
+                        "Current user does not have permission to bind or unbind cluster tag for cluster by id=%s, name=%s",
+                        entity.getId(), entity.getName());
+                userService.checkUser(entity.getInCharges(), opInfo.getName(), errMsg);
                 Set<String> tagSet = Sets.newHashSet(entity.getClusterTags().split(InlongConstants.COMMA));
                 tagSet.remove(request.getClusterTag());
                 String updateTags = Joiner.on(",").join(tagSet);
