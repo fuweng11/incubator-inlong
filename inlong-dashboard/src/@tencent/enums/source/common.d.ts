@@ -17,12 +17,10 @@
  * under the License.
  */
 
-import { allSyncMap, snapshotModeMap } from '@/@tencent/enums/source/mysql';
-import type { FormConfItem } from '.';
-
-export const fields: FormConfItem['fields'] = [
-  { label: '数据库', value: 'dataBaseName' },
-  { label: '是否整库同步', value: 'allSync', enumMap: allSyncMap },
-  { label: '表名白名单', value: 'tableWhiteList' },
-  { label: '读取方式', value: 'snapshotMode', enumMap: snapshotModeMap },
-];
+export type FieldItemType = {
+  label: string;
+  value: string;
+  unit?: string;
+  enumMap?: Map<unknown, unknown>;
+  render?: (text: string, row: Record<string, unknown>) => string | React.ReactNode;
+};

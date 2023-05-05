@@ -19,22 +19,17 @@
 
 import { encodeTypeMap, dataSeparatorMap, peakRateMap } from '@/@tencent/enums/stream';
 import { SourceTypeEnum, sourceTypeMap } from '@/@tencent/enums/source';
-import { fields as fileFields } from './file';
-import { fields as mysqlFields } from './mysql';
-import { fields as postgreSqlFields } from './postgreSql';
+import type { FieldItemType } from '@/@tencent/enums/source/common';
+import { fields as fileFields } from '@/@tencent/enums/source/file';
+import { fields as mysqlFields } from '@/@tencent/enums/source/mysql';
+import { fields as postgreSqlFields } from '@/@tencent/enums/source/postgreSql';
 
-export type FormConfItem = {
+interface FormConfItem {
   title?: string;
-  fields: {
-    label: string;
-    value: string;
-    unit?: string;
-    enumMap?: Map<unknown, unknown>;
-    render?: (text: string, row: Record<string, unknown>) => string | React.ReactNode;
-  }[];
-};
+  fields: FieldItemType[];
+}
 
-export const getFormConf = (accessModel): FormConfItem[] =>
+export const getFields = (accessModel): FormConfItem[] =>
   [
     {
       fields: [

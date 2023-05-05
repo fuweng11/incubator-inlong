@@ -17,6 +17,8 @@
  * under the License.
  */
 
+import type { FieldItemType } from './common';
+
 export enum ReadModeEnum {
   FULL = 'FULL',
   INC = 'INCREMENT',
@@ -30,3 +32,10 @@ export const readModeMap: Map<ReadModeEnum, string> = (() => {
     [ReadModeEnum.DIY, '自定义开始时间'],
   ]);
 })();
+
+export const fields: FieldItemType[] = [
+  { label: '集群名称', value: 'clusterName' },
+  { label: '数据源IP', value: 'clusterIPs' },
+  { label: '文件路径', value: 'filePath' },
+  { label: '读取方式', value: 'readMode', enumMap: readModeMap },
+];

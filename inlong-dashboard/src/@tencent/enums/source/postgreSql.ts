@@ -17,6 +17,8 @@
  * under the License.
  */
 
+import type { FieldItemType } from './common';
+
 export enum ReadTypeEnum {
   FULL = '0',
 }
@@ -24,3 +26,11 @@ export enum ReadTypeEnum {
 export const readTypeMap: Map<ReadTypeEnum, string> = (() => {
   return new Map([[ReadTypeEnum.FULL, '全量']]);
 })();
+
+export const fields: FieldItemType[] = [
+  { label: '数据库', value: 'dataBaseName' },
+  { label: '模式', value: 'schema' },
+  { label: '表', value: 'tableName' },
+  { label: '主键', value: 'primaryKey' },
+  { label: '读取方式', value: 'readType', enumMap: readTypeMap },
+];

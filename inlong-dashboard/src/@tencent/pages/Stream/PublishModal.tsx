@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Modal,
   ModalProps,
@@ -32,67 +32,87 @@ import {
 } from '@tencent/tea-component';
 import { useForm, Controller } from 'react-hook-form';
 import { useRequest } from 'ahooks';
-import { dateFormat } from '@/core/utils';
-import {
-  dataLevelMap,
-  peakRateMap,
-  encodeTypeMap,
-  dataSeparatorMap,
-} from '@/@tencent/enums/stream';
-import { sourceTypeMap } from '@/@tencent/enums/source';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import request from '@/core/utils/request';
+import { dateFormat } from '@/core/utils';
+import { SourceTypeEnum, sourceTypeMap, sourceTypeApiPathMap } from '@/@tencent/enums/source';
+import {
+  encodeTypeMap,
+  dataSeparatorMap,
+  peakRateMap,
+  dataLevelMap,
+} from '@/@tencent/enums/stream';
+import type { FieldItemType } from '@/@tencent/enums/source/common';
+import { fields as fileFields } from '@/@tencent/enums/source/file';
+import { fields as mysqlFields } from '@/@tencent/enums/source/mysql';
+import { fields as postgreSqlFields } from '@/@tencent/enums/source/postgreSql';
 
 interface FieldsParseProps extends ModalProps {
   id?: number | string;
   onOk: (values: Record<string, unknown>) => void;
+  sourceType?: SourceTypeEnum;
 }
 
-type ConfItem = {
-  title: string;
-  fields: {
-    label: string;
-    value: string;
-    unit?: string;
-    enumMap?: Map<unknown, unknown>;
-    render?: (text: string, row: Record<string, unknown>) => string | React.ReactNode;
-  }[];
-};
+interface FormConfItem {
+  title?: string;
+  fields: FieldItemType[];
+}
 
-const conf: ConfItem[] = [
-  {
-    title: '基本信息',
-    fields: [
-      { label: '数据流名称', value: 'name' },
-      { label: '数据流ID', value: 'streamID' },
-      { label: '创建人', value: 'creator' },
-      { label: '创建时间', value: 'creatTime', render: text => text && dateFormat(new Date(text)) },
-      { label: '数据分级', value: 'dataLevel', enumMap: dataLevelMap },
-      { label: '描述', value: 'remark' },
-    ],
-  },
-  {
-    title: '接入信息',
-    fields: [{ label: '接入方式', value: 'accessModel', enumMap: sourceTypeMap }],
-  },
-  {
-    title: '数据流量',
-    fields: [
-      { label: '单日峰值', value: 'peakRate', enumMap: peakRateMap },
-      { label: '单日最大接入量', value: 'peakTotalSize', unit: 'GB' },
-      { label: '单条数据最大值', value: 'msgMaxLength', unit: 'Byte' },
-    ],
-  },
-  {
-    title: '数据格式',
-    fields: [
-      { label: '编码类型', value: 'encodeType', enumMap: encodeTypeMap },
-      { label: '分隔符', value: 'dataSeparator', enumMap: dataSeparatorMap },
-    ],
-  },
-];
+export const getFields = (accessModel): FormConfItem[] =>
+  [
+    {
+      title: '基本信息',
+      fields: [
+        { label: '数据流名称', value: 'name' },
+        { label: '数据流ID', value: 'streamID' },
+        { label: '创建人', value: 'creator' },
+        {
+          label: '创建时间',
+          value: 'creatTime',
+          render: text => text && dateFormat(new Date(text)),
+        },
+        { label: '数据分级', value: 'dataLevel', enumMap: dataLevelMap },
+        { label: '描述', value: 'remark' },
+      ],
+    },
+    {
+      title: '接入信息',
+      fields: [{ label: '接入方式', value: 'accessModel', enumMap: sourceTypeMap }],
+    },
+    {
+      title: '数据流量',
+      fields: [
+        { label: '单日峰值', value: 'peakRate', enumMap: peakRateMap },
+        { label: '单日最大接入量', value: 'peakTotalSize', unit: 'GB' },
+        { label: '单条数据最大值', value: 'msgMaxLength', unit: 'Byte' },
+      ],
+    },
+    accessModel &&
+      accessModel !== SourceTypeEnum.SDK && {
+        title: '数据源信息',
+        fields: {
+          [SourceTypeEnum.FILE]: fileFields,
+          [SourceTypeEnum.MySQL]: mysqlFields,
+          [SourceTypeEnum.PostgreSQL]: postgreSqlFields,
+        }[accessModel],
+      },
+    {
+      title: '数据格式',
+      fields: [
+        { label: '编码类型', value: 'encodeType', enumMap: encodeTypeMap },
+        { label: '分隔符', value: 'dataSeparator', enumMap: dataSeparatorMap },
+      ],
+    },
+  ].filter(Boolean);
 
-const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, ...rest }) => {
+const FieldsParse: React.FC<FieldsParseProps> = ({
+  id,
+  sourceType,
+  visible,
+  onOk,
+  onClose,
+  ...rest
+}) => {
   const [projectId] = useProjectId();
 
   const { control, formState, reset, handleSubmit } = useForm({
@@ -106,7 +126,9 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
 
   const { data = {}, run } = useRequest(
     {
-      url: '/access/query/info',
+      url: sourceTypeApiPathMap.get(sourceType)
+        ? `/access/${sourceTypeApiPathMap.get(sourceType)}/query`
+        : '/access/query/info',
       method: 'POST',
       data: {
         projectID: projectId,
@@ -117,6 +139,12 @@ const FieldsParse: React.FC<FieldsParseProps> = ({ id, visible, onOk, onClose, .
       manual: true,
     },
   );
+
+  const accessModel = data.accessModel;
+
+  const conf = useMemo(() => {
+    return getFields(accessModel);
+  }, [accessModel]);
 
   const handleOk = handleSubmit(async values => {
     await request({

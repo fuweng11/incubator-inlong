@@ -87,8 +87,8 @@ export enum AccessTypeEnum {
 export const accessTypeMap: Map<AccessTypeEnum, string> = (() => {
   return new Map([
     [AccessTypeEnum.SDK, 'SDK'],
-    // [AccessTypeEnum.FILE, '文件'],
-    // [AccessTypeEnum.DB, 'DB'],
+    [AccessTypeEnum.FILE, '文件'],
+    [AccessTypeEnum.DB, 'DB'],
   ]);
 })();
 

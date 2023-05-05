@@ -17,6 +17,8 @@
  * under the License.
  */
 
+import type { FieldItemType } from './common';
+
 export enum SnapshotModeEnum {
   FULL = '0',
   INC = '1',
@@ -40,3 +42,10 @@ export const allSyncMap: Map<AllSyncEnum, string> = (() => {
     [AllSyncEnum.NO, '否'],
   ]);
 })();
+
+export const fields: FieldItemType[] = [
+  { label: '数据库', value: 'dataBaseName' },
+  { label: '是否整库同步', value: 'allSync', enumMap: allSyncMap },
+  { label: '表名白名单', value: 'tableWhiteList' },
+  { label: '读取方式', value: 'snapshotMode', enumMap: snapshotModeMap },
+];

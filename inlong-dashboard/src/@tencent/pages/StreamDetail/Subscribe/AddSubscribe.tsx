@@ -20,9 +20,13 @@ import FieldsMap, { selectedFieldsProps } from '@/@tencent/components/FieldsMap'
 import { FieldData } from '@/@tencent/components/FieldsMap';
 import { Drawer, Button, Row, Col, Form } from '@tencent/tea-component';
 import { Form as ProFormIns, ProFormProps } from '@tencent/tea-material-pro-form';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { encodeTypeMap, dataSeparatorMap, peakRateMap } from '@/@tencent/enums/stream';
-import { sourceTypeMap } from '@/@tencent/enums/source';
+import { sourceTypeMap, SourceTypeEnum } from '@/@tencent/enums/source';
+import type { FieldItemType } from '@/@tencent/enums/source/common';
+import { fields as fileFields } from '@/@tencent/enums/source/file';
+import { fields as mysqlFields } from '@/@tencent/enums/source/mysql';
+import { fields as postgreSqlFields } from '@/@tencent/enums/source/postgreSql';
 import { SinkTypeEnum, sinkTypeMap } from '@/@tencent/enums/subscribe/_basic';
 import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
@@ -39,6 +43,22 @@ export interface AddSubscribeDrawerProps {
   refreshSubscribeList: () => any;
   info: Record<string, any>;
 }
+
+export const getFields = (accessModel): FieldItemType[] => [
+  { label: '接入方式', value: 'accessModel', enumMap: sourceTypeMap },
+  { label: '单日峰值', value: 'peakRate', enumMap: peakRateMap },
+  { label: '单日最大接入量', value: 'peakTotalSize', unit: 'GB' },
+  { label: '单条数据最大值', value: 'msgMaxLength', unit: 'Byte' },
+  { label: '编码类型', value: 'encodeType', enumMap: encodeTypeMap },
+  { label: '分隔符', value: 'dataSeparator', enumMap: dataSeparatorMap },
+  ...(accessModel && accessModel !== SourceTypeEnum.SDK
+    ? {
+        [SourceTypeEnum.FILE]: fileFields,
+        [SourceTypeEnum.MySQL]: mysqlFields,
+        [SourceTypeEnum.PostgreSQL]: postgreSqlFields,
+      }[accessModel]
+    : []),
+];
 
 const insertIndex = (data: Array<any>) =>
   data ? data.map((item, index) => ({ ...item, id: index })) : [];
@@ -122,6 +142,10 @@ const AddSubscribeDrawer = ({
     }
   };
 
+  const conf = useMemo(() => {
+    return getFields(info.accessModel);
+  }, [info.accessModel]);
+
   return (
     <Drawer
       style={{ width: '100%', zIndex: 1000 }}
@@ -152,29 +176,22 @@ const AddSubscribeDrawer = ({
           <div style={{ border: '1px solid #E2E2E2', padding: '20px 20px' }}>
             <Form>
               <Form.Title>数据来源</Form.Title>
-              <Form.Item label="接入方式">
-                <Form.Text>{sourceTypeMap.get(info.accessModel) || info.accessModel}</Form.Text>
-              </Form.Item>
-              <Form.Item
-                label="单日峰值"
-                tips="单日峰值（条/秒），请按照数据实际上报量以及后续增长情况，适当上浮20%-50%左右填写，用于容量管理。如果上涨超过容量限制，平台在紧急情况下会抽样或拒绝数据"
-              >
-                <Form.Text>{peakRateMap.get(info.peakRate) || info.peakRate}</Form.Text>
-              </Form.Item>
-              <Form.Item label="单日最大存储量">
-                <Form.Text>{info.peakTotalSize} GB</Form.Text>
-              </Form.Item>
-              <Form.Item label="平均每条数据大小">
-                <Form.Text>{info.msgMaxLength} Byte</Form.Text>
-              </Form.Item>
-              <Form.Item label="采集类型">
-                <Form.Text>{encodeTypeMap.get(info.encodeType) || info.encodeType}</Form.Text>
-              </Form.Item>
-              <Form.Item label="分隔符">
-                <Form.Text>
-                  {dataSeparatorMap.get(info.dataSeparator) || info.dataSeparator}
-                </Form.Text>
-              </Form.Item>
+              {conf.map(item => (
+                <Form.Item label={item.label}>
+                  <Form.Text>
+                    {(() => {
+                      if (item.render) {
+                        return item.render(info?.[item.value], item);
+                      }
+                      const text = item.enumMap
+                        ? item.enumMap.get(info?.[item.value]) || info?.[item.value]
+                        : info?.[item.value];
+                      const unit = item.unit;
+                      return unit ? `${text} ${unit}` : text;
+                    })()}
+                  </Form.Text>
+                </Form.Item>
+              ))}
             </Form>
           </div>
         </Col>

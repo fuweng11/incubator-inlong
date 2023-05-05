@@ -19,13 +19,13 @@
 
 import React, { useMemo } from 'react';
 import { Col, Row, Form, Table, StatusTip } from '@tencent/tea-component';
-import { getFormConf } from './formConf';
+import { getFields } from './fields';
 
 const Info = ({ streamId, info }) => {
   const accessModel = info.accessModel;
 
   const conf = useMemo(() => {
-    return getFormConf(accessModel);
+    return getFields(accessModel);
   }, [accessModel]);
 
   return (

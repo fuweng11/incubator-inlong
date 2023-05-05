@@ -85,7 +85,11 @@ export default function StreamList() {
 
   const [options, setOptions] = useState(fieldsDefaultValues);
 
-  const [publishModal, setPublishModal] = useState<{ visible: boolean; id?: number }>({
+  const [publishModal, setPublishModal] = useState<{
+    visible: boolean;
+    id?: number;
+    sourceType?: SourceTypeEnum;
+  }>({
     visible: false,
   });
 
@@ -240,7 +244,13 @@ export default function StreamList() {
                   <Button
                     type="link"
                     key="up"
-                    onClick={() => setPublishModal({ visible: true, id: row.streamID })}
+                    onClick={() =>
+                      setPublishModal({
+                        visible: true,
+                        id: row.streamID,
+                        sourceType: row.accessModel,
+                      })
+                    }
                   >
                     发布上线
                   </Button>

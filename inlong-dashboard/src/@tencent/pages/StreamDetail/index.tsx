@@ -138,6 +138,7 @@ export default function StreamDetail() {
         {...publishModal}
         onOk={data => setPublishModal({ visible: false })}
         onClose={() => setPublishModal({ visible: false })}
+        sourceType={sourceType as SourceTypeEnum}
       />
     </PageContainer>
   );
