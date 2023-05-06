@@ -17,14 +17,14 @@
  * under the License.
  */
 
-export enum PartitionUnitEnum {
-  hour = 'H',
-  day = 'D',
+export enum MQTypeEnum {
+  PULSAR = 'PULSAR',
+  TUBE = 'TUBE',
+  KAFKA = 'KAFKA',
 }
 
-export const partitionUnitMap: Map<PartitionUnitEnum, string> = (() => {
-  const map = new Map();
-  map.set(PartitionUnitEnum.hour, 'hour').set(PartitionUnitEnum.day, 'day');
-
-  return map;
-})();
+export const mqTypeMap: Map<MQTypeEnum, string> = new Map([
+  [MQTypeEnum.PULSAR, 'Pulsar'],
+  [MQTypeEnum.TUBE, 'Tube'],
+  [MQTypeEnum.KAFKA, 'Kafka'],
+]);

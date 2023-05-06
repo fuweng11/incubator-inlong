@@ -26,6 +26,7 @@ import { useRequest } from 'ahooks';
 import { parse } from 'qs';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { SourceTypeEnum, sourceTypeApiPathMap } from '@/@tencent/enums/source';
+import { AccessTypeEnum, accessTypeMap } from '@/@tencent/enums/stream';
 import BasicForm, { BasicFormRef } from './BasicForm';
 import AccessForm, { AccessFormRef } from './AccessForm';
 
@@ -44,6 +45,8 @@ export default function StreamCreate() {
   const [loading, setLoading] = useState<boolean>(false);
   const [changed, setChanged] = useState<boolean>(false);
 
+  const isUpdate = Boolean(streamId);
+
   const { data: savedData } = useRequest(
     {
       url: sourceTypeApiPathMap.get(sourceType as SourceTypeEnum)
@@ -58,6 +61,17 @@ export default function StreamCreate() {
     {
       ready: Boolean(streamId),
       refreshDeps: [streamId],
+      formatResult: result => {
+        const sourceType = result.accessModel;
+        if (!accessTypeMap.get(result.accessModel)) {
+          return {
+            ...result,
+            accessModel: AccessTypeEnum.DB,
+            sourceType,
+          };
+        }
+        return result;
+      },
     },
   );
 
@@ -77,7 +91,7 @@ export default function StreamCreate() {
         sourceTypeApiPathMap.get(values.sourceType) ||
         values.accessModel;
       await request({
-        url: `/access/${path}/create`,
+        url: `/access/${path}/${isUpdate ? 'update' : 'create'}`,
         method: 'POST',
         data: {
           ...values,
@@ -131,7 +145,7 @@ export default function StreamCreate() {
           <Card.Body title="基本信息">
             <BasicForm
               ref={basicFormRef}
-              isUpdate={Boolean(streamId)}
+              isUpdate={isUpdate}
               savedData={savedData}
               onChange={() => !changed && setChanged(true)}
             />
@@ -144,7 +158,7 @@ export default function StreamCreate() {
           <Card.Body title="接入信息">
             <AccessForm
               ref={accessFormRef}
-              isUpdate={Boolean(streamId)}
+              isUpdate={isUpdate}
               savedData={savedData}
               onChange={() => !changed && setChanged(true)}
             />
@@ -154,7 +168,7 @@ export default function StreamCreate() {
 
       <FooterToolbar align="right">
         <Button type="primary" style={{ marginRight: 10 }} loading={loading} onClick={submit}>
-          新建
+          {isUpdate ? '保存' : '新建'}
         </Button>
         <Button onClick={() => history.push('/stream')}>取消</Button>
       </FooterToolbar>

@@ -20,7 +20,7 @@
 import React, { useState, useRef, useCallback, forwardRef, useImperativeHandle, Ref } from 'react';
 import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
 import ContentRadio from '@/@tencent/components/ContentRadio';
-import { partitionUnitMap } from '@/@tencent/enums/subscribe/hive';
+import { partitionUnitMap } from '@/@tencent/enums/subscribe/thive';
 import request from '@/core/utils/request';
 import { FieldData } from '@/@tencent/components/FieldsMap';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
@@ -183,7 +183,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
                   style={{ padding: '0', marginBottom: '-10px' }}
                   fields={[
                     {
-                      name: 'tableName',
+                      name: 'dbTable',
                       type: 'string',
                       title: '表名称',
                       required: true,
@@ -204,7 +204,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
                   style={{ padding: '0', marginBottom: '-10px' }}
                   fields={[
                     {
-                      name: 'tableName',
+                      name: 'dbTable',
                       type: 'string',
                       title: '表名称',
                       component: 'select',
@@ -214,7 +214,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
                       options: tableList.map(item => ({ text: item.text, value: item.value })),
                       defaultValue: tableList[0]?.value,
                       reaction: async (field, values: any) => {
-                        setSelectedTable(values.tableName);
+                        setSelectedTable(values.dbTable);
                       },
                     },
                   ]}

@@ -137,7 +137,11 @@ const AccessForm = forwardRef(
             render={({ field }) => (
               <Segment
                 {...(field as any)}
-                options={Array.from(accessTypeMap).map(([key, ctx]) => ({ value: key, text: ctx }))}
+                options={Array.from(accessTypeMap).map(([key, ctx]) => ({
+                  value: key,
+                  text: ctx,
+                  disabled: isUpdate && key !== field.value,
+                }))}
               />
             )}
           />
@@ -276,6 +280,10 @@ const AccessForm = forwardRef(
           <EditableTable
             ref={editableTable}
             showRowIndex
+            showRowRemove={
+              isUpdate ? (key, index) => index > savedData?.fieldsData?.length - 1 : true
+            }
+            showRowUpdate={isUpdate ? (key, index) => index < savedData?.fieldsData?.length : true}
             addons={[
               addons.scrollable({
                 maxHeight: 310,
@@ -332,7 +340,9 @@ const AccessForm = forwardRef(
         <FieldsParse
           {...fieldsParse}
           onOk={data => {
-            editableTable.current.setValue(data);
+            editableTable.current.setValue(
+              isUpdate && savedData?.fieldsData ? savedData.fieldsData.concat(data) : data,
+            );
             setFieldsParse({ visible: false });
           }}
           onClose={() => setFieldsParse({ visible: false })}

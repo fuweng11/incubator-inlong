@@ -23,7 +23,8 @@ import { FieldData, FieldsMapProps } from '@/@tencent/components/FieldsMap';
 export interface SubscribeFormProps extends ProFormProps {
   fields: ProFormProps['fields'];
   streamInfo: Record<string, any>;
-  setTargetFields: (data: FieldData) => void;
+  // FieldData填充自定义｜true填充源数据字段一致｜false填充为空
+  setTargetFields: (data: FieldData | boolean) => void;
 }
 
 export interface SubscribeFormRef {

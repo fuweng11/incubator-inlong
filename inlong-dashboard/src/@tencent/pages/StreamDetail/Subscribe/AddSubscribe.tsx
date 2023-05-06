@@ -20,21 +20,24 @@ import FieldsMap, { selectedFieldsProps } from '@/@tencent/components/FieldsMap'
 import { FieldData } from '@/@tencent/components/FieldsMap';
 import { Drawer, Button, Row, Col, Form } from '@tencent/tea-component';
 import { Form as ProFormIns, ProFormProps } from '@tencent/tea-material-pro-form';
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { encodeTypeMap, dataSeparatorMap, peakRateMap } from '@/@tencent/enums/stream';
 import { sourceTypeMap, SourceTypeEnum } from '@/@tencent/enums/source';
 import type { FieldItemType } from '@/@tencent/enums/source/common';
 import { fields as fileFields } from '@/@tencent/enums/source/file';
 import { fields as mysqlFields } from '@/@tencent/enums/source/mysql';
 import { fields as postgreSqlFields } from '@/@tencent/enums/source/postgreSql';
-import { SinkTypeEnum, sinkTypeMap } from '@/@tencent/enums/subscribe/_basic';
+import { SinkTypeEnum, sinkTypeMap, sinkTypeApiPathMap } from '@/@tencent/enums/subscribe/_basic';
 import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { message } from '@tencent/tea-component';
-import { SubscribeFormRef } from './common';
+import { SubscribeFormRef, SubscribeFormProps } from './common';
 import Clickhouse from './Clickhouse';
 import Hive from './Hive';
+import Thive from './Thive';
 import Hudi from './Hudi';
+import Kafka from './Kafka';
+import MQ from './MQ';
 
 export interface AddSubscribeDrawerProps {
   visible: boolean;
@@ -77,7 +80,15 @@ const AddSubscribeDrawer = ({
   const formRef = useRef<SubscribeFormRef>();
   const [writeType, setWriteType] = useState(SinkTypeEnum.Hive);
 
-  const props = {
+  const setTargetFieldsPro = useCallback(
+    data =>
+      setTargetFields(
+        typeof data === 'boolean' ? (data === true ? insertIndex(info.fieldsData) : []) : data,
+      ),
+    [info.fieldsData],
+  );
+
+  const props: SubscribeFormProps = {
     fields: [
       {
         name: 'writeType',
@@ -95,8 +106,13 @@ const AddSubscribeDrawer = ({
       },
     ] as ProFormProps['fields'],
     streamInfo: info,
-    setTargetFields,
+    setTargetFields: setTargetFieldsPro,
   };
+
+  useEffect(() => {
+    console.log('watch writeType', writeType);
+    setTargetFields(insertIndex(info.fieldsData));
+  }, [writeType]);
 
   const onSelect = data => {
     setSelectedFields(data);
@@ -125,8 +141,9 @@ const AddSubscribeDrawer = ({
         fieldMappings,
         ...(basicFrom as object),
       };
+      const sinkType: SinkTypeEnum = basicFrom.writeType;
       await request({
-        url: '/subscribe/thive/create',
+        url: `/subscribe/${sinkTypeApiPathMap.get(sinkType)}/create`,
         method: 'POST',
         data,
       });
@@ -201,8 +218,11 @@ const AddSubscribeDrawer = ({
             {(() => {
               const dict = {
                 [SinkTypeEnum.Hive]: Hive,
+                [SinkTypeEnum.Thive]: Thive,
                 [SinkTypeEnum.Clickhouse]: Clickhouse,
                 [SinkTypeEnum.Hudi]: Hudi,
+                [SinkTypeEnum.Kafka]: Kafka,
+                [SinkTypeEnum.MQ]: MQ,
               };
               const Form = dict[writeType];
               return (
@@ -210,7 +230,6 @@ const AddSubscribeDrawer = ({
                   {...props}
                   submitter={false}
                   onFormValuesChange={(form: ProFormIns) => {
-                    setTargetFields([]);
                     setWriteType(form.values?.writeType);
                   }}
                   ref={formRef}
@@ -219,21 +238,25 @@ const AddSubscribeDrawer = ({
             })()}
           </div>
         </Col>
-        <Col span={24}>
-          <p style={{ fontSize: '16px', fontWeight: 'bold' }}>字段映射</p>
-          <p>选择需要订阅的来源字段，并对齐写入字段，注意：请确定字段为一一映射关系。</p>
-        </Col>
-        <Col span={24}>
-          <FieldsMap
-            compact={true}
-            bordered={true}
-            sourceFields={insertIndex(info.fieldsData)}
-            targetFields={targetFields}
-            onSelect={onSelect}
-            getTargetFields={formRef.current?.getTargetFields}
-            {...formRef.current?.fieldsMapProps}
-          />
-        </Col>
+        {writeType !== SinkTypeEnum.MQ && (
+          <>
+            <Col span={24}>
+              <p style={{ fontSize: '16px', fontWeight: 'bold' }}>字段映射</p>
+              <p>选择需要订阅的来源字段，并对齐写入字段，注意：请确定字段为一一映射关系。</p>
+            </Col>
+            <Col span={24}>
+              <FieldsMap
+                compact={true}
+                bordered={true}
+                sourceFields={insertIndex(info.fieldsData)}
+                targetFields={targetFields}
+                onSelect={onSelect}
+                getTargetFields={formRef.current?.getTargetFields}
+                {...formRef.current?.fieldsMapProps}
+              />
+            </Col>
+          </>
+        )}
       </Row>
     </Drawer>
   );

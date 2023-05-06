@@ -32,6 +32,9 @@ export interface EditableTableProps extends Omit<TableProps, 'columns'> {
   defaultValues: FieldValues[];
   columns: ColumnItemProps[];
   showRowIndex?: boolean;
+  showRowCreate?: boolean | ((rowKey: string, rowIndex: number) => boolean);
+  showRowRemove?: boolean | ((rowKey: string, rowIndex: number) => boolean);
+  showRowUpdate?: boolean | ((rowKey: string, rowIndex: number) => boolean);
   onChange?: <T>(values: T) => void;
 }
 
@@ -42,7 +45,15 @@ export interface EditableTableRef {
 }
 
 const EditableTable = forwardRef((props: EditableTableProps, ref: Ref<EditableTableRef>) => {
-  const { defaultValues, columns, showRowIndex = false, onChange } = props;
+  const {
+    defaultValues,
+    columns,
+    showRowIndex = false,
+    showRowCreate: rowC = true,
+    showRowRemove: rowR = true,
+    showRowUpdate: rowU = true,
+    onChange,
+  } = props;
 
   const {
     control,
@@ -120,7 +131,11 @@ const EditableTable = forwardRef((props: EditableTableProps, ref: Ref<EditableTa
                         name={`array.${index}.${item.key}`}
                         control={control}
                         rules={rules as any}
-                        render={render}
+                        render={({ field }) => {
+                          (field as any).disabled =
+                            typeof rowU === 'function' ? rowU(rowKey, index) : !rowU;
+                          return render({ field });
+                        }}
                       />
                     </Form.Item>
                   ),
@@ -132,16 +147,21 @@ const EditableTable = forwardRef((props: EditableTableProps, ref: Ref<EditableTa
             header: '操作',
             width: 100,
             render: (row, rowKey, index) => [
-              <Button key="add" type="link" onClick={() => append({ ...defaultValues[0] })}>
-                添加
-              </Button>,
-              <Button key="del" type="link" onClick={() => remove(index)}>
-                删除
-              </Button>,
+              (typeof rowC === 'function' ? rowC(rowKey, index) : rowC) && (
+                <Button key="add" type="link" onClick={() => append({ ...defaultValues[0] })}>
+                  添加
+                </Button>
+              ),
+              (typeof rowR === 'function' ? rowR(rowKey, index) : rowR) && (
+                <Button key="del" type="link" onClick={() => remove(index)}>
+                  删除
+                </Button>
+              ),
             ],
           })
           .filter(Boolean)}
       />
+
       <div style={{ padding: '6px 10px', border: '1px solid #cfd5df', borderTop: 'none' }}>
         <Button
           type="link"

@@ -233,6 +233,15 @@ export default function StreamList() {
               render: row => [
                 <Button
                   type="link"
+                  key="create"
+                  onClick={() =>
+                    history.push(`/stream/create/${row.streamID}?sourceType=${row.accessModel}`)
+                  }
+                >
+                  编辑
+                </Button>,
+                <Button
+                  type="link"
                   key="detail"
                   onClick={() =>
                     history.push(`/stream/${row.streamID}?sourceType=${row.accessModel}`)

@@ -21,12 +21,12 @@ import React, { useState, useRef } from 'react';
 import { Select, StatusTip, SelectProps } from '@tencent/tea-component';
 
 export interface FetchSelectProps extends SelectProps {
-  request: () => Promise<{ value: string | number; text: string; disabled?: boolean }[]>;
+  request: () => Promise<SelectProps['options']>;
 }
 
 const FetchSelect: React.FC<FetchSelectProps> = ({ request, ...rest }) => {
   const [status, setStatus] = useState(null);
-  const [options, setOptions] = useState([]);
+  const [options, setOptions] = useState<SelectProps['options']>([{ value: rest.value }]);
 
   const keywordRef = useRef('');
 

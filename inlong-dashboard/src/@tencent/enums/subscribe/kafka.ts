@@ -17,14 +17,24 @@
  * under the License.
  */
 
-export enum PartitionUnitEnum {
-  hour = 'H',
-  day = 'D',
+export enum WriteModeEnum {
+  Append = 'Append',
+  Upsert = 'Upsert',
 }
 
-export const partitionUnitMap: Map<PartitionUnitEnum, string> = (() => {
-  const map = new Map();
-  map.set(PartitionUnitEnum.hour, 'hour').set(PartitionUnitEnum.day, 'day');
+export const writeModeMap: Map<WriteModeEnum, string> = new Map([
+  [WriteModeEnum.Append, 'Append'],
+  [WriteModeEnum.Upsert, 'Upsert'],
+]);
 
-  return map;
-})();
+export enum SerializationTypeEnum {
+  json = 'json',
+  canal = 'canal',
+  avro = 'avro',
+}
+
+export const serializationTypeMap: Map<SerializationTypeEnum, string> = new Map([
+  [SerializationTypeEnum.json, 'json'],
+  [SerializationTypeEnum.canal, 'canal'],
+  [SerializationTypeEnum.avro, 'avro'],
+]);

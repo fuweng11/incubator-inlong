@@ -20,35 +20,42 @@
 import React, { useRef, useCallback, forwardRef, useImperativeHandle, Ref } from 'react';
 import { Button } from '@tencent/tea-component';
 import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
-import { WriteModeEnum, writeModeMap } from '@/@tencent/enums/subscribe/hudi';
+import {
+  WriteModeEnum,
+  writeModeMap,
+  SerializationTypeEnum,
+  serializationTypeMap,
+} from '@/@tencent/enums/subscribe/kafka';
 import { SubscribeFormProps, SubscribeFormRef } from './common';
 
-const Hudi = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
+const Kafka = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
   const { fields, streamInfo, setTargetFields, ...rest } = props;
 
   const formRef = useRef<Form>();
 
   const params: ProFormProps['fields'] = fields.concat([
     {
-      name: 'cluster',
+      name: 'bootstrapServers',
       type: 'string',
       title: '数据源',
       required: true,
       component: 'input',
     },
     {
-      name: 'dbName',
+      name: 'topicName',
       type: 'string',
-      title: '库',
+      title: 'topic',
       required: true,
       component: 'input',
     },
     {
-      name: 'tableName',
+      name: 'serializationType',
       type: 'string',
-      title: '表',
+      title: '序列化类型',
       required: true,
-      component: 'input',
+      component: 'radio',
+      defaultValue: SerializationTypeEnum.json,
+      options: Array.from(serializationTypeMap).map(([key, ctx]) => ({ name: key, title: ctx })),
     },
     {
       name: 'writeMode',
@@ -117,4 +124,4 @@ const Hudi = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
   return <ProForm {...rest} fields={params} onRef={form => (formRef.current = form)} />;
 });
 
-export default Hudi;
+export default Kafka;
