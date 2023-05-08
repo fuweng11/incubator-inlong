@@ -73,7 +73,9 @@ public class PulsarSqlParserTest {
                 "pulsar://localhost:6650",
                 format,
                 "earliest",
-                null);
+                null,
+                "test",
+                "earliest");
     }
 
     private NodeRelation buildNodeRelation(List<Node> inputs, List<Node> outputs) {
