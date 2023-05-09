@@ -53,6 +53,7 @@ export interface FieldsMapProps extends Omit<TableProps<any>, 'columns'> {
   onSelect: (data: selectedFieldsProps) => void; //get selected fields
   getTargetFields: (table?: string) => any; //get target fields by table name
   candoAutoAdd?: boolean; // default true
+  readonly?: boolean;
 }
 
 type actionsProps = {
@@ -68,6 +69,7 @@ const FieldsMap = ({
   onSelect,
   getTargetFields,
   candoAutoAdd = true,
+  readonly = false,
   ...props
 }: FieldsMapProps) => {
   const [fieldsParseVisible, setFieldParseVisible] = useState<boolean>(false);
@@ -190,21 +192,27 @@ const FieldsMap = ({
                 recordKey="id"
                 records={sourceFields}
                 columns={columns('show')}
-                addons={[
-                  selectable({
-                    value: selectedFields.map(item => item.sourceField.id.toString()),
-                    onChange: (keys, context) => {
-                      const valueMaps = keys.map(key => ({
-                        sourceField: context.selectedRecords.filter(
-                          item => item.id.toString() === key,
-                        )[0],
-                        targetField: targetFields.filter(item => item.id.toString() === key)[0],
-                      }));
-                      setSelectedFields(valueMaps);
-                      onSelect(valueMaps);
-                    },
-                  }),
-                ]}
+                addons={
+                  readonly
+                    ? []
+                    : [
+                        selectable({
+                          value: selectedFields.map(item => item.sourceField.id.toString()),
+                          onChange: (keys, context) => {
+                            const valueMaps = keys.map(key => ({
+                              sourceField: context.selectedRecords.filter(
+                                item => item.id.toString() === key,
+                              )[0],
+                              targetField: targetFields.filter(
+                                item => item.id.toString() === key,
+                              )[0],
+                            }));
+                            setSelectedFields(valueMaps);
+                            onSelect(valueMaps);
+                          },
+                        }),
+                      ]
+                }
               />
             </div>
             <div>
@@ -232,47 +240,53 @@ const FieldsMap = ({
         <Col span={12}>
           <div className={styles.tableTitle}>
             <div>写入字段</div>
-            <div className={styles.actions}>
-              {actions.map((action, i) => (
-                <span className={styles.action} key={i}>
-                  <div className={styles.icon}>{action.icon}</div>
-                  <Button type="link" onClick={action.onClick} disabled={action.disabled}>
-                    {action.text}
-                  </Button>
-                </span>
-              ))}
-            </div>
+            {!readonly && (
+              <div className={styles.actions}>
+                {actions.map((action, i) => (
+                  <span className={styles.action} key={i}>
+                    <div className={styles.icon}>{action.icon}</div>
+                    <Button type="link" onClick={action.onClick} disabled={action.disabled}>
+                      {action.text}
+                    </Button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <Table
             {...props}
             topTip={status === 'loading' && <StatusTip status="loading" />}
             recordKey="fieldName"
-            columns={columns('edit')}
+            columns={columns(readonly ? 'show' : 'edit')}
             records={targetFields}
-            addons={[
-              draggable({
-                onDragEnd: (records, context) => {
-                  //change target fields
-                  setTargetFields(records);
-                  //change selected fields
-                  const newSelectedFields = selectedFields.map((selectedField, i) => ({
-                    sourceField: selectedField.sourceField,
-                    targetField: records[selectedField.sourceField?.id],
-                  }));
-                  setSelectedFields(newSelectedFields);
-                  onSelect(newSelectedFields);
-                },
-              }),
-              injectable({
-                row: (props, context) => ({
-                  className: selectedFields.some(
-                    item => item.sourceField?.id === context.recordIndex,
-                  )
-                    ? 'is-selected'
-                    : undefined,
-                }),
-              }),
-            ]}
+            addons={
+              readonly
+                ? []
+                : [
+                    draggable({
+                      onDragEnd: (records, context) => {
+                        //change target fields
+                        setTargetFields(records);
+                        //change selected fields
+                        const newSelectedFields = selectedFields.map((selectedField, i) => ({
+                          sourceField: selectedField.sourceField,
+                          targetField: records[selectedField.sourceField?.id],
+                        }));
+                        setSelectedFields(newSelectedFields);
+                        onSelect(newSelectedFields);
+                      },
+                    }),
+                    injectable({
+                      row: (props, context) => ({
+                        className: selectedFields.some(
+                          item => item.sourceField?.id === context.recordIndex,
+                        )
+                          ? 'is-selected'
+                          : undefined,
+                      }),
+                    }),
+                  ]
+            }
           />
         </Col>
       </Row>

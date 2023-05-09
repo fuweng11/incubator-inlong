@@ -22,8 +22,6 @@ import {
   Modal,
   ModalProps,
   Button,
-  Col,
-  Row,
   Form,
   Table,
   StatusTip,
@@ -42,7 +40,7 @@ import {
   peakRateMap,
   dataLevelMap,
 } from '@/@tencent/enums/stream';
-import type { FieldItemType } from '@/@tencent/enums/source/common';
+import ReadonlyForm, { ReadonlyFormItemType } from '@/@tencent/components/ReadonlyForm';
 import { fields as fileFields } from '@/@tencent/enums/source/file';
 import { fields as mysqlFields } from '@/@tencent/enums/source/mysql';
 import { fields as postgreSqlFields } from '@/@tencent/enums/source/postgreSql';
@@ -53,12 +51,7 @@ interface FieldsParseProps extends ModalProps {
   sourceType?: SourceTypeEnum;
 }
 
-interface FormConfItem {
-  title?: string;
-  fields: FieldItemType[];
-}
-
-export const getFields = (accessModel): FormConfItem[] =>
+export const getFields = (accessModel): ReadonlyFormItemType[] =>
   [
     {
       title: '基本信息',
@@ -180,40 +173,11 @@ const FieldsParse: React.FC<FieldsParseProps> = ({
   return (
     <Modal size="xl" caption="发布上线审批" visible={visible} onClose={onClose} {...rest}>
       <Modal.Body>
-        <Form layout="fixed" style={{ display: 'flex' }} fixedLabelWidth={100}>
-          <Row>
-            {
-              conf.map(item =>
-                item.fields.reduce(
-                  (acc, cur) =>
-                    acc.concat(
-                      <Col span={8} key={cur.value} style={{ padding: '0 10px' }}>
-                        <Form.Item label={cur.label}>
-                          <Form.Text>
-                            {(() => {
-                              if (cur.render) {
-                                return cur.render(data?.[cur.value], cur);
-                              }
-                              const text = cur.enumMap
-                                ? cur.enumMap.get(data?.[cur.value]) || data?.[cur.value]
-                                : data?.[cur.value];
-                              const unit = cur.unit;
-                              return unit ? `${text} ${unit}` : text;
-                            })()}
-                          </Form.Text>
-                        </Form.Item>
-                      </Col>,
-                    ),
-                  [
-                    <Col span={24} key={item.title} style={{ padding: '0 10px' }}>
-                      <Form.Title>{item.title}</Form.Title>
-                    </Col>,
-                  ],
-                ),
-              ) as any
-            }
-
-            <Col span={24}>
+        <ReadonlyForm
+          conf={conf}
+          defaultValues={data}
+          footer={
+            <>
               <Form.Item label="数据字段" align="middle">
                 <Table
                   bordered
@@ -259,9 +223,9 @@ const FieldsParse: React.FC<FieldsParseProps> = ({
                   )}
                 />
               </Form.Item>
-            </Col>
-          </Row>
-        </Form>
+            </>
+          }
+        />
       </Modal.Body>
 
       <Modal.Footer>

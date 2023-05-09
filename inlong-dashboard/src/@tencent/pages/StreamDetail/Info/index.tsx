@@ -18,7 +18,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { Col, Row, Form, Table, StatusTip } from '@tencent/tea-component';
+import { Form, Table, StatusTip } from '@tencent/tea-component';
+import ReadonlyForm from '@/@tencent/components/ReadonlyForm';
 import { getFields } from './fields';
 
 const Info = ({ streamId, info }) => {
@@ -29,68 +30,35 @@ const Info = ({ streamId, info }) => {
   }, [accessModel]);
 
   return (
-    <Form layout="fixed" style={{ display: 'flex', marginTop: 10 }} fixedLabelWidth={100}>
-      <Row>
-        {
-          conf.map(item =>
-            item.fields?.reduce(
-              (acc, cur) =>
-                acc.concat(
-                  <Col span={8} key={cur.value} style={{ padding: '0 10px' }}>
-                    <Form.Item label={cur.label}>
-                      <Form.Text>
-                        {(() => {
-                          if (cur.render) {
-                            return cur.render(info?.[cur.value], cur);
-                          }
-                          const text = cur.enumMap
-                            ? cur.enumMap.get(info?.[cur.value]) || info?.[cur.value]
-                            : info?.[cur.value];
-                          const unit = cur.unit;
-                          return unit ? `${text} ${unit}` : text;
-                        })()}
-                      </Form.Text>
-                    </Form.Item>
-                  </Col>,
-                ),
-              [
-                item.title && (
-                  <Col span={24} key={item.title} style={{ padding: '0 10px' }}>
-                    <Form.Title>{item.title}</Form.Title>
-                  </Col>
-                ),
-              ],
-            ),
-          ) as any
-        }
-
-        <Col span={24}>
-          <Form.Item label="数据字段" align="middle">
-            <Table
-              bordered
-              verticalTop
-              records={info?.fieldsData || []}
-              recordKey="fieldName"
-              columns={[
-                {
-                  key: 'fieldName',
-                  header: '字段名',
-                },
-                {
-                  key: 'fieldType',
-                  header: '字段类型',
-                },
-                {
-                  key: 'remark',
-                  header: '字段描述',
-                },
-              ]}
-              topTip={!info?.fieldsData?.length && <StatusTip status="empty" />}
-            />
-          </Form.Item>
-        </Col>
-      </Row>
-    </Form>
+    <ReadonlyForm
+      conf={conf}
+      defaultValues={info}
+      footer={
+        <Form.Item label="数据字段" align="middle">
+          <Table
+            bordered
+            verticalTop
+            records={info?.fieldsData || []}
+            recordKey="fieldName"
+            columns={[
+              {
+                key: 'fieldName',
+                header: '字段名',
+              },
+              {
+                key: 'fieldType',
+                header: '字段类型',
+              },
+              {
+                key: 'remark',
+                header: '字段描述',
+              },
+            ]}
+            topTip={!info?.fieldsData?.length && <StatusTip status="empty" />}
+          />
+        </Form.Item>
+      }
+    />
   );
 };
 

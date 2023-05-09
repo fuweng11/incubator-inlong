@@ -27,7 +27,7 @@ import type { FieldItemType } from '@/@tencent/enums/source/common';
 import { fields as fileFields } from '@/@tencent/enums/source/file';
 import { fields as mysqlFields } from '@/@tencent/enums/source/mysql';
 import { fields as postgreSqlFields } from '@/@tencent/enums/source/postgreSql';
-import { SinkTypeEnum, sinkTypeMap, sinkTypeApiPathMap } from '@/@tencent/enums/subscribe/_basic';
+import { SinkTypeEnum, sinkTypeMap, sinkTypeApiPathMap } from '@/@tencent/enums/subscribe';
 import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { message } from '@tencent/tea-component';

@@ -17,33 +17,11 @@
  * under the License.
  */
 
-export enum SinkTypeEnum {
-  Hive = 'INNER_HIVE',
-  Thive = 'INNER_THIVE',
-  Clickhouse = 'INNER_CLICKHOUSE',
-  Hudi = 'INNER_HUDI',
-  Kafka = 'KAFKA',
-  MQ = 'MQ',
-}
+import React, { useState } from 'react';
+import UserSelect from '.';
 
-export const sinkTypeMap: Map<SinkTypeEnum, string> = (() => {
-  return new Map([
-    [SinkTypeEnum.Hive, 'Hive'],
-    [SinkTypeEnum.Thive, 'Thive'],
-    [SinkTypeEnum.Clickhouse, 'Clickhouse'],
-    [SinkTypeEnum.Hudi, 'Hudi'],
-    [SinkTypeEnum.Kafka, 'Kafka'],
-    [SinkTypeEnum.MQ, 'MQ'],
-  ]);
-})();
+export default () => {
+  const [value, setValue] = useState('');
 
-export const sinkTypeApiPathMap: Map<SinkTypeEnum, string> = (() => {
-  return new Map([
-    [SinkTypeEnum.Hive, 'hive'],
-    [SinkTypeEnum.Thive, 'thive'],
-    [SinkTypeEnum.Clickhouse, 'clickhouse'],
-    [SinkTypeEnum.Hudi, 'hudi'],
-    [SinkTypeEnum.Kafka, 'kafka'],
-    [SinkTypeEnum.MQ, 'innermq'],
-  ]);
-})();
+  return <UserSelect value={value} onChange={v => setValue(v)} />;
+};

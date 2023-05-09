@@ -17,25 +17,25 @@
  * under the License.
  */
 
-import type { FieldItemType } from './common';
+import React, { useCallback } from 'react';
+import FetchSelect, { FetchSelectProps } from '@/@tencent/components/FetchSelect';
+import { useStaffsFn } from '@/@tencent/components/Use/usePlatformAPIs';
 
-export enum PartitionUnitEnum {
-  hour = 'H',
-  day = 'D',
-  minute = 'i',
-}
+const UserSelect: React.FC<Omit<FetchSelectProps, 'request'>> = ({ ...rest }) => {
+  const fetchStaffsFn = useStaffsFn();
 
-export const partitionUnitMap: Map<PartitionUnitEnum, string> = (() => {
-  const map = new Map();
-  map
-    .set(PartitionUnitEnum.hour, 'hour')
-    .set(PartitionUnitEnum.day, 'day')
-    .set(PartitionUnitEnum.minute, 'minute');
-  return map;
-})();
+  const fetchStaffs = useCallback(
+    async inputValue => {
+      const result = await fetchStaffsFn(inputValue);
+      return result.map(item => ({
+        text: item.DisplayName,
+        value: item.UserName,
+      }));
+    },
+    [fetchStaffsFn],
+  );
 
-export const fields: FieldItemType[] = [
-  { label: '库名', value: 'dbName' },
-  { label: '表名', value: 'tableName' },
-  { label: '分区间隔', value: 'partitionUnit' },
-];
+  return <FetchSelect {...rest} request={fetchStaffs} trigger={['search']} />;
+};
+
+export default UserSelect;

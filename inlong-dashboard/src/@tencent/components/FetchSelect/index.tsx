@@ -18,49 +18,74 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { Select, StatusTip, SelectProps } from '@tencent/tea-component';
+import { Select, TagSelect, StatusTip, SelectProps, TagSelectProps } from '@tencent/tea-component';
+import debounce from 'lodash/debounce';
 
-export interface FetchSelectProps extends SelectProps {
-  request: () => Promise<SelectProps['options']>;
+interface BaseProps {
+  request: (inputValue?: string) => Promise<SelectProps['options']>;
+  trigger?: ('open' | 'search')[];
+  isMultiple?: boolean;
 }
 
-const FetchSelect: React.FC<FetchSelectProps> = ({ request, ...rest }) => {
+export interface FetchSelectProps extends SelectProps, BaseProps {}
+
+export interface FetchTagSelectProps extends TagSelectProps, BaseProps {}
+
+const FetchSelect: React.FC<FetchSelectProps | FetchTagSelectProps> = ({
+  request,
+  trigger = ['open', 'search'],
+  isMultiple = false,
+  ...rest
+}) => {
   const [status, setStatus] = useState(null);
-  const [options, setOptions] = useState<SelectProps['options']>([{ value: rest.value }]);
+
+  const [options, setOptions] = useState<SelectProps['options']>(
+    Array.isArray(rest.value)
+      ? rest.value.map(item => ({ value: item }))
+      : rest.value
+      ? [{ value: rest.value }]
+      : [],
+  );
 
   const keywordRef = useRef('');
 
-  const fetch = async (inputValue = '') => {
+  const fetch = debounce(async (inputValue = '') => {
     keywordRef.current = inputValue;
 
     try {
       setStatus('loading');
       setOptions([]);
-      const result = await request();
+      const result = await request(inputValue);
       if (keywordRef.current === inputValue) {
+        if (!result.length) setStatus('empty');
         setOptions(result);
       }
     } catch (err) {
       setStatus('error');
     } finally {
-      setStatus(null);
+      setStatus(prev => (prev === 'loading' ? null : prev));
     }
+  }, 300);
+
+  const props: SelectProps | TagSelectProps = {
+    style: { minWidth: 200 },
+    searchPlaceholder: '请输入关键字搜索',
+    ...rest,
+    searchable: true,
+    matchButtonWidth: true,
+    appearance: 'button',
+    filter: () => true,
+    onOpen: trigger.includes('open') ? fetch : undefined,
+    onSearch: trigger.includes('search') ? fetch : undefined,
+    options: options,
+    tips: status && <StatusTip status={status} onRetry={() => fetch(keywordRef.current)} />,
   };
 
-  return (
-    <Select
-      style={{ minWidth: 200 }}
-      {...rest}
-      searchable
-      matchButtonWidth
-      appearance="button"
-      filter={() => true}
-      onOpen={fetch}
-      onSearch={fetch}
-      options={options}
-      tips={status && <StatusTip status={status} onRetry={() => fetch(keywordRef.current)} />}
-    />
-  );
+  if (isMultiple) {
+    return <TagSelect optionsOnly placeholder="请输入关键字搜索" {...(props as TagSelectProps)} />;
+  }
+
+  return <Select {...(props as SelectProps)} />;
 };
 
 export default FetchSelect;

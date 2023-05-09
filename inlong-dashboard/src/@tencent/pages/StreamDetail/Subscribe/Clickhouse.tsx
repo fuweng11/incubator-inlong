@@ -28,17 +28,18 @@ const Clickhouse = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeForm
 
   const params: ProFormProps['fields'] = fields.concat([
     {
-      name: 'input1',
+      name: 'dbName',
       type: 'string',
-      title: 'input 1',
+      title: '库名',
       component: 'input',
+      required: true,
     },
     {
-      name: 'input2',
+      name: 'tableName',
       type: 'string',
-      title: 'input 2',
+      title: '表名',
       component: 'input',
-      when: values => values.input1 === 'ok',
+      required: true,
     },
   ]);
 

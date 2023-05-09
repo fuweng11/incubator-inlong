@@ -17,25 +17,33 @@
  * under the License.
  */
 
-import type { FieldItemType } from './common';
-
-export enum PartitionUnitEnum {
-  hour = 'H',
-  day = 'D',
-  minute = 'i',
+export enum SinkTypeEnum {
+  Thive = 'INNER_THIVE',
+  Hive = 'INNER_HIVE',
+  Clickhouse = 'INNER_CLICKHOUSE',
+  Hudi = 'INNER_HUDI',
+  Kafka = 'KAFKA',
+  MQ = 'MQ',
 }
 
-export const partitionUnitMap: Map<PartitionUnitEnum, string> = (() => {
-  const map = new Map();
-  map
-    .set(PartitionUnitEnum.hour, 'hour')
-    .set(PartitionUnitEnum.day, 'day')
-    .set(PartitionUnitEnum.minute, 'minute');
-  return map;
+export const sinkTypeMap: Map<SinkTypeEnum, string> = (() => {
+  return new Map([
+    [SinkTypeEnum.Thive, 'Thive'],
+    [SinkTypeEnum.Hive, 'Hive'],
+    [SinkTypeEnum.Clickhouse, 'Clickhouse'],
+    [SinkTypeEnum.Hudi, 'Hudi'],
+    [SinkTypeEnum.Kafka, 'Kafka'],
+    [SinkTypeEnum.MQ, 'MQ'],
+  ]);
 })();
 
-export const fields: FieldItemType[] = [
-  { label: '库名', value: 'dbName' },
-  { label: '表名', value: 'tableName' },
-  { label: '分区间隔', value: 'partitionUnit' },
-];
+export const sinkTypeApiPathMap: Map<SinkTypeEnum, string> = (() => {
+  return new Map([
+    [SinkTypeEnum.Thive, 'thive'],
+    [SinkTypeEnum.Hive, 'hive'],
+    [SinkTypeEnum.Clickhouse, 'clickhouse'],
+    [SinkTypeEnum.Hudi, 'hudi'],
+    [SinkTypeEnum.Kafka, 'kafka'],
+    [SinkTypeEnum.MQ, 'innermq'],
+  ]);
+})();

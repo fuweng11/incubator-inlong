@@ -78,14 +78,14 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
   }, []);
 
   const submit = useCallback(async () => {
-    const [basicForm, tableForm] = await Promise.all([
-      formRef.current.submit() as object,
-      autoCreateTableRef.current.submit() as object,
-      // selectTableRef.current.submit() as object,
+    const [basicForm, autoTableForm, selectTableForm] = await Promise.all([
+      formRef.current.submit() as Record<string, any>,
+      autoCreateTableRef.current?.submit() as object,
+      selectTableRef.current?.submit() as object,
     ]);
     return {
       ...basicForm,
-      ...tableForm,
+      ...(basicForm.isCreateTable ? autoTableForm : selectTableForm),
       partitionInterval: 1,
     };
   }, []);
@@ -133,7 +133,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
       required: true,
       component: 'select',
       appearance: 'button',
-      style: { width: '80%' },
+      size: 'm',
       reaction: async (field, values) => {
         const data = await request({
           url: '/project/database/list',
@@ -173,7 +173,6 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
 
         const tableList = await getTableList(values.database);
         field.setComponentProps({
-          style: { width: '80%' },
           radios: [
             {
               value: true,
@@ -210,7 +209,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
                       component: 'select',
                       required: true,
                       appearance: 'button',
-                      size: 'full',
+                      size: 'm',
                       options: tableList.map(item => ({ text: item.text, value: item.value })),
                       defaultValue: tableList[0]?.value,
                       reaction: async (field, values: any) => {

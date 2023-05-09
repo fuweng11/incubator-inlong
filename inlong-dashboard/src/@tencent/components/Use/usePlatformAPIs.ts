@@ -19,6 +19,8 @@
 
 import { useRequest } from 'ahooks';
 import { BaseOptions } from '@ahooksjs/use-request/lib/types';
+import request from '@/core/utils/request';
+import { useCallback } from 'react';
 
 const PlatformPrefix = '/api/wedata/tdw/platform';
 
@@ -93,3 +95,35 @@ export const useProjectInfo = (projectId, options?: BaseOptions<any, any>) =>
     },
     options,
   );
+
+export const useStaffs = (options?: BaseOptions<any, any>) =>
+  useRequest(
+    (username: string) => ({
+      url: '/IsearchStaffs',
+      method: 'POST',
+      prefix: PlatformPrefix,
+      data: {
+        UserName: username,
+      },
+      responseParse: PlatformResponseParse,
+    }),
+    options,
+  );
+
+export const useStaffsFn = () => {
+  const fetch = useCallback(
+    (username: string) =>
+      request({
+        url: '/IsearchStaffs',
+        method: 'POST',
+        prefix: PlatformPrefix,
+        data: {
+          UserName: username,
+        },
+        responseParse: PlatformResponseParse,
+      }),
+    [],
+  );
+
+  return fetch;
+};

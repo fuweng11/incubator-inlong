@@ -25,7 +25,7 @@ import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { dateFormat } from '@/core/utils';
 import { Badge } from '@tencent/tea-component';
 import { statusMap } from '@/@tencent/enums/stream';
-import { sinkTypeMap } from '@/@tencent/enums/subscribe/_basic';
+import { sinkTypeMap, SinkTypeEnum } from '@/@tencent/enums/subscribe';
 
 const SubscribeList = ({ streamId, info }) => {
   const [projectId] = useProjectId();

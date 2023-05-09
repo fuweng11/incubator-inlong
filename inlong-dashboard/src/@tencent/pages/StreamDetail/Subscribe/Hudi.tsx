@@ -95,7 +95,7 @@ const Hudi = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
       component: () => null,
     },
     {
-      name: 'params',
+      name: 'advancedConfig',
       type: 'string',
       title: '参数',
       component: 'textarea',

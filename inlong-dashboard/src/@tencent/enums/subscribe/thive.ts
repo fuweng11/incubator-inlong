@@ -17,6 +17,8 @@
  * under the License.
  */
 
+import type { FieldItemType } from './common';
+
 export enum PartitionUnitEnum {
   hour = 'H',
   day = 'D',
@@ -31,3 +33,9 @@ export const partitionUnitMap: Map<PartitionUnitEnum, string> = (() => {
     .set(PartitionUnitEnum.minute, 'minute');
   return map;
 })();
+
+export const fields: FieldItemType[] = [
+  { label: '库名', value: 'dbName' },
+  { label: '表名', value: 'tableName' },
+  { label: '分区间隔', value: 'partitionUnit' },
+];
