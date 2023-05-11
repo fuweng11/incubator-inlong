@@ -260,6 +260,9 @@ public class AgentConstants {
     public static final String DBSYNC_JOB_BLOCK_TIME_MSEC = "agent.dbsync.job.block.time.msec";
     public static final long DEFAULT_DBSYNC_JOB_BLOCK_TIME_MSEC = 1000 * 60 * 5L;
 
+    public static final String DBSYNC_REPORT_LATEST_POSITION_PERIOD = "agent.dbsync.report.latest.position.period";
+    public static final long DBSYNC_REPORT_LATEST_POSITION_PERIOD_MSEC = 1000 * 60L;
+
     public static final String AGENT_METRIC_LISTENER_CLASS = "agent.domainListeners";
     public static final String AGENT_METRIC_LISTENER_CLASS_DEFAULT =
             "org.apache.inlong.agent.metrics.AgentPrometheusMetricListener";

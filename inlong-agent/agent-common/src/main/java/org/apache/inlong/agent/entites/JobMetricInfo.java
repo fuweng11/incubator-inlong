@@ -38,7 +38,6 @@ public class JobMetricInfo {
     private String groupID;
     private String streamID;
     private long idx;
-    private String serverId = "0";
     private String clusterId;
     private String jobStat;
     private String jobId;

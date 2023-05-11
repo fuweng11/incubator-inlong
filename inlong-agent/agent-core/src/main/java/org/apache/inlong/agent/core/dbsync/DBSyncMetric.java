@@ -15,24 +15,36 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.agent.metrics.dbsync;
+package org.apache.inlong.agent.core.dbsync;
 
+import org.apache.inlong.agent.common.DefaultThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
+import org.apache.inlong.agent.core.job.DBSyncJob;
 import org.apache.inlong.agent.entites.JobMetricInfo;
+import org.apache.inlong.agent.metrics.dbsync.DbSyncMetricSink;
+import org.apache.inlong.agent.metrics.dbsync.StatisticInfo;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.utils.SnowFlake;
+import org.apache.inlong.sdk.dataproxy.utils.ConcurrentHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_NAME;
 import static org.apache.inlong.agent.constant.AgentConstants.AGENT_LOCAL_IP;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_REPORT_LATEST_POSITION_PERIOD;
+import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_REPORT_LATEST_POSITION_PERIOD_MSEC;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_AGENT_UNIQ_ID;
+import static org.apache.inlong.agent.metrics.dbsync.DbSyncMetricSink.DATA_KEY_DELIMITER;
 
 public class DBSyncMetric extends Thread {
 
@@ -52,6 +64,8 @@ public class DBSyncMetric extends Thread {
     private LogPosition newestLogPosition = null;
     private LogPosition oldestLogPosition = null;
 
+    private LogPosition currentLogPosition;
+
     private DbSyncMetricSink dbSyncMetricSink;
 
     private String pulsarCluster = null;
@@ -64,6 +78,12 @@ public class DBSyncMetric extends Thread {
 
     private static volatile DBSyncMetric dbSyncMetricJob = null;
 
+    private DBSyncJob dbSyncJob;
+
+    private ScheduledExecutorService positionUpdateExecutor;
+
+    private ConcurrentHashMap<String, ConcurrentHashSet<String>> positionConf = new ConcurrentHashMap<>();
+
     public LogPosition getMaxLogPositionFromCache() {
         return newestLogPosition;
     }
@@ -74,11 +94,20 @@ public class DBSyncMetric extends Thread {
 
     DBSyncMetricThread dbSyncMetricThread = new DBSyncMetricThread();
 
-    public DBSyncMetric() {
+    public DBSyncMetric(DBSyncJob dbSyncJob) {
         this.statisticData = new ConcurrentHashMap<>();
         this.statisticDataPackage = new ConcurrentHashMap<>();
         this.sInfos = new LinkedBlockingQueue<>();
         this.idGeneratorMap = new ConcurrentHashMap<>();
+        this.dbSyncJob = dbSyncJob;
+
+        positionUpdateExecutor = Executors.newSingleThreadScheduledExecutor(
+                new DefaultThreadFactory(dbSyncJob.getDBSyncJobConf().getJobName() + "-max-position-updater"));
+        positionUpdateExecutor.scheduleWithFixedDelay(maxPositionUpdateTask(),
+                DBSYNC_REPORT_LATEST_POSITION_PERIOD_MSEC, agentConf.getLong(DBSYNC_REPORT_LATEST_POSITION_PERIOD,
+                        DBSYNC_REPORT_LATEST_POSITION_PERIOD_MSEC),
+                TimeUnit.MILLISECONDS);
+
     }
 
     public void init(String pulsarCluster, String serverName) {
@@ -140,7 +169,8 @@ public class DBSyncMetric extends Thread {
                             return null;
                         });
 
-                        LogPosition newPosition = jobNewestPosition.get(sInfo.getInstName());
+                        // LogPosition newPosition = jobNewestPosition.get(sInfo.getInstName());
+                        LogPosition newPosition = dbSyncJob.getNewestLogPosition();
                         LogPosition oldestPosition = jobStartPosition.get(sInfo.getInstName());
                         if (newPosition == null) {
                             newPosition = getMaxLogPositionFromCache();
@@ -240,8 +270,15 @@ public class DBSyncMetric extends Thread {
         if (lineCnt > 0) {
             jobSendMetricLogger.info(info);
         }
+
         if (dbSyncMetricSink != null) {
             dbSyncMetricSink.sendData(info);
+            currentLogPosition = logPosition;
+            ConcurrentHashSet<String> inlongStreamIDSet =
+                    positionConf.putIfAbsent(sInfo.getGroupID(), new ConcurrentHashSet<>());
+            if (inlongStreamIDSet != null) {
+                inlongStreamIDSet.add(sInfo.getStreamID());
+            }
         }
     }
 
@@ -276,5 +313,33 @@ public class DBSyncMetric extends Thread {
     private long generateSnowId(long serverId) {
         idGeneratorMap.computeIfAbsent(serverId, k -> new SnowFlake(serverId));
         return idGeneratorMap.get(serverId).nextId();
+    }
+
+    private Runnable maxPositionUpdateTask() {
+        return () -> {
+            try {
+                String dataKey = getDataKey(System.currentTimeMillis(), dbSyncJob.getDBSyncJobConf().getJobName());
+                for (Map.Entry<String, ConcurrentHashSet<String>> entry : positionConf.entrySet()) {
+                    sendPosition(entry.getKey(), entry.getValue(), dataKey);
+                }
+            } catch (Exception e) {
+                logger.error("maxPositionUpdateTask errr {}", e.getMessage());
+            }
+        };
+    }
+
+    private String getDataKey(Long dateTime, String jobID) {
+        return String.join(DATA_KEY_DELIMITER, String.valueOf(dateTime), jobID);
+    }
+
+    private void sendPosition(String inlongGroupID, ConcurrentHashSet<String> streamIDSet, String dataKey) {
+        for (String streamID : streamIDSet) {
+            StatisticInfo sInfo =
+                    new StatisticInfo(inlongGroupID, streamID, System.currentTimeMillis(), currentLogPosition,
+                            dbSyncJob.getDBSyncJobConf().getJobName(), dataKey);
+            sendStatMetric(sInfo, 0L, 0L, dbSyncJob.getNewestLogPosition(), null);
+
+            logger.debug("maxPositionUpdateTask :{} ", dbSyncJob.getNewestLogPosition());
+        }
     }
 }

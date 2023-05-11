@@ -25,7 +25,8 @@ import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.core.dbsync.DBSyncReadOperator;
 import org.apache.inlong.agent.core.task.Task;
-import org.apache.inlong.agent.metrics.dbsync.DBSyncMetric;
+import org.apache.inlong.agent.core.dbsync.DBSyncMetric;
+import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Channel;
 import org.apache.inlong.agent.plugin.Reader;
@@ -50,7 +51,7 @@ public class DBSyncJob implements AbstractJob {
     protected DBSyncJobConf dbSyncJobConf;
     protected String jobName;
     private DBSyncReadOperator readOperator;
-    private DBSyncMetric dbSyncMetric = new DBSyncMetric();
+    private DBSyncMetric dbSyncMetric;
 
     public DBSyncJob(AgentManager agentManager, DBSyncJobConf dbSyncJobConf) {
         this.dbSyncJobConf = dbSyncJobConf;
@@ -58,6 +59,11 @@ public class DBSyncJob implements AbstractJob {
         dbSyncTasks = new ConcurrentHashMap<>();
         jobName = this.dbSyncJobConf.getJobName();
         readOperator = new DBSyncReadOperator(this);
+        dbSyncMetric = new DBSyncMetric(this);
+    }
+
+    public LogPosition getNewestLogPosition() {
+        return this.readOperator.getNewestLogPosition();
     }
 
     public DBSyncMetric getDBSyncMetric() {

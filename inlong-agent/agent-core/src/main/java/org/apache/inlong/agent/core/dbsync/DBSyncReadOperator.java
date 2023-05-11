@@ -20,6 +20,7 @@ package org.apache.inlong.agent.core.dbsync;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.inlong.agent.common.DefaultThreadFactory;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.EntryType;
 import org.apache.inlong.agent.conf.AgentConfiguration;
@@ -65,6 +66,7 @@ import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.ErrorCode;
 import org.apache.inlong.agent.utils.MonitorLogUtils;
+import org.apache.inlong.agent.utils.SnowFlakeManager;
 import org.apache.inlong.agent.utils.countmap.UpdaterMap;
 import org.apache.inlong.agent.utils.countmap.UpdaterMapFactory;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
@@ -83,6 +85,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -172,6 +177,13 @@ public class DBSyncReadOperator {
     private volatile long oldTimeStampler = 10000L;
     private long lastDiffTime = -1;
 
+    private LogPosition newestLogPosition = null;
+    private LogPosition oldestLogPosition = null;
+
+    private ScheduledExecutorService positionUpdateExecutor;
+
+    private SnowFlakeManager snowFlakeManager = new SnowFlakeManager();
+
     public DBSyncReadOperator(DBSyncJob job) {
         this.job = job;
         // agent conf
@@ -203,10 +215,19 @@ public class DBSyncReadOperator {
         parseThreadList = new ConcurrentHashMap<>();
         heartbeatManager = HeartbeatManager.getInstance();
         positionControl = new PositionControl(jobconf, this);
+
+        positionUpdateExecutor = Executors.newSingleThreadScheduledExecutor(
+                new DefaultThreadFactory(jobName + "-log-position-updater"));
+        positionUpdateExecutor.scheduleWithFixedDelay(getLogPositionUpdateTask(),
+                1000, 30 * 1000, TimeUnit.MILLISECONDS);
     }
 
     public DBSyncJobConf getJobconf() {
         return jobconf;
+    }
+
+    public LogPosition getNewestLogPosition() {
+        return this.newestLogPosition;
     }
 
     public void start() {
@@ -397,9 +418,7 @@ public class DBSyncReadOperator {
             } catch (Throwable t) {
                 LOGGER.warn("can't get max position " + ExceptionUtils.getStackTrace(t));
             } finally {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("GetMaxLogPosition finished!");
-                }
+                LOGGER.info("GetMaxLogPosition finished! MaxLogPosition {}", logPosition.getPosition());
             }
         }
         return logPosition;
@@ -595,6 +614,7 @@ public class DBSyncReadOperator {
             metaConnection = connection.fork();
             try {
                 metaConnection.connect();
+                newestLogPosition = getMaxLogPosition();
             } catch (IOException e) {
                 throw new CanalParseException(e);
             }
@@ -641,7 +661,7 @@ public class DBSyncReadOperator {
                 LOGGER.info("{} build binlog parser!", this.jobName);
                 for (int i = 0; i < 20; i++) {
                     ParseThread parser = new ParseThread("parser-"
-                            + i + "-" + this.jobName, metaConnection, this);
+                            + i + "-" + this.jobName, metaConnection, this, snowFlakeManager);
                     parser.start();
                     // parseThreadList.add(parser);
                     parseThreadList.put(i, parser);
@@ -2110,4 +2130,22 @@ public class DBSyncReadOperator {
         boolean bFound = false;
     }
 
+    private Runnable getLogPositionUpdateTask() {
+        return () -> {
+            // if (isNeedUpdateLogPosition) {
+            LogPosition tmpNewestLogPosition = getMaxLogPosition();
+            if (tmpNewestLogPosition != null) {
+                newestLogPosition = tmpNewestLogPosition;
+            }
+            // LogPosition tmpOldestLogPosition = getOldestLogPosition();
+            // if (tmpOldestLogPosition != null) {
+            // oldestLogPosition = tmpOldestLogPosition;
+            // }
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("UpdatePosition newestLogPosition ={} , oldestLogPosition = "
+                        + "{}", newestLogPosition, oldestLogPosition);
+            }
+            // }
+        };
+    }
 }

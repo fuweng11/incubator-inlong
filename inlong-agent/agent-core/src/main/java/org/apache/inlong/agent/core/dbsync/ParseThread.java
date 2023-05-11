@@ -65,7 +65,7 @@ public class ParseThread extends Thread {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseThread.class);
     private final String parserJobName;
     private final LinkedBlockingQueue<PkgEvent> queue;
-    private final SnowFlakeManager snowFlakeManager = new SnowFlakeManager();
+    private SnowFlakeManager snowFlakeManager;
     private final PositionControl positionControl;
     private LogPosition lastParsePosition;
     private LogPosition lastProcessedPosition;
@@ -79,12 +79,14 @@ public class ParseThread extends Thread {
     private char ipSep = '@';
     private char sep = ',';
 
-    public ParseThread(String parserName, MysqlConnection parseMetaConnection, DBSyncReadOperator dbSyncReadOperator) {
+    public ParseThread(String parserName, MysqlConnection parseMetaConnection,
+            DBSyncReadOperator dbSyncReadOperator, SnowFlakeManager snowFlakeManager) {
         this.parseMetaConnection = parseMetaConnection;
         this.parserJobName = parserName;
         this.dbAddress = parseMetaConnection.getConnector().getAddress();
         this.dbSyncReadOperator = dbSyncReadOperator;
         this.jobName = dbSyncReadOperator.getJobName();
+        this.snowFlakeManager = snowFlakeManager;
         TableMetaCache tableMetaCache = new TableMetaCache(this.parseMetaConnection);
         ((LogEventConvert) dbSyncReadOperator.getBinlogParser()).setTableMetaCache(tableMetaCache);
         queue = new LinkedBlockingQueue<>();
