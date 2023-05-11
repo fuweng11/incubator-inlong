@@ -47,7 +47,9 @@
 ### Manager
 |                            ISSUE                            | Summary                                                                                        |
 |:-----------------------------------------------------------:|:-----------------------------------------------------------------------------------------------|
+| [INLONG-8006](https://github.com/apache/inlong/issues/8006) | [Improve][Manager] Set displayname for the auto-registered cluster                             |
 | [INLONG-7999](https://github.com/apache/inlong/issues/7999) | [Improve][Manager] Support PostgreSQL data node                                                |
+| [INLONG-7996](https://github.com/apache/inlong/issues/7996) | [Improve][Manager] Support issued kafka consumer group to sort                                 |
 | [INLONG-7981](https://github.com/apache/inlong/issues/7981) | [Bug][Manager] Failed to stop source correctly when suspend a group                            |
 | [INLONG-7948](https://github.com/apache/inlong/issues/7948) | [Improve][Manager] Add user authentication when operate inlong consume                         |
 | [INLONG-7946](https://github.com/apache/inlong/issues/7946) | [Improve][Manager] Add user authentication when bind clusterTag                                |
@@ -187,6 +189,7 @@
 | [INLONG-7630](https://github.com/apache/inlong/issues/7630) | [Bug][Dashboard] The page flickers when the route is switched                                                  |
 | [INLONG-7004](https://github.com/apache/inlong/issues/7004) | [Feature][Dashboard][Manager] Creating schema of  StreamSource by Statement                                    |
 | [INLONG-7971](https://github.com/apache/inlong/issues/7971) | [Feature][Dashboard] Support batch import fields by Excel                                                      |
+| [INLONG-8001](https://github.com/apache/inlong/issues/8001) | [Feature][Dashboard] Support postgreSQL node management                                                        |
 
 ### Other
 |                            ISSUE                            | Summary                                                                                               |

@@ -26,6 +26,7 @@ import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.core.job.JobManager;
 import org.apache.inlong.agent.core.dbsync.PositionControl;
 import org.apache.inlong.agent.db.JobProfileDb;
+import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.utils.ThreadUtils;
@@ -259,12 +260,13 @@ public class TaskPositionManager extends AbstractDaemon {
                         }
                         flushJobProfile(jobId, jobProfile);
                     }
-                    int flushTime = conf.getInt(AGENT_HEARTBEAT_INTERVAL,
-                            DEFAULT_AGENT_FETCHER_INTERVAL);
-                    TimeUnit.SECONDS.sleep(flushTime);
                 } catch (Throwable ex) {
                     LOGGER.error("error caught", ex);
                     ThreadUtils.threadThrowableHandler(Thread.currentThread(), ex);
+                } finally {
+                    int flushTime = conf.getInt(AGENT_HEARTBEAT_INTERVAL,
+                            DEFAULT_AGENT_FETCHER_INTERVAL);
+                    AgentUtils.silenceSleepInSeconds(flushTime);
                 }
             }
         };
@@ -295,6 +297,25 @@ public class TaskPositionManager extends AbstractDaemon {
      *
      * @param size add this size to beforePosition
      */
+    public void updateSinkPosition(String jobInstanceId, String sourcePath, long size, boolean reset) {
+        ConcurrentHashMap<String, Long> positionTemp = new ConcurrentHashMap<>();
+        ConcurrentHashMap<String, Long> position = jobTaskPositionMap.putIfAbsent(jobInstanceId, positionTemp);
+        if (position == null) {
+            JobProfile jobProfile = jobConfDb.getJobById(jobInstanceId);
+            if (jobProfile == null) {
+                return;
+            }
+            positionTemp.put(sourcePath, jobProfile.getLong(sourcePath + POSITION_SUFFIX, 0));
+            position = positionTemp;
+        }
+
+        if (!reset) {
+            Long beforePosition = position.getOrDefault(sourcePath, 0L);
+            position.put(sourcePath, beforePosition + size);
+        } else {
+            position.put(sourcePath, size);
+        }
+    }
     public void updateSinkPosition(BatchProxyMessage batchMsg, String sourcePath, long size) {
         if (conf.enableHA()) {
             logMapQueue.add(batchMsg);
@@ -310,7 +331,6 @@ public class TaskPositionManager extends AbstractDaemon {
         Long beforePosition = position.getOrDefault(sourcePath, 0L);
         position.put(sourcePath, beforePosition + size);
     }
-
     public ConcurrentHashMap<String, Long> getTaskPositionMap(String jobId) {
         return jobTaskPositionMap.get(jobId);
     }
