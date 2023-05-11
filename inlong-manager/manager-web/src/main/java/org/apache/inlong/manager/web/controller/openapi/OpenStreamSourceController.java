@@ -32,15 +32,19 @@ import org.apache.inlong.manager.service.source.StreamSourceService;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
+
+import java.util.List;
 
 /**
  * Open InLong Stream Source controller
@@ -116,5 +120,12 @@ public class OpenStreamSourceController {
         Preconditions.expectNotNull(LoginUserUtils.getLoginUser(), ErrorCodeEnum.LOGIN_USER_EMPTY);
         boolean result = sourceService.restart(id, LoginUserUtils.getLoginUser().getName());
         return Response.success(result);
+    }
+
+    @GetMapping("/source/listNodeName")
+    @ApiOperation(value = "get data node name by group id and stream id")
+    public Response<List<String>> listDataNodeName(@RequestParam String groupId,
+            @RequestParam(required = false) String streamId) {
+        return Response.success(sourceService.listUsedDataNodeName(groupId, streamId));
     }
 }

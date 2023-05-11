@@ -207,14 +207,14 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             boolean isExist = upsOperator.checkTableExist(hiveFullInfo, dbName, tbName);
             DealResult dealResult;
             if (isExist) {
-                grantPrivilegeBySc(hiveFullInfo, superUser, "select", false);
+                grantPrivilegeBySc(hiveFullInfo, superUser, "select", false, false);
                 TableInfoBean existTable = upsOperator.queryTableInfo(hiveFullInfo.getIsThive(),
                         hiveFullInfo.getClusterTag(), hiveFullInfo.getUsername(), dbName, tbName);
                 LOGGER.info("hive table [{}.{}] exists, it will be updated", dbName, tbName);
                 dealResult = compareTableAndModifyColumn(existTable, hiveFullInfo);
             } else {
                 // grant superuser permission to create tables, and create tables with superuser
-                grantPrivilegeBySc(hiveFullInfo, superUser, "create", true);
+                grantPrivilegeBySc(hiveFullInfo, superUser, "create", true, false);
                 LOGGER.info("new hive table [{}.{}] will be created", dbName, tbName);
                 dealResult = this.createTdwTable(hiveFullInfo, columnList);
             }
@@ -234,7 +234,9 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             // after the table is created successfully, need to set the table alter and select permission for the super
             // user
             String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
-            scService.grant(superUser, dbName, tbName, "alter", hiveType, hiveFullInfo.getClusterTag());
+            grantPrivilegeBySc(hiveFullInfo, groupInfo.getAppGroupName(), "select", false, true);
+            grantPrivilegeBySc(hiveFullInfo, sink.getCreator(), "select", false, false);
+            scService.grant(superUser, dbName, tbName, "alter", hiveType, hiveFullInfo.getClusterTag(), false);
 
             // give the responsible person query permission
             // and the write permission is only required by cluster level users of sort side write partition
@@ -563,33 +565,38 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
     /**
      * check permission for database or table through security center
      */
-    public boolean checkAndGrant(InnerHiveFullInfo hiveFullInfo, String username, String accessType, boolean isAll)
+    public boolean checkAndGrant(InnerHiveFullInfo hiveFullInfo, String username, String accessType, boolean isAll,
+            boolean isAppGroup)
             throws Exception {
         String dbName = hiveFullInfo.getDbName();
         String tableName = isAll ? "*" : hiveFullInfo.getTableName();
-        String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
         String clusterTag = hiveFullInfo.getClusterTag();
         LOGGER.info("check whether the user has permission to {} a table for user={}, database={}", accessType,
                 username, dbName);
-        boolean hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType, clusterTag);
+        boolean hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType, clusterTag,
+                isAppGroup);
         AtomicInteger retryTimes = new AtomicInteger(0);
         while (!hasPermissions && retryTimes.get() < MAX_RETRY_TIMES) {
             LOGGER.info("check permission with user={}, hasPermission={}, retryTimes={}, maxRetryTimes={}",
                     username, hasPermissions, retryTimes.get(), MAX_RETRY_TIMES);
             // sleep 5 minute
-            scService.grant(username, dbName, tableName, accessType, hiveType, clusterTag);
             Thread.sleep(3 * 1000);
             retryTimes.incrementAndGet();
-            hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType, clusterTag);
+            hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType, clusterTag,
+                    isAppGroup);
         }
         return hasPermissions;
     }
 
-    public void grantPrivilegeBySc(InnerHiveFullInfo hiveFullInfo, String username, String accessType, boolean isAll)
+    public void grantPrivilegeBySc(InnerHiveFullInfo hiveFullInfo, String username, String accessType, boolean isAll,
+            boolean isAppGroup)
             throws Exception {
         String database = hiveFullInfo.getDbName();
         String table = hiveFullInfo.getTableName();
-        boolean isSuccess = checkAndGrant(hiveFullInfo, username, accessType, isAll);
+        String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
+        scService.grant(username, hiveFullInfo.getDbName(), hiveFullInfo.getTableName(), accessType, hiveType,
+                hiveFullInfo.getClusterTag(), isAppGroup);
+        boolean isSuccess = checkAndGrant(hiveFullInfo, username, accessType, isAll, isAppGroup);
         if (!isSuccess) {
             String errMsg = String.format("grant %s permission failed for user=%s, database=%s, table=%s", accessType,
                     username, database, table);

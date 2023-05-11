@@ -118,7 +118,7 @@ public class ScServiceImpl implements ScService {
          * // OpenAPI Map<String, Object> params = Maps.newHashMap(); params.put("pageNum", 1); params.put("pageSize",
          * 20); params.put("enName", username); ScPage<Staff> staffPage = scApiRequestService
          * .getCall(LIST_USER_BY_NAME_API, params, new ParameterizedTypeReference<Response<ScPage<Staff>>>() { });
-         * 
+         *
          * return staffPage.getData();
          */
 
@@ -151,7 +151,7 @@ public class ScServiceImpl implements ScService {
         /*
          * // Only OpenAPI can query the product list of the current user Map<String, Object> params = new HashMap<>();
          * params.put("userName", userName);
-         * 
+         *
          * return scApiRequestService.getCall(LIST_PRODUCT_BY_USER_API, params, new
          * ParameterizedTypeReference<Response<List<Product>>>() { });
          */
@@ -267,15 +267,21 @@ public class ScServiceImpl implements ScService {
 
     @Override
     public boolean checkPermissions(String username, String database, String table, String accessType,
-            String clusterTag) {
+            String clusterTag, boolean isAppGroup) {
         List<Map<String, Object>> list = new ArrayList<>();
         Map<String, Object> params = Maps.newHashMap();
         params.put("type", "HIVE");
         params.put("database", database);
         params.put("table", table);
-        params.put("user", username);
         params.put("accessType", accessType);
         params.put("clusterIdentifier", clusterTag);
+        if (isAppGroup) {
+            List<String> groups = new ArrayList<>();
+            groups.add(username);
+            params.put("groups", groups);
+        } else {
+            params.put("user", username);
+        }
         list.add(params);
         String url = scOpenApiUrl + CHECK_PERMISSIONS_API;
         ScPage<ScDbPermission> rsp = HttpUtils.postRequest(restTemplate, url, list, scApiRequestService.getHeader(),
@@ -288,7 +294,7 @@ public class ScServiceImpl implements ScService {
 
     @Override
     public boolean grant(String username, String database, String table, String accessType, String hiveType,
-            String clusterTag) {
+            String clusterTag, boolean isAppGroup) {
         boolean result = false;
         Map<String, Object> params = Maps.newHashMap();
         params.put("action", "GRANT");
@@ -314,7 +320,12 @@ public class ScServiceImpl implements ScService {
         params.put("authAccess", authAccess);
         params.put("duration", 12);
         params.put("durationUnit", "MONTHS");
-        params.put("principalType", "USER");
+
+        if (isAppGroup) {
+            params.put("principalType", "GROUP");
+        } else {
+            params.put("principalType", "USER");
+        }
         params.put("principal", username);
         params.put("operatorRole", "ADMIN");
         params.put("ignoreCheckForAdmin", true);

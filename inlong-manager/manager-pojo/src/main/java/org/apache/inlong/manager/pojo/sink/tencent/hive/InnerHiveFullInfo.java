@@ -46,6 +46,7 @@ public class InnerHiveFullInfo {
     private String usImportId;
     private String verifiedTaskId; // the US task of verifying data is a sub task of the above task
     private String appGroupName;
+    private String reconciliationType = "InlongCft";
     private String defaultSelectors;
 
     private String dbName;

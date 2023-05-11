@@ -52,6 +52,8 @@ public class USConfiguration {
 
     private String partEndDelayMinute;
 
+    private String managerlistServerUrl;
+
     @Value("#{${inlong.us.appGroupToSuperSQL:{'jdbc:supersql':'url=http://ss-qe-supersql-ultra.tencent-distribute.com:8081'}}}")
     private Map<String, String> superSqlUrlMap = new HashMap<>();
 

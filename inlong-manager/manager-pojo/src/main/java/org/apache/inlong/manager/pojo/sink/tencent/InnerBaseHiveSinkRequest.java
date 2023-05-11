@@ -122,4 +122,7 @@ public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
     @ApiModelProperty("background operation log")
     private String optLog;
 
+    @ApiModelProperty("Inlong reconciliation type")
+    private String reconciliationType = "InlongCft";
+
 }

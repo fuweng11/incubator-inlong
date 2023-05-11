@@ -171,6 +171,9 @@ public class InnerBaseHiveSinkDTO {
     @ApiModelProperty("Hadoop dfs replication ")
     private Integer hadoopDfsReplication;
 
+    @ApiModelProperty("Inlong reconciliation type")
+    private String reconciliationType = "InlongCft";
+
     /**
      * Get the dto instance from the request
      */
@@ -205,6 +208,7 @@ public class InnerBaseHiveSinkDTO {
                 .inlongGroupId(sinkInfo.getInlongGroupId())
                 .inlongStreamId(sinkInfo.getInlongStreamId())
                 .isThive(isThive)
+                .reconciliationType(innerHiveDTO.getReconciliationType())
                 .usTaskId(innerHiveDTO.getUsTaskId())
                 .usCheckId(innerHiveDTO.getUsCheckTaskId())
                 .usImportId(innerHiveDTO.getUsImportTaskId())

@@ -571,6 +571,11 @@ public class StreamSourceServiceImpl implements StreamSourceService {
         return resultList;
     }
 
+    @Override
+    public List<String> listUsedDataNodeName(String groupId, String streamId) {
+        return sourceMapper.selectUsedDataNodeName(groupId, streamId);
+    }
+
     private void checkParams(SourceRequest request) {
         Preconditions.expectNotNull(request, ErrorCodeEnum.REQUEST_IS_EMPTY.getMessage());
         String groupId = request.getInlongGroupId();

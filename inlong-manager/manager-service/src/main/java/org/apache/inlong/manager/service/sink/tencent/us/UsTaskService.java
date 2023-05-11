@@ -33,8 +33,8 @@ import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
-import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.pojo.tencent.us.CreateUsTaskRequest;
 import org.apache.inlong.manager.pojo.tencent.us.CreateUsTaskRequest.TaskExt;
 import org.apache.inlong.manager.pojo.tencent.us.USConfiguration;
@@ -87,6 +87,9 @@ public class UsTaskService {
     private static final String TDW_GROUP_NAME = "tdwGroupName";
     private static final String HIVE_DB = "hiveDb";
     private static final String HIVE_TB = "hiveTb";
+    private static final String RECONCILIATION_TYPE = "inlong.reconciliation.type";
+    private static final String CFT_VERSION_TYPE = "cft_version";
+    private static final String MANAGER_LIST_SERVER_URL = "inlong.open.api.list.server.names.url";
 
     private static final String SECURITY_URL = "securityUrl";
     private static final String SUPER_SQL_URL = "superSqlUrl";
@@ -313,7 +316,9 @@ public class UsTaskService {
         extList.add(new TaskExt(TDW_GROUP_NAME, tableInfo.getAppGroupName()));
         extList.add(new TaskExt(HIVE_DB, tableInfo.getDbName()));
         extList.add(new TaskExt(HIVE_TB, tableInfo.getTableName()));
-
+        extList.add(new TaskExt(RECONCILIATION_TYPE, tableInfo.getReconciliationType()));
+        extList.add(new TaskExt(CFT_VERSION_TYPE, "cft_v2"));
+        extList.add(new TaskExt(MANAGER_LIST_SERVER_URL, usConfig.getManagerlistServerUrl()));
         // if the task ID does not exist, create a new one
         String taskId = tableInfo.getVerifiedTaskId();
         if (StringUtils.isBlank(taskId)) {

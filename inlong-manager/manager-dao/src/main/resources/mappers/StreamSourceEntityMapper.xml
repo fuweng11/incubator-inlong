@@ -382,6 +382,16 @@
             </if>
         </where>
     </select>
+    <select id="selectUsedDataNodeName" resultType="java.lang.String">
+        select distinct data_node_name
+        from stream_source
+        where is_deleted = 0
+        and status not in (99, 102, 104)
+        and inlong_group_id = #{groupId, jdbcType=VARCHAR}
+        <if test="streamId != null and streamId != ''">
+            and inlong_stream_id = #{streamId, jdbcType=VARCHAR}
+        </if>
+    </select>
 
     <select id="selectNeedUpdateIdsByClusterAndDataNode" resultType="java.lang.Integer">
         select source.id

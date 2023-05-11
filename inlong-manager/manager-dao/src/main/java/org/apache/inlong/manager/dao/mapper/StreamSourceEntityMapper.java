@@ -215,4 +215,9 @@ public interface StreamSourceEntityMapper {
      */
     List<StreamSourceEntity> selectByClusterAndDataNode(@Param("clusterName") String clusterName,
             @Param("nodeName") String nodeName, @Param("sourceType") String sourceType);
+
+    /**
+     * Query used data node name by groupId and streamId
+     */
+    List<String> selectUsedDataNodeName(@Param("groupId") String groupId, @Param("streamId") String streamId);
 }

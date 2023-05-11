@@ -229,4 +229,13 @@ public interface StreamSourceService {
         return true;
     }
 
+    /**
+     * According to the inlong stream id, query the list of data node name.
+     *
+     * @param groupId Inlong group id.
+     * @param streamId Inlong stream id.
+     * @return List of data node name.
+     */
+    List<String> listUsedDataNodeName(String groupId, String streamId);
+
 }

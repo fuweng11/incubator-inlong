@@ -113,9 +113,11 @@ public interface ScService {
      * @param database database
      * @param table table
      * @param accessType access type
+     * @param isAppGroup is app group
      * @return true or false
      */
-    boolean checkPermissions(String username, String database, String table, String accessType, String clusterTag);
+    boolean checkPermissions(String username, String database, String table, String accessType, String clusterTag,
+            boolean isAppGroup);
 
     /**
      * Grant permission according to the username
@@ -125,9 +127,10 @@ public interface ScService {
      * @param table table
      * @param accessType access type
      * @param clusterTag cluster tag of hive or thive cluster, like tl, hk, etc
+     * @param isAppGroup is App group
      * @return true or false
      */
     boolean grant(String username, String database, String table, String accessType, String hiveType,
-            String clusterTag);
+            String clusterTag, boolean isAppGroup);
 
 }

@@ -125,4 +125,7 @@ public abstract class InnerBaseHiveSink extends StreamSink {
     @ApiModelProperty("cluster tag")
     private String clusterTag;
 
+    @ApiModelProperty("Inlong reconciliation type")
+    private String reconciliationType;
+
 }
