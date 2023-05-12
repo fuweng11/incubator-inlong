@@ -66,6 +66,34 @@ export default class InnerThiveSink
   dataNodeName: string;
 
   @FieldDecorator({
+    type: 'input',
+    hidden: true,
+  })
+  @I18n('usTaskId')
+  usTaskId: string;
+
+  @FieldDecorator({
+    type: 'input',
+    hidden: true,
+  })
+  @I18n('usCheckId')
+  usCheckTaskId: string;
+
+  @FieldDecorator({
+    type: 'input',
+    hidden: true,
+  })
+  @I18n('usImportId')
+  usImportTaskId: string;
+
+  @FieldDecorator({
+    type: 'input',
+    hidden: true,
+  })
+  @I18n('verifiedTaskId')
+  verifiedTaskId: string;
+
+  @FieldDecorator({
     type: 'select',
     rules: [{ required: true }],
     props: values => ({

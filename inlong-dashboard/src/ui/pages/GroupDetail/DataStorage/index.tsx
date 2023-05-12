@@ -18,13 +18,14 @@
  */
 
 import React, { useState, useMemo, forwardRef, useCallback } from 'react';
-import { Badge, Button, Card, Modal, List, Tag, Segmented, message } from 'antd';
+import { Badge, Button, Card, Modal, List, Tag, Segmented, message, Popover } from 'antd';
 import { PaginationConfig } from 'antd/lib/pagination';
 import {
   UnorderedListOutlined,
   TableOutlined,
   EditOutlined,
   DeleteOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import HighTable from '@/ui/components/HighTable';
 import { defaultSize } from '@/configs/pagination';
@@ -169,6 +170,39 @@ const Comp = ({ inlongGroupId, inlongStreamId, readonly }: Props, ref) => {
               <Button type="link" onClick={() => onDelete(record)}>
                 {i18n.t('basic.Delete')}
               </Button>
+              {record?.sinkType === 'INNER_THIVE' && (
+                <Popover
+                  placement="left"
+                  title={i18n.t('pages.GroupDetail.Sink.US.title')}
+                  content={
+                    <div>
+                      <p>
+                        <span>{i18n.t('pages.GroupDetail.Sink.US.TDBank')}</span>
+                        <a
+                          href={`https://us.woa.com/#/taskManage?search|keywords|inCharge=[{"taskId":"${record.usTaskId}"}][全部]`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {record.usTaskId}
+                        </a>
+                      </p>
+                      <p>
+                        <span>{i18n.t('pages.GroupDetail.Sink.US.InLong')}</span>
+                        <a
+                          href={`https://us.woa.com/#/taskManage?search|keywords|inCharge=[{"taskId":"${record.verifiedTaskId}"}][全部]`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {record.verifiedTaskId}
+                        </a>
+                      </p>
+                    </div>
+                  }
+                  trigger="click"
+                >
+                  <Button type="link">{i18n.t('pages.GroupDetail.Sink.US.title')}</Button>
+                </Popover>
+              )}
             </>
           ),
       } as any,
@@ -227,6 +261,41 @@ const Comp = ({ inlongGroupId, inlongStreamId, readonly }: Props, ref) => {
                   <Button key="del" type="link" onClick={() => onDelete(item)}>
                     <DeleteOutlined />
                   </Button>,
+                  item.sinkType === 'INNER_THIVE' && (
+                    <Popover
+                      placement="left"
+                      title={i18n.t('pages.GroupDetail.Sink.US.title')}
+                      content={
+                        <div>
+                          <p>
+                            <span>{i18n.t('pages.GroupDetail.Sink.US.TDBank')}</span>
+                            <a
+                              href={`https://us.woa.com/#/taskManage?search|keywords|inCharge=[{"taskId":"${item.usTaskId}"}][全部]`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {item.usTaskId}
+                            </a>
+                          </p>
+                          <p>
+                            <span>{i18n.t('pages.GroupDetail.Sink.US.InLong')}</span>
+                            <a
+                              href={`https://us.woa.com/#/taskManage?search|keywords|inCharge=[{"taskId":"${item.verifiedTaskId}"}][全部]`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {item.verifiedTaskId}
+                            </a>
+                          </p>
+                        </div>
+                      }
+                      trigger="click"
+                    >
+                      <Button type="link">
+                        <AppstoreOutlined />
+                      </Button>
+                    </Popover>
+                  ),
                 ]}
               >
                 <span>
