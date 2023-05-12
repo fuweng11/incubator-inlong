@@ -82,6 +82,8 @@ public class UsTaskService {
     // Us parameter name
     private static final String BID = "bid";
     private static final String TID = "tid";
+    private static final String INLONG_GROUP_ID = "inlong_group_id";
+    private static final String INLONG_STREAM_ID = "inlong_stream_id";
     private static final String INTERFACE_NAME = "interface_name";
     private static final String HIVE_SERVER = "hiveServer";
     private static final String TDW_GROUP_NAME = "tdwGroupName";
@@ -313,6 +315,8 @@ public class UsTaskService {
         List<TaskExt> extList = this.getDistinctTaskExtList(tableInfo);
         extList.add(new TaskExt(BID, inlongGroupId));
         extList.add(new TaskExt(TID, inlongStreamId));
+        extList.add(new TaskExt(INLONG_GROUP_ID, inlongGroupId));
+        extList.add(new TaskExt(INLONG_STREAM_ID, inlongStreamId));
         extList.add(new TaskExt(TDW_GROUP_NAME, tableInfo.getAppGroupName()));
         extList.add(new TaskExt(HIVE_DB, tableInfo.getDbName()));
         extList.add(new TaskExt(HIVE_TB, tableInfo.getTableName()));
