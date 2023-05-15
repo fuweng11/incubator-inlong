@@ -22,9 +22,10 @@ import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
 import ContentRadio from '@/@tencent/components/ContentRadio';
 import { partitionUnitMap } from '@/@tencent/enums/subscribe/hive';
 import request from '@/core/utils/request';
-import { FieldData } from '@/@tencent/components/FieldsMap';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
-import { SubscribeFormProps, SubscribeFormRef } from './common';
+import { SubscribeFormProps, SubscribeFormRef, FieldData } from './common';
+
+export { fields } from '@/@tencent/enums/subscribe/hive';
 
 const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
   const { fields, streamInfo, setTargetFields, ...rest } = props;
@@ -60,19 +61,19 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
   }, []);
 
   //TODO 暂未提供接口 //根据选择的table获取字段
-  const getTargetFields = useCallback(async (table?: string): Promise<FieldData> => {
-    const res = await new Promise<FieldData>(resolve => {
+  const getTargetFields: SubscribeFormRef['getTargetFields'] = useCallback(async () => {
+    // const selectedTable
+    const res = await new Promise<FieldData[]>(resolve => {
       setTimeout(() => {
         resolve([
           {
-            id: 0,
             sequence: 55,
             fieldName: 'test',
             fieldType: 'string',
             remark: '备注',
           },
         ]);
-      }, 1000);
+      }, 300);
     });
     return res;
   }, []);
@@ -166,7 +167,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
           if (values.isCreateTable) {
             setTargetFields(true);
           } else {
-            const res = await getTargetFields(selectedTable);
+            const res = await getTargetFields();
             setTargetFields(res);
           }
         }

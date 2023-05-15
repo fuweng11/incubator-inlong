@@ -70,9 +70,9 @@ const FetchSelect: React.FC<FetchSelectProps | FetchTagSelectProps> = ({
   const props: SelectProps | TagSelectProps = {
     style: { minWidth: 200 },
     searchPlaceholder: '请输入关键字搜索',
-    ...rest,
     searchable: true,
     matchButtonWidth: true,
+    ...rest,
     appearance: 'button',
     filter: () => true,
     onOpen: trigger.includes('open') ? fetch : undefined,

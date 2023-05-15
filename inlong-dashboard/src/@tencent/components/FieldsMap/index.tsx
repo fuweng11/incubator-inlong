@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Table,
   TableProps,
@@ -34,24 +34,33 @@ import { AutoAdd, ConvertTip, Delete } from '../Icons';
 
 const { injectable, selectable, draggable } = Table.addons;
 
-export type FieldData = {
-  id: number;
+export interface FieldData {
   sequence?: number;
   fieldName: string;
   fieldType: string;
   remark?: string;
+}
+
+export interface FieldDataWithId extends FieldData {
+  id: number;
+}
+
+export type DefaultSelectedFieldsProps = {
+  sourceField: FieldData;
+  targetField: FieldData;
 }[];
 
-export type selectedFieldsProps = {
-  sourceField: FieldData[0];
-  targetField: FieldData[0];
+export type SelectedFieldsType = {
+  sourceField: FieldDataWithId;
+  targetField: FieldDataWithId;
 }[];
 
 export interface FieldsMapProps extends Omit<TableProps<any>, 'columns'> {
-  sourceFields: FieldData;
-  targetFields: FieldData;
-  onSelect: (data: selectedFieldsProps) => void; //get selected fields
-  getTargetFields: (table?: string) => any; //get target fields by table name
+  sourceFields: FieldData[];
+  targetFields: FieldData[];
+  defaultSelectFields?: DefaultSelectedFieldsProps;
+  onSelect: (data: SelectedFieldsType) => void; //get selected fields
+  getTargetFields: () => Promise<FieldData[]>; //get target fields by table name
   candoAutoAdd?: boolean; // default true
   readonly?: boolean;
 }
@@ -63,18 +72,33 @@ type actionsProps = {
   onClick?: () => void;
 }[];
 
+function insertIndex<T extends Record<string, any>>(data: Array<T>) {
+  return data ? data.map((item, index) => ({ ...item, id: item.id || index })) : [];
+}
+
 const FieldsMap = ({
-  sourceFields,
-  targetFields: defaultTargetFields,
+  sourceFields: _sf,
+  targetFields: _tf,
+  defaultSelectFields,
   onSelect,
   getTargetFields,
   candoAutoAdd = true,
   readonly = false,
   ...props
 }: FieldsMapProps) => {
+  const sourceFields = useMemo<FieldDataWithId[]>(() => insertIndex(_sf), [_sf]);
+  const targetFieldsProp = useMemo<FieldDataWithId[]>(() => insertIndex(_tf), [_tf]);
+
   const [fieldsParseVisible, setFieldParseVisible] = useState<boolean>(false);
-  const [selectedFields, setSelectedFields] = useState<selectedFieldsProps>([]);
-  const [targetFields, setTargetFields] = useState<FieldData>([]);
+  const [selectedFields, setSelectedFields] = useState<SelectedFieldsType>(
+    defaultSelectFields
+      ? defaultSelectFields.map((item, index) => ({
+          sourceField: { ...item.sourceField, id: index },
+          targetField: { ...item.targetField, id: index },
+        }))
+      : [],
+  );
+  const [targetFields, setTargetFields] = useState<FieldDataWithId[]>([]);
   const [status, setStatus] = useState<string>('');
 
   const actions: actionsProps = [
@@ -92,7 +116,7 @@ const FieldsMap = ({
         setStatus('loading');
         const newTargetFields = await getTargetFields();
         setStatus('found');
-        setTargetFields(newTargetFields);
+        setTargetFields(insertIndex(newTargetFields));
       },
       disabled: !candoAutoAdd,
     },
@@ -168,8 +192,8 @@ const FieldsMap = ({
   };
 
   useEffect(() => {
-    setTargetFields(defaultTargetFields);
-  }, [defaultTargetFields]);
+    setTargetFields(targetFieldsProp);
+  }, [targetFieldsProp]);
 
   useEffect(() => {
     const newSelectedFields = selectedFields.map(item => ({

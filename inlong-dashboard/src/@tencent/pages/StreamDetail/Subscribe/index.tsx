@@ -19,18 +19,25 @@
 import React, { useCallback } from 'react';
 import { ProTable } from '@tencent/tea-material-pro-table';
 import { useState } from 'react';
-import AddSubscribeDrawer from './AddSubscribe';
+import AddSubscribeDrawer, { AddSubscribeDrawerProps } from './AddSubscribe';
 import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { dateFormat } from '@/core/utils';
-import { Badge } from '@tencent/tea-component';
+import { Badge, Button } from '@tencent/tea-component';
 import { statusMap } from '@/@tencent/enums/stream';
 import { sinkTypeMap, SinkTypeEnum } from '@/@tencent/enums/subscribe';
 
 const SubscribeList = ({ streamId, info }) => {
   const [projectId] = useProjectId();
   const [records, setRecords] = useState([]);
-  const [addDrawerVisible, setAddDrawerVisible] = useState(false);
+  const [addDrawerProps, setAddDrawerProps] = useState<{
+    visible: boolean;
+    pageType?: AddSubscribeDrawerProps['pageType'];
+    subscribeId?: number;
+    subscribeType?: SinkTypeEnum;
+  }>({
+    visible: false,
+  });
 
   const getSubscribeList = useCallback(
     async ({ pageSize, current }) => {
@@ -55,7 +62,8 @@ const SubscribeList = ({ streamId, info }) => {
   };
 
   const onClose = () => {
-    setAddDrawerVisible(false);
+    setAddDrawerProps({ visible: false });
+    refreshSubscribeList();
   };
 
   return (
@@ -79,7 +87,7 @@ const SubscribeList = ({ streamId, info }) => {
             buttonType: 'primary',
             text: '新增订阅',
             onClick: () => {
-              setAddDrawerVisible(true);
+              setAddDrawerProps({ visible: true });
             },
           },
         ]}
@@ -121,23 +129,45 @@ const SubscribeList = ({ streamId, info }) => {
             header: '创建时间',
             render: row => row.createTime && dateFormat(new Date(row.createTime)),
           },
-          // {
-          //   key: 'action',
-          //   header: '操作',
-          //   render: () => <a>详情</a>,
-          // },
+          {
+            key: 'action',
+            header: '操作',
+            render: row => (
+              <>
+                <Button
+                  type="link"
+                  onClick={() =>
+                    setAddDrawerProps({
+                      visible: true,
+                      pageType: 'u',
+                      subscribeId: row.subscribeID,
+                      subscribeType: row.subscribeType,
+                    })
+                  }
+                >
+                  编辑
+                </Button>
+                <Button
+                  type="link"
+                  onClick={() =>
+                    setAddDrawerProps({
+                      visible: true,
+                      pageType: 'r',
+                      subscribeId: row.subscribeID,
+                      subscribeType: row.subscribeType,
+                    })
+                  }
+                >
+                  详情
+                </Button>
+              </>
+            ),
+          },
         ]}
         pageable
       />
-      {addDrawerVisible && (
-        <AddSubscribeDrawer
-          visible={addDrawerVisible}
-          onClose={onClose}
-          streamId={streamId}
-          refreshSubscribeList={refreshSubscribeList}
-          info={info}
-        />
-      )}
+
+      <AddSubscribeDrawer {...addDrawerProps} onClose={onClose} streamId={streamId} info={info} />
     </>
   );
 };

@@ -20,6 +20,7 @@
 import React, { useRef, useCallback, forwardRef, useImperativeHandle, Ref } from 'react';
 import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
 import { MQTypeEnum, mqTypeMap } from '@/@tencent/enums/subscribe/mq';
+import UserSelect from '@/@tencent/components/UserSelect';
 import { SubscribeFormProps, SubscribeFormRef } from './common';
 
 const Kafka = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
@@ -46,17 +47,22 @@ const Kafka = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>)
     },
     {
       name: 'inCharges',
-      type: 'string',
-      title: '负责人列表',
+      type: 'array',
+      title: '负责人',
       required: true,
-      component: 'input',
-      placeholder: '逗号分隔',
+      component: UserSelect,
+      defaultValue: [],
+      align: 'middle',
+      isMultiple: true,
     },
   ]);
 
   const submit = useCallback(async () => {
     const [basicForm] = await Promise.all([formRef.current.submit() as Record<string, any>]);
-    return basicForm;
+    return {
+      ...basicForm,
+      inCharges: basicForm.inCharges?.join(','),
+    };
   }, []);
 
   useImperativeHandle(ref, () => ({

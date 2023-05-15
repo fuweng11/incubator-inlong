@@ -44,7 +44,11 @@ export default function Mysql({ form }) {
         label="数据库"
         align="middle"
         required
-        suffix={<Button type="link">数据源管理</Button>}
+        suffix={
+          <Button type="link" disabled title="暂未支持">
+            数据源管理
+          </Button>
+        }
         status={errors.dataBaseName?.message ? 'error' : undefined}
         message={errors.dataBaseName?.message}
       >

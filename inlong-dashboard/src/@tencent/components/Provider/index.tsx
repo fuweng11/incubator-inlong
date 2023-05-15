@@ -20,8 +20,11 @@
 import { useDispatch } from 'react-redux';
 import { useCurrentUser } from '@/@tencent/components/Use/usePlatformAPIs';
 import '@tencent/tea-component/dist/tea.css';
+import { useTam } from '@/@tencent/components/Use/useTam';
 
 const Provider = ({ children }) => {
+  useTam();
+
   const dispatch = useDispatch();
 
   useCurrentUser({

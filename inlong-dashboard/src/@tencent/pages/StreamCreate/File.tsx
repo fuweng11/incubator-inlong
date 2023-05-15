@@ -21,6 +21,8 @@ import React from 'react';
 import { Form, Input, Radio, Button, TagSelect } from '@tencent/tea-component';
 import { Controller } from 'react-hook-form';
 import { ReadModeEnum, readModeMap } from '@/@tencent/enums/source/file';
+import FetchSelect from '@/@tencent/components/FetchSelect';
+import request from '@/core/utils/request';
 
 export default function File({ form }) {
   const { control, formState, watch } = form;
@@ -34,7 +36,11 @@ export default function File({ form }) {
         label="集群名称"
         align="middle"
         required
-        suffix={<Button type="link">数据源管理</Button>}
+        suffix={
+          <Button type="link" disabled title="暂未支持">
+            数据源管理
+          </Button>
+        }
         status={errors.clusterName?.message ? 'error' : undefined}
         message={errors.clusterName?.message}
       >
@@ -43,7 +49,27 @@ export default function File({ form }) {
           shouldUnregister
           control={control}
           rules={{ required: '请填写集群名称' }}
-          render={({ field }) => <Input {...field} maxLength={100} />}
+          render={({ field }) => (
+            <FetchSelect
+              {...field}
+              searchable={false}
+              request={async () => {
+                const result = await request({
+                  url: '/cluster/search',
+                  method: 'POST',
+                  data: {
+                    pageNum: 1,
+                    pageSize: 500,
+                    type: 'AGENT',
+                  },
+                });
+                return result.records?.map(item => ({
+                  text: item.displayName,
+                  value: item.name,
+                }));
+              }}
+            />
+          )}
         />
       </Form.Item>
 

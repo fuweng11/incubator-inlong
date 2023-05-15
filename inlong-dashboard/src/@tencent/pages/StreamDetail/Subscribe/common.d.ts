@@ -24,8 +24,10 @@ export interface SubscribeFormProps extends ProFormProps {
   fields: ProFormProps['fields'];
   streamInfo: Record<string, any>;
   // FieldData填充自定义｜true填充源数据字段一致｜false填充为空
-  setTargetFields: (data: FieldData | boolean) => void;
+  setTargetFields: (data: FieldData[] | boolean) => void;
 }
+
+export type { FieldData };
 
 export interface SubscribeFormRef {
   submit: () => Promise<any>;

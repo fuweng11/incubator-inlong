@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import FieldsMap, { selectedFieldsProps } from '@/@tencent/components/FieldsMap';
+import FieldsMap, { SelectedFieldsType } from '@/@tencent/components/FieldsMap';
 import { FieldData } from '@/@tencent/components/FieldsMap';
 import { Drawer, Button, Row, Col, Form } from '@tencent/tea-component';
 import { Form as ProFormIns, ProFormProps } from '@tencent/tea-material-pro-form';
@@ -29,22 +29,26 @@ import { fields as mysqlFields } from '@/@tencent/enums/source/mysql';
 import { fields as postgreSqlFields } from '@/@tencent/enums/source/postgreSql';
 import { SinkTypeEnum, sinkTypeMap, sinkTypeApiPathMap } from '@/@tencent/enums/subscribe';
 import request from '@/core/utils/request';
+import { useRequest } from 'ahooks';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { message } from '@tencent/tea-component';
+import ReadonlyForm, { ReadonlyFormFieldItemType } from '@/@tencent/components/ReadonlyForm';
 import { SubscribeFormRef, SubscribeFormProps } from './common';
 import Clickhouse from './Clickhouse';
-import Hive from './Hive';
-import Thive from './Thive';
+import Hive, { fields as hiveFields } from './Hive';
+import Thive, { fields as thiveFields } from './Thive';
 import Hudi from './Hudi';
 import Kafka from './Kafka';
-import MQ from './MQ';
+// import MQ from './MQ';
 
 export interface AddSubscribeDrawerProps {
   visible: boolean;
   onClose: () => void;
   streamId: string;
-  refreshSubscribeList: () => any;
   info: Record<string, any>;
+  pageType?: 'c' | 'u' | 'r';
+  subscribeId?: number;
+  subscribeType?: SinkTypeEnum;
 }
 
 export const getFields = (accessModel): FieldItemType[] => [
@@ -63,28 +67,48 @@ export const getFields = (accessModel): FieldItemType[] => [
     : []),
 ];
 
-const insertIndex = (data: Array<any>) =>
-  data ? data.map((item, index) => ({ ...item, id: index })) : [];
-
 const AddSubscribeDrawer = ({
   visible,
   onClose,
   streamId,
-  refreshSubscribeList,
   info,
+  pageType = 'c',
+  subscribeId,
+  subscribeType,
 }: AddSubscribeDrawerProps) => {
   const [projectId] = useProjectId();
-  const [targetFields, setTargetFields] = useState<FieldData>([]);
-  const [selectedFields, setSelectedFields] = useState<selectedFieldsProps>([]);
+  const [targetFields, setTargetFields] = useState<FieldData[]>([]);
+  const [selectedFields, setSelectedFields] = useState<SelectedFieldsType>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const formRef = useRef<SubscribeFormRef>();
-  const [writeType, setWriteType] = useState(SinkTypeEnum.Hive);
+  const [writeType, setWriteType] = useState(subscribeType || SinkTypeEnum.Hive);
+
+  const { data: savedData, run: getSubscribeData } = useRequest(
+    {
+      url: `/subscribe/${sinkTypeApiPathMap.get(subscribeType)}/query`,
+      method: 'POST',
+      data: {
+        projectID: projectId,
+        streamID: streamId,
+        subscribeID: subscribeId,
+      },
+    },
+    {
+      manual: true,
+      onSuccess: result => setTargetFields(result.fieldMappings),
+    },
+  );
+
+  useEffect(() => {
+    if (visible && subscribeId) {
+      getSubscribeData();
+      setWriteType(subscribeType);
+    }
+  }, [visible, getSubscribeData, subscribeId]);
 
   const setTargetFieldsPro = useCallback(
     data =>
-      setTargetFields(
-        typeof data === 'boolean' ? (data === true ? insertIndex(info.fieldsData) : []) : data,
-      ),
+      setTargetFields(typeof data === 'boolean' ? (data === true ? info.fieldsData : []) : data),
     [info.fieldsData],
   );
 
@@ -97,7 +121,7 @@ const AddSubscribeDrawer = ({
         required: true,
         component: 'select',
         appearance: 'button',
-        style: { width: '80%' },
+        size: 'm',
         defaultValue: writeType,
         options: Array.from(sinkTypeMap).map(([key, ctx]) => ({
           value: key,
@@ -111,7 +135,7 @@ const AddSubscribeDrawer = ({
 
   useEffect(() => {
     console.log('watch writeType', writeType);
-    setTargetFields(insertIndex(info.fieldsData));
+    setTargetFields(info.fieldsData);
   }, [writeType]);
 
   const onSelect = data => {
@@ -122,7 +146,7 @@ const AddSubscribeDrawer = ({
   const handleOk = async () => {
     setLoading(true);
     try {
-      const basicFrom = await formRef.current.submit();
+      const basicFrom = pageType === 'u' ? savedData : await formRef.current?.submit();
       const fieldMappings = selectedFields.map(item => ({
         fieldName: item.targetField.fieldName,
         fieldType: item.targetField.fieldType,
@@ -140,18 +164,19 @@ const AddSubscribeDrawer = ({
         dataSeparator: info.dataSeparator,
         fieldMappings,
         ...(basicFrom as object),
-      };
-      const sinkType: SinkTypeEnum = basicFrom.writeType;
+      } as Record<string, any>;
+      const sinkType: SinkTypeEnum = writeType;
       await request({
-        url: `/subscribe/${sinkTypeApiPathMap.get(sinkType)}/create`,
+        url: `/subscribe/${sinkTypeApiPathMap.get(sinkType)}/${
+          pageType === 'c' ? 'create' : 'update'
+        }`,
         method: 'POST',
         data,
       });
       message.success({
-        content: '新建订阅成功！',
+        content: `${pageType === 'c' ? '新建' : '保存'}订阅成功！`,
       });
       onClose();
-      refreshSubscribeList();
     } catch (e) {
       console.warn(e);
     } finally {
@@ -172,15 +197,29 @@ const AddSubscribeDrawer = ({
       outerClickClosable={true}
       showMask={true}
       visible={visible}
-      title="新增订阅"
+      title={
+        {
+          c: '新增订阅',
+          u: '编辑订阅',
+          r: '订阅详情',
+        }[pageType]
+      }
       footer={
         <div style={{ float: 'right' }}>
-          <Button type="primary" onClick={handleOk} loading={loading}>
-            新增
-          </Button>
-          <Button style={{ marginLeft: '10px' }} type="weak" onClick={onClose}>
-            取消
-          </Button>
+          {pageType === 'r' ? (
+            <Button type="weak" onClick={onClose}>
+              关闭
+            </Button>
+          ) : (
+            [
+              <Button type="primary" onClick={handleOk} loading={loading}>
+                {pageType === 'c' ? '新增' : '保存'}
+              </Button>,
+              <Button style={{ marginLeft: '10px' }} type="weak" onClick={onClose}>
+                取消
+              </Button>,
+            ]
+          )}
         </div>
       }
       onClose={onClose}
@@ -217,46 +256,85 @@ const AddSubscribeDrawer = ({
             <Form.Title>写入信息</Form.Title>
             {(() => {
               const dict = {
-                [SinkTypeEnum.Hive]: Hive,
-                [SinkTypeEnum.Thive]: Thive,
-                [SinkTypeEnum.Clickhouse]: Clickhouse,
-                [SinkTypeEnum.Hudi]: Hudi,
-                [SinkTypeEnum.Kafka]: Kafka,
-                [SinkTypeEnum.MQ]: MQ,
+                [SinkTypeEnum.Hive]: [Hive, hiveFields],
+                [SinkTypeEnum.Thive]: [Thive, thiveFields],
+                [SinkTypeEnum.Clickhouse]: [Clickhouse, []],
+                [SinkTypeEnum.Hudi]: [Hudi, []],
+                [SinkTypeEnum.Kafka]: [Kafka, []],
+                // [SinkTypeEnum.MQ]: [MQ, thiveFields],
               };
-              const Form = dict[writeType];
-              return (
-                <Form
-                  {...props}
-                  submitter={false}
-                  onFormValuesChange={(form: ProFormIns) => {
-                    setWriteType(form.values?.writeType);
-                  }}
-                  ref={formRef}
-                />
-              );
+              if (pageType === 'r' || pageType === 'u') {
+                const fields = dict[writeType]?.[1] as ReadonlyFormFieldItemType[];
+                return (
+                  fields && (
+                    <ReadonlyForm
+                      conf={[
+                        {
+                          fields: [
+                            {
+                              label: '写入类型',
+                              value: 'subscribeType',
+                              enumMap: sinkTypeMap,
+                            } as ReadonlyFormFieldItemType,
+                          ]
+                            .concat(fields)
+                            .map(k => ({ ...k, col: 24 })),
+                        },
+                      ]}
+                      defaultValues={savedData}
+                    />
+                  )
+                );
+              } else if (visible && pageType === 'c') {
+                const Form = dict[writeType]?.[0] as typeof Hive;
+                return (
+                  Form && (
+                    <Form
+                      {...props}
+                      submitter={false}
+                      onFormValuesChange={(form: ProFormIns) => {
+                        setWriteType(form.values?.writeType);
+                      }}
+                      ref={formRef}
+                    />
+                  )
+                );
+              }
             })()}
           </div>
         </Col>
-        {writeType !== SinkTypeEnum.MQ && (
-          <>
-            <Col span={24}>
-              <p style={{ fontSize: '16px', fontWeight: 'bold' }}>字段映射</p>
-              <p>选择需要订阅的来源字段，并对齐写入字段，注意：请确定字段为一一映射关系。</p>
-            </Col>
-            <Col span={24}>
-              <FieldsMap
-                compact={true}
-                bordered={true}
-                sourceFields={insertIndex(info.fieldsData)}
-                targetFields={targetFields}
-                onSelect={onSelect}
-                getTargetFields={formRef.current?.getTargetFields}
-                {...formRef.current?.fieldsMapProps}
-              />
-            </Col>
-          </>
-        )}
+        {writeType !== SinkTypeEnum.MQ &&
+          (pageType !== 'u' || (pageType === 'u' && savedData?.fieldMappings)) && (
+            <>
+              <Col span={24}>
+                <p style={{ fontSize: '16px', fontWeight: 'bold' }}>字段映射</p>
+                <p>选择需要订阅的来源字段，并对齐写入字段，注意：请确定字段为一一映射关系。</p>
+              </Col>
+              <Col span={24}>
+                <FieldsMap
+                  readonly={pageType === 'r'}
+                  compact={true}
+                  bordered={true}
+                  sourceFields={info.fieldsData}
+                  targetFields={targetFields}
+                  defaultSelectFields={
+                    pageType === 'u'
+                      ? savedData.fieldMappings?.map(item => ({
+                          sourceField: { fieldName: item.fieldName, fieldType: item.fieldType },
+                          targetField: {
+                            fieldName: item.sourceFieldName,
+                            fieldType: item.sourceFieldType,
+                          },
+                        }))
+                      : undefined
+                  }
+                  onSelect={onSelect}
+                  getTargetFields={formRef.current?.getTargetFields}
+                  {...formRef.current?.fieldsMapProps}
+                />
+              </Col>
+            </>
+          )}
       </Row>
     </Drawer>
   );
