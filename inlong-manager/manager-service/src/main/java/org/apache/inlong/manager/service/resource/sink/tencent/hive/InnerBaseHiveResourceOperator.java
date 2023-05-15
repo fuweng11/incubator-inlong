@@ -592,19 +592,19 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             boolean isAppGroup)
             throws Exception {
         String database = hiveFullInfo.getDbName();
-        String table = hiveFullInfo.getTableName();
+        String tableName = isAll ? "*" : hiveFullInfo.getTableName();
         String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
         scService.grant(username, hiveFullInfo.getDbName(), hiveFullInfo.getTableName(), accessType, hiveType,
                 hiveFullInfo.getClusterTag(), isAppGroup);
         boolean isSuccess = checkAndGrant(hiveFullInfo, username, accessType, isAll, isAppGroup);
         if (!isSuccess) {
             String errMsg = String.format("grant %s permission failed for user=%s, database=%s, table=%s", accessType,
-                    username, database, table);
+                    username, database, tableName);
             LOGGER.info(errMsg);
             sinkService.updateStatus(hiveFullInfo.getSinkId(), SinkStatus.CONFIG_FAILED.getCode(), errMsg);
             throw new WorkflowException(errMsg);
         }
         LOGGER.info("success to grant privilege {} for user={}, database={}, table={}", accessType, username, database,
-                table);
+                tableName);
     }
 }
