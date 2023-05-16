@@ -40,6 +40,9 @@ public class BaseSortClusterInfo extends ClusterInfo {
     @ApiModelProperty("backup hadoop proxy user")
     private String backupHadoopProxyUser;
 
+    @ApiModelProperty("application name")
+    private String applicationName;
+
     @Override
     public BaseSortClusterRequest genRequest() {
         return CommonBeanUtils.copyProperties(this, BaseSortClusterRequest::new);

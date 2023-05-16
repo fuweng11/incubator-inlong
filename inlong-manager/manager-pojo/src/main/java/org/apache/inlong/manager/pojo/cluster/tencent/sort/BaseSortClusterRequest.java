@@ -39,4 +39,7 @@ public class BaseSortClusterRequest extends ClusterRequest {
     @ApiModelProperty("backup hadoop proxy user")
     private String backupHadoopProxyUser;
 
+    @ApiModelProperty("application name")
+    private String applicationName;
+
 }

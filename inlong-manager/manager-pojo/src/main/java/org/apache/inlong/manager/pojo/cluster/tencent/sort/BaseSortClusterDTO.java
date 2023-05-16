@@ -43,6 +43,9 @@ public class BaseSortClusterDTO {
     @ApiModelProperty("backup hadoop proxy user")
     private String backupHadoopProxyUser;
 
+    @ApiModelProperty("application name")
+    private String applicationName;
+
     /**
      * Get the dto instance from the request
      */
@@ -50,6 +53,7 @@ public class BaseSortClusterDTO {
         return BaseSortClusterDTO.builder()
                 .backupDataPath(request.getBackupDataPath())
                 .backupHadoopProxyUser(request.getBackupHadoopProxyUser())
+                .applicationName(request.getApplicationName())
                 .build();
     }
 

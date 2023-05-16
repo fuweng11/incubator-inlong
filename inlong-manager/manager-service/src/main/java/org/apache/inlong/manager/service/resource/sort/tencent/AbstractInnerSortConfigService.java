@@ -59,9 +59,11 @@ import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.kafka.KafkaClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
+import org.apache.inlong.manager.service.cluster.InlongClusterOperatorFactory;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,6 +90,8 @@ public class AbstractInnerSortConfigService {
     private StreamSinkEntityMapper sinkMapper;
     @Autowired
     private InlongStreamEntityMapper streamEntityMapper;
+    @Autowired
+    private InlongClusterOperatorFactory clusterOperatorFactory;
 
     public String getZkRoot(String mqType, ZkClusterDTO zkClusterDTO) {
         Preconditions.expectNotNull(mqType, "mq type cannot be null");
@@ -263,7 +267,10 @@ public class AbstractInnerSortConfigService {
                 int isUsedCount = sinkMapper.selectExistByGroupIdAndTaskName(groupId, sortCluster.getName());
                 if (minCount < 0 || isUsedCount <= minCount) {
                     minCount = isUsedCount;
-                    sortClusterName = sortCluster.getName();
+                    if (StringUtils.isNotBlank(sortCluster.getExtParams())) {
+                        BaseSortClusterDTO dto = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
+                        sortClusterName = dto.getApplicationName();
+                    }
                 }
             }
             if (sortClusterName == null || StringUtils.isBlank(sortClusterName)) {
