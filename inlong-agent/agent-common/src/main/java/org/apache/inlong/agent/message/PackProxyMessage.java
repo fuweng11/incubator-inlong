@@ -26,6 +26,12 @@ import org.apache.inlong.common.msg.AttributeConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.utils.AgentUtils;
+import org.apache.inlong.common.msg.AttributeConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +49,18 @@ import static org.apache.inlong.agent.constant.CommonConstants.PROXY_SEND_SYNC;
 import static org.apache.inlong.common.msg.AttributeConstants.DATA_TIME;
 import static org.apache.inlong.common.msg.AttributeConstants.MESSAGE_TOPIC;
 import static org.apache.inlong.common.msg.AttributeConstants.STREAM_ID;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
+import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.utils.AgentUtils;
+import org.apache.inlong.common.msg.AttributeConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handle List of BusMessage, which belong to the same stream id.
@@ -110,19 +128,22 @@ public class PackProxyMessage {
     /**
      * Add proxy message to cache, proxy message should belong to the same stream id.
      */
-    public void addProxyMessage(ProxyMessage message) {
+    public boolean addProxyMessage(ProxyMessage message) {
         assert streamId.equals(message.getInlongStreamId());
         assert groupId.equals(message.getInlongGroupId());
         try {
             if (queueIsFull()) {
                 LOGGER.warn("message queue is greater than {}, stop adding message, "
                         + "maybe proxy get stuck", maxQueueNumber);
+                return false;
             }
             messageQueue.put(message);
             queueSize.addAndGet(message.getBody().length);
+            return true;
         } catch (Exception ex) {
             LOGGER.error("exception caught", ex);
         }
+        return false;
     }
 
     /**
@@ -153,8 +174,19 @@ public class PackProxyMessage {
             while (!messageQueue.isEmpty()) {
                 // pre check message size
                 ProxyMessage peekMessage = messageQueue.peek();
-                if (peekMessage == null
-                        || resultBatchSize + peekMessage.getBody().length > maxPackSize) {
+                if (peekMessage == null) {
+                    break;
+                }
+
+                // if the message size is greater than max pack size,should drop it.
+                int peekMessageLength = peekMessage.getBody().length;
+                if (peekMessageLength > maxPackSize) {
+                    LOGGER.warn("message size is {}, greater than max pack size {}, drop it!",
+                            peekMessage.getBody().length, maxPackSize);
+                    messageQueue.remove();
+                    break;
+                }
+                if (resultBatchSize + peekMessageLength > maxPackSize) {
                     break;
                 }
                 ProxyMessage message = messageQueue.remove();

@@ -244,11 +244,12 @@ public class PulsarSink extends AbstractSink {
                             }
                         }
                     });
-                    AgentUtils.silenceSleepInMs(batchFlushInterval);
                 } catch (Exception ex) {
                     LOGGER.error("error caught", ex);
                 } catch (Throwable t) {
                     ThreadUtils.threadThrowableHandler(Thread.currentThread(), t);
+                } finally {
+                    AgentUtils.silenceSleepInMs(batchFlushInterval);
                 }
             }
         };
