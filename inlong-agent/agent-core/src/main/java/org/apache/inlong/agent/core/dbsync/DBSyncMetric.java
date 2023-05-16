@@ -53,6 +53,8 @@ public class DBSyncMetric extends Thread {
     protected volatile boolean metricSenderRunning = true;
     protected LinkedBlockingQueue<StatisticInfo> sInfos;
 
+    private LogPosition maxLogPosition = null;
+
     /**
      * key: serverId, value: snowflake
      */
@@ -83,6 +85,14 @@ public class DBSyncMetric extends Thread {
     private ScheduledExecutorService positionUpdateExecutor;
 
     private ConcurrentHashMap<String, ConcurrentHashSet<String>> positionConf = new ConcurrentHashMap<>();
+
+    public void addDBSyncMetric(String inlongGroupID, String inlongStramID) {
+        logger.info("addDBSyncMetric [{}] , {}", inlongGroupID, inlongStramID);
+        positionConf.putIfAbsent(inlongGroupID, new ConcurrentHashSet<>());
+        if (positionConf.get(inlongGroupID) != null) {
+            positionConf.get(inlongGroupID).add(inlongStramID);
+        }
+    }
 
     public LogPosition getMaxLogPositionFromCache() {
         return newestLogPosition;
@@ -203,6 +213,7 @@ public class DBSyncMetric extends Thread {
 
     public void sendStatMetric(StatisticInfo sInfo, Long cnt, Long packageCnt,
             LogPosition newestPosition, LogPosition oldestPosition) {
+        logger.debug("sendStatMetric2 {}", sInfo);
         if (cnt != null && packageCnt != null) {
             sendMetricsToPulsar(sInfo, cnt, newestPosition,
                     oldestPosition, JobStat.State.RUN.name());
@@ -211,6 +222,7 @@ public class DBSyncMetric extends Thread {
 
     public void sendMetricsToPulsar(StatisticInfo sInfo, long lineCnt,
             LogPosition newestPosition, LogPosition oldestPosition, String jobStat) {
+        logger.debug("sendMetricsToPulsar2 {}", sInfo);
         Long newestPositionPos = 0L;
         String newestPositionBinlogName = "";
         String oldestPositionBinlogName = "";
@@ -274,11 +286,6 @@ public class DBSyncMetric extends Thread {
         if (dbSyncMetricSink != null) {
             dbSyncMetricSink.sendData(info);
             currentLogPosition = logPosition;
-            ConcurrentHashSet<String> inlongStreamIDSet =
-                    positionConf.putIfAbsent(sInfo.getGroupID(), new ConcurrentHashSet<>());
-            if (inlongStreamIDSet != null) {
-                inlongStreamIDSet.add(sInfo.getStreamID());
-            }
         }
     }
 
@@ -318,6 +325,7 @@ public class DBSyncMetric extends Thread {
     private Runnable maxPositionUpdateTask() {
         return () -> {
             try {
+                maxLogPosition = dbSyncJob.getMaxLogPosition();
                 String dataKey = getDataKey(System.currentTimeMillis(), dbSyncJob.getDBSyncJobConf().getJobName());
                 for (Map.Entry<String, ConcurrentHashSet<String>> entry : positionConf.entrySet()) {
                     sendPosition(entry.getKey(), entry.getValue(), dataKey);
@@ -333,13 +341,16 @@ public class DBSyncMetric extends Thread {
     }
 
     private void sendPosition(String inlongGroupID, ConcurrentHashSet<String> streamIDSet, String dataKey) {
-        for (String streamID : streamIDSet) {
-            StatisticInfo sInfo =
-                    new StatisticInfo(inlongGroupID, streamID, System.currentTimeMillis(), currentLogPosition,
-                            dbSyncJob.getDBSyncJobConf().getJobName(), dataKey);
-            sendStatMetric(sInfo, 0L, 0L, dbSyncJob.getNewestLogPosition(), null);
-
-            logger.debug("maxPositionUpdateTask :{} ", dbSyncJob.getNewestLogPosition());
+        try {
+            for (String streamID : streamIDSet) {
+                StatisticInfo sInfo =
+                        new StatisticInfo(inlongGroupID, streamID, System.currentTimeMillis(),
+                                dbSyncJob.getSenderPosition(),
+                                dbSyncJob.getDBSyncJobConf().getJobName(), dataKey);
+                sendStatMetric(sInfo, 0L, 0L, maxLogPosition, null);
+            }
+        } catch (Exception e) {
+            logger.error("sendPosition errr {}", e.getMessage());
         }
     }
 }

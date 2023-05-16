@@ -62,8 +62,19 @@ public class DBSyncJob implements AbstractJob {
         dbSyncMetric = new DBSyncMetric(this);
     }
 
+    public LogPosition getSenderPosition() {
+        if (readOperator.getPositionControl() == null) {
+            return null;
+        }
+        return readOperator.getPositionControl().getSenderPosition();
+    }
+
     public LogPosition getNewestLogPosition() {
         return this.readOperator.getNewestLogPosition();
+    }
+
+    public LogPosition getMaxLogPosition() {
+        return this.readOperator.getMaxLogPosition();
     }
 
     public DBSyncMetric getDBSyncMetric() {
@@ -118,6 +129,14 @@ public class DBSyncJob implements AbstractJob {
         LOGGER.info("job id: {}, create new taskId[{}], source: {}, channel: {}, sink: {}", taskProfile.getInstanceId(),
                 taskId, taskProfile.get(JobConstants.JOB_SOURCE_CLASS),
                 taskProfile.get(JobConstants.JOB_CHANNEL), taskProfile.get(JobConstants.JOB_SINK));
+
+        if (taskConf.getTaskInfo() != null
+                && taskConf.getTaskInfo().getMqClusters() != null
+                && taskConf.getTaskInfo().getMqClusters().size() >= 1) {
+            dbSyncMetric.init(taskConf.getTaskInfo().getMqClusters().get(0).getUrl(),
+                    this.dbSyncJobConf.getServerName());
+        }
+
         try {
             Source source = (Source) Class.forName(taskProfile.get(JobConstants.JOB_SOURCE_CLASS)).newInstance();
             for (Reader reader : source.split(taskProfile)) {
@@ -129,18 +148,13 @@ public class DBSyncJob implements AbstractJob {
                 dbSyncTasks.put(taskId, task);
                 agentManager.getTaskManager().submitTask(task);
                 LOGGER.info("task [{}-{}] create and start success", jobName, taskId);
+
+                dbSyncMetric.addDBSyncMetric(taskConf.getGroupId(), taskConf.getStreamId());
             }
         } catch (Throwable e) {
             LOGGER.error("create task[{}-{}] failed", jobName, taskId, e);
             ThreadUtils.threadThrowableHandler(Thread.currentThread(), e);
             throw new RuntimeException(e);
-        }
-
-        if (taskConf.getTaskInfo() != null
-                && taskConf.getTaskInfo().getMqClusters() != null
-                && taskConf.getTaskInfo().getMqClusters().size() >= 1) {
-            dbSyncMetric.init(taskConf.getTaskInfo().getMqClusters().get(0).getUrl(),
-                    this.dbSyncJobConf.getServerName());
         }
     }
 

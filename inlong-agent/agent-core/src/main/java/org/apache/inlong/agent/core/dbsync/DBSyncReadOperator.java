@@ -20,7 +20,6 @@ package org.apache.inlong.agent.core.dbsync;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.inlong.agent.common.DefaultThreadFactory;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.EntryType;
 import org.apache.inlong.agent.conf.AgentConfiguration;
@@ -85,9 +84,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -216,10 +213,10 @@ public class DBSyncReadOperator {
         heartbeatManager = HeartbeatManager.getInstance();
         positionControl = new PositionControl(jobconf, this);
 
-        positionUpdateExecutor = Executors.newSingleThreadScheduledExecutor(
-                new DefaultThreadFactory(jobName + "-log-position-updater"));
-        positionUpdateExecutor.scheduleWithFixedDelay(getLogPositionUpdateTask(),
-                1000, 30 * 1000, TimeUnit.MILLISECONDS);
+        // positionUpdateExecutor = Executors.newSingleThreadScheduledExecutor(
+        // new DefaultThreadFactory(jobName + "-log-position-updater"));
+        // positionUpdateExecutor.scheduleWithFixedDelay(getLogPositionUpdateTask(),
+        // 1000, 30 * 1000, TimeUnit.MILLISECONDS);
     }
 
     public DBSyncJobConf getJobconf() {

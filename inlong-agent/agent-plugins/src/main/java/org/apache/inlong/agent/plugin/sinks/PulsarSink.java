@@ -329,7 +329,7 @@ public class PulsarSink extends AbstractSink {
                 batchMsg.getTotalSize());
         sinkMetric.pluginSendSuccessCount.addAndGet(batchMsg.getMsgCnt());
         if (sourceName != null) {
-            taskPositionManager.updateSinkPosition(batchMsg.getJobId(), sourceName, batchMsg.getMsgCnt(), false);
+            taskPositionManager.updateSinkPosition(batchMsg, sourceName, batchMsg.getMsgCnt());
         }
 
         addSuccessMetrics(batchMsg);
