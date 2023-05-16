@@ -66,6 +66,7 @@
   "meta.Sinks.InnerIceberg.FieldType": "FieldType",
   "meta.Sinks.InnerIceberg.FieldDescription": "FieldDescription",
   "meta.Sinks.InnerIceberg.PartitionStrategy": "PartitionStrategy",
+  "meta.Clusters.Sort.ApplicationName": "AppName",
   "meta.Clusters.Sort.BackupDataPath": "Backup Address",
   "meta.Clusters.Sort.BackupHadoopProxyUser": "BackupProxyUser",
   "meta.Sources.HaBinlog.Cluster": "TransferCluster",
