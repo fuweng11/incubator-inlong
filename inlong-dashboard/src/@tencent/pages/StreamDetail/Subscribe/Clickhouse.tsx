@@ -21,12 +21,21 @@ import React, { useRef, useCallback, forwardRef, useImperativeHandle, Ref } from
 import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
 import { SubscribeFormProps, SubscribeFormRef } from './common';
 
+export { fields } from '@/@tencent/enums/subscribe/clickhouse';
+
 const Clickhouse = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
   const { fields, streamInfo, setTargetFields, ...rest } = props;
 
   const formRef = useRef<Form>();
 
   const params: ProFormProps['fields'] = fields.concat([
+    {
+      name: 'inLongNodeName',
+      type: 'string',
+      title: '数据源',
+      component: 'input',
+      required: true,
+    },
     {
       name: 'dbName',
       type: 'string',

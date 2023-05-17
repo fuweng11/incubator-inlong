@@ -20,12 +20,12 @@
 import React, { useRef, useCallback, forwardRef, useImperativeHandle, Ref } from 'react';
 import { Button } from '@tencent/tea-component';
 import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
-import { WriteModeEnum, writeModeMap } from '@/@tencent/enums/subscribe/hudi';
+import { WriteModeEnum, writeModeMap } from '@/@tencent/enums/subscribe/iceberg';
 import { SubscribeFormProps, SubscribeFormRef } from './common';
 
-export { fields } from '@/@tencent/enums/subscribe/hudi';
+export { fields } from '@/@tencent/enums/subscribe/iceberg';
 
-const Hudi = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
+const Iceberg = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
   const { fields, streamInfo, setTargetFields, ...rest } = props;
 
   const formRef = useRef<Form>();
@@ -119,4 +119,4 @@ const Hudi = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
   return <ProForm {...rest} fields={params} onRef={form => (formRef.current = form)} />;
 });
 
-export default Hudi;
+export default Iceberg;

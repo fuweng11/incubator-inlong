@@ -20,10 +20,11 @@
 export enum SinkTypeEnum {
   Thive = 'INNER_THIVE',
   Hive = 'INNER_HIVE',
-  Clickhouse = 'INNER_CLICKHOUSE',
-  Hudi = 'INNER_HUDI',
+  Clickhouse = 'CLICKHOUSE',
+  Hudi = 'HUDI',
   Kafka = 'KAFKA',
   MQ = 'MQ',
+  Iceberg = 'INNER_ICEBERG',
 }
 
 export const sinkTypeMap: Map<SinkTypeEnum, string> = (() => {
@@ -32,6 +33,7 @@ export const sinkTypeMap: Map<SinkTypeEnum, string> = (() => {
     [SinkTypeEnum.Hive, 'Hive'],
     [SinkTypeEnum.Clickhouse, 'Clickhouse'],
     [SinkTypeEnum.Hudi, 'Hudi'],
+    [SinkTypeEnum.Iceberg, 'Iceberg'],
     [SinkTypeEnum.Kafka, 'Kafka'],
     [SinkTypeEnum.MQ, 'MQ'],
   ]);
@@ -43,6 +45,7 @@ export const sinkTypeApiPathMap: Map<SinkTypeEnum, string> = (() => {
     [SinkTypeEnum.Hive, 'hive'],
     [SinkTypeEnum.Clickhouse, 'clickhouse'],
     [SinkTypeEnum.Hudi, 'hudi'],
+    [SinkTypeEnum.Iceberg, 'iceberg'],
     [SinkTypeEnum.Kafka, 'kafka'],
     [SinkTypeEnum.MQ, 'innermq'],
   ]);
