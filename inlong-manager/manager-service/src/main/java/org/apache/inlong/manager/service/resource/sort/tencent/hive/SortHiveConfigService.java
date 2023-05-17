@@ -177,17 +177,21 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                     hiveFullInfo.getSinkId(), topoType);
 
             List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
-                    sortClusterName, topoType);
+                    null, topoType);
             if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
                 throw new WorkflowListenerException("sort cluster not found for groupId=" + groupId);
             }
-            InlongClusterEntity sortCluster = sortClusters.get(0);
-
             // Backup configuration
-            BaseSortClusterDTO sortClusterDTO = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
             SortExtConfig sortExtConfig = new SortExtConfig();
-            sortExtConfig.setBackupDataPath(sortClusterDTO.getBackupDataPath());
-            sortExtConfig.setBackupHadoopProxyUser(sortClusterDTO.getBackupHadoopProxyUser());
+            for (InlongClusterEntity sortCluster : sortClusters) {
+                BaseSortClusterDTO sortClusterDTO = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
+                if (Objects.equals(sortClusterName, sortClusterDTO.getApplicationName())) {
+                    sortExtConfig.setBackupDataPath(sortClusterDTO.getBackupDataPath());
+                    sortExtConfig.setBackupHadoopProxyUser(sortClusterDTO.getBackupHadoopProxyUser());
+                    break;
+                }
+            }
+
             // get and save hdfs location
             upsOperator.getAndSaveLocation(hiveFullInfo);
             LOGGER.info("begin to push hive sort config to zkUrl={}, hiveTopo={}", zkUrl, sortClusterName);
