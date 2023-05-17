@@ -62,6 +62,7 @@ import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.service.cluster.InlongClusterOperatorFactory;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
@@ -351,8 +352,18 @@ public class AbstractInnerSortConfigService {
             PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
             String adminUrl = pulsarClusterDTO.getAdminUrl();
             String masterAddress = pulsarCluster.getUrl();
-            String tenant = pulsarClusterDTO.getTenant() == null ? InlongConstants.DEFAULT_PULSAR_TENANT
-                    : pulsarClusterDTO.getTenant();
+            if (!(groupInfo instanceof InlongPulsarInfo)) {
+                throw new BusinessException("the mqType must be PULSAR for inlongGroupId=" + groupId);
+            }
+
+            InlongPulsarInfo pulsarInfo = (InlongPulsarInfo) groupInfo;
+            String tenant = pulsarInfo.getTenant();
+            if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarClusterDTO.getTenant())) {
+                tenant = pulsarClusterDTO.getTenant();
+            } else {
+                tenant = InlongConstants.DEFAULT_PULSAR_TENANT;
+            }
+
             String namespace = groupInfo.getMqResource();
             String topic = stream.getMqResource();
             // Full path of topic in pulsar
