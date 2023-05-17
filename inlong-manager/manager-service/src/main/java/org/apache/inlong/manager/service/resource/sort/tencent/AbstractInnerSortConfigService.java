@@ -242,9 +242,11 @@ public class AbstractInnerSortConfigService {
             default:
                 throw new BusinessException(ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT);
         }
-        String sortClusterName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
-                sink.getId(),
-                topoType);
+        String sortClusterName = sink.getInlongClusterName();
+        if (StringUtils.isBlank(sortClusterName)) {
+            LOGGER.warn("sort cluster is null for id={}, not ", sink.getId());
+            return;
+        }
         InlongClusterEntity zkCluster = zkClusters.get(0);
         ZkClusterDTO zkClusterDTO = ZkClusterDTO.getFromJson(zkCluster.getExtParams());
         String zkUrl = zkCluster.getUrl();
