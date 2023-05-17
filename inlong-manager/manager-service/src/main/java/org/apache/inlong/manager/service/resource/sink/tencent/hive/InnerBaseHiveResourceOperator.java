@@ -594,7 +594,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         String database = hiveFullInfo.getDbName();
         String tableName = isAll ? "*" : hiveFullInfo.getTableName();
         String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
-        scService.grant(username, hiveFullInfo.getDbName(), hiveFullInfo.getTableName(), accessType, hiveType,
+        scService.grant(username, hiveFullInfo.getDbName(), tableName, accessType, hiveType,
                 hiveFullInfo.getClusterTag(), isAppGroup);
         boolean isSuccess = checkAndGrant(hiveFullInfo, username, accessType, isAll, isAppGroup);
         if (!isSuccess) {
