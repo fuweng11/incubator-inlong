@@ -380,5 +380,5 @@ public class AgentConstants {
     public static final String DEFAULT_DBSYNC_PULSAR_CLUSTER = "";
 
     public static final String DBSYNC_PULSAR_TOPIC = "dbsync.metric.pulsar.topic";
-    public static final String DEFAULT_DBSYNC_PULSAR_TOPIC = "persistent://dbsync/audit/dbsync_audit_metric";
+    public static final String DEFAULT_DBSYNC_PULSAR_TOPIC = "persistent://inlong/audit/dbsync_audit_metric";
 }

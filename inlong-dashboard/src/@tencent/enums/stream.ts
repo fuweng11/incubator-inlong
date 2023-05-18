@@ -39,7 +39,12 @@ export enum StatusEnum {
   New = 100,
   Success = 130,
   Deleted = 40,
+  Deleting = 41,
   Abnormal = 500,
+  Approval = 101,
+  Rejected = 102,
+  Passed = 103,
+  Canceled = 104,
 }
 
 export const statusMap: Map<
@@ -47,6 +52,34 @@ export const statusMap: Map<
   { label: string; colorTheme: 'success' | 'warning' | 'default' | 'error' }
 > = (() => {
   return new Map([
+    [
+      StatusEnum.Canceled,
+      {
+        label: '已取消',
+        colorTheme: 'warning',
+      },
+    ],
+    [
+      StatusEnum.Passed,
+      {
+        label: '审批通过',
+        colorTheme: 'success',
+      },
+    ],
+    [
+      StatusEnum.Rejected,
+      {
+        label: '已拒绝',
+        colorTheme: 'error',
+      },
+    ],
+    [
+      StatusEnum.Approval,
+      {
+        label: '待审批',
+        colorTheme: 'warning',
+      },
+    ],
     [
       StatusEnum.New,
       {
@@ -65,6 +98,13 @@ export const statusMap: Map<
       StatusEnum.Deleted,
       {
         label: '下线',
+        colorTheme: 'default',
+      },
+    ],
+    [
+      StatusEnum.Deleting,
+      {
+        label: '下线中',
         colorTheme: 'default',
       },
     ],

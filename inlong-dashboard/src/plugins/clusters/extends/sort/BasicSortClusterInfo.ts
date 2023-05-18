@@ -32,6 +32,13 @@ export class BasicSortClusterInfo
 {
   @FieldDecorator({
     type: 'input',
+    rules: [{ required: true }],
+  })
+  @I18n('meta.Clusters.Sort.ApplicationName')
+  applicationName: string;
+
+  @FieldDecorator({
+    type: 'input',
   })
   @I18n('meta.Clusters.Sort.BackupDataPath')
   backupDataPath: string;

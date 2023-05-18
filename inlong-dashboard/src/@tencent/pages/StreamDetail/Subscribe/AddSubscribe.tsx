@@ -34,12 +34,13 @@ import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { message } from '@tencent/tea-component';
 import ReadonlyForm, { ReadonlyFormFieldItemType } from '@/@tencent/components/ReadonlyForm';
 import { SubscribeFormRef, SubscribeFormProps } from './common';
-import Clickhouse from './Clickhouse';
+import Clickhouse, { fields as ckFields } from './Clickhouse';
 import Hive, { fields as hiveFields } from './Hive';
 import Thive, { fields as thiveFields } from './Thive';
-import Hudi from './Hudi';
-import Kafka from './Kafka';
-// import MQ from './MQ';
+// import Hudi, { fields as hudiFields } from './Hudi';
+// import Kafka from './Kafka';
+import Iceberg from './Iceberg';
+import MQ, { MQTypeEnum, fields as MqFields } from './MQ';
 
 export interface AddSubscribeDrawerProps {
   visible: boolean;
@@ -85,7 +86,7 @@ const AddSubscribeDrawer = ({
 
   const { data: savedData, run: getSubscribeData } = useRequest(
     {
-      url: `/subscribe/${sinkTypeApiPathMap.get(subscribeType)}/query`,
+      url: `/subscribe/${sinkTypeApiPathMap.get(subscribeType) || 'innermq'}/query`,
       method: 'POST',
       data: {
         projectID: projectId,
@@ -157,7 +158,7 @@ const AddSubscribeDrawer = ({
       }));
       const data = {
         projectID: projectId,
-        streamID: streamId,
+        streamID: parseInt(streamId, 10),
         inLongGroupID: info.inLongGroupID,
         inLongStreamID: info.inLongStreamID,
         encodeType: info.encodeType,
@@ -258,13 +259,14 @@ const AddSubscribeDrawer = ({
               const dict = {
                 [SinkTypeEnum.Hive]: [Hive, hiveFields],
                 [SinkTypeEnum.Thive]: [Thive, thiveFields],
-                [SinkTypeEnum.Clickhouse]: [Clickhouse, []],
-                [SinkTypeEnum.Hudi]: [Hudi, []],
-                [SinkTypeEnum.Kafka]: [Kafka, []],
-                // [SinkTypeEnum.MQ]: [MQ, thiveFields],
+                [SinkTypeEnum.Clickhouse]: [Clickhouse, ckFields],
+                // [SinkTypeEnum.Hudi]: [Hudi, hudiFields],
+                // [SinkTypeEnum.Kafka]: [Kafka, []],
+                [SinkTypeEnum.Iceberg]: [Iceberg, []],
+                [SinkTypeEnum.MQ]: [MQ, MqFields],
               };
               if (pageType === 'r' || pageType === 'u') {
-                const fields = dict[writeType]?.[1] as ReadonlyFormFieldItemType[];
+                const fields = (dict[writeType]?.[1] || MqFields) as ReadonlyFormFieldItemType[];
                 return (
                   fields && (
                     <ReadonlyForm
@@ -303,7 +305,7 @@ const AddSubscribeDrawer = ({
             })()}
           </div>
         </Col>
-        {writeType !== SinkTypeEnum.MQ &&
+        {![SinkTypeEnum.MQ, ...Object.values(MQTypeEnum)].includes(writeType) &&
           (pageType !== 'u' || (pageType === 'u' && savedData?.fieldMappings)) && (
             <>
               <Col span={24}>

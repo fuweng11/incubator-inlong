@@ -59,9 +59,12 @@ import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.kafka.KafkaClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
+import org.apache.inlong.manager.service.cluster.InlongClusterOperatorFactory;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,6 +91,8 @@ public class AbstractInnerSortConfigService {
     private StreamSinkEntityMapper sinkMapper;
     @Autowired
     private InlongStreamEntityMapper streamEntityMapper;
+    @Autowired
+    private InlongClusterOperatorFactory clusterOperatorFactory;
 
     public String getZkRoot(String mqType, ZkClusterDTO zkClusterDTO) {
         Preconditions.expectNotNull(mqType, "mq type cannot be null");
@@ -238,9 +243,11 @@ public class AbstractInnerSortConfigService {
             default:
                 throw new BusinessException(ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT);
         }
-        String sortClusterName = getSortTaskName(groupInfo.getInlongGroupId(), groupInfo.getInlongClusterTag(),
-                sink.getId(),
-                topoType);
+        String sortClusterName = sink.getInlongClusterName();
+        if (StringUtils.isBlank(sortClusterName)) {
+            LOGGER.warn("sort cluster is null for id={}, not ", sink.getId());
+            return;
+        }
         InlongClusterEntity zkCluster = zkClusters.get(0);
         ZkClusterDTO zkClusterDTO = ZkClusterDTO.getFromJson(zkCluster.getExtParams());
         String zkUrl = zkCluster.getUrl();
@@ -263,7 +270,10 @@ public class AbstractInnerSortConfigService {
                 int isUsedCount = sinkMapper.selectExistByGroupIdAndTaskName(groupId, sortCluster.getName());
                 if (minCount < 0 || isUsedCount <= minCount) {
                     minCount = isUsedCount;
-                    sortClusterName = sortCluster.getName();
+                    if (StringUtils.isNotBlank(sortCluster.getExtParams())) {
+                        BaseSortClusterDTO dto = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
+                        sortClusterName = dto.getApplicationName();
+                    }
                 }
             }
             if (sortClusterName == null || StringUtils.isBlank(sortClusterName)) {
@@ -342,8 +352,18 @@ public class AbstractInnerSortConfigService {
             PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
             String adminUrl = pulsarClusterDTO.getAdminUrl();
             String masterAddress = pulsarCluster.getUrl();
-            String tenant = pulsarClusterDTO.getTenant() == null ? InlongConstants.DEFAULT_PULSAR_TENANT
-                    : pulsarClusterDTO.getTenant();
+            if (!(groupInfo instanceof InlongPulsarInfo)) {
+                throw new BusinessException("the mqType must be PULSAR for inlongGroupId=" + groupId);
+            }
+
+            InlongPulsarInfo pulsarInfo = (InlongPulsarInfo) groupInfo;
+            String tenant = pulsarInfo.getTenant();
+            if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarClusterDTO.getTenant())) {
+                tenant = pulsarClusterDTO.getTenant();
+            } else {
+                tenant = InlongConstants.DEFAULT_PULSAR_TENANT;
+            }
+
             String namespace = groupInfo.getMqResource();
             String topic = stream.getMqResource();
             // Full path of topic in pulsar

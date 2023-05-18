@@ -66,6 +66,7 @@
   "meta.Sinks.InnerIceberg.FieldType": "字段类型",
   "meta.Sinks.InnerIceberg.FieldDescription": "字段描述",
   "meta.Sinks.InnerIceberg.PartitionStrategy": "分区策略",
+  "meta.Clusters.Sort.ApplicationName": "应用名",
   "meta.Clusters.Sort.BackupDataPath": "备份地址",
   "meta.Clusters.Sort.BackupHadoopProxyUser": "备份代理用户",
   "meta.Sources.HaBinlog.Cluster": "中转机集群",

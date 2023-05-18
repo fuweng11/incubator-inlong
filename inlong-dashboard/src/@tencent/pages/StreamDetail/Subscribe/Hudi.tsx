@@ -23,6 +23,8 @@ import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
 import { WriteModeEnum, writeModeMap } from '@/@tencent/enums/subscribe/hudi';
 import { SubscribeFormProps, SubscribeFormRef } from './common';
 
+export { fields } from '@/@tencent/enums/subscribe/hudi';
+
 const Hudi = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
   const { fields, streamInfo, setTargetFields, ...rest } = props;
 
@@ -30,7 +32,7 @@ const Hudi = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
 
   const params: ProFormProps['fields'] = fields.concat([
     {
-      name: 'cluster',
+      name: 'inLongNodeName',
       type: 'string',
       title: '数据源',
       required: true,

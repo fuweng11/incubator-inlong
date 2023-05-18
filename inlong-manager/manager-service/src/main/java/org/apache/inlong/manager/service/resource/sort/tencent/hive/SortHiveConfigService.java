@@ -68,6 +68,7 @@ import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
 import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.service.resource.sink.tencent.us.UPSOperator;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
@@ -176,17 +177,21 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                     hiveFullInfo.getSinkId(), topoType);
 
             List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(groupInfo.getInlongClusterTag(),
-                    sortClusterName, topoType);
+                    null, topoType);
             if (CollectionUtils.isEmpty(sortClusters) || StringUtils.isBlank(sortClusters.get(0).getName())) {
                 throw new WorkflowListenerException("sort cluster not found for groupId=" + groupId);
             }
-            InlongClusterEntity sortCluster = sortClusters.get(0);
-
             // Backup configuration
-            BaseSortClusterDTO sortClusterDTO = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
             SortExtConfig sortExtConfig = new SortExtConfig();
-            sortExtConfig.setBackupDataPath(sortClusterDTO.getBackupDataPath());
-            sortExtConfig.setBackupHadoopProxyUser(sortClusterDTO.getBackupHadoopProxyUser());
+            for (InlongClusterEntity sortCluster : sortClusters) {
+                BaseSortClusterDTO sortClusterDTO = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
+                if (Objects.equals(sortClusterName, sortClusterDTO.getApplicationName())) {
+                    sortExtConfig.setBackupDataPath(sortClusterDTO.getBackupDataPath());
+                    sortExtConfig.setBackupHadoopProxyUser(sortClusterDTO.getBackupHadoopProxyUser());
+                    break;
+                }
+            }
+
             // get and save hdfs location
             upsOperator.getAndSaveLocation(hiveFullInfo);
             LOGGER.info("begin to push hive sort config to zkUrl={}, hiveTopo={}", zkUrl, sortClusterName);
@@ -535,9 +540,18 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             // Multiple adminUrls should be configured for pulsar,
             // otherwise all requests will be sent to the same broker
             PulsarClusterDTO pulsarClusterDTO = PulsarClusterDTO.getFromJson(pulsarCluster.getExtParams());
+            if (!(groupInfo instanceof InlongPulsarInfo)) {
+                throw new BusinessException("the mqType must be PULSAR for inlongGroupId=" + groupId);
+            }
 
-            String tenant = pulsarClusterDTO.getTenant() == null ? InlongConstants.DEFAULT_PULSAR_TENANT
-                    : pulsarClusterDTO.getTenant();
+            InlongPulsarInfo pulsarInfo = (InlongPulsarInfo) groupInfo;
+            String tenant = pulsarInfo.getTenant();
+            if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarClusterDTO.getTenant())) {
+                tenant = pulsarClusterDTO.getTenant();
+            } else {
+                tenant = InlongConstants.DEFAULT_PULSAR_TENANT;
+            }
+
             String namespace = groupInfo.getMqResource();
             String topic = hiveFullInfo.getMqResourceObj();
             // Full path of topic in pulsar
