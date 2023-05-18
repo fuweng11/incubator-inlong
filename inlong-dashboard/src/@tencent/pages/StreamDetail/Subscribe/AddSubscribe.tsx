@@ -37,10 +37,10 @@ import { SubscribeFormRef, SubscribeFormProps } from './common';
 import Clickhouse, { fields as ckFields } from './Clickhouse';
 import Hive, { fields as hiveFields } from './Hive';
 import Thive, { fields as thiveFields } from './Thive';
-import Hudi, { fields as hudiFields } from './Hudi';
-import Kafka from './Kafka';
+// import Hudi, { fields as hudiFields } from './Hudi';
+// import Kafka from './Kafka';
 import Iceberg from './Iceberg';
-// import MQ from './MQ';
+import MQ, { MQTypeEnum, fields as MqFields } from './MQ';
 
 export interface AddSubscribeDrawerProps {
   visible: boolean;
@@ -86,7 +86,7 @@ const AddSubscribeDrawer = ({
 
   const { data: savedData, run: getSubscribeData } = useRequest(
     {
-      url: `/subscribe/${sinkTypeApiPathMap.get(subscribeType)}/query`,
+      url: `/subscribe/${sinkTypeApiPathMap.get(subscribeType) || 'innermq'}/query`,
       method: 'POST',
       data: {
         projectID: projectId,
@@ -260,13 +260,13 @@ const AddSubscribeDrawer = ({
                 [SinkTypeEnum.Hive]: [Hive, hiveFields],
                 [SinkTypeEnum.Thive]: [Thive, thiveFields],
                 [SinkTypeEnum.Clickhouse]: [Clickhouse, ckFields],
-                [SinkTypeEnum.Hudi]: [Hudi, hudiFields],
-                [SinkTypeEnum.Kafka]: [Kafka, []],
+                // [SinkTypeEnum.Hudi]: [Hudi, hudiFields],
+                // [SinkTypeEnum.Kafka]: [Kafka, []],
                 [SinkTypeEnum.Iceberg]: [Iceberg, []],
-                // [SinkTypeEnum.MQ]: [MQ, thiveFields],
+                [SinkTypeEnum.MQ]: [MQ, MqFields],
               };
               if (pageType === 'r' || pageType === 'u') {
-                const fields = dict[writeType]?.[1] as ReadonlyFormFieldItemType[];
+                const fields = (dict[writeType]?.[1] || MqFields) as ReadonlyFormFieldItemType[];
                 return (
                   fields && (
                     <ReadonlyForm
@@ -305,7 +305,7 @@ const AddSubscribeDrawer = ({
             })()}
           </div>
         </Col>
-        {writeType !== SinkTypeEnum.MQ &&
+        {![SinkTypeEnum.MQ, ...Object.values(MQTypeEnum)].includes(writeType) &&
           (pageType !== 'u' || (pageType === 'u' && savedData?.fieldMappings)) && (
             <>
               <Col span={24}>

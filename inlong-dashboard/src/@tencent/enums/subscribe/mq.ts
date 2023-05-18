@@ -17,6 +17,8 @@
  * under the License.
  */
 
+import type { FieldItemType } from './common';
+
 export enum MQTypeEnum {
   PULSAR = 'PULSAR',
   TUBE = 'TUBE',
@@ -28,3 +30,10 @@ export const mqTypeMap: Map<MQTypeEnum, string> = new Map([
   [MQTypeEnum.TUBE, 'Tube'],
   [MQTypeEnum.KAFKA, 'Kafka'],
 ]);
+
+export const fields: FieldItemType[] = [
+  { label: 'mq类型', value: 'mqType' },
+  { label: 'topic', value: 'topic' },
+  { label: '消费组名称', value: 'consumerGroup' },
+  // { label: '集群信息', value: 'cluster' },
+];
