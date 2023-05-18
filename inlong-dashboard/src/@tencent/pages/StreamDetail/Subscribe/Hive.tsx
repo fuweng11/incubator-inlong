@@ -101,6 +101,33 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
 
   const params: ProFormProps['fields'] = fields.concat([
     {
+      name: 'inLongNodeName',
+      type: 'string',
+      title: '集群',
+      required: true,
+      component: 'select',
+      appearance: 'button',
+      size: 'm',
+      reaction: async (field, values) => {
+        const data = await request({
+          url: '/datasource/search',
+          method: 'POST',
+          data: {
+            projectID: projectId,
+            type: 'INNER_HIVE',
+            pageSize: 99,
+            pageNum: 0,
+          },
+        });
+        field.setComponentProps({
+          options: (data?.records || []).map(item => ({
+            text: item.displayName,
+            value: item.name,
+          })),
+        });
+      },
+    },
+    {
       name: 'partitionUnit',
       type: 'string',
       title: '分区间隔',

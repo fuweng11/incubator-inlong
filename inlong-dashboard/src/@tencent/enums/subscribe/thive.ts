@@ -35,6 +35,7 @@ export const partitionUnitMap: Map<PartitionUnitEnum, string> = (() => {
 })();
 
 export const fields: FieldItemType[] = [
+  { label: '集群名', value: 'inLongNodeName' },
   { label: '库名', value: 'dbName' },
   { label: '表名', value: 'tableName' },
   { label: '分区间隔', value: 'partitionUnit' },
