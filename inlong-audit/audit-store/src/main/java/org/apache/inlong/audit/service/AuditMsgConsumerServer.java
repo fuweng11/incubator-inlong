@@ -18,6 +18,7 @@
 package org.apache.inlong.audit.service;
 
 import com.google.gson.Gson;
+import com.tencent.tdw.security.authentication.v2.TauthClient;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
@@ -50,6 +51,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
+import static org.apache.inlong.audit.consts.ConfigConstants.DEFAULT_INTER_MANAGER_NAME;
+import static org.apache.inlong.audit.consts.ConfigConstants.DEFAULT_INTER_MANAGER_SECURE_AUTH;
+import static org.apache.inlong.audit.consts.ConfigConstants.DEFAULT_INTER_NAMANGER_USER_KEY;
+import static org.apache.inlong.audit.consts.ConfigConstants.DEFAULT_INTER_NAMANGER_USER_NAME;
+import static org.apache.inlong.audit.consts.ConfigConstants.INTER_MANAGER_NAME;
+import static org.apache.inlong.audit.consts.ConfigConstants.INTER_MANAGER_SECURE_AUTH;
+import static org.apache.inlong.audit.consts.ConfigConstants.INTER_NAMANGER_USER_KEY;
+import static org.apache.inlong.audit.consts.ConfigConstants.INTER_NAMANGER_USER_NAME;
 
 @Service
 public class AuditMsgConsumerServer implements InitializingBean {
@@ -145,7 +155,7 @@ public class AuditMsgConsumerServer implements InitializingBean {
             String[] hostList = StringUtils.split(managerHosts, ",");
             for (String host : hostList) {
                 while (true) {
-                    mqConfig = getMQConfig(host, clusterTag);
+                    mqConfig = getMQConfig(host, clusterTag, properties);
                     if (ObjectUtils.isNotEmpty(mqConfig)) {
                         return mqConfig;
                     }
@@ -159,13 +169,28 @@ public class AuditMsgConsumerServer implements InitializingBean {
         return null;
     }
 
-    private List<MQInfo> getMQConfig(String host, String clusterTag) {
+    private List<MQInfo> getMQConfig(String host, String clusterTag, Properties properties) {
         HttpPost httpPost = null;
         try {
             String url = "http://" + host + ConfigConstants.MANAGER_PATH + ConfigConstants.MANAGER_GET_CONFIG_PATH;
             LOG.info("start to request {} to get config info", url);
             httpPost = new HttpPost(url);
             httpPost.addHeader(HttpHeaders.CONNECTION, "close");
+
+            String secureAuth =
+                    properties.getOrDefault(INTER_MANAGER_SECURE_AUTH, DEFAULT_INTER_MANAGER_SECURE_AUTH).toString();
+            String serviceName = properties.getOrDefault(INTER_MANAGER_NAME, DEFAULT_INTER_MANAGER_NAME).toString();
+            String secureUserName =
+                    properties.getOrDefault(INTER_NAMANGER_USER_NAME, DEFAULT_INTER_NAMANGER_USER_NAME).toString();
+            String secureUserKey =
+                    properties.getOrDefault(INTER_NAMANGER_USER_KEY, DEFAULT_INTER_NAMANGER_USER_KEY).toString();
+            if (StringUtils.isNotBlank(secureUserName) && StringUtils.isNotBlank(secureUserKey)) {
+                TauthClient tauthClient = new TauthClient(secureUserName, secureUserKey);
+                String encodedAuthentication = tauthClient.getAuthentication(serviceName);
+                httpPost.addHeader(secureAuth, encodedAuthentication);
+                LOG.info("start to request {} to get config info with internal secure-auth {}", secureUserName,
+                        secureUserKey);
+            }
 
             // request body
             AuditConfigRequest request = new AuditConfigRequest();

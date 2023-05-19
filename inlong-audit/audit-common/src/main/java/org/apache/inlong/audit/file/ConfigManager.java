@@ -18,6 +18,7 @@
 package org.apache.inlong.audit.file;
 
 import com.google.gson.Gson;
+import com.tencent.tdw.security.authentication.v2.TauthClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.config.RequestConfig;
@@ -40,6 +41,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
+import static org.apache.inlong.audit.consts.ConfigConstants.DEFAULT_INTER_MANAGER_NAME;
+import static org.apache.inlong.audit.consts.ConfigConstants.DEFAULT_INTER_MANAGER_SECURE_AUTH;
+import static org.apache.inlong.audit.consts.ConfigConstants.DEFAULT_INTER_NAMANGER_USER_KEY;
+import static org.apache.inlong.audit.consts.ConfigConstants.DEFAULT_INTER_NAMANGER_USER_NAME;
+import static org.apache.inlong.audit.consts.ConfigConstants.INTER_MANAGER_NAME;
+import static org.apache.inlong.audit.consts.ConfigConstants.INTER_MANAGER_SECURE_AUTH;
+import static org.apache.inlong.audit.consts.ConfigConstants.INTER_NAMANGER_USER_KEY;
+import static org.apache.inlong.audit.consts.ConfigConstants.INTER_NAMANGER_USER_NAME;
 
 public class ConfigManager {
 
@@ -208,6 +218,26 @@ public class ConfigManager {
                 LOG.info("start to request {} to get config info", url);
                 httpPost = new HttpPost(url);
                 httpPost.addHeader(HttpHeaders.CONNECTION, "close");
+
+                // internal secure-auth
+                Map<String, String> properties = configManager.getProperties(DEFAULT_CONFIG_PROPERTIES);
+                if (properties == null) {
+                    return false;
+                }
+                String secureAuth =
+                        properties.getOrDefault(INTER_MANAGER_SECURE_AUTH, DEFAULT_INTER_MANAGER_SECURE_AUTH);
+                String serviceName = properties.getOrDefault(INTER_MANAGER_NAME, DEFAULT_INTER_MANAGER_NAME);
+                String secureUserName =
+                        properties.getOrDefault(INTER_NAMANGER_USER_NAME, DEFAULT_INTER_NAMANGER_USER_NAME);
+                String secureUserKey =
+                        properties.getOrDefault(INTER_NAMANGER_USER_KEY, DEFAULT_INTER_NAMANGER_USER_KEY);
+                if (StringUtils.isNotBlank(secureUserName) && StringUtils.isNotBlank(secureUserKey)) {
+                    TauthClient tauthClient = new TauthClient(secureUserName, secureUserKey);
+                    String encodedAuthentication = tauthClient.getAuthentication(serviceName);
+                    httpPost.addHeader(secureAuth, encodedAuthentication);
+                    LOG.info("start to request {} to get config info with internal secure-auth {}", secureUserName,
+                            secureUserKey);
+                }
 
                 // request body
                 AuditConfigRequest request = new AuditConfigRequest();
