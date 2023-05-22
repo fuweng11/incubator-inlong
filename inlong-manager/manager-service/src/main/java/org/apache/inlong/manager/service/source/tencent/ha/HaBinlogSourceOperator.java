@@ -153,7 +153,7 @@ public class HaBinlogSourceOperator extends AbstractSourceOperator {
             return;
         }
 
-        boolean allowUpdate = InlongConstants.LIGHTWEIGHT_MODE.equals(groupMode)
+        boolean allowUpdate = InlongConstants.DATASYNC_MODE.equals(groupMode)
                 || SourceStatus.ALLOWED_UPDATE.contains(entity.getStatus());
         if (!allowUpdate) {
             throw new BusinessException(String.format("source=%s is not allowed to update, "
