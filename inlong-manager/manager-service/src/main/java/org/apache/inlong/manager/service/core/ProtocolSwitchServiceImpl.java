@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.service.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.tencent.oceanus.etl.configuration.Configuration;
 import com.tencent.oceanus.etl.configuration.Constants;
 import com.tencent.oceanus.etl.util.ZooKeeperUtils;
@@ -26,6 +27,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
@@ -120,13 +122,17 @@ public class ProtocolSwitchServiceImpl extends AbstractInnerSortConfigService im
         config.setString(Constants.ZOOKEEPER_QUORUM, zkUrl);
         config.setString(Constants.ZOOKEEPER_ROOT, zkRoot);
         CuratorFramework zkClient = ZooKeeperUtils.startCuratorFramework(config);
+        ProtocolSwitchInfo protocolSwitchInfo;
 
         try {
-            ProtocolSwitchInfo protocolSwitchInfo = new ProtocolSwitchInfo();
-            protocolSwitchInfo.setStatus(request.getStatus());
-            protocolSwitchInfo.setSwitchTime(request.getSwitchTime());
-            protocolSwitchInfo.setReplaceTime(request.getReplaceTime());
-            protocolSwitchInfo.setRollbackTime(request.getRollbackTime());
+            if (zkClient.checkExists().forPath(zkPath) == null) {
+                protocolSwitchInfo = new ProtocolSwitchInfo();
+            } else {
+                byte[] data = zkClient.getData().forPath(zkPath);
+                protocolSwitchInfo = OBJECT_MAPPER.readValue(data, ProtocolSwitchInfo.class);
+            }
+
+            CommonBeanUtils.copyProperties(request, protocolSwitchInfo, true);
             byte[] protocolSwitchInfoData = OBJECT_MAPPER.writeValueAsBytes(protocolSwitchInfo);
             if (zkClient.checkExists().forPath(zkPath) == null) {
                 ZooKeeperUtils.createRecursive(zkClient, zkPath, protocolSwitchInfoData, CreateMode.PERSISTENT);
@@ -150,5 +156,21 @@ public class ProtocolSwitchServiceImpl extends AbstractInnerSortConfigService im
 
     private String getUsZkPath(String hdfsTablePath) {
         return "/sort-flink/switch/us" + hdfsTablePath;
+    }
+
+    public static void main(String[] args) throws JsonProcessingException {
+        ProtocolSwitchRequest request = new ProtocolSwitchRequest();
+        request.setStatus(1);
+        request.setThStatus(2);
+        request.setSwitchTime("123456");
+        request.setThReplaceTime("765432");
+        System.out.println(OBJECT_MAPPER.writeValueAsString(request));
+
+        ProtocolSwitchInfo protocolSwitchInfo = new ProtocolSwitchInfo();
+        protocolSwitchInfo.setSwitchTime("111111");
+        protocolSwitchInfo.setThSwitchTime("222222");
+        System.out.println(OBJECT_MAPPER.writeValueAsString(protocolSwitchInfo));
+        CommonBeanUtils.copyProperties(request, protocolSwitchInfo, true);
+        System.out.println(OBJECT_MAPPER.writeValueAsString(protocolSwitchInfo));
     }
 }

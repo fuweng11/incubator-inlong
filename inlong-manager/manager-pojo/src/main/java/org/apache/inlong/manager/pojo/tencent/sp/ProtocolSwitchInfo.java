@@ -43,4 +43,16 @@ public class ProtocolSwitchInfo {
 
     @ApiModelProperty("Rollback time")
     private String rollbackTime;
+
+    @ApiModelProperty("Switch status. 1 for switching, 2 for replacing, 3 for rollback-ing")
+    private Integer thStatus;
+
+    @ApiModelProperty("Switch time")
+    private String thSwitchTime;
+
+    @ApiModelProperty("Replace time")
+    private String thReplaceTime;
+
+    @ApiModelProperty("Rollback time")
+    private String thRollbackTime;
 }
