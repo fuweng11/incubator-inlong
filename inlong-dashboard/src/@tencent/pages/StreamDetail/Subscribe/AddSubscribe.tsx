@@ -21,7 +21,7 @@ import { FieldData } from '@/@tencent/components/FieldsMap';
 import { Drawer, Button, Row, Col, Form } from '@tencent/tea-component';
 import { Form as ProFormIns, ProFormProps } from '@tencent/tea-material-pro-form';
 import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react';
-import { encodeTypeMap, dataSeparatorMap, peakRateMap } from '@/@tencent/enums/stream';
+import { encodeTypeMap, dataSeparatorMap, peakRateMap, StatusEnum } from '@/@tencent/enums/stream';
 import { sourceTypeMap, SourceTypeEnum } from '@/@tencent/enums/source';
 import type { FieldItemType } from '@/@tencent/enums/source/common';
 import { fields as fileFields } from '@/@tencent/enums/source/file';
@@ -96,7 +96,17 @@ const AddSubscribeDrawer = ({
     },
     {
       manual: true,
-      onSuccess: result => setTargetFields(result.fieldMappings),
+      onSuccess: result => {
+        if (result.fieldMappings?.length) {
+          const targetFields =
+            info.fieldsData.length > result.fieldMappings.length
+              ? result.fieldMappings
+                  .map(f => (info.status === StatusEnum.Success ? { ...f, disabled: true } : f))
+                  .concat(info.fieldsData.slice(result.fieldMappings.length))
+              : result.fieldMappings;
+          setTargetFields(targetFields);
+        }
+      },
     },
   );
 
@@ -163,8 +173,8 @@ const AddSubscribeDrawer = ({
         inLongStreamID: info.inLongStreamID,
         encodeType: info.encodeType,
         dataSeparator: info.dataSeparator,
-        fieldMappings,
         ...(basicFrom as object),
+        fieldMappings,
       } as Record<string, any>;
       const sinkType: SinkTypeEnum = writeType;
       await request({
