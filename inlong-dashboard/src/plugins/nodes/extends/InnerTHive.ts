@@ -59,30 +59,6 @@ export default class InnerThiveNode
 
   @FieldDecorator({
     type: 'input',
-    initialValue: '/user/tdw/warehouse',
-    rules: [{ required: true }],
-  })
-  @I18n('warehouseDir')
-  warehouseDir: string;
-
-  @FieldDecorator({
-    type: 'input',
-    initialValue: 'hdfs:',
-    rules: [{ required: true }],
-  })
-  @I18n('hdfsDefaultFs')
-  hdfsDefaultFs: string;
-
-  @FieldDecorator({
-    type: 'input',
-    initialValue: 'tdwadmin:',
-    rules: [{ required: true }],
-  })
-  @I18n('hdfsUgi')
-  hdfsUgi: string;
-
-  @FieldDecorator({
-    type: 'input',
   })
   @I18n('omsAddress')
   omsAddress: string;
