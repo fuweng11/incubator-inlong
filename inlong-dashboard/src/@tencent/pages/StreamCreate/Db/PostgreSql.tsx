@@ -59,7 +59,7 @@ export default function PostgreSql({ form }) {
                   method: 'POST',
                   data: {
                     projectID: projectId,
-                    type: 'MYSQL',
+                    type: 'POSTGRESQL',
                     pageSize: 99,
                     pageNum: 0,
                   },

@@ -40,7 +40,7 @@ export interface FieldData {
   fieldName: string;
   fieldType: string;
   remark?: string;
-  disable?: boolean; // 已上线的订阅之前接出的字段不能编辑,新接入的可以
+  disabled?: boolean; // 已上线的订阅之前接出的字段不能编辑,新接入的可以
 }
 
 export interface FieldDataWithId extends FieldData {
@@ -247,6 +247,10 @@ const FieldsMap = ({
                             }));
                             setSelectedFields(valueMaps);
                             onSelect(valueMaps);
+                          },
+                          rowSelectable: (rowKey, { record }) => {
+                            const f: FieldData = targetFieldsProp.find(t => t.id === record.id);
+                            return f ? !f.disabled : true;
                           },
                         }),
                       ]

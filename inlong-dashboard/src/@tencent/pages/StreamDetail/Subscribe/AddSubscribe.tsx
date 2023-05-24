@@ -96,12 +96,13 @@ const AddSubscribeDrawer = ({
       manual: true,
       onSuccess: result => {
         if (result.fieldMappings?.length) {
-          const targetFields =
-            info.fieldsData.length > result.fieldMappings.length
-              ? result.fieldMappings
-                  .map(f => (info.status === StatusEnum.Success ? { ...f, disabled: true } : f))
-                  .concat(info.fieldsData.slice(result.fieldMappings.length))
-              : result.fieldMappings;
+          let targetFields = result.fieldMappings;
+          if (result.status === StatusEnum.Success) {
+            targetFields = targetFields.map((f: FieldData) => ({ ...f, disabled: true }));
+          }
+          if (info.fieldsData.length > result.fieldMappings.length) {
+            targetFields = targetFields.concat(info.fieldsData.slice(result.fieldMappings.length));
+          }
           setTargetFields(targetFields);
         }
       },
