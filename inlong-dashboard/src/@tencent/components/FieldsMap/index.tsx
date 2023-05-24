@@ -260,7 +260,7 @@ const FieldsMap = ({
                   <div
                     style={{
                       height: `${100 / sourceFields.length}%`,
-                      lineHeight: '40px',
+                      lineHeight: '25px',
                       visibility: selectedFields.map(item => item.sourceField.id).includes(i)
                         ? 'visible'
                         : 'hidden',

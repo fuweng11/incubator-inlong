@@ -55,15 +55,18 @@ export default function PostgreSql({ form }) {
               {...field}
               request={async () => {
                 const result = await request({
-                  url: '/project/database/list',
+                  url: '/datasource/search',
                   method: 'POST',
                   data: {
                     projectID: projectId,
+                    type: 'MYSQL',
+                    pageSize: 99,
+                    pageNum: 0,
                   },
                 });
-                return result?.map(item => ({
-                  text: item.dbName,
-                  value: item.dbName,
+                return result?.records.map(item => ({
+                  text: item.displayName,
+                  value: item.name,
                 }));
               }}
             />

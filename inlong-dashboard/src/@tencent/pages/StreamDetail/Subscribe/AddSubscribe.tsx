@@ -16,31 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import FieldsMap, { SelectedFieldsType } from '@/@tencent/components/FieldsMap';
-import { FieldData } from '@/@tencent/components/FieldsMap';
-import { Drawer, Button, Row, Col, Form } from '@tencent/tea-component';
+import FieldsMap, { FieldData, SelectedFieldsType } from '@/@tencent/components/FieldsMap';
+import { Button, Col, Drawer, Form, message, Row } from '@tencent/tea-component';
 import { Form as ProFormIns, ProFormProps } from '@tencent/tea-material-pro-form';
-import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react';
-import { encodeTypeMap, dataSeparatorMap, peakRateMap, StatusEnum } from '@/@tencent/enums/stream';
-import { sourceTypeMap, SourceTypeEnum } from '@/@tencent/enums/source';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { dataSeparatorMap, encodeTypeMap, peakRateMap, StatusEnum } from '@/@tencent/enums/stream';
+import { SourceTypeEnum, sourceTypeMap } from '@/@tencent/enums/source';
 import type { FieldItemType } from '@/@tencent/enums/source/common';
 import { fields as fileFields } from '@/@tencent/enums/source/file';
 import { fields as mysqlFields } from '@/@tencent/enums/source/mysql';
 import { fields as postgreSqlFields } from '@/@tencent/enums/source/postgreSql';
-import { SinkTypeEnum, sinkTypeMap, sinkTypeApiPathMap } from '@/@tencent/enums/subscribe';
+import { sinkTypeApiPathMap, SinkTypeEnum, sinkTypeMap } from '@/@tencent/enums/subscribe';
 import request from '@/core/utils/request';
 import { useRequest } from 'ahooks';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
-import { message } from '@tencent/tea-component';
 import ReadonlyForm, { ReadonlyFormFieldItemType } from '@/@tencent/components/ReadonlyForm';
-import { SubscribeFormRef, SubscribeFormProps } from './common';
+import { SubscribeFormProps, SubscribeFormRef } from './common';
 import Clickhouse, { fields as ckFields } from './Clickhouse';
 import Hive, { fields as hiveFields } from './Hive';
 import Thive, { fields as thiveFields } from './Thive';
 // import Hudi, { fields as hudiFields } from './Hudi';
 // import Kafka from './Kafka';
 import Iceberg from './Iceberg';
-import MQ, { MQTypeEnum, fields as MqFields } from './MQ';
+import MQ, { fields as MqFields, MQTypeEnum } from './MQ';
 
 export interface AddSubscribeDrawerProps {
   visible: boolean;
@@ -123,6 +121,10 @@ const AddSubscribeDrawer = ({
     [info.fieldsData],
   );
 
+  const writeTypeOptions =
+    info.status === StatusEnum.New
+      ? Array.from(sinkTypeMap).filter(row => row[0] !== SinkTypeEnum.MQ)
+      : Array.from(sinkTypeMap);
   const props: SubscribeFormProps = {
     fields: [
       {
@@ -134,7 +136,7 @@ const AddSubscribeDrawer = ({
         appearance: 'button',
         size: 'm',
         defaultValue: writeType,
-        options: Array.from(sinkTypeMap).map(([key, ctx]) => ({
+        options: writeTypeOptions.map(([key, ctx]) => ({
           value: key,
           text: ctx,
         })),
@@ -166,6 +168,12 @@ const AddSubscribeDrawer = ({
         sourceFieldType: item.sourceField.fieldType,
         sequence: item.targetField.id,
       }));
+      if (fieldMappings.length === 0) {
+        message.warning({
+          content: '请选择映射字段',
+        });
+        return;
+      }
       const data = {
         projectID: projectId,
         streamID: parseInt(streamId, 10),

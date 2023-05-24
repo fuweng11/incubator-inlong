@@ -25,7 +25,7 @@ import Mysql from './Mysql';
 import PostgreSql from './PostgreSql';
 
 export default function Db({ form }) {
-  const { control, formState, watch } = form;
+  const { control, formState, watch, setValue } = form;
   const { errors } = formState;
 
   const watchDbType = watch('sourceType', DbTypeEnum.MySQL);
@@ -54,6 +54,10 @@ export default function Db({ form }) {
                 value: key,
                 text: ctx,
               }))}
+              onChange={v => {
+                setValue('sourceType', v);
+                setValue('dataBaseName', undefined);
+              }}
             />
           )}
         />

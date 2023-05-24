@@ -18,13 +18,13 @@
  */
 
 export enum WriteModeEnum {
-  Append = 'Append',
-  Upsert = 'Upsert',
+  Append = 'append',
+  Upsert = 'upsert',
 }
 
 export const writeModeMap: Map<WriteModeEnum, string> = new Map([
-  [WriteModeEnum.Append, 'Append'],
-  [WriteModeEnum.Upsert, 'Upsert'],
+  [WriteModeEnum.Append, 'append'],
+  [WriteModeEnum.Upsert, 'upsert'],
 ]);
 
 export enum SerializationTypeEnum {
