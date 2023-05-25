@@ -245,6 +245,9 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         Stat stat = null;
         String createPath = null;
         try {
+            if (!cf.isStarted()) {
+                cf.start();
+            }
             stat = cf.checkExists().forPath(path);
             if (stat == null) {
                 createPath = cf.create().creatingParentsIfNeeded()
@@ -262,6 +265,9 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         CuratorFramework cf = getZkClient(group);
         Stat stat = null;
         try {
+            if (!cf.isStarted()) {
+                cf.start();
+            }
             stat = cf.checkExists().forPath(path);
             if (stat == null) {
                 cf.create().creatingParentsIfNeeded()
@@ -284,6 +290,9 @@ public class ConfigDelegateImpl implements ConfigDelegate {
             for (CuratorFramework cf : cfs) {
                 Stat stat = null;
                 try {
+                    if (!cf.isStarted()) {
+                        cf.start();
+                    }
                     stat = cf.checkExists().forPath(path);
                     if (stat == null) {
                         cf.create().creatingParentsIfNeeded()
@@ -338,6 +347,9 @@ public class ConfigDelegateImpl implements ConfigDelegate {
         CuratorFramework cf = getZkClient(group);
         Stat stat = null;
         try {
+            if (!cf.isStarted()) {
+                cf.start();
+            }
             stat = cf.checkExists().forPath(path);
             if (stat == null) {
                 cf.create().creatingParentsIfNeeded().forPath(path, "".getBytes());
