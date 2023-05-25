@@ -548,9 +548,11 @@ public class JobCoordinator {
                         || (runningNodeLoad.getBandwidthIn() != null
                                 && runningNodeLoad.getBandwidthIn().percentUsage() > haNodeNeedChangeMaxThreshold)
                         || runningNodeLoad.getSyncsCapacityPercentUsage() > haNodeNeedChangeMaxThreshold) {
+                    LOGGER.info("isNeedChangeRunNode [{}]", true);
                     return true;
                 }
             }
+            LOGGER.info("isNeedChangeRunNode [{}]", false);
             return false;
         }
 
@@ -570,11 +572,13 @@ public class JobCoordinator {
                         && (candidateNodeLoad.getBandwidthOut() == null
                                 || candidateNodeLoad.getBandwidthOut().percentUsage() < haNodeChangeCandidateThreshold)
                         && (candidateNodeLoad.getBandwidthIn() == null
-                                || candidateNodeLoad.getBandwidthIn().percentUsage() > haNodeChangeCandidateThreshold)
+                                || candidateNodeLoad.getBandwidthIn().percentUsage() < haNodeChangeCandidateThreshold)
                         && candidateNodeLoad.getSyncsCapacityPercentUsage() < 1.0F) {
+                    LOGGER.info("isNodeCanBeUsedToChange [{}]", true);
                     return true;
                 }
             }
+            LOGGER.info("isNodeCanBeUsedToChange [{}]", false);
             return false;
         }
     }
