@@ -42,4 +42,10 @@ public class InnerIcebergSinkRequest extends SinkRequest {
     @ApiModelProperty("table name")
     private String tableName;
 
+    @ApiModelProperty("append mode, UPSERT or APPEND")
+    private String appendMode;
+
+    @ApiModelProperty("Table primary key")
+    private String primaryKey;
+
 }

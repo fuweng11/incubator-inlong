@@ -50,6 +50,12 @@ public class InnerIcebergSink extends StreamSink {
     @ApiModelProperty("table name")
     private String tableName;
 
+    @ApiModelProperty("append mode, UPSERT or APPEND")
+    private String appendMode;
+
+    @ApiModelProperty("Table primary key")
+    private String primaryKey;
+
     @Override
     public SinkRequest genSinkRequest() {
         return CommonBeanUtils.copyProperties(this, InnerIcebergSinkRequest::new);

@@ -42,6 +42,12 @@ public class InnerIcebergSinkDTO {
     @ApiModelProperty("table name")
     private String tableName;
 
+    @ApiModelProperty("append mode, UPSERT or APPEND")
+    private String appendMode;
+
+    @ApiModelProperty("Table primary key")
+    private String primaryKey;
+
     /**
      * Get the dto instance from the request
      */
