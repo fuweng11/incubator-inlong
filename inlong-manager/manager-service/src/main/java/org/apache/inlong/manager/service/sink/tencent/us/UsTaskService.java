@@ -25,7 +25,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
@@ -57,7 +56,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * operate US tasks
@@ -232,43 +230,6 @@ public class UsTaskService {
         String inlongGroupId = tableInfo.getInlongGroupId();
         String inlongStreamId = tableInfo.getInlongStreamId();
         String partitionStrategy = tableInfo.getPartitionCreationStrategy();
-
-        StreamSinkEntity thiveEntity = sinkEntityMapper.selectDeletedThive(inlongGroupId, inlongStreamId);
-
-        if (thiveEntity != null) {
-            InnerBaseHiveSinkDTO thiveDTO = InnerBaseHiveSinkDTO.getFromJson(thiveEntity.getExtParams());
-            boolean isThive = Objects.equals(thiveEntity.getSinkType(), SinkType.INNER_THIVE);
-            // the partition creation strategy must be the same,
-            // otherwise the parent-child relationship of the task will be disordered
-            boolean needReuse = isThive && StringUtils.isNotBlank(thiveDTO.getUsTaskId())
-                    && partitionStrategy.equals(thiveDTO.getPartitionCreationStrategy());
-            if (needReuse) {
-                try {
-                    StreamSinkEntity entity = sinkEntityMapper.selectByPrimaryKey(tableInfo.getSinkId());
-                    InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromJson(entity.getExtParams());
-                    if (StringUtils.isBlank(thiveDTO.getUsTaskId())) {
-                        tableInfo.setUsTaskId(thiveDTO.getUsTaskId());
-                        dto.setUsTaskId(thiveDTO.getUsTaskId());
-                    }
-                    if (StringUtils.isBlank(tableInfo.getVerifiedTaskId())
-                            && TencentConstants.PART_DISTINCT_VERIFIED.equals(partitionStrategy)) {
-                        tableInfo.setVerifiedTaskId(thiveDTO.getVerifiedTaskId());
-                        dto.setVerifiedTaskId(thiveDTO.getVerifiedTaskId());
-                    }
-
-                    // it must be judged to prevent modification failure caused by empty parameters
-                    if (StringUtils.isNotBlank(dto.getUsTaskId())) {
-                        entity.setExtParams(objectMapper.writeValueAsString(dto));
-                        sinkEntityMapper.updateByIdSelective(entity);
-                        log.info("found frozen us tasks, reuse them for gourp id={}, stream id={}",
-                                inlongGroupId, inlongStreamId);
-                    }
-                } catch (Exception e) {
-                    log.error("parsing json string to sink info failed", e);
-                    throw new WorkflowListenerException(ErrorCodeEnum.SINK_SAVE_FAILED.getMessage());
-                }
-            }
-        }
 
         String result = "";
         // create us tasks only for thive

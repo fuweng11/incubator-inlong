@@ -212,6 +212,7 @@ public class ScServiceImpl implements ScService {
             params.put("userName", userName);
             params.put("pageNum", 1);
             params.put("pageSize", 100);
+            params.put("includeDetail", false);
         }
         ScPage<AppGroup> resultPage = scApiRequestService.getCall(LIST_ALL_GROUP_API, params,
                 new ParameterizedTypeReference<Response<ScPage<AppGroup>>>() {

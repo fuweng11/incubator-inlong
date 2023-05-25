@@ -36,6 +36,8 @@ export default class PulsarSource
     rules: [{ required: true }],
     props: values => ({
       showSearch: true,
+      allowClear: true,
+      filterOption: false,
       disabled: [200, 201, 202, 204, 205, 300, 301, 302, 304, 305].includes(values?.status),
       options: {
         requestTrigger: ['onOpen', 'onSearch'],
@@ -69,6 +71,8 @@ export default class PulsarSource
     rules: [{ required: true }],
     props: values => ({
       showSearch: true,
+      allowClear: true,
+      filterOption: false,
       disabled: [200, 201, 202, 204, 205, 300, 301, 302, 304, 305].includes(values?.status),
       options: {
         requestTrigger: ['onOpen', 'onSearch'],
@@ -76,6 +80,7 @@ export default class PulsarSource
           url: '/node/list',
           method: 'POST',
           data: {
+            keyword,
             pageNum: 1,
             pageSize: 20,
             type: 'MYSQL',

@@ -40,21 +40,37 @@ public class ProtocolSwitchRequest {
     @NotBlank(message = "inlongStreamId cannot be blank")
     private String inlongStreamId;
 
-    @ApiModelProperty("Switch status. 1 for switching, 2 for replacing, 3 for rollback-ing")
+    @ApiModelProperty("Switch hive status. 1 for switching, 2 for replacing, 3 for rollback-ing")
     @Range(min = 1, max = 3, message = "default is 1, only supports [1 : switching, 2 : replacing, 3 : rollback-ing]")
     private Integer status;
 
-    @ApiModelProperty("Switch time")
+    @ApiModelProperty("Switch thive status. 1 for switching, 2 for replacing, 3 for rollback-ing")
+    @Range(min = 1, max = 3, message = "default is 1, only supports [1 : switching, 2 : replacing, 3 : rollback-ing]")
+    private Integer thStatus;
+
+    @ApiModelProperty("Switch hive time")
     @Length(min = 14, max = 14, message = "switchTime only support yyyyMMddHHmmss format")
     private String switchTime;
 
-    @ApiModelProperty("Replace time")
+    @ApiModelProperty("Switch thive time")
+    @Length(min = 14, max = 14, message = "switchTime only support yyyyMMddHHmmss format")
+    private String thSwitchTime;
+
+    @ApiModelProperty("Replace hive time")
     @Length(min = 14, max = 14, message = "replaceTime only support yyyyMMddHHmmss format")
     private String replaceTime;
 
-    @ApiModelProperty("Rollback time")
+    @ApiModelProperty("Replace thive time")
+    @Length(min = 14, max = 14, message = "replaceTime only support yyyyMMddHHmmss format")
+    private String thReplaceTime;
+
+    @ApiModelProperty("Rollback hive time")
     @Length(min = 14, max = 14, message = "rollbackTime only support yyyyMMddHHmmss format")
     private String rollbackTime;
+
+    @ApiModelProperty("Rollback thive time")
+    @Length(min = 14, max = 14, message = "rollbackTime only support yyyyMMddHHmmss format")
+    private String thRollbackTime;
 
     @ApiModelProperty("zookeeper root path")
     private String zkRootPath;

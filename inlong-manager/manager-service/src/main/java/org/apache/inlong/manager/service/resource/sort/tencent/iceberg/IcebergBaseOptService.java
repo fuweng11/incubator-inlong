@@ -20,6 +20,7 @@ package org.apache.inlong.manager.service.resource.sort.tencent.iceberg;
 import com.tencent.tdw.security.authentication.v2.TauthClient;
 import com.tencent.tdw.security.exceptions.SecureException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowException;
 import org.apache.inlong.manager.common.util.HttpUtils;
@@ -39,6 +40,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -98,15 +100,14 @@ public class IcebergBaseOptService {
             log.info("get iceberg table detail result={}", queryRsp);
             // the table exists, and the flow direction status is modified to [Configuration Succeeded].
             // return directly
+            String url = dlaApiUrl + "/formation/v2/metadata/createTable";
             if (queryRsp != null && queryRsp.getCode() != 20005) {
                 log.warn("iceberg table [{}.{}] already exists", request.getDb(), request.getTable());
-                sinkService.updateStatus(icebergSink.getId(), SinkStatus.CONFIG_SUCCESSFUL.getCode(),
-                        queryRsp.getMessage());
-                return;
+                url = dlaApiUrl + "/formation/v2/metadata/updateTableSchema";
             }
 
             // the table does not exist. Create a new table
-            String rsp = HttpUtils.postRequest(restTemplate, dlaApiUrl + "/formation/v2/metadata/createTable",
+            String rsp = HttpUtils.postRequest(restTemplate, url,
                     request, getTauthHeader(icebergSink.getCreator()), new ParameterizedTypeReference<String>() {
                     });
             log.info("create iceberg result rsp={}", rsp);
@@ -148,6 +149,18 @@ public class IcebergBaseOptService {
             return field;
         }).collect(Collectors.toList());
         createRequest.setFields(fields);
+        HashMap<String, Object> map = new HashMap<>();
+        if (Objects.equals("APPEND", icebergSink.getAppendMode())) {
+            map.put("write.upsert.enabled", false);
+        } else {
+            map.put("write.upsert.enabled", true);
+        }
+        map.put("format-version", 2);
+        String primaryKey = icebergSink.getPrimaryKey();
+        if (StringUtils.isNotBlank(primaryKey)) {
+            map.put("primary-key", primaryKey);
+        }
+        createRequest.setProperties(map);
         return createRequest;
     }
 

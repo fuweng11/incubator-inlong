@@ -20,6 +20,8 @@
 import React, { useRef, useCallback, forwardRef, useImperativeHandle, Ref } from 'react';
 import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
 import { SubscribeFormProps, SubscribeFormRef } from './common';
+import request from '@/core/utils/request';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 export { fields } from '@/@tencent/enums/subscribe/clickhouse';
 
@@ -28,13 +30,34 @@ const Clickhouse = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeForm
 
   const formRef = useRef<Form>();
 
+  const [projectId] = useProjectId();
+
   const params: ProFormProps['fields'] = fields.concat([
     {
       name: 'inLongNodeName',
       type: 'string',
       title: '数据源',
-      component: 'input',
-      required: true,
+      component: 'select',
+      appearance: 'button',
+      size: 'm',
+      reaction: async (field, values) => {
+        const data = await request({
+          url: '/datasource/search',
+          method: 'POST',
+          data: {
+            projectID: projectId,
+            type: 'CLICKHOUSE',
+            pageSize: 99,
+            pageNum: 0,
+          },
+        });
+        field.setComponentProps({
+          options: (data?.records || []).map(item => ({
+            text: item.displayName,
+            value: item.name,
+          })),
+        });
+      },
     },
     {
       name: 'dbName',

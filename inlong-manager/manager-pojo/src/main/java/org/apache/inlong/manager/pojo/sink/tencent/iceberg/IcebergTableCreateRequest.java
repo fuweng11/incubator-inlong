@@ -38,7 +38,7 @@ public class IcebergTableCreateRequest {
     private String db;
     private String table;
     private String description;
-    private PropertiesBean properties;
+    private Map<String, Object> properties;
     private List<FieldsBean> fields;
     private List<PartitionsBean> partitions;
 

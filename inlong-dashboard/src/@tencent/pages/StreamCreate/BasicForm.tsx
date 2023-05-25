@@ -63,6 +63,7 @@ const BasicForm = forwardRef(
             remark: '',
             sinkInnerHive: false,
             subscribeTHive: {
+              inLongNodeName: '',
               dbName: '',
               dbTableName: `table_${new Date().getTime().toString()}`,
             },
@@ -83,6 +84,26 @@ const BasicForm = forwardRef(
     }, [isUpdate, reset, savedData]);
 
     const { errors } = formState;
+
+    const { data: clusterRes = [] } = useRequest(
+      {
+        url: '/datasource/search',
+        method: 'POST',
+        data: {
+          projectID: projectId,
+          type: 'INNER_THIVE',
+          pageSize: 99,
+          pageNum: 0,
+        },
+      },
+      {
+        onSuccess: result => {
+          if (result?.records.length && !isUpdate) {
+            setValue('subscribeTHive.inLongNodeName', result?.records[0].name);
+          }
+        },
+      },
+    );
 
     const { data: dbList = [] } = useRequest(
       {
@@ -209,6 +230,27 @@ const BasicForm = forwardRef(
                 {field.value && (
                   <Alert type="info" hideIcon style={{ marginTop: 10 }}>
                     <ul style={{ listStyle: 'initial' }}>
+                      <li>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <span style={{ marginRight: 5 }}>选择集群</span>
+                          <Controller
+                            name="subscribeTHive.inLongNodeName"
+                            control={control}
+                            render={({ field }) => (
+                              <Select
+                                {...field}
+                                searchable
+                                appearance="default"
+                                options={(clusterRes?.records || []).map(item => ({
+                                  text: item.displayName,
+                                  value: item.name,
+                                  tooltip: item.displayName,
+                                }))}
+                              />
+                            )}
+                          />
+                        </div>
+                      </li>
                       <li>
                         开启自动写入TDW，将自动生成表：
                         <Form.Item

@@ -70,4 +70,17 @@ public class ConfigConstants {
     public static final String MANAGER_PATH = "/inlong/manager/openapi";
 
     public static final String MANAGER_GET_CONFIG_PATH = "/audit/getConfig";
+
+    public static final String INTER_MANAGER_SECURE_AUTH = "manager.internal.secure.auth";
+    public static final String DEFAULT_INTER_MANAGER_SECURE_AUTH = "secure-authentication";
+
+    public static final String INTER_MANAGER_NAME = "manager.internal.name";
+    public static final String DEFAULT_INTER_MANAGER_NAME = "inlong_manager";
+
+    public static final String INTER_NAMANGER_USER_NAME = "manager.internal.user.name";
+    public static final String DEFAULT_INTER_NAMANGER_USER_NAME = "";
+
+    public static final String INTER_NAMANGER_USER_KEY = "manager.internal.user.key";
+    public static final String DEFAULT_INTER_NAMANGER_USER_KEY = "";
+
 }

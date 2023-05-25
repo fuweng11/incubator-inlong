@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   Table,
   TableProps,
@@ -31,6 +31,7 @@ import styles from './index.module.less';
 import FieldsParse from '../FieldsParse';
 import LongText from '../LongText';
 import { AutoAdd, ConvertTip, Delete } from '../Icons';
+import isEqual from 'lodash/isEqual';
 
 const { injectable, selectable, draggable } = Table.addons;
 
@@ -39,6 +40,7 @@ export interface FieldData {
   fieldName: string;
   fieldType: string;
   remark?: string;
+  disabled?: boolean; // 已上线的订阅之前接出的字段不能编辑,新接入的可以
 }
 
 export interface FieldDataWithId extends FieldData {
@@ -88,16 +90,18 @@ const FieldsMap = ({
 }: FieldsMapProps) => {
   const sourceFields = useMemo<FieldDataWithId[]>(() => insertIndex(_sf), [_sf]);
   const targetFieldsProp = useMemo<FieldDataWithId[]>(() => insertIndex(_tf), [_tf]);
+  const prevDefaultSelectFields = useRef(defaultSelectFields);
 
-  const [fieldsParseVisible, setFieldParseVisible] = useState<boolean>(false);
-  const [selectedFields, setSelectedFields] = useState<SelectedFieldsType>(
+  const initSelected = () =>
     defaultSelectFields
       ? defaultSelectFields.map((item, index) => ({
           sourceField: { ...item.sourceField, id: index },
           targetField: { ...item.targetField, id: index },
         }))
-      : [],
-  );
+      : [];
+
+  const [fieldsParseVisible, setFieldParseVisible] = useState<boolean>(false);
+  const [selectedFields, setSelectedFields] = useState<SelectedFieldsType>(initSelected);
   const [targetFields, setTargetFields] = useState<FieldDataWithId[]>([]);
   const [status, setStatus] = useState<string>('');
 
@@ -142,6 +146,7 @@ const FieldsMap = ({
               onChange={val => {
                 onChangeFieldValue('fieldName', records, val);
               }}
+              disabled={records.disabled}
             />
           ) : (
             <LongText text={records.fieldName} style={{ minHeight: '30px', lineHeight: '30px' }} />
@@ -166,6 +171,7 @@ const FieldsMap = ({
               onChange={val => {
                 onChangeFieldValue('fieldType', records, val);
               }}
+              disabled={records.disabled}
             />
           ) : (
             <LongText text={records.fieldType} style={{ minHeight: '30px', lineHeight: '30px' }} />
@@ -190,6 +196,14 @@ const FieldsMap = ({
     }
     setTargetFields(copyTargetFields);
   };
+
+  // componentWillReceiveProps - -#
+  useEffect(() => {
+    if (!isEqual(prevDefaultSelectFields.current, defaultSelectFields)) {
+      setSelectedFields(initSelected);
+    }
+    prevDefaultSelectFields.current = defaultSelectFields;
+  }, [defaultSelectFields]);
 
   useEffect(() => {
     setTargetFields(targetFieldsProp);
@@ -234,6 +248,10 @@ const FieldsMap = ({
                             setSelectedFields(valueMaps);
                             onSelect(valueMaps);
                           },
+                          rowSelectable: (rowKey, { record }) => {
+                            const f: FieldData = targetFieldsProp.find(t => t.id === record.id);
+                            return f ? !f.disabled : true;
+                          },
                         }),
                       ]
                 }
@@ -246,7 +264,7 @@ const FieldsMap = ({
                   <div
                     style={{
                       height: `${100 / sourceFields.length}%`,
-                      lineHeight: '40px',
+                      lineHeight: '25px',
                       visibility: selectedFields.map(item => item.sourceField.id).includes(i)
                         ? 'visible'
                         : 'hidden',
