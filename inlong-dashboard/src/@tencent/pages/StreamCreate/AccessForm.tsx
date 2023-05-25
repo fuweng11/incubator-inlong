@@ -39,6 +39,7 @@ import {
   EncodeTypeEnum,
   dataSeparatorMap,
   DataSeparatorEnum,
+  StatusEnum,
 } from '@/@tencent/enums/stream';
 import FieldsParse from '@/@tencent/components/FieldsParse';
 import EditableTable, { addons, EditableTableRef } from '@/@tencent/components/EditableTable';
@@ -283,7 +284,12 @@ const AccessForm = forwardRef(
             showRowRemove={
               isUpdate ? (key, index) => index > savedData?.fieldsData?.length - 1 : true
             }
-            showRowUpdate={isUpdate ? (key, index) => index < savedData?.fieldsData?.length : true}
+            showRowUpdate={
+              // 没上线的接入都可以添加和修改字段
+              isUpdate && savedData?.status === StatusEnum.Success
+                ? (key, index) => index < savedData?.fieldsData?.length
+                : true
+            }
             addons={[
               addons.scrollable({
                 maxHeight: 310,

@@ -111,6 +111,7 @@ const BasicForm = forwardRef(
         method: 'POST',
         data: {
           projectID: projectId,
+          dbType: 'THIVE',
         },
       },
       {

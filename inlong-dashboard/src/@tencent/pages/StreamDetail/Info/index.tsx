@@ -21,6 +21,7 @@ import React, { useMemo } from 'react';
 import { Form, Table, StatusTip } from '@tencent/tea-component';
 import ReadonlyForm from '@/@tencent/components/ReadonlyForm';
 import { getFields } from './fields';
+import { SourceTypeEnum } from '@/@tencent/enums/source';
 
 const Info = ({ streamId, info }) => {
   const accessModel = info.accessModel;
@@ -29,16 +30,20 @@ const Info = ({ streamId, info }) => {
     return getFields(accessModel);
   }, [accessModel]);
 
+  // 临时给PG的读取方式补上展示的默认值(后台不返回这个字段，但又需要前端展示)
+  const finalInfo =
+    accessModel === SourceTypeEnum.PostgreSQL ? { ...info, readType: '全量' } : info;
+
   return (
     <ReadonlyForm
       conf={conf}
-      defaultValues={info}
+      defaultValues={finalInfo}
       footer={
         <Form.Item label="数据字段" align="middle">
           <Table
             bordered
             verticalTop
-            records={info?.fieldsData || []}
+            records={finalInfo?.fieldsData || []}
             recordKey="fieldName"
             columns={[
               {
@@ -54,7 +59,7 @@ const Info = ({ streamId, info }) => {
                 header: '字段描述',
               },
             ]}
-            topTip={!info?.fieldsData?.length && <StatusTip status="empty" />}
+            topTip={!finalInfo?.fieldsData?.length && <StatusTip status="empty" />}
           />
         </Form.Item>
       }

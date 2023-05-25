@@ -98,9 +98,9 @@ const Iceberg = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef
       type: 'string',
       title: '唯一键',
       tips: 'Upsert写入模式下，需设置唯一键保证数据有序性，支持多选，Append模式则不需要设置唯一键。',
-      required: true,
+      required: false,
       component: 'input',
-      when: values => values.writeMode === WriteModeEnum.Upsert,
+      // when: values => values.writeMode === WriteModeEnum.Upsert,
     },
     {
       name: '_proConf',

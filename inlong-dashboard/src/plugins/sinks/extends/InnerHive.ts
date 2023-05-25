@@ -82,6 +82,7 @@ export default class InnerHiveSink
             dataNodeName: values.dataNodeName,
             pageNum: 1,
             pageSize: 20,
+            dbType: 'HIVE',
           },
         },
         requestParams: {

@@ -110,6 +110,7 @@ export default class InnerThiveSink
             dataNodeName: values.dataNodeName,
             pageNum: 1,
             pageSize: 20,
+            dbType: 'THIVE',
           },
         },
         requestParams: {

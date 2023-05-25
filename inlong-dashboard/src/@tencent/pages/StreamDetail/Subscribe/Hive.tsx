@@ -168,6 +168,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
           method: 'POST',
           data: {
             projectID: projectId,
+            dbType: 'HIVE',
           },
         });
         field.setComponentProps({
