@@ -100,7 +100,7 @@ export default function StreamCreate() {
       });
       history.block(() => null);
       history.push('/stream');
-      message.success({ content: '新建成功' });
+      message.success({ content: isUpdate ? '保存成功' : '新建成功' });
     } catch (err) {
       console.warn(err);
     } finally {
