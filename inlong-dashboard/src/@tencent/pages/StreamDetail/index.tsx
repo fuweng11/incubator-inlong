@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { Alert, Button, Tag, Tabs, TabPanel } from '@tencent/tea-component';
 import { useRequest } from 'ahooks';
@@ -30,7 +30,7 @@ import { dataLevelMap, statusMap, StatusEnum } from '@/@tencent/enums/stream';
 import { SourceTypeEnum, sourceTypeApiPathMap } from '@/@tencent/enums/source';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import Info from './Info';
-import SubscribeList from './Subscribe';
+import SubscribeList, { SubscribeListRef } from './Subscribe';
 import Test from './Test';
 
 const tabs = [
@@ -43,6 +43,8 @@ const tabs = [
 ];
 
 export default function StreamDetail() {
+  const subscribeList = useRef<SubscribeListRef>();
+
   const [projectId] = useProjectId();
 
   const { id: streamId } = useParams<{ id: string }>();
@@ -51,6 +53,7 @@ export default function StreamDetail() {
 
   const { sourceType } = parse(location.search.slice(1));
 
+  const [activeId, setActiveId] = useState<string>('info');
   const [publishModal, setPublishModal] = useState<{ visible: boolean; id?: string }>({
     visible: false,
   });
@@ -82,7 +85,16 @@ export default function StreamDetail() {
       {subscribeData?.total === 0 && (
         <Alert type="info">
           当前日志尚未配置数据订阅，如有数据消费需求，请进入【数据订阅】配置。
-          <Button type="link" style={{ textDecoration: 'underline' }} tooltip="暂未支持" disabled>
+          <Button
+            type="link"
+            style={{ textDecoration: 'underline' }}
+            onClick={() => {
+              setActiveId('subscribe');
+              setTimeout(() => {
+                subscribeList.current.setAddDrawerProps({ visible: true });
+              }, 150);
+            }}
+          >
             立即配置
           </Button>
         </Alert>
@@ -125,10 +137,14 @@ export default function StreamDetail() {
       </Container>
 
       <Container>
-        <Tabs tabs={tabs}>
+        <Tabs tabs={tabs} activeId={activeId} onActive={(tab, event) => setActiveId(tab.id)}>
           {tabs.map(({ id, Component }) => (
             <TabPanel id={id} key={id}>
-              <Component streamId={streamId} info={data} />
+              <Component
+                streamId={streamId}
+                info={data}
+                ref={id === 'subscribe' ? subscribeList : null}
+              />
             </TabPanel>
           ))}
         </Tabs>

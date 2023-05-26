@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useCallback } from 'react';
+import React, { forwardRef, Ref, useCallback, useImperativeHandle } from 'react';
 import { ProTable } from '@tencent/tea-material-pro-table';
 import { useState } from 'react';
 import AddSubscribeDrawer, { AddSubscribeDrawerProps } from './AddSubscribe';
@@ -27,7 +27,11 @@ import { Badge, Button } from '@tencent/tea-component';
 import { statusMap } from '@/@tencent/enums/stream';
 import { sinkTypeMap, SinkTypeEnum } from '@/@tencent/enums/subscribe';
 
-const SubscribeList = ({ streamId, info }) => {
+export interface SubscribeListRef {
+  setAddDrawerProps: (props: any) => void;
+}
+
+const SubscribeList = forwardRef(({ streamId, info }: any, ref: Ref<SubscribeListRef>) => {
   const [projectId] = useProjectId();
   const [records, setRecords] = useState([]);
   const [addDrawerProps, setAddDrawerProps] = useState<{
@@ -38,6 +42,10 @@ const SubscribeList = ({ streamId, info }) => {
   }>({
     visible: false,
   });
+
+  useImperativeHandle(ref, () => ({
+    setAddDrawerProps,
+  }));
 
   const getSubscribeList = useCallback(
     async ({ pageSize, current }) => {
@@ -170,6 +178,6 @@ const SubscribeList = ({ streamId, info }) => {
       <AddSubscribeDrawer {...addDrawerProps} onClose={onClose} streamId={streamId} info={info} />
     </>
   );
-};
+});
 
 export default SubscribeList;

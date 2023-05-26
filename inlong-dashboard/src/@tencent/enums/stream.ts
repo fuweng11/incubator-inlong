@@ -37,6 +37,7 @@ export const dataLevelMap: Map<DataLevelEnum, string> = (() => {
 
 export enum StatusEnum {
   New = 100,
+  Configuring = 110,
   Success = 130,
   Failed = 120,
   Deleted = 40,
@@ -93,6 +94,13 @@ export const statusMap: Map<
       {
         label: '已上线',
         colorTheme: 'success',
+      },
+    ],
+    [
+      StatusEnum.Configuring,
+      {
+        label: '配置中',
+        colorTheme: 'warning',
       },
     ],
     [

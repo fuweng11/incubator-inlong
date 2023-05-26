@@ -139,7 +139,10 @@ export default function StreamCreate() {
   }, [changed, history]);
 
   return (
-    <PageContainer useDefaultContainer={false} breadcrumb={[{ name: '新建接入' }]}>
+    <PageContainer
+      useDefaultContainer={false}
+      breadcrumb={[{ name: isUpdate ? '编辑接入' : '新建接入' }]}
+    >
       <Container useDefaultBackground={false}>
         <Card>
           <Card.Body title="基本信息">

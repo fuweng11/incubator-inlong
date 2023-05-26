@@ -23,12 +23,14 @@ import { Controller } from 'react-hook-form';
 import { ReadModeEnum, readModeMap } from '@/@tencent/enums/source/file';
 import FetchSelect from '@/@tencent/components/FetchSelect';
 import request from '@/core/utils/request';
+import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 export default function File({ form }) {
   const { control, formState, watch } = form;
   const { errors } = formState;
 
   const watchReadMode = watch('readMode', ReadModeEnum.FULL);
+  const [projectId] = useProjectId();
 
   return (
     <>
@@ -37,7 +39,11 @@ export default function File({ form }) {
         align="middle"
         required
         suffix={
-          <Button type="link" disabled title="暂未支持">
+          <Button
+            type="link"
+            title="数据源管理"
+            onClick={() => window.open(`/manage/data-source?ProjectId=${projectId}`)}
+          >
             数据源管理
           </Button>
         }

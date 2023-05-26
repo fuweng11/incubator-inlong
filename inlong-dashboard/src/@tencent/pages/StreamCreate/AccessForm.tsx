@@ -17,28 +17,28 @@
  * under the License.
  */
 
-import React, { useState, forwardRef, useImperativeHandle, Ref, useRef, useEffect } from 'react';
+import React, { forwardRef, Ref, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import {
+  Button,
   Form,
   FormProps,
+  Icon,
+  Input,
   InputNumber,
   Segment,
   Select,
-  Input,
-  Button,
-  Icon,
 } from '@tencent/tea-component';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import omit from 'lodash/omit';
 import {
-  accessTypeMap,
   AccessTypeEnum,
-  peakRateMap,
-  PeakRateEnum,
-  encodeTypeMap,
-  EncodeTypeEnum,
-  dataSeparatorMap,
+  accessTypeMap,
   DataSeparatorEnum,
+  dataSeparatorMap,
+  EncodeTypeEnum,
+  encodeTypeMap,
+  PeakRateEnum,
+  peakRateMap,
   StatusEnum,
 } from '@/@tencent/enums/stream';
 import FieldsParse from '@/@tencent/components/FieldsParse';
@@ -108,8 +108,7 @@ const AccessForm = forwardRef(
         }),
         editableTable.current.submit(),
       ]);
-      const values = { ...v1, fieldsData: v2 };
-      return values;
+      return { ...v1, fieldsData: v2 };
     };
 
     useImperativeHandle(ref, () => ({

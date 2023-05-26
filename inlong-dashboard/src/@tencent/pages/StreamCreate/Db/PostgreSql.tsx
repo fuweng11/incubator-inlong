@@ -38,7 +38,11 @@ export default function PostgreSql({ form }) {
         align="middle"
         required
         suffix={
-          <Button type="link" disabled title="暂未支持">
+          <Button
+            type="link"
+            title="数据源管理"
+            onClick={() => window.open(`/manage/data-source?ProjectId=${projectId}`)}
+          >
             数据源管理
           </Button>
         }
