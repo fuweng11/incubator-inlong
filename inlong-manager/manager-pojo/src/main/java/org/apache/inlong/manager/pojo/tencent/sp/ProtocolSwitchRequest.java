@@ -41,11 +41,9 @@ public class ProtocolSwitchRequest {
     private String inlongStreamId;
 
     @ApiModelProperty("Switch hive status. 1 for switching, 2 for replacing, 3 for rollback-ing")
-    @Range(min = 1, max = 3, message = "default is 1, only supports [1 : switching, 2 : replacing, 3 : rollback-ing]")
     private Integer status;
 
     @ApiModelProperty("Switch thive status. 1 for switching, 2 for replacing, 3 for rollback-ing")
-    @Range(min = 1, max = 3, message = "default is 1, only supports [1 : switching, 2 : replacing, 3 : rollback-ing]")
     private Integer thStatus;
 
     @ApiModelProperty("Switch hive time")
