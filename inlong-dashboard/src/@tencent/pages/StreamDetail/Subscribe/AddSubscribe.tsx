@@ -169,7 +169,7 @@ const AddSubscribeDrawer = ({
         sourceFieldType: item.sourceField.fieldType,
         sequence: item.targetField.id,
       }));
-      if (fieldMappings.length === 0) {
+      if (fieldMappings.length === 0 && writeType !== SinkTypeEnum.MQ) {
         message.warning({
           content: '请选择映射字段',
         });
