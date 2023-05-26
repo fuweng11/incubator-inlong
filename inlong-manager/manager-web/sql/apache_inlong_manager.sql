@@ -791,6 +791,31 @@ CREATE TABLE IF NOT EXISTS `stream_heartbeat`
   DEFAULT CHARSET = utf8 COMMENT ='Inlong stream heartbeat';
 
 -- ----------------------------
+-- Table structure for inlong_tenant
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `inlong_tenant`
+(
+    `id`           int(11)      NOT NULL AUTO_INCREMENT,
+    `name`         varchar(256) NOT NULL COMMENT 'Namespace, not support modification',
+    `description`  varchar(256) DEFAULT '' COMMENT 'Description of tenant',
+    `is_deleted`   int(11)      DEFAULT '0' COMMENT 'Whether to delete, 0 is not deleted, if greater than 0, delete',
+    `creator`      varchar(256) NOT NULL COMMENT 'Creator name',
+    `modifier`     varchar(256) DEFAULT NULL COMMENT 'Modifier name',
+    `create_time`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    `modify_time`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Modify time',
+    `version`      int(11)      NOT NULL DEFAULT '1' COMMENT 'Version number, which will be incremented by 1 after modification',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_user_role_key` (`name`, `is_deleted`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8 COMMENT ='Inlong tenant table';
+
+-- ----------------------------
+-- Insert inlong_tenant item
+-- ----------------------------
+INSERT INTO `inlong_tenant`(`name`, `description`, `creator`, `modifier`)
+VALUES ('public', 'Default tenant', 'admin', 'admin');
+
+-- ----------------------------
 -- Table structure for dbsync heartbeat
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `dbsync_heartbeat`
@@ -849,6 +874,7 @@ VALUES (5, 'SNG社交网络事业群', 'SNG', 5),
        (14129, 'WXG微信事业群', 'WXG', 8),
        (29292, 'PCG平台与内容事业群', 'PCG', 13),
        (29294, 'CSIG云与智慧产业事业群', 'CSIG', 14);
+
 -- ----------------------------
 -- Table structure for audit_base
 -- ----------------------------
