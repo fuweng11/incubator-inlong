@@ -46,11 +46,11 @@ export default function PostgreSql({ form }) {
             数据源管理
           </Button>
         }
-        status={errors.dataBaseName?.message ? 'error' : undefined}
-        message={errors.dataBaseName?.message}
+        status={errors.dataSourceID?.message ? 'error' : undefined}
+        message={errors.dataSourceID?.message}
       >
         <Controller
-          name="dataBaseName"
+          name="dataSourceID"
           shouldUnregister
           control={control}
           rules={{ required: '请填写数据库' }}

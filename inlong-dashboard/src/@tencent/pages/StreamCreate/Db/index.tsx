@@ -56,7 +56,7 @@ export default function Db({ form }) {
               }))}
               onChange={v => {
                 setValue('sourceType', v);
-                setValue('dataBaseName', undefined);
+                setValue('dataSourceID', undefined);
               }}
             />
           )}
