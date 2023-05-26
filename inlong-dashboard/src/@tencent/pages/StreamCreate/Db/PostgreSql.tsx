@@ -24,12 +24,14 @@ import FetchSelect from '@/@tencent/components/FetchSelect';
 import request from '@/core/utils/request';
 import { ReadTypeEnum, readTypeMap } from '@/@tencent/enums/source/postgreSql';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
+import { useParams } from 'react-router-dom';
 
 export default function PostgreSql({ form }) {
-  const { control, formState } = form;
+  const { control, formState, getValues } = form;
   const { errors } = formState;
 
   const [projectId] = useProjectId();
+  const { id: streamId } = useParams<{ id: string }>();
 
   return (
     <>
@@ -54,27 +56,35 @@ export default function PostgreSql({ form }) {
           shouldUnregister
           control={control}
           rules={{ required: '请填写数据库' }}
-          render={({ field }) => (
-            <FetchSelect
-              {...field}
-              request={async () => {
-                const result = await request({
-                  url: '/datasource/search',
-                  method: 'POST',
-                  data: {
-                    projectID: projectId,
-                    type: 'POSTGRESQL',
-                    pageSize: 99,
-                    pageNum: 0,
-                  },
-                });
-                return result?.records.map(item => ({
-                  text: item.displayName,
-                  value: item.name,
-                }));
-              }}
-            />
-          )}
+          render={({ field }: any) => {
+            if (streamId) {
+              const values = getValues();
+              field.initOptions = [
+                { text: values?.dataBaseName || field.value, value: field.value },
+              ];
+            }
+            return (
+              <FetchSelect
+                {...field}
+                request={async () => {
+                  const result = await request({
+                    url: '/datasource/search',
+                    method: 'POST',
+                    data: {
+                      projectID: projectId,
+                      type: 'POSTGRESQL',
+                      pageSize: 99,
+                      pageNum: 0,
+                    },
+                  });
+                  return result?.records.map(item => ({
+                    text: item.displayName,
+                    value: item.name,
+                  }));
+                }}
+              />
+            );
+          }}
         />
       </Form.Item>
 

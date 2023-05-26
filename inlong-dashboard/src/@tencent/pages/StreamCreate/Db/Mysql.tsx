@@ -29,11 +29,12 @@ import {
   snapshotModeMap,
 } from '@/@tencent/enums/source/mysql';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
+import { useParams } from 'react-router-dom';
 
 export default function Mysql({ form }) {
-  const { control, formState, watch } = form;
+  const { control, formState, watch, getValues } = form;
   const { errors } = formState;
-
+  const { id: streamId } = useParams<{ id: string }>();
   const [projectId] = useProjectId();
 
   const watchAllSync = watch('allSync', AllSyncEnum.YES);
@@ -61,27 +62,35 @@ export default function Mysql({ form }) {
           shouldUnregister
           control={control}
           rules={{ required: '请填写数据库' }}
-          render={({ field }) => (
-            <FetchSelect
-              {...field}
-              request={async () => {
-                const result = await request({
-                  url: '/datasource/search',
-                  method: 'POST',
-                  data: {
-                    projectID: projectId,
-                    type: 'MYSQL',
-                    pageSize: 99,
-                    pageNum: 0,
-                  },
-                });
-                return result?.records.map(item => ({
-                  text: item.displayName,
-                  value: item.name,
-                }));
-              }}
-            />
-          )}
+          render={({ field }: any) => {
+            if (streamId) {
+              const values = getValues();
+              field.initOptions = [
+                { text: values?.dataBaseName || field.value, value: field.value },
+              ];
+            }
+            return (
+              <FetchSelect
+                {...field}
+                request={async () => {
+                  const result = await request({
+                    url: '/datasource/search',
+                    method: 'POST',
+                    data: {
+                      projectID: projectId,
+                      type: 'MYSQL',
+                      pageSize: 99,
+                      pageNum: 0,
+                    },
+                  });
+                  return result?.records.map(item => ({
+                    text: item.displayName,
+                    value: item.name,
+                  }));
+                }}
+              />
+            );
+          }}
         />
       </Form.Item>
 

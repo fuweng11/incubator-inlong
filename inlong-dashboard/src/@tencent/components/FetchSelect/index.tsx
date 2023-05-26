@@ -18,12 +18,20 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { Select, TagSelect, StatusTip, SelectProps, TagSelectProps } from '@tencent/tea-component';
+import {
+  Select,
+  TagSelect,
+  StatusTip,
+  SelectProps,
+  TagSelectProps,
+  SelectOptionWithGroup,
+} from '@tencent/tea-component';
 import debounce from 'lodash/debounce';
 
 interface BaseProps {
   request: (inputValue?: string) => Promise<SelectProps['options']>;
   trigger?: ('open' | 'search')[];
+  initOptions?: SelectOptionWithGroup[];
   isMultiple?: boolean;
 }
 
@@ -35,12 +43,15 @@ const FetchSelect: React.FC<FetchSelectProps | FetchTagSelectProps> = ({
   request,
   trigger = ['open', 'search'],
   isMultiple = false,
+  initOptions = [],
   ...rest
 }) => {
   const [status, setStatus] = useState(null);
 
   const [options, setOptions] = useState<SelectProps['options']>(
-    Array.isArray(rest.value)
+    initOptions?.length > 0
+      ? initOptions
+      : Array.isArray(rest.value)
       ? rest.value.map(item => ({ value: item }))
       : rest.value
       ? [{ value: rest.value }]
