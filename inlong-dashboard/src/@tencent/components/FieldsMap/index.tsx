@@ -106,21 +106,23 @@ const FieldsMap = ({
   const [status, setStatus] = useState<string>('');
 
   const actions: actionsProps = [
-    {
-      text: '批量解析字段',
-      onClick: () => {
-        setFieldParseVisible(true);
-      },
-      icon: <ConvertTip />,
-    },
+    // {
+    //   text: '批量解析字段',
+    //   onClick: () => {
+    //     setFieldParseVisible(true);
+    //   },
+    //   icon: <ConvertTip />,
+    // },
     {
       text: '自动添加',
       icon: <AutoAdd />,
       onClick: async () => {
         setStatus('loading');
-        const newTargetFields = await getTargetFields();
+        // const newTargetFields = await getTargetFields();
+        if (sourceFields.length > targetFields.length) {
+          setTargetFields(targetFields.concat(sourceFields.slice(targetFields.length)));
+        }
         setStatus('found');
-        setTargetFields(insertIndex(newTargetFields));
       },
       disabled: !candoAutoAdd,
     },
@@ -128,7 +130,8 @@ const FieldsMap = ({
       text: '全部删除',
       icon: <Delete />,
       onClick: () => {
-        setTargetFields([]);
+        // 已上线接入的字段不能删除
+        setTargetFields(targetFields.filter(f => f.disabled));
       },
     },
   ];
