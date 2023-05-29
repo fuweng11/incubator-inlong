@@ -17,9 +17,6 @@
 
 package org.apache.inlong.manager.service.node;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncDumpPosition;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.apache.inlong.manager.common.consts.DataNodeType;
@@ -48,6 +45,10 @@ import org.apache.inlong.manager.pojo.node.tencent.DataNodeSummaryResponse.Group
 import org.apache.inlong.manager.pojo.source.SourcePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.user.UserService;
+
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

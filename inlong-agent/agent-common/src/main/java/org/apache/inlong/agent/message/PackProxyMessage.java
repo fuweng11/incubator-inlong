@@ -27,12 +27,6 @@ import org.apache.inlong.common.msg.AttributeConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.inlong.agent.conf.JobProfile;
-import org.apache.inlong.agent.utils.AgentUtils;
-import org.apache.inlong.common.msg.AttributeConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,18 +44,6 @@ import static org.apache.inlong.agent.constant.CommonConstants.PROXY_SEND_SYNC;
 import static org.apache.inlong.common.msg.AttributeConstants.DATA_TIME;
 import static org.apache.inlong.common.msg.AttributeConstants.MESSAGE_TOPIC;
 import static org.apache.inlong.common.msg.AttributeConstants.STREAM_ID;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
-import org.apache.inlong.agent.conf.JobProfile;
-import org.apache.inlong.agent.utils.AgentUtils;
-import org.apache.inlong.common.msg.AttributeConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle List of BusMessage, which belong to the same stream id.

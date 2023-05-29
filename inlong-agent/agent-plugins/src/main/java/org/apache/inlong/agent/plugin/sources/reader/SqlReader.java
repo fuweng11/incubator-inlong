@@ -17,9 +17,6 @@
 
 package org.apache.inlong.agent.plugin.sources.reader;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.CharUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.message.DefaultMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
@@ -27,6 +24,10 @@ import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.utils.AgentDbUtils;
 import org.apache.inlong.agent.utils.AgentUtils;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.CharUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

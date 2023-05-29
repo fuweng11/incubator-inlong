@@ -26,6 +26,7 @@ import org.apache.inlong.agent.pojo.DebeziumOffset;
 import org.apache.inlong.agent.utils.DebeziumOffsetSerializer;
 import org.apache.inlong.common.metric.MetricRegister;
 import org.apache.inlong.common.util.NetworkUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

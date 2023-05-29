@@ -31,6 +31,7 @@ import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.utils.ThreadUtils;
 import org.apache.inlong.common.monitor.LogCounter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

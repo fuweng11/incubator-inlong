@@ -17,12 +17,6 @@
 
 package org.apache.inlong.agent.plugin.fetcher;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import org.apache.inlong.agent.cache.LocalFileCache;
 import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
@@ -30,7 +24,6 @@ import org.apache.inlong.agent.conf.ProfileFetcher;
 import org.apache.inlong.agent.conf.TriggerProfile;
 import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.db.CommandDb;
-import org.apache.inlong.agent.entites.CommonResponse;
 import org.apache.inlong.agent.plugin.Trigger;
 import org.apache.inlong.agent.plugin.utils.PluginUtils;
 import org.apache.inlong.agent.pojo.ConfirmAgentIpRequest;
@@ -45,19 +38,28 @@ import org.apache.inlong.common.enums.PullJobTypeEnum;
 import org.apache.inlong.common.pojo.agent.CmdConfig;
 import org.apache.inlong.common.pojo.agent.TaskRequest;
 import org.apache.inlong.common.pojo.agent.TaskResult;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskFullInfo;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import org.apache.inlong.agent.cache.LocalFileCache;
+import org.apache.inlong.agent.entites.CommonResponse;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskFullInfo;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_NAME;
@@ -93,43 +95,6 @@ import static org.apache.inlong.agent.plugin.fetcher.ManagerResultFormatter.getR
 import static org.apache.inlong.agent.plugin.utils.PluginUtils.copyJobProfile;
 import static org.apache.inlong.agent.utils.AgentUtils.fetchLocalIp;
 import static org.apache.inlong.agent.utils.AgentUtils.fetchLocalUuid;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import org.apache.inlong.agent.common.AbstractDaemon;
-import org.apache.inlong.agent.conf.AgentConfiguration;
-import org.apache.inlong.agent.conf.JobProfile;
-import org.apache.inlong.agent.conf.ProfileFetcher;
-import org.apache.inlong.agent.conf.TriggerProfile;
-import org.apache.inlong.agent.core.AgentManager;
-import org.apache.inlong.agent.db.CommandDb;
-import org.apache.inlong.agent.plugin.Trigger;
-import org.apache.inlong.agent.plugin.utils.PluginUtils;
-import org.apache.inlong.agent.pojo.ConfirmAgentIpRequest;
-import org.apache.inlong.agent.pojo.DbCollectorTaskRequestDto;
-import org.apache.inlong.agent.pojo.DbCollectorTaskResult;
-import org.apache.inlong.agent.utils.AgentUtils;
-import org.apache.inlong.agent.utils.HttpManager;
-import org.apache.inlong.agent.utils.ThreadUtils;
-import org.apache.inlong.common.db.CommandEntity;
-import org.apache.inlong.common.enums.ManagerOpEnum;
-import org.apache.inlong.common.enums.PullJobTypeEnum;
-import org.apache.inlong.common.pojo.agent.CmdConfig;
-import org.apache.inlong.common.pojo.agent.TaskRequest;
-import org.apache.inlong.common.pojo.agent.TaskResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Fetch command from Inlong-Manager

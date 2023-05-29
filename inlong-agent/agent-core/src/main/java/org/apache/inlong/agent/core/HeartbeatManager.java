@@ -17,8 +17,6 @@
 
 package org.apache.inlong.agent.core;
 
-import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
@@ -38,6 +36,9 @@ import org.apache.inlong.common.heartbeat.HeartbeatMsg;
 import org.apache.inlong.common.heartbeat.StreamHeartbeat;
 import org.apache.inlong.common.pojo.agent.TaskSnapshotMessage;
 import org.apache.inlong.common.pojo.agent.TaskSnapshotRequest;
+
+import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeatRequest;
 import org.slf4j.Logger;

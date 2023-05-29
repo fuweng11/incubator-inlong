@@ -33,6 +33,7 @@ import org.apache.inlong.agent.db.Db;
 import org.apache.inlong.agent.db.JobProfileDb;
 import org.apache.inlong.agent.db.LocalProfile;
 import org.apache.inlong.agent.db.TriggerProfileDb;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

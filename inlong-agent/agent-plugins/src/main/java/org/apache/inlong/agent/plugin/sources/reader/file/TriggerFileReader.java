@@ -17,12 +17,13 @@
 
 package org.apache.inlong.agent.plugin.sources.reader.file;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.Reader;
+
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotNull;
 
