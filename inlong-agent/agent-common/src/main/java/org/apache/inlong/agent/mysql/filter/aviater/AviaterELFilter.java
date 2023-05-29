@@ -17,12 +17,13 @@
 
 package org.apache.inlong.agent.mysql.filter.aviater;
 
-import com.googlecode.aviator.AviatorEvaluator;
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.common.protocol.CanalEntry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.mysql.filter.CanalEventFilter;
 import org.apache.inlong.agent.mysql.filter.exception.CanalFilterException;
+
+import com.googlecode.aviator.AviatorEvaluator;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;

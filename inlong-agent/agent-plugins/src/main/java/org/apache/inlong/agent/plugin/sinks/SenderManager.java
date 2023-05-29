@@ -18,7 +18,6 @@
 package org.apache.inlong.agent.plugin.sinks;
 
 import org.apache.inlong.agent.common.AgentThreadFactory;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.CommonConstants;
@@ -38,6 +37,7 @@ import org.apache.inlong.sdk.dataproxy.SendMessageCallback;
 import org.apache.inlong.sdk.dataproxy.SendResult;
 
 import io.netty.util.concurrent.DefaultThreadFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,14 +61,13 @@ import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_AU
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_AUTH_SECRET_KEY;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_VIP_HTTP_HOST;
 import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_VIP_HTTP_PORT;
+import static org.apache.inlong.agent.constant.FetcherConstants.INTERNAL_MANAGER_AUTH_USER_KEY;
+import static org.apache.inlong.agent.constant.FetcherConstants.INTERNAL_MANAGER_AUTH_USER_NAME;
 import static org.apache.inlong.agent.constant.JobConstants.DEFAULT_JOB_PROXY_SEND;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_PROXY_SEND;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_GROUP_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_STREAM_ID;
 import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_PLUGIN_ID;
-
-import static org.apache.inlong.agent.constant.FetcherConstants.INTERNAL_MANAGER_AUTH_USER_KEY;
-import static org.apache.inlong.agent.constant.FetcherConstants.INTERNAL_MANAGER_AUTH_USER_NAME;
 
 /**
  * proxy client

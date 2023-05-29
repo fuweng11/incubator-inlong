@@ -17,15 +17,17 @@
 
 package org.apache.inlong.manager.plugin.common.pojo.user;
 
+import org.apache.inlong.manager.common.util.JsonUtils;
+import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
+
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.inlong.manager.common.util.JsonUtils;
-import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
 
 import javax.validation.constraints.NotNull;
+
 import java.util.Date;
 import java.util.Set;
 

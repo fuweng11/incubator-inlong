@@ -20,6 +20,7 @@ package org.apache.inlong.dataproxy.loadmonitor;
 import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
+
 import org.hyperic.sigar.Cpu;
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.NetInterfaceStat;
@@ -27,6 +28,7 @@ import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.Executors;

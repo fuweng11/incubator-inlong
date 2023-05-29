@@ -17,7 +17,6 @@
 
 package org.apache.inlong.audit.service;
 
-import com.tencent.tdw.security.authentication.v2.TauthClient;
 import org.apache.inlong.audit.config.ClickHouseConfig;
 import org.apache.inlong.audit.config.MessageQueueConfig;
 import org.apache.inlong.audit.config.StoreConfig;
@@ -33,6 +32,7 @@ import org.apache.inlong.common.pojo.audit.AuditConfigRequest;
 import org.apache.inlong.common.pojo.audit.MQInfo;
 
 import com.google.gson.Gson;
+import com.tencent.tdw.security.authentication.v2.TauthClient;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;

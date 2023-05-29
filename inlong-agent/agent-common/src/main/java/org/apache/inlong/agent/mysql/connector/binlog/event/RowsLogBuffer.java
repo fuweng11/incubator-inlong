@@ -17,10 +17,11 @@
 
 package org.apache.inlong.agent.mysql.connector.binlog.event;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
 import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.Serializable;
 import java.sql.Timestamp;

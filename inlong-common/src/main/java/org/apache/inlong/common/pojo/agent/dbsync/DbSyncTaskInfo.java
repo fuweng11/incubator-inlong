@@ -17,6 +17,10 @@
 
 package org.apache.inlong.common.pojo.agent.dbsync;
 
+import org.apache.inlong.common.enums.DataReportTypeEnum;
+import org.apache.inlong.common.pojo.dataproxy.DataProxyTopicInfo;
+import org.apache.inlong.common.pojo.dataproxy.MQClusterInfo;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -24,9 +28,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.inlong.common.enums.DataReportTypeEnum;
-import org.apache.inlong.common.pojo.dataproxy.DataProxyTopicInfo;
-import org.apache.inlong.common.pojo.dataproxy.MQClusterInfo;
 
 import java.util.List;
 

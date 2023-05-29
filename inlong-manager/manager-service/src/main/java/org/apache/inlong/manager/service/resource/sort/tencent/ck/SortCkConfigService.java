@@ -17,16 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent.ck;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tencent.flink.formats.common.FormatInfo;
-import com.tencent.oceanus.etl.ZkTools;
-import com.tencent.oceanus.etl.protocol.DataFlowInfo;
-import com.tencent.oceanus.etl.protocol.FieldInfo;
-import com.tencent.oceanus.etl.protocol.sink.ClickHouseSinkInfo;
-import com.tencent.oceanus.etl.protocol.source.SourceInfo;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
@@ -46,6 +36,17 @@ import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tencent.flink.formats.common.FormatInfo;
+import com.tencent.oceanus.etl.ZkTools;
+import com.tencent.oceanus.etl.protocol.DataFlowInfo;
+import com.tencent.oceanus.etl.protocol.FieldInfo;
+import com.tencent.oceanus.etl.protocol.sink.ClickHouseSinkInfo;
+import com.tencent.oceanus.etl.protocol.source.SourceInfo;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

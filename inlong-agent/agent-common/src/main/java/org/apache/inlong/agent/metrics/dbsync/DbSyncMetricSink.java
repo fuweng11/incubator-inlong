@@ -17,11 +17,12 @@
 
 package org.apache.inlong.agent.metrics.dbsync;
 
-import com.alibaba.fastjson.JSONObject;
 import org.apache.inlong.agent.common.DefaultThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.entites.JobMetricInfo;
 import org.apache.inlong.agent.utils.DBSyncUtils;
+
+import com.alibaba.fastjson.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.pulsar.client.api.CompressionType;

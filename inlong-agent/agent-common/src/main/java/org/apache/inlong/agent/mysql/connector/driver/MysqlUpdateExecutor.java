@@ -21,6 +21,7 @@ import org.apache.inlong.agent.mysql.connector.driver.packets.client.QueryComman
 import org.apache.inlong.agent.mysql.connector.driver.packets.server.ErrorPacket;
 import org.apache.inlong.agent.mysql.connector.driver.packets.server.OKPacket;
 import org.apache.inlong.agent.mysql.connector.driver.utils.PacketManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

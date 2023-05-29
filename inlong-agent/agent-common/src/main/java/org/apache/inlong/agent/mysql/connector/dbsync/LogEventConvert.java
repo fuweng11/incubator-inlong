@@ -17,9 +17,6 @@
 
 package org.apache.inlong.agent.mysql.connector.dbsync;
 
-import com.google.protobuf.ByteString;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.EntryType;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Header;
@@ -63,6 +60,10 @@ import org.apache.inlong.agent.mysql.parse.TableMeta.FieldMeta;
 import org.apache.inlong.agent.mysql.utils.AbstractCanalLifeCycle;
 import org.apache.inlong.agent.utils.JsonParser;
 import org.apache.inlong.agent.utils.JsonParser.JsonValue;
+
+import com.google.protobuf.ByteString;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

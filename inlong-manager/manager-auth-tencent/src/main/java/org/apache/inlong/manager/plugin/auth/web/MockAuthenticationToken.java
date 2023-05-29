@@ -17,8 +17,9 @@
 
 package org.apache.inlong.manager.plugin.auth.web;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
+
+import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 

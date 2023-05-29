@@ -17,8 +17,9 @@
 
 package org.apache.inlong.manager.service.tencentauth;
 
-import com.google.common.collect.Maps;
 import org.apache.inlong.manager.common.util.JsonUtils;
+
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;

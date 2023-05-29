@@ -17,10 +17,6 @@
 
 package org.apache.inlong.agent.conf;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.inlong.agent.mysql.filter.CanalEventFilter;
 import org.apache.inlong.agent.mysql.filter.exception.CanalFilterException;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
@@ -30,6 +26,11 @@ import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.JsonUtils.JSONArray;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import org.apache.inlong.agent.utils.LRUMap;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

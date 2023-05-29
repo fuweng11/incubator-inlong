@@ -46,6 +46,7 @@ import org.apache.inlong.agent.mysql.connector.binlog.event.UpdateRowsLogEvent;
 import org.apache.inlong.agent.mysql.connector.binlog.event.UserVarLogEvent;
 import org.apache.inlong.agent.mysql.connector.binlog.event.WriteRowsLogEvent;
 import org.apache.inlong.agent.mysql.connector.binlog.event.XidLogEvent;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

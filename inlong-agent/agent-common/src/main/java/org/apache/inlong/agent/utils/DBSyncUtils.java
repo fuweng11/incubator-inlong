@@ -17,8 +17,6 @@
 
 package org.apache.inlong.agent.utils;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.RowChange;
 import org.apache.inlong.agent.common.protocol.DBSyncMsg.Column;
@@ -26,6 +24,9 @@ import org.apache.inlong.agent.common.protocol.DBSyncMsg.RowData;
 import org.apache.inlong.agent.except.DataSourceConfigException;
 import org.apache.inlong.common.pojo.agent.dbsync.DBServerInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
+
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.pulsar.client.api.CompressionType;

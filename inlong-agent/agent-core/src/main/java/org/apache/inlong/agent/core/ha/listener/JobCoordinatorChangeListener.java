@@ -17,14 +17,15 @@
 
 package org.apache.inlong.agent.core.ha.listener;
 
+import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
 import org.apache.inlong.agent.core.ha.zk.ConfigDelegate;
 import org.apache.inlong.agent.core.ha.zk.Constants;
-import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class JobCoordinatorChangeListener
         implements

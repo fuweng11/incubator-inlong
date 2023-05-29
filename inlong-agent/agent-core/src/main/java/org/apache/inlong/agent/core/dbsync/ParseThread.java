@@ -17,8 +17,6 @@
 
 package org.apache.inlong.agent.core.dbsync;
 
-import com.google.common.base.Joiner;
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.common.protocol.CanalEntry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.EntryType;
@@ -46,6 +44,9 @@ import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.MonitorLogUtils;
 import org.apache.inlong.agent.utils.SnowFlakeManager;
+
+import com.google.common.base.Joiner;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

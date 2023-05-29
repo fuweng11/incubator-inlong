@@ -17,14 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent.iceberg;
 
-import com.tencent.flink.formats.common.FormatInfo;
-import com.tencent.oceanus.etl.ZkTools;
-import com.tencent.oceanus.etl.protocol.DataFlowInfo;
-import com.tencent.oceanus.etl.protocol.FieldInfo;
-import com.tencent.oceanus.etl.protocol.sink.IcebergSinkInfo;
-import com.tencent.oceanus.etl.protocol.source.SourceInfo;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
@@ -38,6 +30,15 @@ import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.QueryIcebergTableResponse;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
+
+import com.tencent.flink.formats.common.FormatInfo;
+import com.tencent.oceanus.etl.ZkTools;
+import com.tencent.oceanus.etl.protocol.DataFlowInfo;
+import com.tencent.oceanus.etl.protocol.FieldInfo;
+import com.tencent.oceanus.etl.protocol.sink.IcebergSinkInfo;
+import com.tencent.oceanus.etl.protocol.source.SourceInfo;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

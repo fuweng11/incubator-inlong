@@ -17,9 +17,10 @@
 
 package org.apache.inlong.agent.mysql.connector.dbsync;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.common.protocol.DBSyncMsg.EventType;
 import org.apache.inlong.agent.mysql.filter.PatternUtils;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.oro.text.regex.Perl5Matcher;
 
 public class SimpleDdlParser {

@@ -17,15 +17,14 @@
 
 package org.apache.inlong.agent.core.job;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.conf.MysqlTableConf;
 import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.core.AgentManager;
+import org.apache.inlong.agent.core.dbsync.DBSyncMetric;
 import org.apache.inlong.agent.core.dbsync.DBSyncReadOperator;
 import org.apache.inlong.agent.core.task.Task;
-import org.apache.inlong.agent.core.dbsync.DBSyncMetric;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Channel;
@@ -35,6 +34,8 @@ import org.apache.inlong.agent.plugin.Source;
 import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.ThreadUtils;
+
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

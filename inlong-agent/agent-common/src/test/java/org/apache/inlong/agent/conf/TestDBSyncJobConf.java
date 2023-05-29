@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.conf;
 
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
+
 import org.junit.Before;
 import org.junit.Test;
 

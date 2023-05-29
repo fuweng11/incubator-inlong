@@ -17,11 +17,12 @@
 
 package org.apache.inlong.manager.pojo.tencent.ups;
 
+import org.apache.inlong.manager.pojo.tencent.ups.UpsTableInfo.TableInfoBean;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.inlong.manager.pojo.tencent.ups.UpsTableInfo.TableInfoBean;
 
 @Data
 @AllArgsConstructor

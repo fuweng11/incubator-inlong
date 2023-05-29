@@ -17,9 +17,10 @@
 
 package org.apache.inlong.agent.mysql.connector.binlog.event;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
 import org.apache.inlong.agent.utils.DBSyncUtils;
+
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.regex.Matcher;

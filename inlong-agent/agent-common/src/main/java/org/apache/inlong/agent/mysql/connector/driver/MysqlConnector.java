@@ -17,7 +17,6 @@
 
 package org.apache.inlong.agent.mysql.connector.driver;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.inlong.agent.mysql.connector.driver.packets.HeaderPacket;
 import org.apache.inlong.agent.mysql.connector.driver.packets.Reply323Packet;
 import org.apache.inlong.agent.mysql.connector.driver.packets.client.AuthSwitchResponsePacket;
@@ -29,6 +28,8 @@ import org.apache.inlong.agent.mysql.connector.driver.packets.server.HandshakeIn
 import org.apache.inlong.agent.mysql.connector.driver.utils.MSC;
 import org.apache.inlong.agent.mysql.connector.driver.utils.MySQLPasswordEncrypter;
 import org.apache.inlong.agent.mysql.connector.driver.utils.PacketManager;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

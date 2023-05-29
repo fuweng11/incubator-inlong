@@ -17,16 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent.es;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tencent.flink.formats.common.FormatInfo;
-import com.tencent.oceanus.etl.ZkTools;
-import com.tencent.oceanus.etl.protocol.DataFlowInfo;
-import com.tencent.oceanus.etl.protocol.FieldInfo;
-import com.tencent.oceanus.etl.protocol.sink.EsSinkInfo;
-import com.tencent.oceanus.etl.protocol.sink.EsSinkInfo.EsClusterInfo;
-import com.tencent.oceanus.etl.protocol.source.SourceInfo;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.manager.common.consts.DataNodeType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
@@ -43,6 +33,17 @@ import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.es.ElasticsearchSink;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tencent.flink.formats.common.FormatInfo;
+import com.tencent.oceanus.etl.ZkTools;
+import com.tencent.oceanus.etl.protocol.DataFlowInfo;
+import com.tencent.oceanus.etl.protocol.FieldInfo;
+import com.tencent.oceanus.etl.protocol.sink.EsSinkInfo;
+import com.tencent.oceanus.etl.protocol.sink.EsSinkInfo.EsClusterInfo;
+import com.tencent.oceanus.etl.protocol.source.SourceInfo;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

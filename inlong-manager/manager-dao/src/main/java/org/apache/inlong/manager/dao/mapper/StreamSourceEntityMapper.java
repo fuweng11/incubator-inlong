@@ -19,9 +19,9 @@ package org.apache.inlong.manager.dao.mapper;
 
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
 import org.apache.inlong.manager.pojo.source.SourcePageRequest;
+import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
 
 import org.apache.ibatis.annotations.Param;
-import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

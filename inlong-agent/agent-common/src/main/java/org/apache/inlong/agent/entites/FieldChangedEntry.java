@@ -17,10 +17,11 @@
 
 package org.apache.inlong.agent.entites;
 
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest.FieldObject;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest.FieldObject;
 
 import java.util.List;
 

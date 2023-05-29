@@ -17,9 +17,6 @@
 
 package org.apache.inlong.agent.core.dbsync;
 
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.EntryType;
 import org.apache.inlong.agent.conf.AgentConfiguration;
@@ -69,6 +66,10 @@ import org.apache.inlong.agent.utils.SnowFlakeManager;
 import org.apache.inlong.agent.utils.countmap.UpdaterMap;
 import org.apache.inlong.agent.utils.countmap.UpdaterMapFactory;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

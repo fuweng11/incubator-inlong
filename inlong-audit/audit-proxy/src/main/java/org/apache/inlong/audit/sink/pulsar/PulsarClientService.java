@@ -21,8 +21,8 @@ import org.apache.inlong.audit.consts.AttributeConstants;
 import org.apache.inlong.audit.file.ConfigManager;
 import org.apache.inlong.audit.sink.EventStat;
 import org.apache.inlong.common.constant.MQType;
-import org.apache.inlong.common.pojo.audit.MQInfo;
 import org.apache.inlong.common.monitor.LogCounter;
+import org.apache.inlong.common.pojo.audit.MQInfo;
 import org.apache.inlong.common.util.NetworkUtils;
 
 import com.google.common.base.Preconditions;

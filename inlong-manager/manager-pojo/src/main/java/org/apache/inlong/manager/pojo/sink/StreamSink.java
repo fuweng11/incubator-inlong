@@ -19,6 +19,7 @@ package org.apache.inlong.manager.pojo.sink;
 
 import org.apache.inlong.manager.common.auth.DefaultAuthentication;
 import org.apache.inlong.manager.common.enums.DataFormat;
+import org.apache.inlong.manager.pojo.sink.custom.CustomSink;
 import org.apache.inlong.manager.pojo.stream.StreamNode;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -35,10 +36,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.apache.inlong.manager.common.auth.DefaultAuthentication;
-import org.apache.inlong.manager.common.enums.DataFormat;
-import org.apache.inlong.manager.pojo.sink.custom.CustomSink;
-import org.apache.inlong.manager.pojo.stream.StreamNode;
 
 import java.util.Date;
 import java.util.List;

@@ -17,11 +17,12 @@
 
 package org.apache.inlong.agent.mysql.filter.aviater;
 
+import org.apache.inlong.agent.mysql.filter.CanalEventFilter;
+import org.apache.inlong.agent.mysql.filter.exception.CanalFilterException;
+
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import org.apache.commons.lang.StringUtils;
-import org.apache.inlong.agent.mysql.filter.CanalEventFilter;
-import org.apache.inlong.agent.mysql.filter.exception.CanalFilterException;
 
 import java.util.ArrayList;
 import java.util.Arrays;

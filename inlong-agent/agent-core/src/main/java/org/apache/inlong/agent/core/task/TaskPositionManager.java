@@ -17,21 +17,21 @@
 
 package org.apache.inlong.agent.core.task;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.core.AgentManager;
-import org.apache.inlong.agent.core.job.JobManager;
 import org.apache.inlong.agent.core.dbsync.PositionControl;
+import org.apache.inlong.agent.core.job.JobManager;
 import org.apache.inlong.agent.db.JobProfileDb;
-import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
+import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.ThreadUtils;
 import org.apache.inlong.common.monitor.LogCounter;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

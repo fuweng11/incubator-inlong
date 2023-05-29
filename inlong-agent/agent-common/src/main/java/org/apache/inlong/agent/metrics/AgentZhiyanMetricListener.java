@@ -17,14 +17,15 @@
 
 package org.apache.inlong.agent.metrics;
 
-import com.google.gson.Gson;
-import com.tencent.teg.monitor.sdk.CurveReporter;
-import com.tencent.teg.monitor.sdk.TegMonitor;
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.common.metric.MetricItemValue;
 import org.apache.inlong.common.metric.MetricListener;
 import org.apache.inlong.common.metric.MetricValue;
+
+import com.google.gson.Gson;
+import com.tencent.teg.monitor.sdk.CurveReporter;
+import com.tencent.teg.monitor.sdk.TegMonitor;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

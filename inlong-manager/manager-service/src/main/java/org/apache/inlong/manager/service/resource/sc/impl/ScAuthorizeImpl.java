@@ -17,11 +17,12 @@
 
 package org.apache.inlong.manager.service.resource.sc.impl;
 
-import lombok.extern.slf4j.Slf4j;
+import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.pojo.common.Response;
 import org.apache.inlong.manager.pojo.tencent.sc.ResourceGrantRequest;
-import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.service.resource.sc.ScAuthorize;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;

@@ -17,10 +17,11 @@
 
 package org.apache.inlong.agent.mysql.protocol;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.inlong.agent.common.protocol.CanalEntry;
 import org.apache.inlong.agent.common.protocol.CanalEntry.Entry;
 import org.apache.inlong.agent.mysql.utils.CanalToStringStyle;
+
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;

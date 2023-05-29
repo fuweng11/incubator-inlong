@@ -19,6 +19,7 @@ package org.apache.inlong.agent.mysql.connector.dbsync;
 
 import org.apache.inlong.agent.mysql.connector.binlog.LogFetcher;
 import org.apache.inlong.agent.mysql.connector.exception.BinlogMissException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

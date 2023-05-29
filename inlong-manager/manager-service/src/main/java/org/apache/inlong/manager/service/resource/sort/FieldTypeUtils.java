@@ -17,8 +17,9 @@
 
 package org.apache.inlong.manager.service.resource.sort;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Locale;
 

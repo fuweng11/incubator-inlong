@@ -17,9 +17,10 @@
 
 package org.apache.inlong.agent.plugin.fetcher;
 
+import org.apache.inlong.agent.entites.CommonResponse;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.apache.inlong.agent.entites.CommonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

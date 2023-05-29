@@ -17,8 +17,9 @@
 
 package org.apache.inlong.manager.plugin.common.utils;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

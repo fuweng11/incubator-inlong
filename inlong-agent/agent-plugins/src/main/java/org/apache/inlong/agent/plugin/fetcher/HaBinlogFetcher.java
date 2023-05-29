@@ -17,7 +17,6 @@
 
 package org.apache.inlong.agent.plugin.fetcher;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.DBSyncJobConf;
@@ -42,6 +41,8 @@ import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.InitTaskRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.ReportTaskRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.ReportTaskRequest.TaskInfoBean;
+
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

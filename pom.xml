@@ -260,18 +260,6 @@
                 <version>${sigar.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>com.ververica</groupId>
-                <artifactId>flink-connector-mongodb-cdc</artifactId>
-                <version>${flink.connector.mongodb.cdc.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.bahir</groupId>
-                <artifactId>flink-connector-redis_${flink.scala.binary.version}</artifactId>
-                <version>${flink.connector.redis}</version>
-            </dependency>
-
             <!-- hive -->
             <dependency>
                 <groupId>org.apache.hive</groupId>

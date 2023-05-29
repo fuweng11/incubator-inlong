@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sort;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.StreamStatus;
@@ -40,6 +39,8 @@ import org.apache.inlong.manager.service.resource.sort.tencent.es.SortEsConfigSe
 import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.resource.sort.tencent.iceberg.SortIcebergConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
+
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

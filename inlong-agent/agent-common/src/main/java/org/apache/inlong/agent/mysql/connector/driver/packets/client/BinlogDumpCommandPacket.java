@@ -17,9 +17,10 @@
 
 package org.apache.inlong.agent.mysql.connector.driver.packets.client;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.mysql.connector.driver.packets.CommandPacket;
 import org.apache.inlong.agent.mysql.connector.driver.utils.ByteHelper;
+
+import org.apache.commons.lang.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

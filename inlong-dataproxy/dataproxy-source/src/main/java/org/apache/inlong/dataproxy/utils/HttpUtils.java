@@ -17,6 +17,9 @@
 
 package org.apache.inlong.dataproxy.utils;
 
+import org.apache.inlong.dataproxy.config.AuthUtils;
+import org.apache.inlong.dataproxy.config.CommonConfigHolder;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.tencent.tdw.security.authentication.v2.TauthClient;
@@ -25,8 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.inlong.dataproxy.config.AuthUtils;
-import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Map;

@@ -17,9 +17,6 @@
 
 package org.apache.inlong.agent.core;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.entites.CommonResponse;
 import org.apache.inlong.agent.entites.FieldChangedEntry;
@@ -28,6 +25,10 @@ import org.apache.inlong.agent.utils.HttpManager;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest.FieldObject;
 import org.apache.inlong.sdk.dataproxy.utils.ConcurrentHashSet;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

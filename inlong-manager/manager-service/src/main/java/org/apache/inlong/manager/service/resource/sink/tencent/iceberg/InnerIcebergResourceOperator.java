@@ -26,6 +26,7 @@ import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
 import org.apache.inlong.manager.service.resource.sink.SinkResourceOperator;
 import org.apache.inlong.manager.service.resource.sort.tencent.iceberg.IcebergBaseOptService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

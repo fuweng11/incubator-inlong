@@ -17,11 +17,13 @@
 
 package org.apache.inlong.manager.plugin.auth.openapi;
 
-import com.tencent.tdw.security.authentication.Authentication;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
 
+import com.tencent.tdw.security.authentication.Authentication;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.servlet.http.HttpServletRequest;
+
 import java.net.URLDecoder;
 
 /**

@@ -17,8 +17,9 @@
 
 package org.apache.inlong.agent.core.job;
 
-import com.google.common.collect.Sets;
 import org.apache.inlong.agent.conf.DBSyncJobConf;
+
+import com.google.common.collect.Sets;
 
 import java.util.Arrays;
 import java.util.Objects;

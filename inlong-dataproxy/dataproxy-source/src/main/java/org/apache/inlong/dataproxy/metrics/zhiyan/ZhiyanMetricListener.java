@@ -17,15 +17,15 @@
 
 package org.apache.inlong.dataproxy.metrics.zhiyan;
 
-import com.google.gson.Gson;
-import com.tencent.teg.monitor.sdk.CurveReporter;
-import com.tencent.teg.monitor.sdk.TegMonitor;
-
 import org.apache.inlong.common.metric.MetricItemValue;
 import org.apache.inlong.common.metric.MetricListener;
 import org.apache.inlong.common.metric.MetricValue;
 import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.metrics.DataProxyMetricItem;
+
+import com.google.gson.Gson;
+import com.tencent.teg.monitor.sdk.CurveReporter;
+import com.tencent.teg.monitor.sdk.TegMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

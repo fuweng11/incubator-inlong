@@ -17,6 +17,8 @@
 
 package org.apache.inlong.manager.pojo.node;
 
+import org.apache.inlong.manager.pojo.node.tencent.custom.CustomDataNodeInfo;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.annotations.ApiModel;
@@ -25,7 +27,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.apache.inlong.manager.pojo.node.tencent.custom.CustomDataNodeInfo;
 
 import java.util.Date;
 

@@ -20,6 +20,7 @@ package org.apache.inlong.manager.pojo.node;
 import org.apache.inlong.manager.common.validation.SaveValidation;
 import org.apache.inlong.manager.common.validation.UpdateByIdValidation;
 import org.apache.inlong.manager.common.validation.UpdateByKeyValidation;
+import org.apache.inlong.manager.pojo.node.tencent.custom.CustomDataNodeRequest;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.annotations.ApiModel;
@@ -27,8 +28,6 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import org.apache.inlong.manager.pojo.node.tencent.custom.CustomDataNodeRequest;
 import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.NotBlank;

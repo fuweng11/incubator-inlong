@@ -17,10 +17,11 @@
 
 package org.apache.inlong.manager.pojo.node.tencent.ck;
 
+import org.apache.inlong.manager.common.util.JsonUtils;
+
 import io.swagger.annotations.ApiModel;
 import lombok.Builder;
 import lombok.Data;
-import org.apache.inlong.manager.common.util.JsonUtils;
 
 import javax.validation.constraints.NotNull;
 

@@ -17,12 +17,13 @@
 
 package org.apache.inlong.agent.core.ha.listener;
 
+import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
+import org.apache.inlong.agent.core.ha.zk.Constants;
+
 import com.google.gson.Gson;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCacheEvent;
 import org.apache.curator.framework.recipes.cache.TreeCacheListener;
-import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
-import org.apache.inlong.agent.core.ha.zk.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

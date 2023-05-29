@@ -17,8 +17,6 @@
 
 package org.apache.inlong.agent.mysql.connector;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.inlong.agent.mysql.connector.binlog.LogContext;
 import org.apache.inlong.agent.mysql.connector.binlog.LogDecoder;
 import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
@@ -38,6 +36,9 @@ import org.apache.inlong.agent.mysql.connector.exception.CanalParseException;
 import org.apache.inlong.agent.mysql.protocol.position.EntryPosition;
 import org.apache.inlong.agent.mysql.relaylog.RelayLog;
 import org.apache.inlong.agent.mysql.relaylog.exception.RelayLogPosErrorException;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

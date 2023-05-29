@@ -17,11 +17,12 @@
 
 package org.apache.inlong.manager.plugin.auth.web;
 
-import com.google.common.hash.Hashing;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
 import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.service.user.UserService;
+
+import com.google.common.hash.Hashing;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 

@@ -17,8 +17,6 @@
 
 package org.apache.inlong.agent.core.dbsync;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
@@ -26,6 +24,9 @@ import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.state.JobStat.State;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

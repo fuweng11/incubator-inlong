@@ -17,11 +17,12 @@
 
 package org.apache.inlong.agent.mysql.connector.driver.packets;
 
-import com.google.common.collect.Lists;
-import lombok.Synchronized;
 import org.apache.inlong.agent.mysql.connector.binlog.LogBuffer;
 import org.apache.inlong.agent.mysql.connector.driver.packets.UUIDSet.Interval;
 import org.apache.inlong.agent.mysql.connector.driver.utils.ByteHelper;
+
+import com.google.common.collect.Lists;
+import lombok.Synchronized;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

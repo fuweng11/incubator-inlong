@@ -27,6 +27,7 @@ import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.utils.SnowFlake;
 import org.apache.inlong.sdk.dataproxy.utils.ConcurrentHashSet;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

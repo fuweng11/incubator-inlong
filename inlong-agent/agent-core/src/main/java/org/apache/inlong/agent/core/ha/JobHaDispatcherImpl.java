@@ -17,8 +17,6 @@
 
 package org.apache.inlong.agent.core.ha;
 
-import com.google.gson.Gson;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.common.DefaultThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.ProfileFetcher;
@@ -42,6 +40,9 @@ import org.apache.inlong.common.pojo.agent.dbsync.DbSyncClusterInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskFullInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.RunningTaskRequest;
+
+import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

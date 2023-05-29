@@ -27,6 +27,8 @@ import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.config.holder.SourceReportInfo;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
+import org.apache.inlong.dataproxy.loadmonitor.LoadMonitor;
+import org.apache.inlong.dataproxy.utils.HttpUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -39,8 +41,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.apache.inlong.dataproxy.loadmonitor.LoadMonitor;
-import org.apache.inlong.dataproxy.utils.HttpUtils;
 
 import java.util.ArrayList;
 import java.util.List;

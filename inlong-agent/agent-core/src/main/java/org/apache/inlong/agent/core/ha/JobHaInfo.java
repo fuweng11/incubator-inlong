@@ -17,11 +17,12 @@
 
 package org.apache.inlong.agent.core.ha;
 
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;

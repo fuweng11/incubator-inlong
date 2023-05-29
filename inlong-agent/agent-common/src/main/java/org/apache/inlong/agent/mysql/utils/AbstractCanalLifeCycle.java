@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.mysql.utils;
 
 import org.apache.inlong.agent.mysql.connector.exception.CanalException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

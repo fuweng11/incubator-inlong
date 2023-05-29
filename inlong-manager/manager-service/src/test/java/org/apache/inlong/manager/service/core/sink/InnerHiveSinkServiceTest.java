@@ -35,6 +35,7 @@ import org.apache.inlong.manager.service.resource.sink.SinkResourceOperatorFacto
 import org.apache.inlong.manager.service.resource.sort.SortConfigOperatorFactory;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

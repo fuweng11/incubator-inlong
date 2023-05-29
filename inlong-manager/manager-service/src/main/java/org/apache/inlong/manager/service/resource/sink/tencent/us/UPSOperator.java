@@ -17,14 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sink.tencent.us;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Maps;
-import com.tencent.tdw.ups.client.TdwUps;
-import com.tencent.tdw.ups.client.TdwUpsFactory;
-import com.tencent.tdw.ups.client.impl.HiveImpl;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.WorkflowException;
@@ -44,6 +36,15 @@ import org.apache.inlong.manager.pojo.tencent.ups.UPSOperateResult;
 import org.apache.inlong.manager.pojo.tencent.ups.UpsTableInfo;
 import org.apache.inlong.manager.pojo.tencent.ups.UpsTableInfo.TableInfoBean;
 import org.apache.inlong.manager.pojo.tencent.ups.UpsTablePrivilege;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Maps;
+import com.tencent.tdw.ups.client.TdwUps;
+import com.tencent.tdw.ups.client.TdwUpsFactory;
+import com.tencent.tdw.ups.client.impl.HiveImpl;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;

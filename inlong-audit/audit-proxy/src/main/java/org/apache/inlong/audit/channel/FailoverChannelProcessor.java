@@ -17,6 +17,8 @@
 
 package org.apache.inlong.audit.channel;
 
+import org.apache.inlong.common.monitor.LogCounter;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.flume.Channel;
@@ -30,7 +32,6 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.interceptor.Interceptor;
 import org.apache.flume.interceptor.InterceptorBuilderFactory;
 import org.apache.flume.interceptor.InterceptorChain;
-import org.apache.inlong.common.monitor.LogCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

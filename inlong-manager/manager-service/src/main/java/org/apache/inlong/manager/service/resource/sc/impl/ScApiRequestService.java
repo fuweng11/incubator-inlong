@@ -17,13 +17,14 @@
 
 package org.apache.inlong.manager.service.resource.sc.impl;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
-import org.apache.inlong.manager.pojo.common.Response;
-import org.apache.inlong.manager.pojo.tencent.sc.ScConfig;
 import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.pojo.common.Response;
+import org.apache.inlong.manager.pojo.tencent.sc.ScConfig;
 import org.apache.inlong.manager.service.resource.sc.ScAuthenticate;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;

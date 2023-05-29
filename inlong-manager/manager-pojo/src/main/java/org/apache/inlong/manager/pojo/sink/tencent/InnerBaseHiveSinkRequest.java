@@ -17,12 +17,13 @@
 
 package org.apache.inlong.manager.pojo.sink.tencent;
 
+import org.apache.inlong.manager.pojo.sink.SinkRequest;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.inlong.manager.pojo.sink.SinkRequest;
 
 import javax.validation.constraints.NotNull;
 

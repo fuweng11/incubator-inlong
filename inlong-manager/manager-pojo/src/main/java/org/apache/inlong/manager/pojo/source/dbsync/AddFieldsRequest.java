@@ -17,13 +17,15 @@
 
 package org.apache.inlong.manager.pojo.source.dbsync;
 
+import org.apache.inlong.manager.pojo.stream.StreamField;
+
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.inlong.manager.pojo.stream.StreamField;
 
 import javax.validation.constraints.NotEmpty;
+
 import java.util.List;
 
 /**

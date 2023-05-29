@@ -17,9 +17,10 @@
 
 package org.apache.inlong.agent.mysql.connector.driver.utils;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.mysql.connector.driver.packets.HeaderPacket;
 import org.apache.inlong.agent.mysql.connector.driver.packets.client.BinlogDumpCommandPacket;
+
+import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 

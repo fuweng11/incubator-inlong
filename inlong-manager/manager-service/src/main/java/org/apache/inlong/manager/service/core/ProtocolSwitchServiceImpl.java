@@ -17,13 +17,6 @@
 
 package org.apache.inlong.manager.service.core;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.tencent.oceanus.etl.configuration.Configuration;
-import com.tencent.oceanus.etl.configuration.Constants;
-import com.tencent.oceanus.etl.util.ZooKeeperUtils;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.curator.framework.CuratorFramework;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
@@ -39,6 +32,14 @@ import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.tencent.sp.ProtocolSwitchInfo;
 import org.apache.inlong.manager.pojo.tencent.sp.ProtocolSwitchRequest;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.tencent.oceanus.etl.configuration.Configuration;
+import com.tencent.oceanus.etl.configuration.Constants;
+import com.tencent.oceanus.etl.util.ZooKeeperUtils;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

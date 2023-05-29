@@ -24,6 +24,7 @@ import org.apache.inlong.agent.metrics.audit.AuditUtils;
 import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.utils.DBSyncUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

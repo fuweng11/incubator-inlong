@@ -17,16 +17,17 @@
 
 package org.apache.inlong.agent.mysql.connector.dbsync;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.mysql.connector.MysqlConnection;
 import org.apache.inlong.agent.mysql.connector.driver.packets.server.FieldPacket;
 import org.apache.inlong.agent.mysql.connector.driver.packets.server.ResultSetPacket;
 import org.apache.inlong.agent.mysql.connector.exception.CanalParseException;
 import org.apache.inlong.agent.mysql.parse.TableMeta;
 import org.apache.inlong.agent.mysql.parse.TableMeta.FieldMeta;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;

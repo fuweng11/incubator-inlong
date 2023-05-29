@@ -17,9 +17,10 @@
 
 package org.apache.inlong.agent.mysql.protocol.position;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncDumpPosition;
+
+import org.apache.commons.lang.StringUtils;
 
 public class LogPosition extends Position implements Comparable<LogPosition> {
 

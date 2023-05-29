@@ -17,12 +17,13 @@
 
 package org.apache.inlong.agent.core.ha;
 
-import com.google.gson.Gson;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.common.DefaultThreadFactory;
 import org.apache.inlong.agent.core.ha.lb.LoadBalanceInfo;
 import org.apache.inlong.agent.core.ha.zk.ConfigDelegate;
 import org.apache.inlong.agent.core.ha.zk.ZkUtil;
+
+import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

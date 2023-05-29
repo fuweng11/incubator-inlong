@@ -17,13 +17,14 @@
 
 package org.apache.inlong.manager.pojo.cluster.tencent.sort;
 
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
+import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.inlong.manager.common.util.CommonBeanUtils;
-import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 
 /**
  * Inlong base sort cluster info

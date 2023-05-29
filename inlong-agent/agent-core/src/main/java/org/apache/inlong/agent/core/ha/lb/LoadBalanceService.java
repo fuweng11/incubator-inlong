@@ -17,17 +17,18 @@
 
 package org.apache.inlong.agent.core.ha.lb;
 
+import org.apache.inlong.agent.common.DefaultThreadFactory;
+import org.apache.inlong.agent.core.ha.JobHaDispatcher;
+import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
+import org.apache.inlong.agent.core.ha.zk.ConfigDelegate;
+import org.apache.inlong.agent.core.ha.zk.ZkUtil;
+
 import com.alibaba.fastjson.JSONObject;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.inlong.agent.common.DefaultThreadFactory;
-import org.apache.inlong.agent.core.ha.JobHaDispatcher;
-import org.apache.inlong.agent.core.ha.JobHaDispatcherImpl;
-import org.apache.inlong.agent.core.ha.zk.ConfigDelegate;
-import org.apache.inlong.agent.core.ha.zk.ZkUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

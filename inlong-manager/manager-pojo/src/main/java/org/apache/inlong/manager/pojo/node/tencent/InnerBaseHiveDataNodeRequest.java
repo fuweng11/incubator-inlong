@@ -17,12 +17,13 @@
 
 package org.apache.inlong.manager.pojo.node.tencent;
 
+import org.apache.inlong.manager.pojo.node.DataNodeRequest;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.inlong.manager.pojo.node.DataNodeRequest;
 
 /**
  * Base data node request for inner Hive

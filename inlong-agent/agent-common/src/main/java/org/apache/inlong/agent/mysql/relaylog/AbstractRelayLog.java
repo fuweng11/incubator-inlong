@@ -17,8 +17,9 @@
 
 package org.apache.inlong.agent.mysql.relaylog;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.inlong.agent.conf.AgentConfiguration;
+
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 

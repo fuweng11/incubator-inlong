@@ -17,9 +17,10 @@
 
 package org.apache.inlong.agent.mysql.connector.dbsync.local;
 
+import org.apache.inlong.agent.mysql.connector.exception.CanalParseException;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.inlong.agent.mysql.connector.exception.CanalParseException;
 
 import java.io.File;
 import java.util.ArrayList;

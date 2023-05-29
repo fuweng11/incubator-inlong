@@ -17,10 +17,11 @@
 
 package org.apache.inlong.agent.mysql.protocol.position;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.inlong.agent.mysql.utils.CanalToStringStyle;
 import org.apache.inlong.agent.utils.JsonUtils.JSONObject;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncDumpPosition;
+
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.net.InetSocketAddress;
 

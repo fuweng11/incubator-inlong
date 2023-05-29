@@ -18,10 +18,11 @@
 package org.apache.inlong.manager.service.core.impl;
 
 import org.apache.inlong.manager.common.exceptions.BusinessException;
-import org.apache.inlong.manager.pojo.tencent.BgInfoResponse;
 import org.apache.inlong.manager.dao.entity.tencent.BgInfoEntity;
 import org.apache.inlong.manager.dao.mapper.tencent.BgInfoEntityMapper;
+import org.apache.inlong.manager.pojo.tencent.BgInfoResponse;
 import org.apache.inlong.manager.service.core.BgInfoService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -17,9 +17,10 @@
 
 package org.apache.inlong.agent.mysql.connector.driver.packets;
 
+import org.apache.inlong.agent.mysql.utils.CanalToStringStyle;
+
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.inlong.agent.mysql.utils.CanalToStringStyle;
 
 public abstract class PacketWithHeaderPacket implements IPacket {
 

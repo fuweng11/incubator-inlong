@@ -17,7 +17,6 @@
 
 package org.apache.inlong.agent.mysql.connector;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.inlong.agent.mysql.connector.binlog.LogContext;
 import org.apache.inlong.agent.mysql.connector.binlog.LogDecoder;
 import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
@@ -25,6 +24,8 @@ import org.apache.inlong.agent.mysql.connector.binlog.LogPosition;
 import org.apache.inlong.agent.mysql.connector.binlog.event.QueryLogEvent;
 import org.apache.inlong.agent.mysql.connector.dbsync.FileLogFetcher;
 import org.apache.inlong.agent.mysql.connector.dbsync.local.BinLogFileQueue;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
