@@ -119,10 +119,12 @@ const FieldsMap = ({
       onClick: async () => {
         setStatus('loading');
         // const newTargetFields = await getTargetFields();
-        if (sourceFields.length > targetFields.length) {
-          setTargetFields(targetFields.concat(sourceFields.slice(targetFields.length)));
-        }
-        setStatus('found');
+        setTimeout(() => {
+          if (sourceFields.length > targetFields.length) {
+            setTargetFields(targetFields.concat(sourceFields.slice(targetFields.length)));
+          }
+          setStatus('found');
+        }, 200);
       },
       disabled: !candoAutoAdd,
     },
@@ -131,7 +133,16 @@ const FieldsMap = ({
       icon: <Delete />,
       onClick: () => {
         // 已上线接入的字段不能删除
-        setTargetFields(targetFields.filter(f => f.disabled));
+        const leftTargetFields = targetFields.filter(f => f.disabled);
+        setTargetFields(leftTargetFields);
+        setSelectedFields(
+          leftTargetFields
+            .map(f => f.id)
+            .map(id => ({
+              sourceField: sourceFields.find(f => f.id === id),
+              targetField: targetFields.find(f => f.id === id),
+            })),
+        );
       },
     },
   ];
