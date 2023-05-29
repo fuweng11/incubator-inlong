@@ -140,30 +140,15 @@ public class LoadMonitor implements Runnable {
             // tcp connections
             final long tcpCon = probeEnd.tcpConn;
             // get load weight setting
-            Map<String, String> weightPropMap =
-                    ConfigManager.getInstance().getWeightProperties();
-            if (weightPropMap.get("cpuWeight") != null) {
-                propertiesValue[0] = Double.parseDouble(weightPropMap.get("cpuWeight"));
-            }
-            if (weightPropMap.get("netinWeight") != null) {
-                propertiesValue[1] = Double.parseDouble(weightPropMap.get("netinWeight"));
-            }
-            if (weightPropMap.get("netoutWeight") != null) {
-                propertiesValue[2] = Double.parseDouble(weightPropMap.get("netoutWeight"));
-            }
-            if (weightPropMap.get("tcpWeight") != null) {
-                propertiesValue[3] = Double.parseDouble(weightPropMap.get("tcpWeight"));
-            }
-            if (weightPropMap.get("cpuThreshold") != null) {
-                cpuMaxThresHold = Double.parseDouble(weightPropMap.get("cpuThreshold"));
-            }
+            ConfigManager configManager = ConfigManager.getInstance();
+            cpuMaxThresHold = configManager.getCpuThresholdWeight();
             // calc load value
             if (cpuPercent < cpuMaxThresHold) {
                 hisLoadList.add(accCnt,
-                        loadValue.getAndSet((int) Math.ceil(cpuPercent * propertiesValue[0]
-                                + netIn * propertiesValue[1]
-                                + netOut * propertiesValue[2]
-                                + tcpCon * propertiesValue[3])));
+                        loadValue.getAndSet((int) Math.ceil(cpuPercent * configManager.getCpuWeight()
+                                + netIn * configManager.getNetInWeight()
+                                + netOut * configManager.getNetOutWeight()
+                                + tcpCon * configManager.getTcpWeight())));
             } else {
                 hisLoadList.add(accCnt, loadValue.getAndSet(200));
             }
