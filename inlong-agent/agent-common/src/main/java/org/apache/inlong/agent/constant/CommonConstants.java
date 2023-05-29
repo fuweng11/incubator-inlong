@@ -105,6 +105,7 @@ public class CommonConstants {
     public static final String PROXY_KEY_GROUP_ID = "inlongGroupId";
     public static final String PROXY_KEY_STREAM_ID = "inlongStreamId";
     public static final String PROXY_KEY_DATA = "dataKey";
+    public static final String PROXY_KEY_DATE = "dateKey";
     public static final String PROXY_KEY_ID = "id";
     public static final String PROXY_KEY_AGENT_IP = "agentip";
     public static final String PROXY_OCEANUS_F = "f";

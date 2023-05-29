@@ -27,6 +27,7 @@ import org.apache.inlong.agent.common.protocol.DBSyncMsg.EventType;
 import org.apache.inlong.agent.common.protocol.DBSyncMsg.RowData;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.MysqlTableConf;
+import org.apache.inlong.agent.constant.CommonConstants;
 import org.apache.inlong.agent.core.FieldManager;
 import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.mysql.connector.MysqlConnection;
@@ -53,6 +54,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -357,7 +359,21 @@ public class ParseThread extends Thread {
         String key = dbName + sep + tbName;
 
         // logData.addData(rowDataOrBuilder.build().toByteArray(), key, execTime);
-        DBSyncMessage message = new DBSyncMessage(rowDataOrBuilder.build().toByteArray()); // add groupId-streamId
+        long timeStample = 0;
+        /*
+         * 10 分钟一个纬度做数据聚合
+         */
+        if (execTime > 0) {
+            timeStample = execTime - (execTime % (1000 * 60 * 10));
+        } else {
+            execTime = Instant.now().toEpochMilli();
+            timeStample = execTime - (execTime % (1000 * 60 * 10));
+        }
+        HashMap<String, String> headerMap = new HashMap<>();
+        headerMap.put(CommonConstants.PROXY_KEY_DATA, String.valueOf(timeStample));
+        headerMap.put(CommonConstants.PROXY_KEY_DATE, String.valueOf(timeStample));
+        DBSyncMessage message = new DBSyncMessage(rowDataOrBuilder.build().toByteArray(), headerMap); // add
+                                                                                                      // groupId-streamId
         message.setInstName(pbInstName);
         message.setLogPosition(logPosition);
         message.setMsgId(msgIdIndex);

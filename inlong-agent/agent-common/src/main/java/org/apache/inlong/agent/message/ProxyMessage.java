@@ -22,9 +22,7 @@ import org.apache.inlong.agent.plugin.Message;
 
 import java.util.Map;
 
-import static org.apache.inlong.agent.constant.CommonConstants.PROXY_KEY_DATA;
-import static org.apache.inlong.agent.constant.CommonConstants.PROXY_KEY_GROUP_ID;
-import static org.apache.inlong.agent.constant.CommonConstants.PROXY_KEY_STREAM_ID;
+import static org.apache.inlong.agent.constant.CommonConstants.*;
 
 /**
  * Bus message with body, header, inlongGroupId and inlongStreamId.
@@ -41,6 +39,8 @@ public class ProxyMessage implements Message {
     private final String batchKey;
     private final String dataKey;
 
+    private final String dateKey;
+
     // dbsync logposition
     private LogPosition logPosition;
     private long msgId;
@@ -51,6 +51,7 @@ public class ProxyMessage implements Message {
         this.inlongGroupId = header.get(PROXY_KEY_GROUP_ID);
         this.inlongStreamId = header.getOrDefault(PROXY_KEY_STREAM_ID, DEFAULT_INLONG_STREAM_ID);
         this.dataKey = header.getOrDefault(PROXY_KEY_DATA, "");
+        this.dateKey = header.getOrDefault(PROXY_KEY_DATE, "");
         // use the batch key of user and inlongStreamId to determine one batch
         this.batchKey = dataKey + inlongStreamId;
     }
@@ -105,5 +106,9 @@ public class ProxyMessage implements Message {
 
     public String getBatchKey() {
         return batchKey;
+    }
+
+    public String getDateKey() {
+        return dateKey;
     }
 }

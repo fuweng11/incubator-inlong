@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.common.AgentThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.constant.CommonConstants;
 import org.apache.inlong.agent.core.job.DBSyncJob;
 import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.message.BatchProxyMessage;
@@ -46,6 +47,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -181,7 +183,7 @@ public class PulsarSink extends AbstractSink {
                                     packProxyMessage =
                                             new PackProxyMessage(jobInstanceId, jobConf, inlongGroupId, inlongStreamId);
                                     packProxyMessage.generateExtraMap(proxyMessage.getDataKey());
-                                    packProxyMessage.addTopicAndDataTime(topic, System.currentTimeMillis());
+                                    packProxyMessage.addTopicAndDataTime(topic, getDataTime(proxyMessage));
                                 }
                                 // add message to package proxy
                                 packProxyMessage.addProxyMessage(proxyMessage);
@@ -200,6 +202,24 @@ public class PulsarSink extends AbstractSink {
             ThreadUtils.threadThrowableHandler(Thread.currentThread(), t);
         }
 
+    }
+
+    private long getDataTime(ProxyMessage proxyMessage) {
+        long dataTime = Instant.now().toEpochMilli();
+        if (proxyMessage != null && proxyMessage.getHeader() != null) {
+            String dateStr = proxyMessage.getHeader().get(CommonConstants.PROXY_KEY_DATE);
+            if (StringUtils.isNotEmpty(dateStr) && StringUtils.isNumeric(dateStr)) {
+                try {
+                    dataTime = Long.parseLong(dateStr);
+                } catch (Exception e) {
+                    LOGGER.error("parse proxy message date [{}] has exception!", dateStr, e);
+                    dataTime = Instant.now().toEpochMilli();
+                }
+            } else {
+                LOGGER.warn("proxy message date [{}] conf has error!", dateStr);
+            }
+        }
+        return dataTime;
     }
 
     @Override

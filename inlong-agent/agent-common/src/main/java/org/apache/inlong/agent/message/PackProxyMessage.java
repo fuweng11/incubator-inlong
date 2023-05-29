@@ -18,6 +18,7 @@
 package org.apache.inlong.agent.message;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
@@ -170,7 +171,7 @@ public class PackProxyMessage {
 
             // record dbsync pos; LogPosition<->msgId
             List<Pair<LogPosition, Long>> positions = new ArrayList<>();
-
+            ProxyMessage getBatchDataTimeMsg = null;
             while (!messageQueue.isEmpty()) {
                 // pre check message size
                 ProxyMessage peekMessage = messageQueue.peek();
@@ -191,6 +192,9 @@ public class PackProxyMessage {
                 }
                 ProxyMessage message = messageQueue.remove();
                 if (message != null) {
+                    if (getBatchDataTimeMsg == null) {
+                        getBatchDataTimeMsg = message;
+                    }
                     int bodySize = message.getBody().length;
                     resultBatchSize += bodySize;
                     // decrease queue size.
@@ -204,11 +208,27 @@ public class PackProxyMessage {
             }
             // make sure result is not empty.
             if (!result.isEmpty()) {
-                return new BatchProxyMessage(jobId, groupId, streamId, result, AgentUtils.getCurrentTime(), extraMap,
-                        syncSend, positions);
+                return new BatchProxyMessage(jobId, groupId, streamId, result,
+                        getBatchProxyMessageDataTime(getBatchDataTimeMsg), extraMap, syncSend, positions);
             }
         }
         return null;
+    }
+
+    private long getBatchProxyMessageDataTime(ProxyMessage message) {
+        long dateTime = AgentUtils.getCurrentTime();
+        if (message != null && StringUtils.isNumeric(message.getDateKey())) {
+            try {
+                dateTime = Long.parseLong(message.getDateKey());
+            } catch (Exception e) {
+                LOGGER.warn("DateTime [{}] from message parse exception, and use current system time",
+                        message.getDateKey(), e);
+            }
+        } else {
+            LOGGER.warn("DateTime [{}] from message is null or not number, and use current system time",
+                    message.getDateKey());
+        }
+        return dateTime;
     }
 
     public Map<String, String> getExtraMap() {
