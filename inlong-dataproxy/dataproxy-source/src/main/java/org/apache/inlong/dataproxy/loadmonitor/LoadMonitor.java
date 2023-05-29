@@ -45,12 +45,10 @@ public class LoadMonitor implements Runnable {
     private static LoadMonitor instance = null;
     private long intervalInMs = 10000;
     private String netName = "eth1";
-    private double cpuMaxThresHold = 85;
     private int accCnt = 0;
     private int maxAccPrintCnt = 6;
     private static final AtomicInteger loadValue = new AtomicInteger(200);
     private final ArrayList<Integer> hisLoadList = new ArrayList<>();
-    private final double[] propertiesValue = {1, 0.5, 0.5, 0};
     private final ScheduledExecutorService executorService;
 
     public static LoadMonitor getInstance() {
@@ -141,9 +139,8 @@ public class LoadMonitor implements Runnable {
             final long tcpCon = probeEnd.tcpConn;
             // get load weight setting
             ConfigManager configManager = ConfigManager.getInstance();
-            cpuMaxThresHold = configManager.getCpuThresholdWeight();
             // calc load value
-            if (cpuPercent < cpuMaxThresHold) {
+            if (cpuPercent < configManager.getCpuThresholdWeight()) {
                 hisLoadList.add(accCnt,
                         loadValue.getAndSet((int) Math.ceil(cpuPercent * configManager.getCpuWeight()
                                 + netIn * configManager.getNetInWeight()
@@ -154,9 +151,14 @@ public class LoadMonitor implements Runnable {
             }
             if (++accCnt >= maxAccPrintCnt) {
                 accCnt = 0;
-                logger.info("[Load Monitor] load calculate: calc weight is {}, history is {},"
-                        + " latest cpuPercent={}, memPercent={}, netIn={}, netOut={}, tcpConn={}",
-                        propertiesValue, hisLoadList, cpuPercent, memPercent, netIn, netOut, tcpCon);
+                logger.info("[Load Monitor] load calculate: calc weight is (cpu={}, net-in={},"
+                                + " net-out={}, tcp={}, cpuThreshold={}), latest probe values"
+                                + " (cpuPercent={}, memPercent={}, netIn={}, netOut={}, tcpConn={}),"
+                                + " history is {}",
+                        configManager.getCpuWeight(), configManager.getNetInWeight(),
+                        configManager.getNetOutWeight(), configManager.getTcpWeight(),
+                        configManager.getCpuThresholdWeight(), cpuPercent, memPercent,
+                        netIn, netOut, tcpCon, hisLoadList);
                 hisLoadList.clear();
             }
         } catch (Throwable e) {
