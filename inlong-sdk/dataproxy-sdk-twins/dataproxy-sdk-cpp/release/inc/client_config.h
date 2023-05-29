@@ -91,6 +91,7 @@ namespace dataproxy_sdk
     bool need_auth_;
     std::string auth_id_;
     std::string auth_key_;
+    bool internal_;
 
     void defaultInit();
 

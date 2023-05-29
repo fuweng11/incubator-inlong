@@ -91,6 +91,7 @@ namespace dataproxy_sdk
 
         // http basic auth  
         static const char kBasicAuthHeader[] = "Authorization:";
+        static const char kInternalAuthHeader[] = "secure-authentication:";
         static const char kBasicAuthPrefix[] = "Basic";
         static const char kBasicAuthSeparator[] = " ";
         static const char kBasicAuthJoiner[] = ":";

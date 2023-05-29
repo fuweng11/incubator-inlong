@@ -112,111 +112,111 @@ namespace dataproxy_sdk
     #define _log_level_       gst_log_run.log_level
 
 
-    #define LOG_STAT(fmt, args...)                                          \
+    #define LOG_STAT( fmt, args...)                                          \
     do{                                                                     \
         char    log_time[50] = {0};                                         \
         if (_log_type_ & _LOG_FILE)                                         \
         {                                                                   \
-            log_print(_LOG_STAT, 1, (char *)"PID[%d]STAT:%s:%.3d<%s>: "fmt,\
+            log_print(_LOG_STAT, 1, (char *)"PID[%d]STAT:%s:%.3d<%s>: " fmt,\
                     _log_pid_, __FILENAME__, __LINE__, __FUNCTION__, ##args);   \
         }                                                                   \
         if (_log_type_ & _LOG_PTY)                                          \
         {                                                                   \
             debug_get_date(log_time);                                       \
-            fprintf(stderr, (char *)"[%s]PID[%d]STAT:%s:%.3d<%s>: "fmt"\n",\
+            fprintf(stderr, (char *)"[%s]PID[%d]STAT:%s:%.3d<%s>: " fmt "\n",\
                     log_time, _log_pid_, __FILENAME__, __LINE__,                \
                     __FUNCTION__, ##args);                                  \
         }                                                                   \
     }while(0)
 
-    #define LOG_ERROR(fmt, args...)                                          \
+    #define LOG_ERROR( fmt, args...)                                          \
     do{                                                                     \
         char    log_time[50] = {0};                                         \
         if (_log_type_ & _LOG_FILE)                                         \
         {                                                                   \
-            log_print(_LOG_ERROR, 1, (char *)"PID[%d]ERR:%s:%.3d<%s>: "fmt,\
+            log_print(_LOG_ERROR, 1, (char *)"PID[%d]ERR:%s:%.3d<%s>: " fmt,\
                     _log_pid_, __FILENAME__, __LINE__, __FUNCTION__, ##args);   \
         }                                                                   \
         if (_log_type_ & _LOG_PTY)                                          \
         {                                                                   \
             debug_get_date(log_time);                                       \
-            fprintf(stderr, (char *)"[%s]PID[%d]ERR:%s:%.3d<%s>: "fmt"\n", \
+            fprintf(stderr, (char *)"[%s]PID[%d]ERR:%s:%.3d<%s>: " fmt "\n", \
                     log_time, _log_pid_, __FILENAME__, __LINE__,                \
                     __FUNCTION__, ##args);                                  \
         }                                                                   \
     }while(0)
 
-    #define LOG_WARN(fmt, args...)                                          \
+    #define LOG_WARN( fmt, args...)                                          \
     do{                                                                     \
         char    log_time[50] = {0};                                         \
         if (_log_level_ < _LOG_WARN)                                        \
             {break;}                                                        \
         if (_log_type_ & _LOG_FILE)                                         \
         {                                                                   \
-            log_print(_LOG_WARN, 1, (char *)"PID[%d]WARN:%s:%.3d<%s>: "fmt,\
+            log_print(_LOG_WARN, 1, (char *)"PID[%d]WARN:%s:%.3d<%s>: " fmt,\
                     _log_pid_, __FILENAME__, __LINE__, __FUNCTION__, ##args);   \
         }                                                                   \
         if (_log_type_ & _LOG_PTY)                                          \
         {                                                                   \
             debug_get_date(log_time);                                       \
-            fprintf(stderr, (char *)"[%s]PID[%d]WARN:%s:%.3d<%s>: "fmt"\n",\
+            fprintf(stderr, (char *)"[%s]PID[%d]WARN:%s:%.3d<%s>: " fmt "\n",\
                     log_time, _log_pid_, __FILENAME__, __LINE__,                \
                     __FUNCTION__, ##args);                                  \
         }                                                                   \
     }while(0)
 
-    #define LOG_INFO(fmt, args...)                                          \
+    #define LOG_INFO( fmt, args...)                                          \
     do{                                                                     \
         char    log_time[50] = {0};                                         \
         if (_log_level_ < _LOG_INFO)                                        \
             {break;}                                                        \
         if (_log_type_ & _LOG_FILE)                                         \
         {                                                                   \
-            log_print(_LOG_INFO, 1, (char *)"PID[%d]INFO:%s:%.3d<%s>: "fmt,\
+            log_print(_LOG_INFO, 1, (char *)"PID[%d]INFO:%s:%.3d<%s>: " fmt,\
                     _log_pid_, __FILENAME__, __LINE__, __FUNCTION__, ##args);   \
         }                                                                   \
         if (_log_type_ & _LOG_PTY)                                          \
         {                                                                   \
             debug_get_date(log_time);                                       \
-            fprintf(stderr, (char *)"[%s]PID[%d]INFO:%s:%.3d<%s>: "fmt"\n",\
+            fprintf(stderr, (char *)"[%s]PID[%d]INFO:%s:%.3d<%s>: " fmt "\n",\
                     log_time, _log_pid_, __FILENAME__, __LINE__,                \
                     __FUNCTION__, ##args);                                  \
         }                                                                   \
     }while(0)
 
-    #define LOG_DEBUG(fmt, args...)                                         \
+    #define LOG_DEBUG( fmt, args...)                                         \
     do{                                                                     \
         char    log_time[50] = {0};                                         \
         if (_log_level_ < _LOG_DEBUG)                                       \
             {break;}                                                        \
         if (_log_type_ & _LOG_FILE)                                         \
         {                                                                   \
-            log_print(_LOG_DEBUG, 1, (char *)"PID[%d]DEBUG:%s:%.3d<%s>: "fmt,\
+            log_print(_LOG_DEBUG, 1, (char *)"PID[%d]DEBUG:%s:%.3d<%s>: " fmt,\
                     _log_pid_, __FILENAME__, __LINE__, __FUNCTION__, ##args);   \
         }                                                                   \
         if (_log_type_ & _LOG_PTY)                                          \
         {                                                                   \
             debug_get_date(log_time);                                       \
-            fprintf(stderr, (char *)"[%s]PID[%d]DEBUG:%s:%.3d<%s>: "fmt"\n",\
+            fprintf(stderr, (char *)"[%s]PID[%d]DEBUG:%s:%.3d<%s>: " fmt "\n",\
                     log_time, _log_pid_, __FILENAME__, __LINE__,                \
                     __FUNCTION__, ##args);                                  \
         }                                                                   \
     }while(0)
 
-    #define LOG_TRACE(fmt, args...)                                         \
+    #define LOG_TRACE( fmt, args...)                                         \
     do{                                                                     \
         char    log_time[50] = {0};                                         \
         if (_log_level_ < _LOG_TRACE)                                       \
             {break;}                                                        \
         if (_log_type_ & _LOG_FILE)                                         \
         {                                                                   \
-            log_print(_LOG_TRACE, 1, (char *)"PID[%d]TRACE:%s:%.3d<%s>: "fmt,   \
+            log_print(_LOG_TRACE, 1, (char *)"PID[%d]TRACE:%s:%.3d<%s>: " fmt,   \
                     _log_pid_, __FILENAME__, __LINE__, __FUNCTION__, ##args);   \
         }                                                                   \
         if (_log_type_ & _LOG_PTY)                                          \
         {                                                                   \
             debug_get_date(log_time);                                       \
-            fprintf(stderr, (char *)"[%s]PID[%d]TRACE:%s:%.3d<%s>: "fmt"\n",\
+            fprintf(stderr, (char *)"[%s]PID[%d]TRACE:%s:%.3d<%s>: " fmt "\n",\
                     log_time, _log_pid_, __FILENAME__, __LINE__,                \
                     __FUNCTION__, ##args);                                  \
         }                                                                   \

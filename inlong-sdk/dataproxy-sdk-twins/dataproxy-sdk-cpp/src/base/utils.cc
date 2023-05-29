@@ -40,6 +40,8 @@
 #include "logger.h"
 #include "tc_api.h"
 #include "curl/curl.h"
+#include "manager_auth.h"
+
 namespace dataproxy_sdk
 {
 uint16_t Utils::sequence     = 0;
@@ -306,9 +308,18 @@ int32_t Utils::requestUrl(std::string& res, const HttpRequest* request)
     if ( request->need_auth && !request->auth_id.empty() && !request->auth_key.empty())
     {
         // Authorization: Basic xxxxxxxx
-        std::string auth = constants::kBasicAuthHeader;
+        std::string auth = "";
         auth.append(constants::kBasicAuthSeparator);
-        auth.append(genBasicAuthCredential(request->auth_id, request->auth_key));
+        if (request->internal) {
+          auth = constants::kInternalAuthHeader;
+          tauth::TAuthClient tAuthClient;
+          std::string authCredential=tAuthClient.constructAuthentication(request->auth_id, request->auth_key);
+          auth.append(authCredential);
+        } else {
+          auth = constants::kBasicAuthHeader;
+          auth.append(
+              genBasicAuthCredential(request->auth_id, request->auth_key));
+        }
         LOG_INFO("request manager, auth-header:%s", auth.c_str());
         list = curl_slist_append(list, auth.c_str());
     }

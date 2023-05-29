@@ -1,7 +1,7 @@
 {
     "init-param": {
         "thread_num": 5,
-        "inlong_group_ids": "b_inlong_group_test_01, b_inlong_group_test_02",
+        "inlong_group_ids": "test_cpp_sdk_20230404",
         "enable_groupId_isolation": false,
         "shared_buf_num": 5,
         "buffer_num_per_groupId": 5,
@@ -24,9 +24,10 @@
         "enable_hb": true,
         "hb_interval": 60,
         "proxy_update_interval": 10,
-        "proxy_cfg_preurl": "http://127.0.0.1:8099/inlong/manager/openapi/dataproxy/getIpList",
+        "proxy_cfg_preurl": "http://11.151.212.99:8083/inlong/manager/openapi/dataproxy/getIpList",
         "need_auth": true,
-        "auth_id": "admin",
-        "auth_key": "87haw3VYTPqK5fK0"
+        "auth_id": "doleyzi",
+        "auth_key": "YTkwYmYxODZhZjhjYmVkZmIxMGU4OGM3ZTdlMjBiNmY3NGI2NzViY2FlNDdjYjUw",
+        "is_internal": true
     }
 }

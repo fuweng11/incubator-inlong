@@ -54,8 +54,8 @@ int main(int argc, char const *argv[])
     cout << "---->start sdk successfully" << endl;
 
     int count = 1000;
-    string inlong_group_id = "test_20220727_86";
-    string inlong_stream_id = "test_20220727_86_str_17";
+    string inlong_group_id = "test_cpp_sdk_20230404";
+    string inlong_stream_id = "stream1";
     string msg = "this is a test ttttttttttttttt; eiwhgreuhg jfdiowaehgorerlea; test end";
 
     // step2. send

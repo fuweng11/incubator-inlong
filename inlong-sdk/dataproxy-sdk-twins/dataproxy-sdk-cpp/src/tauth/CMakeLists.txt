@@ -20,7 +20,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 aux_source_directory(. BASE_SRCS)
-add_library(sdk_base STATIC ${BASE_SRCS} ${TAUTH_SRCS})
+add_library(sdk_tauth STATIC ${BASE_SRCS})
 
 # set link lib
-target_link_libraries(sdk_base liblog4cplus.a libsnappy.a libcurl.a) 
+target_link_libraries(sdk_tauth libssl.a libcrypto.a)

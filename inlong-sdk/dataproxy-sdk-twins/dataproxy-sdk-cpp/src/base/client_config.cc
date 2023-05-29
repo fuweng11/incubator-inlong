@@ -122,6 +122,9 @@ namespace dataproxy_sdk
             need_auth_ = true;
             auth_id_ = doc["auth_id"].GetString();
             auth_key_ = doc["auth_key"].GetString();
+            if(doc.HasMember("is_internal") && doc["need_auth"].IsBool()){
+                internal_=doc["need_auth"].GetBool();
+            }
             LOG_WARN("need_auth, auth_id:%s, auth_key:%s", auth_id_.c_str(), auth_key_.c_str());        
         }
         else

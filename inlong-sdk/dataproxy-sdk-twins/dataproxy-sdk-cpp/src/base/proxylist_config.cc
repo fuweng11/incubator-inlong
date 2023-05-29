@@ -36,6 +36,7 @@
 #include "socket_connection.h"
 #include "tc_api.h"
 #include "utils.h"
+
 namespace dataproxy_sdk
 {
     ClusterProxyList::ClusterProxyList()
@@ -598,7 +599,8 @@ namespace dataproxy_sdk
                 int32_t ret;
                 for (int i = 0; i < constants::kMaxRequestTDMTimes; i++)
                 {
-                    HttpRequest request = {url, g_config.proxy_URL_timeout_, g_config.need_auth_, g_config.auth_id_, g_config.auth_key_, post_data};
+                    HttpRequest request = {url, g_config.proxy_URL_timeout_, g_config.need_auth_, g_config.auth_id_,
+                                           g_config.auth_key_, post_data,g_config.internal_};
                     ret = Utils::requestUrl(meta_data, &request);
                     if (!ret)
                     {

@@ -21,7 +21,7 @@ cmake_minimum_required(VERSION 3.1)
 
 project(demo)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall  -Wsign-compare -Wfloat-equal -fno-strict-aliasing -fPIC -DASIO_STANDALONE")
+set(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall  -Wsign-compare -Wfloat-equal -fno-strict-aliasing -fPIC -DASIO_STANDALONE -Wl,-dn  -lssl -lcrypto   -Wl,-dy -lcurl")
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
