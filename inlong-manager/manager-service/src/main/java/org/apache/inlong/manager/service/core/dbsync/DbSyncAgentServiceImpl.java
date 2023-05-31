@@ -62,6 +62,7 @@ import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
 import org.apache.inlong.manager.pojo.common.OrderFieldEnum;
 import org.apache.inlong.manager.pojo.common.OrderTypeEnum;
 import org.apache.inlong.manager.pojo.common.PageResult;
+import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarDTO;
 import org.apache.inlong.manager.pojo.node.mysql.MySQLDataNodeInfo;
 import org.apache.inlong.manager.pojo.source.SourcePageRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
@@ -659,8 +660,11 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 String mqType = groupEntity.getMqType();
                 if (MQType.PULSAR.equals(mqType) || MQType.TDMQ_PULSAR.equals(mqType)) {
                     PulsarClusterDTO pulsarCluster = PulsarClusterDTO.getFromJson(cluster.getExtParams());
-                    String tenant = pulsarCluster.getTenant();
-                    if (StringUtils.isBlank(tenant)) {
+                    InlongPulsarDTO pulsarInfo = InlongPulsarDTO.getFromJson(groupEntity.getExtParams());
+                    String tenant = pulsarInfo.getTenant();
+                    if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarCluster.getTenant())) {
+                        tenant = pulsarCluster.getTenant();
+                    } else {
                         tenant = InlongConstants.DEFAULT_PULSAR_TENANT;
                     }
                     String topic = String.format(InlongConstants.PULSAR_TOPIC_FORMAT,
