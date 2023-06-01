@@ -24,7 +24,7 @@ import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
-import org.apache.inlong.manager.common.enums.UserTypeEnum;
+import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
@@ -117,7 +117,7 @@ public class DataNodeServiceImpl implements DataNodeService {
         }
 
         // only the person in charges can query
-        if (!opInfo.getAccountType().equals(UserTypeEnum.ADMIN.getCode())) {
+        if (!opInfo.getAccountType().equals(TenantUserTypeEnum.TENANT_ADMIN.getCode())) {
             throw new BusinessException(ErrorCodeEnum.PERMISSION_REQUIRED);
         }
         // check if data node already exist
@@ -197,7 +197,7 @@ public class DataNodeServiceImpl implements DataNodeService {
     @Override
     public List<DataNodeInfo> list(DataNodePageRequest request, UserInfo opInfo) {
         request.setCurrentUser(opInfo.getName());
-        request.setIsAdminRole(opInfo.getRoles().contains(UserTypeEnum.ADMIN.name()));
+        request.setIsAdminRole(opInfo.getRoles().contains(TenantUserTypeEnum.TENANT_ADMIN.name()));
         // query result
         List<DataNodeEntity> nodeEntities = dataNodeMapper.selectByCondition(request);
         return nodeEntities.stream()
@@ -246,7 +246,7 @@ public class DataNodeServiceImpl implements DataNodeService {
     @Transactional(rollbackFor = Throwable.class)
     public Boolean update(DataNodeRequest request, UserInfo opInfo) {
         // only the person in charges can query
-        if (!opInfo.getAccountType().equals(UserTypeEnum.ADMIN.getCode())) {
+        if (!opInfo.getAccountType().equals(TenantUserTypeEnum.TENANT_ADMIN.getCode())) {
             throw new BusinessException(ErrorCodeEnum.PERMISSION_REQUIRED);
         }
         // check the record existed
@@ -314,7 +314,7 @@ public class DataNodeServiceImpl implements DataNodeService {
     @Override
     public Boolean delete(Integer id, UserInfo opInfo) {
         // only the person in charges can query
-        if (!opInfo.getAccountType().equals(UserTypeEnum.ADMIN.getCode())) {
+        if (!opInfo.getAccountType().equals(TenantUserTypeEnum.TENANT_ADMIN.getCode())) {
             throw new BusinessException(ErrorCodeEnum.PERMISSION_REQUIRED);
         }
         DataNodeEntity entity = dataNodeMapper.selectById(id);
