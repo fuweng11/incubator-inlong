@@ -18,15 +18,17 @@
 package org.apache.inlong.manager.plugin.auth.web;
 
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
-import org.apache.inlong.manager.common.enums.UserTypeEnum;
+import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.NetworkUtils;
 import org.apache.inlong.manager.plugin.auth.openapi.BasicAuthenticationToken;
 import org.apache.inlong.manager.plugin.auth.openapi.TAuthAuthenticationToken;
 import org.apache.inlong.manager.plugin.common.pojo.user.StaffDTO;
+import org.apache.inlong.manager.pojo.user.TenantRoleInfo;
+import org.apache.inlong.manager.pojo.user.TenantRolePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
-import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
+import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +51,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Web authentication filter
@@ -62,14 +65,15 @@ public class WebAuthenticationFilter implements Filter {
 
     private final UserService userService;
 
-    private final RoleService roleService;
+    private final TenantRoleService tenantRoleService;
 
-    public WebAuthenticationFilter(boolean supportMockUsername, UserService userService, RoleService roleService) {
+    public WebAuthenticationFilter(boolean supportMockUsername, UserService userService,
+            TenantRoleService tenantRoleService) {
         if (supportMockUsername) {
             log.warn("ensure that you are not using the test mode in production environment");
         }
         this.userService = userService;
-        this.roleService = roleService;
+        this.tenantRoleService = tenantRoleService;
         this.supportMockUsername = supportMockUsername;
     }
 
@@ -208,12 +212,15 @@ public class WebAuthenticationFilter implements Filter {
         UserInfo userInfo = new UserInfo();
         String userName = (String) (subject.getPrincipal());
         UserInfo userInfoDB = userService.getByName(userName);
-        List<String> roleList = roleService.listByUser(userName);
+        TenantRolePageRequest tenantRolePageRequest = new TenantRolePageRequest();
+        tenantRolePageRequest.setUsername(userName);
+        List<String> roleList = tenantRoleService.listByCondition(tenantRolePageRequest).getList().stream().map(
+                TenantRoleInfo::getUsername).collect(Collectors.toList());
         userInfo.setName(userName);
         userInfo.setRoles(new HashSet<>(roleList));
         // add account type info
         if (userInfoDB == null) {
-            userInfo.setAccountType(UserTypeEnum.OPERATOR.getCode());
+            userInfo.setAccountType(TenantUserTypeEnum.TENANT_OPERATOR.getCode());
         } else {
             userInfo.setAccountType(userInfoDB.getAccountType());
         }

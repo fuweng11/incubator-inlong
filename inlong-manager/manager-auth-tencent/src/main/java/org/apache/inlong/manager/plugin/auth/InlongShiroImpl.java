@@ -23,9 +23,9 @@ import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthorizingRealm;
 import org.apache.inlong.manager.plugin.auth.web.WebAuthenticationFilter;
 import org.apache.inlong.manager.plugin.auth.web.WebAuthorizingRealm;
 import org.apache.inlong.manager.plugin.common.enums.Env;
-import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
+import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
 import org.apache.shiro.authc.credential.CredentialsMatcher;
@@ -64,7 +64,7 @@ public class InlongShiroImpl implements InlongShiro {
     private Boolean openAPIAuthEnabled;
 
     @Autowired
-    private RoleService roleService;
+    private TenantRoleService tenantRoleService;
 
     @Autowired
     private UserService userService;
@@ -90,7 +90,7 @@ public class InlongShiroImpl implements InlongShiro {
         webRealm.setCredentialsMatcher(getCredentialsMatcher());
 
         // openAPI realm
-        AuthorizingRealm openAPIRealm = new OpenAPIAuthorizingRealm(userService, roleService, authConfig);
+        AuthorizingRealm openAPIRealm = new OpenAPIAuthorizingRealm(userService, tenantRoleService, authConfig);
         openAPIRealm.setCredentialsMatcher(getCredentialsMatcher());
 
         return Arrays.asList(webRealm, openAPIRealm);
@@ -113,7 +113,7 @@ public class InlongShiroImpl implements InlongShiro {
 
         Map<String, Filter> filters = new LinkedHashMap<>();
         boolean allowMock = !Env.PROD.equals(Env.forName(env));
-        filters.put(FILTER_NAME_WEB, new WebAuthenticationFilter(allowMock, userService, roleService));
+        filters.put(FILTER_NAME_WEB, new WebAuthenticationFilter(allowMock, userService, tenantRoleService));
         shiroFilterFactoryBean.setFilters(filters);
 
         // anon: can be accessed by anyone
@@ -130,7 +130,7 @@ public class InlongShiroImpl implements InlongShiro {
         pathDefinitions.put("/openapi/**/*", FILTER_NAME_API);
         // openapi
         if (openAPIAuthEnabled) {
-            filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, roleService));
+            filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, tenantRoleService));
             pathDefinitions.put("/openapi/**/*", FILTER_NAME_API);
         } else {
             pathDefinitions.put("/openapi/**/*", "anon");

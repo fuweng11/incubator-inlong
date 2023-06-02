@@ -17,12 +17,14 @@
 
 package org.apache.inlong.manager.plugin.auth.openapi;
 
-import org.apache.inlong.manager.common.enums.UserTypeEnum;
+import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
+import org.apache.inlong.manager.pojo.user.TenantRoleInfo;
+import org.apache.inlong.manager.pojo.user.TenantRolePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.pojo.user.UserRoleCode;
-import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
+import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
 import com.google.common.collect.Sets;
@@ -38,6 +40,7 @@ import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Open api authorizing realm
@@ -47,11 +50,12 @@ public class OpenAPIAuthorizingRealm extends AuthorizingRealm {
 
     private final TAuthAuthenticator tAuthAuthenticator;
     private final UserService userService;
-    private final RoleService roleService;
+    private final TenantRoleService tenantRoleService;
 
-    public OpenAPIAuthorizingRealm(UserService userService, RoleService roleService, AuthConfig authConfig) {
+    public OpenAPIAuthorizingRealm(UserService userService, TenantRoleService tenantRoleService,
+            AuthConfig authConfig) {
         this.userService = userService;
-        this.roleService = roleService;
+        this.tenantRoleService = tenantRoleService;
         this.tAuthAuthenticator = new TAuthAuthenticator(authConfig.getService(), authConfig.getSmk());
     }
 
@@ -80,16 +84,19 @@ public class OpenAPIAuthorizingRealm extends AuthorizingRealm {
         }
         if (principal instanceof String) {
             UserInfo userInfoDB = userService.getByName((String) principal);
-            List<String> roles = roleService.listByUser((String) principal);
+            TenantRolePageRequest tenantRolePageRequest = new TenantRolePageRequest();
+            tenantRolePageRequest.setUsername((String) principal);
+            List<String> roles = tenantRoleService.listByCondition(tenantRolePageRequest).getList().stream().map(
+                    TenantRoleInfo::getUsername).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(roles)) {
-                authorizationInfo.setRoles(Sets.newHashSet(UserRoleCode.OPERATOR));
+                authorizationInfo.setRoles(Sets.newHashSet(UserRoleCode.TENANT_OPERATOR));
             } else {
                 authorizationInfo.setRoles(Sets.newHashSet(roles));
             }
             LoginUserUtils.getLoginUser().setRoles(authorizationInfo.getRoles());
             // add account type info
             if (userInfoDB == null) {
-                LoginUserUtils.getLoginUser().setAccountType(UserTypeEnum.OPERATOR.getCode());
+                LoginUserUtils.getLoginUser().setAccountType(TenantUserTypeEnum.TENANT_OPERATOR.getCode());
             } else {
                 LoginUserUtils.getLoginUser().setAccountType(userInfoDB.getAccountType());
             }

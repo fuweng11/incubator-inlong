@@ -18,7 +18,7 @@
 package org.apache.inlong.manager.plugin.auth.web;
 
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
-import org.apache.inlong.manager.common.enums.UserTypeEnum;
+import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
@@ -136,7 +136,7 @@ public abstract class BaseProxyAuthenticator implements Authenticator {
                         log.warn("{} user info might be out of date", userInfo.getName());
                     }
                 }
-                userInfo.setRoles(Collections.singleton(UserTypeEnum.name(userInfo.getAccountType())));
+                userInfo.setRoles(Collections.singleton(TenantUserTypeEnum.name(userInfo.getAccountType())));
                 return userInfo;
             }
             // or create with staff info
@@ -144,13 +144,13 @@ public abstract class BaseProxyAuthenticator implements Authenticator {
                     .name(username)
                     .password(DUMMY_PASSWORD)
                     .validDays(DEFAULT_VALID_DAYS)
-                    .accountType(UserTypeEnum.OPERATOR.getCode())
+                    .accountType(TenantUserTypeEnum.TENANT_OPERATOR.getCode())
                     .extParams(StaffDTO.convertToJson(staffInfo))
                     .build();
             int userId = userService.save(request, username);
             userInfo = CommonBeanUtils.copyProperties(request, UserInfo::new);
             userInfo.setId(userId);
-            userInfo.setRoles(Collections.singleton(UserTypeEnum.name(userInfo.getAccountType())));
+            userInfo.setRoles(Collections.singleton(TenantUserTypeEnum.name(userInfo.getAccountType())));
         }
         return userInfo;
     }

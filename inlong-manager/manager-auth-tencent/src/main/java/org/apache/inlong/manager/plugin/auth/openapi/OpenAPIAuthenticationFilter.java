@@ -17,11 +17,13 @@
 
 package org.apache.inlong.manager.plugin.auth.openapi;
 
-import org.apache.inlong.manager.common.enums.UserTypeEnum;
+import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
 import org.apache.inlong.manager.common.util.NetworkUtils;
+import org.apache.inlong.manager.pojo.user.TenantRoleInfo;
+import org.apache.inlong.manager.pojo.user.TenantRolePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
-import org.apache.inlong.manager.service.core.RoleService;
 import org.apache.inlong.manager.service.user.LoginUserUtils;
+import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Open api authentication filter
@@ -50,15 +53,16 @@ public class OpenAPIAuthenticationFilter implements Filter {
     private final boolean supportMockUsername;
 
     private final UserService userService;
-    private final RoleService roleService;
+    private final TenantRoleService tenantRoleService;
 
-    public OpenAPIAuthenticationFilter(boolean supportMockUsername, UserService userService, RoleService roleService) {
+    public OpenAPIAuthenticationFilter(boolean supportMockUsername, UserService userService,
+            TenantRoleService tenantRoleService) {
         if (supportMockUsername) {
             log.warn("Ensure that you are not using test mode in production environment.");
         }
         this.supportMockUsername = supportMockUsername;
         this.userService = userService;
-        this.roleService = roleService;
+        this.tenantRoleService = tenantRoleService;
     }
 
     @Override
@@ -105,12 +109,15 @@ public class OpenAPIAuthenticationFilter implements Filter {
         UserInfo userInfo = new UserInfo();
         String userName = (String) (subject.getPrincipal());
         UserInfo userInfoDB = userService.getByName(userName);
-        List<String> roleList = roleService.listByUser(userName);
+        TenantRolePageRequest tenantRolePageRequest = new TenantRolePageRequest();
+        tenantRolePageRequest.setUsername(userName);
+        List<String> roles = tenantRoleService.listByCondition(tenantRolePageRequest).getList().stream().map(
+                TenantRoleInfo::getUsername).collect(Collectors.toList());
         userInfo.setName(userName);
-        userInfo.setRoles(new HashSet<>(roleList));
+        userInfo.setRoles(new HashSet<>(roles));
         // add account type info
         if (userInfoDB == null) {
-            userInfo.setAccountType(UserTypeEnum.OPERATOR.getCode());
+            userInfo.setAccountType(TenantUserTypeEnum.TENANT_OPERATOR.getCode());
         } else {
             userInfo.setAccountType(userInfoDB.getAccountType());
         }
