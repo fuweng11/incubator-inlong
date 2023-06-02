@@ -316,12 +316,12 @@ public class AbstractInnerSortConfigService {
             Preconditions.expectNotNull(masterAddress,
                     "tube cluster [" + tubeCluster.getId() + "] not contains masterAddress");
             DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
-            // List<InnerElasticsearchFieldInfo> fieldList = getElasticsearchFieldFromSink(innerEsSink);
-            // The consumer group name is pushed to null, which is constructed by the sort side
+            String topic = groupInfo.getMqResource();
+            String consumerGroup = getConsumerGroup(groupInfo, topic, sortClusterName, sinkInfo.getId());
             return new TubeSourceInfo(
                     groupInfo.getMqResource(),
                     masterAddress,
-                    null,
+                    consumerGroup,
                     deserializationInfo,
                     fieldList.stream().map(f -> {
                         FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
