@@ -91,6 +91,8 @@ public class AgentConstants {
     public static final String TRIGGER_CHECK_INTERVAL = "trigger.check.interval";
     public static final int DEFAULT_TRIGGER_CHECK_INTERVAL = 2;
     public static final String JOB_DB_CACHE_TIME = "job.db.cache.time";
+    public static final String JOB_QUEUE_BLOCK_TIME_MS = "job.queue.block.time.ms";
+    public static final long DEFAULT_JOB_QUEUE_BLOCK_TIME_MS = 1000;
     // cache for 3 days.
     public static final long DEFAULT_JOB_DB_CACHE_TIME = 3 * 24 * 60 * 60 * 1000;
     public static final String JOB_DB_CACHE_CHECK_INTERVAL = "job.db.cache.check.interval";

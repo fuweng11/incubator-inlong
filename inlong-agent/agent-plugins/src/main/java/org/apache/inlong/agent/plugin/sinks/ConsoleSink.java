@@ -62,7 +62,7 @@ public class ConsoleSink extends AbstractSink {
 
     @Override
     public void init(JobProfile jobConf, AbstractJob job) {
-
+        init(jobConf);
     }
 
     @Override

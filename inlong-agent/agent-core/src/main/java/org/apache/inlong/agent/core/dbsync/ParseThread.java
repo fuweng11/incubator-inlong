@@ -58,10 +58,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_NEED_SKIP_DELETE_DATA;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_NEED_SKIP_DELETE_DATA;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_SEND_QUEUE_SIZE;
+import static org.apache.inlong.agent.constant.AgentConstants.PULSAR_SINK_SEND_QUEUE_SIZE;
 
 public class ParseThread extends Thread {
 
@@ -81,6 +84,7 @@ public class ParseThread extends Thread {
     private String jobName;
     private char ipSep = '@';
     private char sep = ',';
+    private Semaphore queueSemaphore;
 
     public ParseThread(String parserName, MysqlConnection parseMetaConnection,
             DBSyncReadOperator dbSyncReadOperator, SnowFlakeManager snowFlakeManager) {
@@ -100,6 +104,8 @@ public class ParseThread extends Thread {
         });
         parseStatus = JobStat.State.INIT;
         positionControl = dbSyncReadOperator.getPositionControl();
+        queueSemaphore = new Semaphore(
+                AgentConfiguration.getAgentConf().getInt(PULSAR_SINK_SEND_QUEUE_SIZE, DEFAULT_SEND_QUEUE_SIZE));
     }
 
     public void start() {
@@ -119,7 +125,6 @@ public class ParseThread extends Thread {
         while (bParseRunning || !bInTransEnd || !queue.isEmpty()) {
             try {
                 pkgEvent = queue.poll(1, TimeUnit.SECONDS);
-
                 if (pkgEvent == null) {
                     if (!bParseRunning && dbSyncReadOperator.getParseDisptcherStatus() == JobStat.State.STOP
                             && queue.isEmpty() && !bInTransEnd) {
@@ -129,6 +134,9 @@ public class ParseThread extends Thread {
                     }
                     continue;
                 }
+
+                queueSemaphore.release();
+
                 eventList = pkgEvent.getEventLists();
                 parseMsgId = pkgEvent.getIndex();
                 bInTransEnd = pkgEvent.isbHasTransEnd();
@@ -382,6 +390,12 @@ public class ParseThread extends Thread {
     }
 
     public void putEvents(PkgEvent events) {
+        try {
+            queueSemaphore.acquire();
+        } catch (InterruptedException e) {
+            LOGGER.warn("{}, {} putEvents queueSemaphore.acquire: {}", jobName, parserJobName, e.getMessage());
+        }
+
         queue.offer(events);
     }
 

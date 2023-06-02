@@ -17,6 +17,9 @@
 
 package org.apache.inlong.agent.mysql.relaylog;
 
+import org.apache.inlong.agent.conf.AgentConfiguration;
+import org.apache.inlong.agent.utils.AgentUtils;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,6 +27,11 @@ import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_JOB_QUEUE_BLOCK_TIME_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_SEND_QUEUE_SIZE;
+import static org.apache.inlong.agent.constant.AgentConstants.JOB_QUEUE_BLOCK_TIME_MS;
+import static org.apache.inlong.agent.constant.AgentConstants.PULSAR_SINK_SEND_QUEUE_SIZE;
 
 public class MemRelayLogImpl implements RelayLog {
 
@@ -34,6 +42,8 @@ public class MemRelayLogImpl implements RelayLog {
     private AtomicLong containDataLength;
     private AtomicBoolean bRunning;
     private ReentrantLock reenLock;
+    private int sendQueueSize;
+    private long jobBlockTimeMs;
 
     public MemRelayLogImpl(long maxDataSize) {
         this.maxDataSize = maxDataSize;
@@ -41,6 +51,10 @@ public class MemRelayLogImpl implements RelayLog {
         bRunning = new AtomicBoolean(true);
         containDataLength = new AtomicLong(0L);
         reenLock = new ReentrantLock();
+
+        sendQueueSize = AgentConfiguration.getAgentConf().getInt(PULSAR_SINK_SEND_QUEUE_SIZE, DEFAULT_SEND_QUEUE_SIZE);
+        jobBlockTimeMs =
+                AgentConfiguration.getAgentConf().getLong(JOB_QUEUE_BLOCK_TIME_MS, DEFAULT_JOB_QUEUE_BLOCK_TIME_MS);
     }
 
     @Override
@@ -51,12 +65,9 @@ public class MemRelayLogImpl implements RelayLog {
         }
 
         while ((containDataLength.get() + bytes.length) > maxDataSize && bRunning.get()) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                logger.error("", e);
-            }
+            AgentUtils.silenceSleepInMs(jobBlockTimeMs);
         }
+
         try {
             reenLock.lock();
             dataList.add(bytes);

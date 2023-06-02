@@ -17,6 +17,7 @@
 
 package org.apache.inlong.agent.plugin.sources.reader;
 
+import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.message.DBSyncMessage;
@@ -29,8 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_SEND_QUEUE_SIZE;
+import static org.apache.inlong.agent.constant.AgentConstants.PULSAR_SINK_SEND_QUEUE_SIZE;
 import static org.apache.inlong.agent.constant.JobConstants.DBSYNC_TASK_ID;
 
 public class DBSyncReader extends AbstractReader {
@@ -40,22 +44,30 @@ public class DBSyncReader extends AbstractReader {
     private String taskId = "-1";
     private volatile boolean finished = false;
 
+    private Semaphore queueSemaphore;
+
     public DBSyncReader(JobProfile taskConf) {
         messageQueue = new LinkedBlockingQueue<>(5000);// TODO:configurable in agent.properties
         taskId = taskConf.get(DBSYNC_TASK_ID, "-1");
+        queueSemaphore = new Semaphore(
+                AgentConfiguration.getAgentConf().getInt(PULSAR_SINK_SEND_QUEUE_SIZE, DEFAULT_SEND_QUEUE_SIZE));
     }
 
     @Override
     public Message read() {
+        Message message = null;
         if (!messageQueue.isEmpty()) {
-            return messageQueue.poll();
+            message = messageQueue.poll();
+            queueSemaphore.release();
         }
         try {
-            return messageQueue.poll(JobConstants.DEFAULT_JOB_READ_WAIT_TIMEOUT, TimeUnit.SECONDS);
+            message = messageQueue.poll(JobConstants.DEFAULT_JOB_READ_WAIT_TIMEOUT, TimeUnit.SECONDS);
+            queueSemaphore.release();
         } catch (InterruptedException e) {
             LOGGER.warn("read data get interruptted.", e);
+            queueSemaphore.release();
         }
-        return null;
+        return message;
     }
 
     @Override
@@ -64,6 +76,8 @@ public class DBSyncReader extends AbstractReader {
             return;
         }
         try {
+            queueSemaphore.acquire();
+
             readerMetric.pluginReadCount.incrementAndGet();
             messageQueue.put((DBSyncMessage) message);
             AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_READ_SUCCESS, inlongGroupId, inlongStreamId,
