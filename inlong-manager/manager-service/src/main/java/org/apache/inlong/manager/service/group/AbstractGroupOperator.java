@@ -25,15 +25,20 @@ import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
+import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongGroupExtEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongStreamExtEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupRequest;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.service.cluster.InlongClusterOperator;
 import org.apache.inlong.manager.service.cluster.InlongClusterOperatorFactory;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
+import org.apache.inlong.manager.service.sink.SinkOperatorFactory;
+import org.apache.inlong.manager.service.sink.StreamSinkOperator;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,6 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Default operator of inlong group.
@@ -76,6 +82,10 @@ public abstract class AbstractGroupOperator implements InlongGroupOperator {
     protected InlongClusterEntityMapper clusterEntityMapper;
     @Autowired
     protected InlongClusterOperatorFactory clusterOperatorFactory;
+    @Autowired
+    private StreamSinkEntityMapper sinkEntityMapper;
+    @Autowired
+    private SinkOperatorFactory operatorFactory;
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
@@ -125,6 +135,7 @@ public abstract class AbstractGroupOperator implements InlongGroupOperator {
     public Map<String, Object> getDetailInfo(InlongGroupInfo groupInfo) {
         Map<String, Object> map = new HashMap<>(getClusterInfoByTag(groupInfo.getInlongClusterTag()));
         map.putIfAbsent(groupInfo.getMqType(), getMqInfo(groupInfo));
+        map.putIfAbsent("SortInfo", getSortInfo(groupInfo));
         return map;
     }
 
@@ -156,6 +167,14 @@ public abstract class AbstractGroupOperator implements InlongGroupOperator {
             mqClusterInfo.add(instance.getClusterInfo(clusterEntity));
         }
         return mqClusterInfo;
+    }
+
+    private List<StreamSink> getSortInfo(InlongGroupInfo groupInfo) {
+        List<StreamSinkEntity> streamSinks = sinkEntityMapper.selectByRelatedId(groupInfo.getInlongGroupId(), null);
+        return streamSinks.stream().map(sink -> {
+            StreamSinkOperator sinkOperator = operatorFactory.getInstance(sink.getSinkType());
+            return sinkOperator.getFromEntity(sink);
+        }).collect(Collectors.toList());
     }
 
 }

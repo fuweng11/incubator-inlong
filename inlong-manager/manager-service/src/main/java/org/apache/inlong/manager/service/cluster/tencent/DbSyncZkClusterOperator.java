@@ -36,6 +36,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class DbSyncZkClusterOperator extends AbstractClusterOperator {
 
@@ -79,5 +82,13 @@ public class DbSyncZkClusterOperator extends AbstractClusterOperator {
             CommonBeanUtils.copyProperties(dto, info);
         }
         return info;
+    }
+
+    @Override
+    public Object getClusterInfo(InlongClusterEntity entity) {
+        DbSyncZkClusterInfo dbSyncZkClusterInfo = (DbSyncZkClusterInfo) this.getFromEntity(entity);
+        Map<String, String> map = new HashMap<>();
+        map.put("url", dbSyncZkClusterInfo.getUrl());
+        return map;
     }
 }

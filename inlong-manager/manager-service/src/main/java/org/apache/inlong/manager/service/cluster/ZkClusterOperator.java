@@ -35,6 +35,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Zk cluster operator.
  */
@@ -80,5 +83,13 @@ public class ZkClusterOperator extends AbstractClusterOperator {
         CommonBeanUtils.copyProperties(entity, clusterInfo, true);
         CommonBeanUtils.copyProperties(dto, clusterInfo, true);
         return clusterInfo;
+    }
+
+    @Override
+    public Object getClusterInfo(InlongClusterEntity entity) {
+        ZkClusterInfo zkClusterInfo = (ZkClusterInfo) this.getFromEntity(entity);
+        Map<String, String> map = new HashMap<>();
+        map.put("serverUrl", zkClusterInfo.getUrl());
+        return map;
     }
 }
