@@ -20,7 +20,6 @@ package org.apache.inlong.agent.core;
 import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
-import org.apache.inlong.agent.core.dbsync.DBSyncReadOperator;
 import org.apache.inlong.agent.core.job.Job;
 import org.apache.inlong.agent.core.job.JobManager;
 import org.apache.inlong.agent.core.job.JobWrapper;
@@ -36,8 +35,6 @@ import org.apache.inlong.common.heartbeat.HeartbeatMsg;
 import org.apache.inlong.common.heartbeat.StreamHeartbeat;
 import org.apache.inlong.common.pojo.agent.TaskSnapshotMessage;
 import org.apache.inlong.common.pojo.agent.TaskSnapshotRequest;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeatRequest;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -48,29 +45,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_IN_CHARGES;
-import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_NAME;
-import static org.apache.inlong.agent.constant.AgentConstants.AGENT_CLUSTER_TAG;
-import static org.apache.inlong.agent.constant.AgentConstants.AGENT_HTTP_PORT;
-import static org.apache.inlong.agent.constant.AgentConstants.AGENT_NODE_GROUP;
-import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_HEART_INTERVAL;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_AGENT_HTTP_PORT;
-import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_HEART_INTERVAL;
-import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_HEARTBEAT_INTERVAL;
-import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_HEARTBEAT_HTTP_PATH;
-import static org.apache.inlong.agent.constant.FetcherConstants.AGENT_MANAGER_REPORTSNAPSHOT_HTTP_PATH;
-import static org.apache.inlong.agent.constant.FetcherConstants.DBSYNC_REPORT_HEARTBEAT;
-import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_AGENT_HEARTBEAT_INTERVAL;
-import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_AGENT_MANAGER_HEARTBEAT_HTTP_PATH;
-import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_AGENT_MANAGER_REPORTSNAPSHOT_HTTP_PATH;
-import static org.apache.inlong.agent.constant.FetcherConstants.DEFAULT_DBSYNC_REPORT_HEARTBEAT;
+import static org.apache.inlong.agent.constant.AgentConstants.*;
+import static org.apache.inlong.agent.constant.FetcherConstants.*;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_GROUP_ID;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_STREAM_ID;
 
@@ -87,12 +66,7 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
     private final String baseManagerUrl;
     private final String reportSnapshotUrl;
     private final String reportHeartbeatUrl;
-    private final String dbSyncReportUrl;
     private final Pattern numberPattern = Pattern.compile("^[-+]?[\\d]*$");
-    private final long connInterval;
-    private final Random random = new Random();
-    private final LinkedBlockingQueue<DbSyncHeartbeat> stoppedDbSyncJobHb = new LinkedBlockingQueue<>();
-    private final ConcurrentHashMap<String, DBSyncReadOperator> monitorDbSyncJobs = new ConcurrentHashMap<>();
     private volatile boolean stopFlag = false;
 
     /**
@@ -100,13 +74,11 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
      */
     private HeartbeatManager(AgentManager agentManager) {
         this.conf = AgentConfiguration.getAgentConf();
-        connInterval = conf.getLong(DBSYNC_HEART_INTERVAL, DEFAULT_DBSYNC_HEART_INTERVAL);
         jobmanager = agentManager.getJobManager();
         httpManager = new HttpManager(conf);
         baseManagerUrl = HttpManager.buildBaseUrl();
         reportSnapshotUrl = buildReportSnapShotUrl(baseManagerUrl);
         reportHeartbeatUrl = buildReportHeartbeatUrl(baseManagerUrl);
-        dbSyncReportUrl = buildDBSyncHbUrl();
     }
 
     private HeartbeatManager() {
@@ -115,8 +87,6 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
         baseManagerUrl = HttpManager.buildBaseUrl();
         reportSnapshotUrl = buildReportSnapShotUrl(baseManagerUrl);
         reportHeartbeatUrl = buildReportHeartbeatUrl(baseManagerUrl);
-        dbSyncReportUrl = buildDBSyncHbUrl();
-        connInterval = conf.getLong(DBSYNC_HEART_INTERVAL, DEFAULT_DBSYNC_HEART_INTERVAL);
 
         jobmanager = null;
     }
@@ -139,38 +109,12 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
         return heartbeatManager;
     }
 
-    public void addStoppedHeartbeat(DbSyncHeartbeat stopHb) {
-        if (stopHb != null) {
-            stoppedDbSyncJobHb.offer(stopHb);
-            LOGGER.debug("stopHb: {}", stopHb);
-        }
-    }
-
-    public DbSyncHeartbeat getLastHbInfo(String jobName) {
-        DBSyncReadOperator reader = monitorDbSyncJobs.get(jobName);
-        LOGGER.info("all monitor dbsync-jobs {}", monitorDbSyncJobs.keySet());
-        return reader.genHeartBeat(true);
-    }
-
-    public void addMonitorJob(String jobName, DBSyncReadOperator reader) {
-        LOGGER.info("monitor add dbsync-reader {}", jobName);
-        monitorDbSyncJobs.put(jobName, reader);
-    }
-
-    public void removeMonitorJob(String jobName) {
-        LOGGER.info("monitor remove dbsync-reader{}", jobName);
-        monitorDbSyncJobs.remove(jobName);
-    }
-
     @Override
     public void start() throws Exception {
         submitWorker(snapshotReportThread());
         // TODO:improve, merge two heartbeat report, need manager support
         // Now, agent automatic registration depends on the heartbeat module, must report
         submitWorker(heartbeatReportThread());
-        if (conf.enableHA()) {
-            submitWorker(dbSyncHbReportThread());
-        }
     }
 
     private Runnable snapshotReportThread() {
@@ -187,22 +131,6 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
                     LOGGER.error("interrupted while report snapshot", e);
                     ThreadUtils.threadThrowableHandler(Thread.currentThread(), e);
                 }
-            }
-        };
-    }
-
-    private Runnable dbSyncHbReportThread() {
-        return () -> {
-            LOGGER.info("DbSync-heartbeat-report thread start");
-            while (isRunnable()) {
-                try {
-                    reportDBSyncHeartbeat();
-                } catch (Throwable e) {
-                    LOGGER.error("dbsync-heartbeat-report interrupted while report heartbeat", e);
-                } finally {
-                    AgentUtils.silenceSleepInMs(getDBSyncInterval());
-                }
-
             }
         };
     }
@@ -241,47 +169,6 @@ public class HeartbeatManager extends AbstractDaemon implements AbstractHeartbea
     @Override
     public void reportHeartbeat(HeartbeatMsg heartbeat) {
         httpManager.doSentPost(reportHeartbeatUrl, heartbeat);
-    }
-
-    public long getDBSyncInterval() {
-        return connInterval + ((long) (random.nextFloat() * connInterval / 2));
-    }
-
-    public void reportDBSyncHeartbeat() {
-        DbSyncHeartbeatRequest heartbeat = getDbSyncHeartbeat();
-        httpManager.doSentPost(dbSyncReportUrl, heartbeat);
-    }
-
-    public DbSyncHeartbeatRequest getDbSyncHeartbeat() {
-        DbSyncHeartbeatRequest hbRequest = new DbSyncHeartbeatRequest();
-        hbRequest.setIp(AgentUtils.getLocalIp());
-        List<DbSyncHeartbeat> allHb = new ArrayList<>();
-        // get stopped job hb
-        if (!stoppedDbSyncJobHb.isEmpty()) {
-            DbSyncHeartbeat stopHb;
-            do {
-                try {
-                    stopHb = stoppedDbSyncJobHb.poll(1, TimeUnit.MILLISECONDS);
-                    if (stopHb != null) {
-                        allHb.add(stopHb);
-                    }
-                } catch (InterruptedException e) {
-                    LOGGER.error("get hold stopped heartbeat exception", e);
-                    break;
-                }
-            } while (stopHb != null);
-        }
-        // get running job hb
-        for (DBSyncReadOperator reader : monitorDbSyncJobs.values()) {
-            DbSyncHeartbeat runningJobHb = reader.genHeartBeat(false);
-            if (runningJobHb != null) {
-                allHb.add(runningJobHb);
-            }
-        }
-
-        hbRequest.setHeartbeats(allHb);
-
-        return hbRequest;
     }
 
     /**

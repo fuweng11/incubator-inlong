@@ -21,10 +21,12 @@ import org.apache.inlong.agent.common.AgentThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.CommonConstants;
-import org.apache.inlong.agent.core.dbsync.DBSyncMetric;
-import org.apache.inlong.agent.core.job.DBSyncJob;
+import org.apache.inlong.agent.core.dbsync.DBSyncJob;
+import org.apache.inlong.agent.core.dbsync.DbAgentMetricManager;
+import org.apache.inlong.agent.core.task.ITaskPositionManager;
 import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.message.BatchProxyMessage;
+import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.message.EndMessage;
 import org.apache.inlong.agent.message.PackProxyMessage;
 import org.apache.inlong.agent.message.ProxyMessage;
@@ -59,6 +61,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_BLOCK_IF_QUEUE_FULL;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_COMPRESSION_TYPE;
@@ -96,7 +99,7 @@ public class PulsarSink extends AbstractSink {
     private static final ExecutorService EXECUTOR_SERVICE = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
             60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new AgentThreadFactory("PulsarSink"));
     private final AgentConfiguration agentConf = AgentConfiguration.getAgentConf();
-    private TaskPositionManager taskPositionManager;
+    private ITaskPositionManager taskPositionManager;
     private volatile boolean shutdown = false;
     private List<MQClusterInfo> mqClusterInfos;
     private String topic;
@@ -123,7 +126,8 @@ public class PulsarSink extends AbstractSink {
     private DBSyncJob job;
 
     public static final String DATA_KEY_DELIMITER = "#";
-    private DBSyncMetric dbSyncMetricJob = null;
+    private DbAgentMetricManager dbSyncMetricJob = null;
+    private AtomicLong sendingCnt = new AtomicLong(0L);
 
     @Override
     public void init(JobProfile jobConf, AbstractJob job) {
@@ -240,7 +244,8 @@ public class PulsarSink extends AbstractSink {
     }
 
     private boolean sinkFinish() {
-        return cache.values().stream().allMatch(PackProxyMessage::isEmpty) && pulsarSendQueue.isEmpty();
+        return cache.values().stream().allMatch(PackProxyMessage::isEmpty) && pulsarSendQueue.isEmpty()
+                && (sendingCnt.get() == 0);
     }
 
     /**
@@ -309,6 +314,7 @@ public class PulsarSink extends AbstractSink {
         }
         InLongMsg message = batchMsg.getInLongMsg();
         sinkMetric.pluginSendCount.addAndGet(batchMsg.getMsgCnt());
+        sendingCnt.incrementAndGet();
         if (asyncSend) {
             CompletableFuture<MessageId> future = producer.newMessage().eventTime(batchMsg.getDataTime())
                     .value(message.buildArray()).sendAsync();
@@ -328,8 +334,8 @@ public class PulsarSink extends AbstractSink {
                     sendQueueSemaphore.release();
                     updateSuccessSendMetrics(batchMsg);
                 }
+                sendingCnt.incrementAndGet();
             });
-
         } else {
             try {
                 producer.newMessage().eventTime(batchMsg.getDataTime()).value(message.buildArray()).send();
@@ -341,6 +347,7 @@ public class PulsarSink extends AbstractSink {
                         pulsarSendQueue.size(), e);
                 pulsarSendQueue.put(batchMsg);
             }
+            sendingCnt.incrementAndGet();
         }
     }
 
@@ -349,10 +356,7 @@ public class PulsarSink extends AbstractSink {
                 batchMsg.getStreamId(), batchMsg.getDataTime(), batchMsg.getMsgCnt(),
                 batchMsg.getTotalSize());
         sinkMetric.pluginSendSuccessCount.addAndGet(batchMsg.getMsgCnt());
-        if (sourceName != null) {
-            taskPositionManager.updateSinkPosition(batchMsg, sourceName, batchMsg.getMsgCnt());
-        }
-
+        taskPositionManager.updateSinkPosition(batchMsg, sourceName, batchMsg.getMsgCnt());
         addSuccessMetrics(batchMsg);
     }
 
@@ -399,13 +403,14 @@ public class PulsarSink extends AbstractSink {
         String streamId = data.getStreamId();
         String dataKey = getDataKey(data);
 
-        dbSyncMetricJob.addStatisticInfo(dataKey, groupId, streamId,
+        dbSyncMetricJob.addStatisticInfo(groupId, streamId,
                 data.getDataTime(), data.getMsgCnt(),
-                data.getPositions().get(0).getKey(), data.getJobId());
+                data.getPositions().get(0).getKey(), data.getJobId(), dataKey);
     }
 
     private String getDataKey(BatchProxyMessage data) {
-        return String.join(DATA_KEY_DELIMITER, String.valueOf(data.getDataTime()), data.getJobId());
+        return String.join(DATA_KEY_DELIMITER, data.getGroupId(), data.getStreamId(), topic,
+                String.valueOf(data.getDataTime()), data.getJobId());
     }
 
     class PulsarTopicSender {

@@ -56,15 +56,13 @@ public class DBSyncReader extends AbstractReader {
     @Override
     public Message read() {
         Message message = null;
-        if (!messageQueue.isEmpty()) {
-            message = messageQueue.poll();
-            queueSemaphore.release();
-        }
         try {
             message = messageQueue.poll(JobConstants.DEFAULT_JOB_READ_WAIT_TIMEOUT, TimeUnit.SECONDS);
-            queueSemaphore.release();
+            if (message != null) {
+                queueSemaphore.release();
+            }
         } catch (InterruptedException e) {
-            LOGGER.warn("read data get interruptted.", e);
+            LOGGER.warn("read data get interrupted.", e);
             queueSemaphore.release();
         }
         return message;
@@ -78,10 +76,11 @@ public class DBSyncReader extends AbstractReader {
         try {
             queueSemaphore.acquire();
 
+            DBSyncMessage dbSyncMessage = (DBSyncMessage) message;
             readerMetric.pluginReadCount.incrementAndGet();
-            messageQueue.put((DBSyncMessage) message);
+            messageQueue.put(dbSyncMessage);
             AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_READ_SUCCESS, inlongGroupId, inlongStreamId,
-                    System.currentTimeMillis(), 1, message.getBody().length);
+                    getMessageTimeStamp(dbSyncMessage), 1, dbSyncMessage.getBody().length);
             readerMetric.pluginReadSuccessCount.incrementAndGet();
         } catch (Throwable e) {
             LOGGER.error("put message to dbsyncReader queue error", e);
@@ -142,5 +141,13 @@ public class DBSyncReader extends AbstractReader {
     @Override
     public void destroy() {
 
+    }
+
+    public Long getMessageTimeStamp(DBSyncMessage dbSyncMessage) {
+        if (dbSyncMessage != null
+                && dbSyncMessage.getMsgTimeStamp() != null && dbSyncMessage.getMsgTimeStamp() > 0) {
+            return dbSyncMessage.getMsgTimeStamp();
+        }
+        return System.currentTimeMillis();
     }
 }

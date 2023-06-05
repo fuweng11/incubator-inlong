@@ -17,14 +17,17 @@
 
 package org.apache.inlong.agent.utils;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MonitorLogUtils {
 
-    public static Logger JOB_STAT_LOG = LogManager.getLogger("jobStatMonitor");
-    public static Logger JOB_START_POSITION_LOG = LogManager.getLogger("startPositionChangedMonitor");
-    public static Logger JOB_EVENT_DISCARD_LOG = LogManager.getLogger("eventDiscardMonitor");
+    public static Logger JOB_STAT_LOG = LoggerFactory.getLogger("jobRunStatMonitor");
+    public static Logger JOB_START_POSITION_LOG = LoggerFactory.getLogger("startPositionChangedMonitor");
+    public static Logger JOB_EVENT_DISCARD_LOG = LoggerFactory.getLogger("eventDiscardMonitor");
+    public static Logger JOB_BIG_FIELD_LOG = LoggerFactory.getLogger("jobBigFieldMonitor");
+    public static Logger JOB_DUMP_LOG = LoggerFactory.getLogger("jobDumpMonitor");
+    public static Logger JOB_ZK_POSITION_LOG = LoggerFactory.getLogger("jobZkPositionMonitor");
 
     public static String LOG_SEPARATOR = "|";
 
@@ -72,5 +75,18 @@ public class MonitorLogUtils {
     public static void printEventDiscard(String jobName, String discardType, String discardMsg) {
         JOB_EVENT_DISCARD_LOG.info(jobName + LOG_SEPARATOR + discardType + LOG_SEPARATOR
                 + discardMsg);
+    }
+
+    public static void printBigField(String jobName, String type, String msg) {
+        JOB_BIG_FIELD_LOG.info(jobName + LOG_SEPARATOR + type + LOG_SEPARATOR
+                + msg);
+    }
+
+    public static void printDumpMetric(String jobName, String msg) {
+        JOB_DUMP_LOG.info(jobName + LOG_SEPARATOR + msg);
+    }
+
+    public static void printZkPositionMetric(String jobName, String msg) {
+        JOB_ZK_POSITION_LOG.info(jobName + LOG_SEPARATOR + msg);
     }
 }

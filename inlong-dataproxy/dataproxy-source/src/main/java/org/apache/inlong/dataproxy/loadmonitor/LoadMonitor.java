@@ -152,9 +152,9 @@ public class LoadMonitor implements Runnable {
             if (++accCnt >= maxAccPrintCnt) {
                 accCnt = 0;
                 logger.info("[Load Monitor] load calculate: calc weight is (cpu={}, net-in={},"
-                                + " net-out={}, tcp={}, cpuThreshold={}), latest probe values"
-                                + " (cpuPercent={}, memPercent={}, netIn={}, netOut={}, tcpConn={}),"
-                                + " history is {}",
+                        + " net-out={}, tcp={}, cpuThreshold={}), latest probe values"
+                        + " (cpuPercent={}, memPercent={}, netIn={}, netOut={}, tcpConn={}),"
+                        + " history is {}",
                         configManager.getCpuWeight(), configManager.getNetInWeight(),
                         configManager.getNetOutWeight(), configManager.getTcpWeight(),
                         configManager.getCpuThresholdWeight(), cpuPercent, memPercent,

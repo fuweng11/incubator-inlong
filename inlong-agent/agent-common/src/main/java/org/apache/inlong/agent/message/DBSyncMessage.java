@@ -23,22 +23,23 @@ import java.util.Map;
 
 import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_GROUP_ID;
 import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INLONG_STREAM_ID;
-import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_GROUP_ID;
-import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_STREAM_ID;
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_GROUP_ID;
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID;
 
 public class DBSyncMessage extends DefaultMessage {
 
     private LogPosition logPosition;
     /* the binlog time stample is second, use msgId for same time stample */
     private long msgId;
-    private String instName; // namely jobName
+    private String jobName; // namely jobName
 
-    public DBSyncMessage(byte[] body, Map<String, String> header) {
+    private Long msgTimeStamp;
+
+    public DBSyncMessage(byte[] body, Map<String, String> header, String jobName,
+            Long msgTimeStamp) {
         super(body, header);
-    }
-
-    public DBSyncMessage(byte[] body) {
-        super(body);
+        this.jobName = jobName;
+        this.msgTimeStamp = msgTimeStamp;
     }
 
     public LogPosition getLogPosition() {
@@ -57,19 +58,23 @@ public class DBSyncMessage extends DefaultMessage {
         this.msgId = msgId;
     }
 
-    public String getInstName() {
-        return instName;
+    public String getJobName() {
+        return jobName;
     }
 
-    public void setInstName(String instName) {
-        this.instName = instName;
+    public void setJobName(String jobName) {
+        this.jobName = jobName;
+    }
+
+    public Long getMsgTimeStamp() {
+        return msgTimeStamp;
     }
 
     public String getGroupId() {
-        return header.getOrDefault(KEY_INLONG_GROUP_ID, DEFAULT_PROXY_INLONG_GROUP_ID);
+        return header.getOrDefault(PROXY_INLONG_GROUP_ID, DEFAULT_PROXY_INLONG_GROUP_ID);
     }
 
     public String getStreamId() {
-        return header.getOrDefault(KEY_INLONG_STREAM_ID, DEFAULT_PROXY_INLONG_STREAM_ID);
+        return header.getOrDefault(PROXY_INLONG_STREAM_ID, DEFAULT_PROXY_INLONG_STREAM_ID);
     }
 }

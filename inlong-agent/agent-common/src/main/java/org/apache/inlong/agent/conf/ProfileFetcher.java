@@ -18,8 +18,6 @@
 package org.apache.inlong.agent.conf;
 
 import org.apache.inlong.agent.common.Service;
-import org.apache.inlong.agent.entites.CommonResponse;
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskFullInfo;
 
 import java.util.List;
 
@@ -41,6 +39,4 @@ public interface ProfileFetcher extends Service {
      * @return trigger profile lisy
      */
     List<TriggerProfile> getTriggerProfiles();
-
-    boolean parseJobAndCheckForStart(CommonResponse<DbSyncTaskFullInfo> commonResponse);
 }

@@ -92,7 +92,7 @@ public class AgentConstants {
     public static final int DEFAULT_TRIGGER_CHECK_INTERVAL = 2;
     public static final String JOB_DB_CACHE_TIME = "job.db.cache.time";
     public static final String JOB_QUEUE_BLOCK_TIME_MS = "job.queue.block.time.ms";
-    public static final long DEFAULT_JOB_QUEUE_BLOCK_TIME_MS = 1000;
+    public static final long DEFAULT_JOB_QUEUE_BLOCK_TIME_MS = 10;
     // cache for 3 days.
     public static final long DEFAULT_JOB_DB_CACHE_TIME = 3 * 24 * 60 * 60 * 1000;
     public static final String JOB_DB_CACHE_CHECK_INTERVAL = "job.db.cache.check.interval";
@@ -197,6 +197,11 @@ public class AgentConstants {
     public static final boolean DEFAULT_IS_NEED_TRANSACTION = true;
 
     public static final String DBSYNC_JOB_DO_SWITCH_CNT = "agent.dbsync.job.do.switch.cnt";
+
+    public static final String DBSYNC_JOB_MAX_PARSE_THREAD_NUM = "agent.dbsync.job.max.parse.thread.num";
+
+    public static final int DEFAULT_DBSYNC_JOB_MAX_PARSE_THREAD_NUM = 20;
+
     public static final int DEFAULT_DBSYNC_JOB_DO_SWITCH_CNT = 10;
 
     public static final long DBSYNC_BINLOG_START_OFFEST = 4L;
@@ -259,9 +264,6 @@ public class AgentConstants {
             + ",multipolygon,geometrycollection,json";
 
     public static final String NULL_STRING = "NULL";
-
-    public static final String DBSYNC_JOB_BLOCK_TIME_MSEC = "agent.dbsync.job.block.time.msec";
-    public static final long DEFAULT_DBSYNC_JOB_BLOCK_TIME_MSEC = 1000 * 60 * 5L;
 
     public static final String DBSYNC_REPORT_LATEST_POSITION_PERIOD = "agent.dbsync.report.latest.position.period";
     public static final long DBSYNC_REPORT_LATEST_POSITION_PERIOD_MSEC = 1000 * 60L;

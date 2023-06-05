@@ -17,27 +17,27 @@
 
 package org.apache.inlong.agent.core.dbsync;
 
-import org.apache.inlong.agent.mysql.connector.binlog.LogEvent;
-
 import java.util.ArrayList;
 
 public class PkgEvent {
 
-    private ArrayList<LogEvent> eventLists;
+    private ArrayList<Object> eventLists;
     private long index;
-    private boolean bHasTransEnd = false;
+    private String logFileName;
+    private long timeStamp;
 
-    public PkgEvent(ArrayList<LogEvent> events, long index, boolean bHasTransEnd) {
+    public PkgEvent(ArrayList<Object> events, long index, long timeStamp, String logFileName) {
         this.eventLists = events;
         this.index = index;
-        this.bHasTransEnd = bHasTransEnd;
+        this.timeStamp = timeStamp;
+        this.logFileName = logFileName;
     }
 
-    public ArrayList<LogEvent> getEventLists() {
+    public ArrayList<Object> getEventLists() {
         return eventLists;
     }
 
-    public void setEventLists(ArrayList<LogEvent> eventLists) {
+    public void setEventLists(ArrayList<Object> eventLists) {
         this.eventLists = eventLists;
     }
 
@@ -49,11 +49,19 @@ public class PkgEvent {
         this.index = index;
     }
 
-    public boolean isbHasTransEnd() {
-        return bHasTransEnd;
+    public String getLogFileName() {
+        return logFileName;
     }
 
-    public void setbHasTransEnd(boolean bHasTransEnd) {
-        this.bHasTransEnd = bHasTransEnd;
+    public void setLogFileName(String logFileName) {
+        this.logFileName = logFileName;
+    }
+
+    public long getTimeStamp() {
+        return timeStamp;
+    }
+
+    public void setTimeStamp(long timeStamp) {
+        this.timeStamp = timeStamp;
     }
 }

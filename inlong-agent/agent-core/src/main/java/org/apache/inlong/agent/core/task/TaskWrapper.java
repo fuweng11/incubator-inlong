@@ -21,6 +21,7 @@ import org.apache.inlong.agent.common.AgentThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.constant.AgentConstants;
 import org.apache.inlong.agent.constant.JobConstants;
+import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.message.EndMessage;
 import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.state.AbstractStateWrapper;
@@ -96,8 +97,8 @@ public class TaskWrapper extends AbstractStateWrapper {
                     }
                 }
             }
-            LOGGER.info("read end, task exception status is {}, read finish status is {}", isException(),
-                    task.isReadFinished());
+            LOGGER.info("read end, task {} exception status is {}, read finish status is {}",
+                    task.getTaskId(), isException(), task.isReadFinished());
             // write end message
             task.getChannel().push(new EndMessage());
             task.getReader().destroy();
@@ -115,6 +116,9 @@ public class TaskWrapper extends AbstractStateWrapper {
                 Message message = task.getChannel().pull(pullMaxWaitTime, TimeUnit.SECONDS);
                 if (message instanceof EndMessage) {
                     break;
+                }
+                if (LOGGER.isDebugEnabled() && message instanceof DBSyncMessage) {
+                    LOGGER.debug("submitWriteThread msg position : " + ((DBSyncMessage) message).getLogPosition());
                 }
                 task.getSink().write(message);
             }

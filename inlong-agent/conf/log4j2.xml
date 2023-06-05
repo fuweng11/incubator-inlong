@@ -45,6 +45,21 @@
         <property name="monitors_fileName">${basePath}/monitors.log</property>
         <property name="monitors_filePattern">${basePath}/monitors-%d{yyyy-MM-dd}-%i.log.gz</property>
         <property name="last_modify_time">15d</property>
+        <property name="log.file.name.event.discard.prefix">DBSync_event_discard.log</property>
+        <property name="log.file.name.job.stat.prefix">DBSync_job_stat.log</property>
+        <property name="log.file.name.job.task.prefix">DBSync_job_task.log</property>
+        <property name="log.file.name.job.dump.prefix">DBSync_job_dump.log</property>
+        <property name="log.file.name.job.update.zk.prefix">DBSync_job_zk_position.log</property>
+        <property name="log.file.name.job.sender.metric.prefix">DBSync_job_sender_metric.log</property>
+        <property name="log.file.name.job.report.prefix">DBSync_job_report.log</property>
+        <property name="log.file.name.job.manager.report.prefix">DBSync_job_manager_report.log</property>
+        <property name="log.file.name.job.sender.report.prefix">DBSync_job_sender_report.log</property>
+        <property name="log.file.name.job.big.field.prefix">DBSync_job_big_field.log</property>
+        <property name="log.file.name.job.coordinator.prefix">DBSync_job_coordinator.log</property>
+        <property name="log.file.name.pulsar.prefix">DBSync_pulsar.log</property>
+        <property name="log.file.name.start.position.change.prefix">DBSync_start_position_changed.log</property>
+        <property name="log.file.name.alter.field.prefix">DBSync_alter_field.log</property>
+        <property name="log.file.info.name.postfix"></property>
     </Properties>
 
     <appenders>
@@ -161,9 +176,251 @@
                 <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
             </Filters>
         </RollingFile>
+
+        <RollingFile name="RollingEventDiscardMonitorInfo" fileName="${basePath}/monitor/${log.file.name.event.discard.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.event.discard.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingJobRunStatMonitorInfo" fileName="${basePath}/monitor/${log.file.name.job.stat.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.stat.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingStartPositionChangedMonitorInfo" fileName="${basePath}/monitor/${log.file.name.start.position.change.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.start.position.change.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingBigFieldMonitorInfo" fileName="${basePath}/monitor/${log.file.name.job.big.field.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.big.field.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingJobReport" fileName="${basePath}/monitor/${log.file.name.job.report.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.report.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingJobManagerReport" fileName="${basePath}/monitor/${log.file.name.job.manager.report.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.manager.report.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingJobSenderReport" fileName="${basePath}/monitor/${log.file.name.job.sender.report.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.sender.report.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingPulsar" fileName="${basePath}/monitor/${log.file.name.pulsar.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.pulsar.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingSendMetric" fileName="${basePath}/monitor/${log.file.name.job.sender.metric.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.sender.metric.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingAlterFieldMonitorInfo" fileName="${basePath}/monitor/${log.file.name.alter.field.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.alter.field.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingJobCoordinatorInfo" fileName="${basePath}/monitor/${log.file.name.job.coordinator.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.coordinator.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingJobTaskInfo" fileName="${basePath}/monitor/${log.file.name.job.task.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.task.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingJobDumpInfo" fileName="${basePath}/monitor/${log.file.name.job.dump.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.dump.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
+        <RollingFile name="RollingJobZkPositionInfo" fileName="${basePath}/monitor/${log.file.name.job.update.zk.prefix}${log.file.info.name.postfix}"
+                     filePattern="${basePath}/monitor/${log.file.name.job.update.zk.prefix}${log.file.info.name.postfix}.%i">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%p]-[%C{1}:%L]-%m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="15"/>
+        </RollingFile>
     </appenders>
 
     <loggers>
+        <!--默认不打印-->
+        <logger name="org.apache.pulsar" level="error" additivity="false">
+            <appender-ref ref="RollingPulsar"/>
+        </logger>
+        <logger name="eventDiscardMonitor" level="info" additivity="false">
+            <appender-ref ref="RollingEventDiscardMonitorInfo"/>
+        </logger>
+        <logger name="jobBigFieldMonitor" level="info" additivity="false">
+            <appender-ref ref="RollingBigFieldMonitorInfo"/>
+        </logger>
+        <!--显示的当前链接的db ip-port信息-->
+        <logger name="jobRunStatMonitor" level="info" additivity="false">
+            <appender-ref ref="RollingJobRunStatMonitorInfo"/>
+        </logger>
+        <logger name="startPositionChangedMonitor" level="info" additivity="false">
+            <appender-ref ref="RollingStartPositionChangedMonitorInfo"/>
+        </logger>
+        <logger name="jobAlterFieldMonitor" level="info" additivity="false">
+            <appender-ref ref="RollingAlterFieldMonitorInfo"/>
+        </logger>
+        <logger name="jobReport" level="info" additivity="false">
+            <appender-ref ref="RollingJobReport"/>
+        </logger>
+        <logger name="jobManagerReport" level="info" additivity="false">
+            <appender-ref ref="RollingJobManagerReport"/>
+        </logger>
+        <logger name="jobSenderReport" level="info" additivity="false">
+            <appender-ref ref="RollingJobSenderReport"/>
+        </logger>
+        <!--数据量太大，默认不打印-->
+        <logger name="jobSendMetric" level="error" additivity="false">
+            <appender-ref ref="RollingSendMetric"/>
+        </logger>
+        <logger name="jobCoordinator" level="info" additivity="false">
+            <appender-ref ref="RollingJobCoordinatorInfo"/>
+        </logger>
+        <logger name="jobTaskMonitor" level="info" additivity="false">
+            <appender-ref ref="RollingJobTaskInfo"/>
+        </logger>
+        <logger name="jobDumpMonitor" level="info" additivity="false">
+            <appender-ref ref="RollingJobDumpInfo"/>
+        </logger>
+        <logger name="jobZkPositionMonitor" level="info" additivity="false">
+            <appender-ref ref="RollingJobZkPositionInfo"/>
+        </logger>
         <root level="${output_log_level}">
             <appender-ref ref="Console"/>
             <appender-ref ref="DebugFile"/>

@@ -93,7 +93,7 @@ public class TestTextFileTask {
         TMP_FOLDER.create();
 
         // mock metrics
-        taskManager = new TaskManager(null);
+        taskManager = new TaskManager();
         agentMetricItemSet = mock(AgentMetricItemSet.class);
         agentMetricItem = mock(AgentMetricItem.class);
         whenNew(AgentMetricItemSet.class).withArguments(anyString()).thenReturn(agentMetricItemSet);

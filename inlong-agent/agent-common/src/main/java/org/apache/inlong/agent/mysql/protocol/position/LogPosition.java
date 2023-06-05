@@ -27,14 +27,12 @@ public class LogPosition extends Position implements Comparable<LogPosition> {
     private static final long serialVersionUID = 3875012010277005819L;
     private LogIdentity identity;
     private EntryPosition position;
-    private boolean bAcked = false;
-    private long genTimeStample;
     private int sendIndex = 0;
     private long pkgIndex = 0;
     private String parseThreadName = "";
 
     public LogPosition() {
-        genTimeStample = System.currentTimeMillis();
+
     }
 
     public LogPosition(LogPosition other) {
@@ -64,18 +62,6 @@ public class LogPosition extends Position implements Comparable<LogPosition> {
 
     public void setPosition(EntryPosition position) {
         this.position = position;
-    }
-
-    public void ackePosiiton() {
-        bAcked = true;
-    }
-
-    public boolean bAcked() {
-        return bAcked;
-    }
-
-    public long getGenTimeStample() {
-        return genTimeStample;
     }
 
     public int getSendIndex() {
@@ -128,6 +114,25 @@ public class LogPosition extends Position implements Comparable<LogPosition> {
         result = prime * result + ((identity == null) ? 0 : identity.hashCode());
         result = prime * result + ((position == null) ? 0 : position.hashCode());
         return result;
+    }
+
+    public String toMinString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("addr:").append(this.identity.getSourceAddress().getAddress().getHostAddress())
+                .append(":").append(this.identity.getSourceAddress().getPort())
+                .append(":").append(this.identity.getSlaveId());
+        sb.append(",");
+        sb.append("journalName:").append(this.position.getJournalName());
+        sb.append(",");
+        sb.append("position:").append(this.position.getPosition());
+        if (this.position.getTimestamp() != null) {
+            sb.append(",");
+            sb.append("timestamp:").append(this.position.getTimestamp());
+        }
+        sb.append(",");
+        sb.append("sendIndex:").append(this.getSendIndex());
+
+        return sb.toString();
     }
 
     @Override

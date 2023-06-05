@@ -66,6 +66,9 @@ public class DbSyncHeartbeat {
     @ApiModelProperty(value = "BinLog maximum position of the current DB, will be saved as a JSON string")
     private DbSyncDumpPosition maxLogPosition;
 
+    @ApiModelProperty(value = "BinLog oldest position of the current DB, will be saved as a JSON string")
+    private DbSyncDumpPosition oldestLogPosition;
+
     @ApiModelProperty(value = "Error message")
     private String errorMsg;
 

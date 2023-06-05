@@ -19,6 +19,7 @@ package org.apache.inlong.agent.plugin.channel;
 
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.AgentConstants;
+import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
 import org.apache.inlong.agent.plugin.AbstractJob;
@@ -81,10 +82,19 @@ public class MemoryChannel implements Channel {
                 AgentMetricItem metricItem = getMetricItem(new HashMap<String, String>());
                 metricItem.pluginReadCount.incrementAndGet();
                 boolean result = queue.offer(message, timeout, unit);
+                if (LOGGER.isDebugEnabled() && message instanceof DBSyncMessage) {
+                    String msg = ((DBSyncMessage) message).getLogPosition().toMinString();
+                    LOGGER.debug("push message position {}", msg);
+                }
                 if (result) {
                     metricItem.pluginReadSuccessCount.incrementAndGet();
                 } else {
                     metricItem.pluginReadFailCount.incrementAndGet();
+                    String msg = "";
+                    if (message instanceof DBSyncMessage) {
+                        msg = ((DBSyncMessage) message).getLogPosition().toMinString();
+                    }
+                    LOGGER.warn("Drop message when put msg to queue timeout! {}", msg);
                 }
                 return result;
             }

@@ -17,7 +17,9 @@
 
 package org.apache.inlong.agent.mysql.relaylog;
 
-public interface RelayLog {
+import org.apache.inlong.agent.metrics.MetricReport;
+
+public interface RelayLog extends MetricReport {
 
     byte[] MAGIC_BYTES = new byte[]{0x01, 0x05, (byte) 0xBA, (byte) 0xDB};
 
@@ -30,6 +32,4 @@ public interface RelayLog {
     boolean isEmpty();
 
     void clearLog();
-
-    void report();
 }

@@ -60,6 +60,7 @@ import org.apache.inlong.agent.mysql.parse.TableMeta.FieldMeta;
 import org.apache.inlong.agent.mysql.utils.AbstractCanalLifeCycle;
 import org.apache.inlong.agent.utils.JsonParser;
 import org.apache.inlong.agent.utils.JsonParser.JsonValue;
+import org.apache.inlong.agent.utils.MonitorLogUtils;
 
 import com.google.protobuf.ByteString;
 import org.apache.commons.codec.binary.Base64;
@@ -123,7 +124,7 @@ public class LogEventConvert extends AbstractCanalLifeCycle implements BinlogPar
                         if (tableMetaCache != null) {
                             tableMetaCache.clearTableMeta();
                             LOGGER.info("{} clear the tableMetaCache in {} !",
-                                    jobconf.getJobName(), tmpClearDate);
+                                    jobconf.getDbJobId(), tmpClearDate);
                         }
                         clearedDate = tmpClearDate;
                     }
@@ -475,7 +476,9 @@ public class LogEventConvert extends AbstractCanalLifeCycle implements BinlogPar
                                     LOGGER.warn("column {} length over max {}, set to empty.",
                                             columnBuilder.getName(), maxColumnValueLen);
                                 }
-                                MysqlTableConf mysqlTableConf = jobconf.getMysqlTableConf(dbName, tbName);
+                                MonitorLogUtils.printBigField(jobconf.getDbJobId(), "BigField",
+                                        dbName + "." + tbName + ":"
+                                                + (fieldMeta == null ? "" : fieldMeta.getColumnName()));
                                 // TODO:add send metrics
                                 // DBSyncUtils.sendBigFieldMetrics(event.getWhen() * MILLISEC_IN_ONE_SEC,
                                 // mysqlTableConf,

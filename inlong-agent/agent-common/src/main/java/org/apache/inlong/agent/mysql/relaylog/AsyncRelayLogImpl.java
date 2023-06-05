@@ -133,9 +133,8 @@ public class AsyncRelayLogImpl extends AbstractRelayLog {
         clearLogImpl();
     }
 
-    public void report() {
-        LOGGER.debug("asyc-relay-log input queue size : {}, output queue size : {}",
-                new Object[]{queue.size(), rqueue.size()});
+    public String report() {
+        return "asyc-relay-log:" + queue.size() + "|output queue size:" + rqueue.size();
     }
 
     private void clearLogImpl() {

@@ -168,7 +168,7 @@ public class DBSyncUtils {
             if (dbConf == null) {
                 future.completeExceptionally(new DataSourceConfigException("db config is null!"));
                 result = false;
-            } else if (StringUtils.isEmpty(dbConf.getUrl())
+            } else if (!checkDbUrl(dbConf.getUrl())
                     || StringUtils.isEmpty(taskConf.getDbName())
                     || StringUtils.isEmpty(dbConf.getUsername()) || StringUtils.isEmpty(dbConf.getPassword())) {
                 future.completeExceptionally(new DataSourceConfigException("db config has error! "
@@ -397,6 +397,24 @@ public class DBSyncUtils {
             return false;
         }
         return str.equalsIgnoreCase(NULL_STRING);
+    }
+
+    public static boolean checkDbUrl(String url) {
+        if (StringUtils.isBlank(url)) {
+            return false;
+        }
+        String[] ipPort = url.split(":");
+        if (ipPort.length < 2) {
+            return false;
+        }
+        if (!StringUtils.isNumeric(ipPort[1])) {
+            return false;
+        }
+        int port = Integer.parseInt(ipPort[1]);
+        if (port < 0) {
+            return false;
+        }
+        return true;
     }
 
     public static String getHost(String url) {

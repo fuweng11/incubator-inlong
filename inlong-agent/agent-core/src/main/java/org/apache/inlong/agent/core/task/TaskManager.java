@@ -21,7 +21,6 @@ import org.apache.inlong.agent.common.AbstractDaemon;
 import org.apache.inlong.agent.common.AgentThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.constant.AgentConstants;
-import org.apache.inlong.agent.core.AgentManager;
 import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
 import org.apache.inlong.agent.utils.AgentUtils;
@@ -53,7 +52,6 @@ public class TaskManager extends AbstractDaemon {
 
     // task thread pool;
     private final ThreadPoolExecutor runningPool;
-    private final AgentManager agentManager;
     private final ConcurrentHashMap<String, TaskWrapper> tasks;
     private final BlockingQueue<TaskWrapper> retryTasks;
     private final int monitorInterval;
@@ -68,10 +66,8 @@ public class TaskManager extends AbstractDaemon {
     /**
      * Init task manager.
      *
-     * @param agentManager agent manager
      */
-    public TaskManager(AgentManager agentManager) {
-        this.agentManager = agentManager;
+    public TaskManager() {
         this.runningPool = new ThreadPoolExecutor(
                 0, Integer.MAX_VALUE,
                 60L, TimeUnit.SECONDS,

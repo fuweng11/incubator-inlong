@@ -324,7 +324,8 @@ public class ConfigManager {
         private boolean reloadDataProxyConfig(String clusterName, String clusterTag, String host) {
             HttpPost httpPost = null;
             try {
-                String url = "http://" + host + ConfigConstants.MANAGER_PATH + ConfigConstants.MANAGER_GET_ALL_CONFIG_PATH;
+                String url =
+                        "http://" + host + ConfigConstants.MANAGER_PATH + ConfigConstants.MANAGER_GET_ALL_CONFIG_PATH;
                 httpPost = HttpUtils.getHttPost(url);
                 // request body
                 DataProxyConfigRequest request = new DataProxyConfigRequest();

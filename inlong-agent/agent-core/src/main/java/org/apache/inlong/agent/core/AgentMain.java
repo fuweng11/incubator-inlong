@@ -17,7 +17,10 @@
 
 package org.apache.inlong.agent.core;
 
+import org.apache.inlong.agent.common.AbstractDaemon;
+import org.apache.inlong.agent.common.Service;
 import org.apache.inlong.agent.conf.AgentConfiguration;
+import org.apache.inlong.agent.constant.AgentConstants;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
 import org.apache.inlong.common.metric.MetricObserver;
 
@@ -90,7 +93,7 @@ public class AgentMain {
      *
      * @param agentManager agent manager
      */
-    private static void stopAgentIfKilled(AgentManager agentManager) {
+    private static void stopAgentIfKilled(Service agentManager) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 LOGGER.info("stopping agent gracefully");
@@ -102,6 +105,10 @@ public class AgentMain {
         }));
     }
 
+    private static boolean isAsDbAgent() {
+        return AgentConfiguration.getAgentConf().getBoolean(AgentConstants.DBSYNC_ENABLE,
+                AgentConstants.DEFAULT_DBSYNC_ENABLE);
+    }
     /**
      * Main entrance.
      */
@@ -110,20 +117,27 @@ public class AgentMain {
         assert cl != null;
         initAgentConf(cl);
         AuditUtils.initAudit();
-
-        AgentManager manager = new AgentManager();
+        AbstractDaemon agentManager;
+        if (isAsDbAgent()) {
+            LOGGER.info("DbAgent start running!");
+            agentManager = new DbAgentManager();
+        } else {
+            agentManager = new AgentManager();
+        }
         try {
-            manager.start();
-            stopAgentIfKilled(manager);
+            agentManager.start();
+
+            stopAgentIfKilled(agentManager);
             // metrics
             MetricObserver.init(AgentConfiguration.getAgentConf().getConfigProperties());
             // jvm report
             MetricObserver.reportJvmToBrain("Agent");
-            manager.join();
+            agentManager.join();
         } catch (Exception ex) {
             LOGGER.error("agent running exception: ", ex);
         } finally {
-            manager.stop();
+            agentManager.stop();
+            LOGGER.info("Agent stopped!");
         }
     }
 }

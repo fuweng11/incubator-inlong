@@ -21,6 +21,7 @@ import org.apache.inlong.agent.common.AgentThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.CommonConstants;
+import org.apache.inlong.agent.core.task.ITaskPositionManager;
 import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.metrics.AgentMetricItem;
@@ -65,9 +66,7 @@ import static org.apache.inlong.agent.constant.FetcherConstants.INTERNAL_MANAGER
 import static org.apache.inlong.agent.constant.FetcherConstants.INTERNAL_MANAGER_AUTH_USER_NAME;
 import static org.apache.inlong.agent.constant.JobConstants.DEFAULT_JOB_PROXY_SEND;
 import static org.apache.inlong.agent.constant.JobConstants.JOB_PROXY_SEND;
-import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_GROUP_ID;
-import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_INLONG_STREAM_ID;
-import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_PLUGIN_ID;
+import static org.apache.inlong.agent.metrics.AgentMetricItem.*;
 
 /**
  * proxy client
@@ -111,7 +110,7 @@ public class SenderManager {
     // metric
     private AgentMetricItemSet metricItemSet;
     private Map<String, String> dimensions;
-    private TaskPositionManager taskPositionManager;
+    private ITaskPositionManager taskPositionManager;
     private int ioThreadNum;
     private boolean enableBusyWait;
     private Semaphore semaphore;

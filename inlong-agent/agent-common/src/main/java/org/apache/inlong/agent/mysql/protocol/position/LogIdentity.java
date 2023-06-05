@@ -29,8 +29,8 @@ public class LogIdentity extends Position implements Comparable<LogIdentity> {
 
     private static final long serialVersionUID = 5530225131455662581L;
     private InetSocketAddress sourceAddress; // serverAddr
-    private Long slaveId; // TODO:change as int
-    private String servername; // TODO:init
+    private Long slaveId;
+    private String serverName;
 
     public LogIdentity() {
     }
@@ -67,6 +67,10 @@ public class LogIdentity extends Position implements Comparable<LogIdentity> {
         this.slaveId = slaveId;
     }
 
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
+    }
+
     public JSONObject getJsonObj() {
         JSONObject obj = new JSONObject();
         obj.put("sourceIp", sourceAddress.getAddress().getHostAddress());
@@ -77,7 +81,7 @@ public class LogIdentity extends Position implements Comparable<LogIdentity> {
 
     public DbSyncDumpPosition.LogIdentity genLogIdentity() {
         return new DbSyncDumpPosition.LogIdentity(sourceAddress.getAddress().getHostAddress(), sourceAddress.getPort(),
-                Math.toIntExact(slaveId), servername);
+                Math.toIntExact(slaveId), serverName);
     }
 
     @Override

@@ -20,6 +20,7 @@ package org.apache.inlong.agent.plugin.sinks;
 import org.apache.inlong.agent.common.AgentThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.core.task.ITaskPositionManager;
 import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.message.EndMessage;
@@ -77,7 +78,7 @@ public class KafkaSink extends AbstractSink {
     private static final ExecutorService EXECUTOR_SERVICE = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
             60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new AgentThreadFactory("KafkaSink"));
     private final AgentConfiguration agentConf = AgentConfiguration.getAgentConf();
-    private TaskPositionManager taskPositionManager;
+    private ITaskPositionManager taskPositionManager;
     private volatile boolean shutdown = false;
 
     private List<MQClusterInfo> mqClusterInfos;

@@ -25,6 +25,7 @@ import org.apache.inlong.agent.conf.TriggerProfile;
 import org.apache.inlong.agent.constant.AgentConstants;
 import org.apache.inlong.agent.core.conf.ConfigJetty;
 import org.apache.inlong.agent.core.job.JobManager;
+import org.apache.inlong.agent.core.task.ITaskPositionManager;
 import org.apache.inlong.agent.core.task.TaskManager;
 import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.core.trigger.TriggerManager;
@@ -54,11 +55,10 @@ import static org.apache.inlong.agent.constant.JobConstants.JOB_TRIGGER;
 public class AgentManager extends AbstractDaemon {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AgentManager.class);
-    // dbsync
     private final JobManager jobManager;
     private final TaskManager taskManager;
     private final TriggerManager triggerManager;
-    private final TaskPositionManager taskPositionManager;
+    private final ITaskPositionManager taskPositionManager;
     private final HeartbeatManager heartbeatManager;
     private final ProfileFetcher fetcher;
     private final AgentConfiguration conf;
@@ -69,9 +69,6 @@ public class AgentManager extends AbstractDaemon {
     private final JobProfileDb jobProfileDb;
     // jetty for config operations via http.
     private ConfigJetty configJetty;
-    private FieldManager fieldManager;
-    private boolean enableReportFiledChange;
-    private boolean enableDBSync;
 
     public AgentManager() {
         conf = AgentConfiguration.getAgentConf();
@@ -83,7 +80,7 @@ public class AgentManager extends AbstractDaemon {
         localProfile = new LocalProfile(parentConfPath);
         triggerManager = new TriggerManager(this, new TriggerProfileDb(db));
         jobManager = new JobManager(this, jobProfileDb);
-        taskManager = new TaskManager(this);
+        taskManager = new TaskManager();
         fetcher = initFetcher(this);
         heartbeatManager = HeartbeatManager.getInstance(this);
         taskPositionManager = TaskPositionManager.getInstance(this);
@@ -91,15 +88,6 @@ public class AgentManager extends AbstractDaemon {
         if (conf.getBoolean(
                 AgentConstants.AGENT_ENABLE_HTTP, AgentConstants.DEFAULT_AGENT_ENABLE_HTTP)) {
             this.configJetty = new ConfigJetty(jobManager, triggerManager);
-        }
-
-        this.enableDBSync = conf.getBoolean(AgentConstants.DBSYNC_ENABLE, AgentConstants.DEFAULT_DBSYNC_ENABLE);
-        this.enableReportFiledChange = conf.getBoolean(AgentConstants.DBSYNC_FILED_CHANGED_REPORT_ENABLE,
-                AgentConstants.DEFAULT_DBSYNC_FILED_CHANGED_REPORT_ENABLE);
-        if (enableDBSync) {
-            if (enableReportFiledChange) {
-                this.fieldManager = FieldManager.getInstance();
-            }
         }
     }
 
@@ -187,7 +175,7 @@ public class AgentManager extends AbstractDaemon {
         return triggerManager;
     }
 
-    public TaskPositionManager getTaskPositionManager() {
+    public ITaskPositionManager getTaskPositionManager() {
         return taskPositionManager;
     }
 
@@ -233,10 +221,6 @@ public class AgentManager extends AbstractDaemon {
         if (fetcher != null) {
             fetcher.start();
         }
-
-        if (fieldManager != null) {
-            fieldManager.start();
-        }
     }
 
     /**
@@ -259,9 +243,6 @@ public class AgentManager extends AbstractDaemon {
         heartbeatManager.setStopFlag(true);
         jobManager.stop();
         taskManager.stop();
-        if (fieldManager != null) {
-            fieldManager.stop();
-        }
         heartbeatManager.stop();
         taskPositionManager.stop();
         agentConfMonitor.shutdown();
