@@ -17,23 +17,30 @@
 
 package org.apache.inlong.manager.service.resource.queue.tubemq;
 
+import com.google.common.base.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.common.constant.MQType;
+import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.GroupStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.tubemq.TubeClusterInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
 import org.apache.inlong.manager.service.consume.InlongConsumeService;
 import org.apache.inlong.manager.service.resource.queue.QueueResourceOperator;
-
-import com.google.common.base.Objects;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
+import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * Operator for create TubeMQ Topic and ConsumerGroup
@@ -42,12 +49,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class TubeMQResourceOperator implements QueueResourceOperator {
 
+    public static final String TUBE_CONSUME_GROUP = "%s_%s_%s_consumer_group";
+
     @Autowired
     private InlongClusterService clusterService;
     @Autowired
     private InlongConsumeService consumeService;
     @Autowired
     private TubeMQOperator tubeMQOperator;
+    @Autowired
+    private StreamSinkService sinkService;
+    @Autowired
+    private InlongClusterEntityMapper clusterMapper;
+    @Autowired
+    private SortHiveConfigService sortConfigService;
 
     @Override
     public boolean accept(String mqType) {
@@ -74,18 +89,6 @@ public class TubeMQResourceOperator implements QueueResourceOperator {
             String topicName = groupInfo.getMqResource();
             tubeMQOperator.createTopic(tubeCluster, topicName, operator);
             log.info("success to create tubemq topic for groupId={}", groupId);
-
-            // 2. create tubemq consumer group
-            // consumer naming rules: clusterTag_topicName_consumer_group
-            String consumeGroup = clusterTag + "_" + topicName + "_consumer_group";
-            tubeMQOperator.createConsumerGroup(tubeCluster, topicName, consumeGroup, operator);
-            log.info("success to create tubemq consumer group for groupId={}", groupId);
-
-            // insert the consumer group info
-            Integer id = consumeService.saveBySystem(groupInfo, topicName, consumeGroup);
-            log.info("success to save inlong consume [{}] for consumerGroup={}, groupId={}, topic={}",
-                    id, consumeGroup, groupId, topicName);
-
             log.info("success to create tubemq resource for groupId={}, cluster={}", groupId, tubeCluster);
         } catch (Exception e) {
             log.error("failed to create tubemq resource for groupId=" + groupId, e);
@@ -101,6 +104,28 @@ public class TubeMQResourceOperator implements QueueResourceOperator {
     @Override
     public void createQueueForStream(InlongGroupInfo groupInfo, InlongStreamInfo streamInfo, String operator) {
         // currently, not support create tubemq resource for stream
+        String groupId = groupInfo.getInlongGroupId();
+        String streamId = streamInfo.getInlongStreamId();
+        List<StreamSink> streamSinks = sinkService.listSink(groupId, streamId);
+        if (CollectionUtils.isEmpty(streamSinks)) {
+            log.warn("no need to create subs, as no sink exists for groupId={}, streamId={}", groupId, streamId);
+            return;
+        }
+        for (StreamSink sink : streamSinks) {
+            String topicName = groupInfo.getMqResource();
+            String consumeGroup = getTubeConsumerGroup(groupInfo, sink, topicName);
+            TubeClusterInfo tubeCluster = (TubeClusterInfo) clusterService.getOne(groupInfo.getInlongClusterTag(), null,
+                    ClusterType.TUBEMQ);
+            tubeMQOperator.createConsumerGroup(tubeCluster, topicName, consumeGroup, operator);
+            log.info("success to create tubemq consumer group for groupId={}", groupId);
+
+            // insert the consumer group info
+            Integer id = consumeService.saveBySystem(groupInfo, topicName, consumeGroup);
+            log.info("success to save inlong consume [{}] for consumerGroup={}, groupId={}, topic={}",
+                    id, consumeGroup, groupId, topicName);
+
+            log.info("success to create tubemq resource for groupId={}, cluster={}", groupId, tubeCluster);
+        }
     }
 
     @Override
@@ -108,4 +133,31 @@ public class TubeMQResourceOperator implements QueueResourceOperator {
         // currently, not support delete tubemq resource for stream
     }
 
+    private String getTubeConsumerGroup(InlongGroupInfo groupInfo, StreamSink sink, String topicName) {
+        String clusterTag = groupInfo.getInlongClusterTag();
+        String sortTaskType;
+        switch (sink.getSinkType()) {
+            case SinkType.INNER_THIVE:
+                sortTaskType = ClusterType.SORT_THIVE;
+                break;
+            case SinkType.INNER_HIVE:
+                sortTaskType = ClusterType.SORT_HIVE;
+                break;
+            case SinkType.CLICKHOUSE:
+                sortTaskType = ClusterType.SORT_CK;
+                break;
+            case SinkType.INNER_ICEBERG:
+                sortTaskType = ClusterType.SORT_ICEBERG;
+                break;
+            case SinkType.ELASTICSEARCH:
+                sortTaskType = ClusterType.SORT_ES;
+                break;
+            default:
+                return String.format(TUBE_CONSUME_GROUP, clusterTag, groupInfo.getMqResource(), topicName);
+        }
+        // get sort task name for sink
+        String sortClusterName = sortConfigService.getSortTaskName(groupInfo.getInlongGroupId(),
+                groupInfo.getInlongClusterTag(), sink.getId(), sortTaskType);
+        return String.format(TUBE_CONSUME_GROUP, sortClusterName, clusterTag, topicName);
+    }
 }

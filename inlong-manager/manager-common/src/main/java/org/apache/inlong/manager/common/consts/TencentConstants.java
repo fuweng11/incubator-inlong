@@ -69,7 +69,9 @@ public class TencentConstants {
      * The name of the sort consumer group for the tube
      * Naming rules: clusterTag_topicName_consumer_group
      */
-    public static final String SORT_TUBE_GROUP = "%s_%s_consumer_group";
+    public static final String SORT_TUBE_GROUP = "%s_%s_%s_consumer_group";
+
+    public static final String OLD_SORT_TUBE_GROUP = "%s_%s_consumer_group";
 
     /**
      * Name of pulsar's sort consumer group
