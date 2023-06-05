@@ -88,9 +88,11 @@ public class TaskWrapper extends AbstractStateWrapper {
                 if (!task.getReader().isSourceExist()) {
                     doChangeState(State.FAILED);
                 } else {
-                    if (message == null
-                            || task.getChannel().push(message, pushMaxWaitTime, TimeUnit.SECONDS)) {
-                        message = task.getReader().read();
+                    message = task.getReader().read();
+                    if (message == null) {
+                        AgentUtils.silenceSleepInMs(100);
+                    } else {
+                        task.getChannel().push(message);
                     }
                 }
             }

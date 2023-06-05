@@ -119,7 +119,6 @@ public class PackProxyMessage {
             if (queueIsFull()) {
                 LOGGER.warn("message queue is greater than {}, stop adding message, "
                         + "maybe proxy get stuck", maxQueueNumber);
-                return false;
             }
             messageQueue.put(message);
             queueSize.addAndGet(message.getBody().length);
