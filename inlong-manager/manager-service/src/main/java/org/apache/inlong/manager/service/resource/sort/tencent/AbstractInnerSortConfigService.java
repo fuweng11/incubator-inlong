@@ -362,9 +362,9 @@ public class AbstractInnerSortConfigService {
             }
 
             InlongPulsarInfo pulsarInfo = (InlongPulsarInfo) groupInfo;
-            String tenant = pulsarInfo.getTenant();
-            if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarClusterDTO.getTenant())) {
-                tenant = pulsarClusterDTO.getTenant();
+            String tenant = pulsarInfo.getPulsarTenant();
+            if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarClusterDTO.getPulsarTenant())) {
+                tenant = pulsarClusterDTO.getPulsarTenant();
             } else {
                 tenant = InlongConstants.DEFAULT_PULSAR_TENANT;
             }

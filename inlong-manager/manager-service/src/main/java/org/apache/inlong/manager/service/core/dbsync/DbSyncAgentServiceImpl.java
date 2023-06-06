@@ -661,9 +661,9 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 if (MQType.PULSAR.equals(mqType) || MQType.TDMQ_PULSAR.equals(mqType)) {
                     PulsarClusterDTO pulsarCluster = PulsarClusterDTO.getFromJson(cluster.getExtParams());
                     InlongPulsarDTO pulsarInfo = InlongPulsarDTO.getFromJson(groupEntity.getExtParams());
-                    String tenant = pulsarInfo.getTenant();
-                    if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarCluster.getTenant())) {
-                        tenant = pulsarCluster.getTenant();
+                    String tenant = pulsarInfo.getPulsarTenant();
+                    if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarCluster.getPulsarTenant())) {
+                        tenant = pulsarCluster.getPulsarTenant();
                     } else {
                         tenant = InlongConstants.DEFAULT_PULSAR_TENANT;
                     }
