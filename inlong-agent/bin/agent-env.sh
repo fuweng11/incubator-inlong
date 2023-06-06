@@ -44,7 +44,7 @@ fi
 
 EXETEN_PARAM=' -Djava.net.preferIPv4Stack=true  -Dfile.encoding=UTF-8 '
 GC_PARAM=' -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+TraceClassLoading -XX:InitiatingHeapOccupancyPercent=60'
-GC_PRINT=' -Xloggc:log/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=20M'
+GC_PRINT=" -Xloggc:$BASE_DIR/logs/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=20M"
 
 AGENT_JVM_ARGS="$HEAP_OPTS $EXETEN_PARAM $GC_PARAM $GC_PRINT"
 
