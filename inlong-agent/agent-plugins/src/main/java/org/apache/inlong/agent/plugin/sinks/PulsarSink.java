@@ -26,7 +26,6 @@ import org.apache.inlong.agent.core.dbsync.DbAgentMetricManager;
 import org.apache.inlong.agent.core.task.ITaskPositionManager;
 import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.message.BatchProxyMessage;
-import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.message.EndMessage;
 import org.apache.inlong.agent.message.PackProxyMessage;
 import org.apache.inlong.agent.message.ProxyMessage;

@@ -81,7 +81,7 @@ public class LoadBalanceService implements AutoCloseable {
         try {
             SystemResourceUsage systemResourceUsage = dbSyncHostUsage.getDbSyncHostUsage();
             LoadBalanceInfo info = new LoadBalanceInfo();
-            info.setIp(info.getIp());
+            info.setIp(registerKey);
             info.setMaxDbJobsThreshold(jobHaDispatcher.getMaxDbJobsThreshold());
             info.setBandwidthIn(systemResourceUsage.getBandwidthIn());
             info.setBandwidthOut(systemResourceUsage.getBandwidthOut());

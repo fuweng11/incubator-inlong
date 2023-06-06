@@ -340,6 +340,9 @@ public class JobCoordinator {
             if (loadBalanceInfo != null && loadBalanceInfo.getDbJobIdNum() < loadBalanceInfo.getMaxDbJobsThreshold()) {
                 try {
                     String registerKey = loadBalanceInfo.getIp();
+                    if (StringUtils.isEmpty(registerKey)) {
+                        return false;
+                    }
                     doChangeRunNodeInfo(registerKey, dbJobId);
                     loadBalanceInfo.setDbJobIdNum(loadBalanceInfo.getDbJobIdNum() + 1);
                     updateDbJobIdMapInfo(registerKey, dbJobId);
@@ -536,7 +539,7 @@ public class JobCoordinator {
                     String dbJobId = dbJobIdList.get(i);
                     JobRunNodeInfo runNodeInfo = getJobRunNodeInfo(dbJobId);
                     String registerKey;
-                    if (runNodeInfo != null) {
+                    if (runNodeInfo != null && StringUtils.isNotEmpty(runNodeInfo.getIp())) {
                         handleUnNormalModelJob(runNodeInfo, dbJobId, unNormalRunModelMap);
                         registerKey = runNodeInfo.getIp();
                         String lastRegisterKey = serverIpMap.put(dbJobId, registerKey);

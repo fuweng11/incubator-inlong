@@ -230,23 +230,25 @@ public class DbAgentMetricManager implements MetricReport {
 
     public void addStatisticInfo(String groupID, String streamID, long timeStamp,
             long msgCnt, LogPosition latestLogPosition, String jobID, String key) {
-        AtomicLong statistic = statisticData.get(key);
-        if (statistic == null) {
-            statisticData.putIfAbsent(key, new AtomicLong(msgCnt));
-            try {
-                sInfos.put(new StatisticInfo(groupID, streamID, timeStamp, latestLogPosition, jobID, key));
-            } catch (InterruptedException e) {
-                logger.error("put {}#{} StatisticInfo {} error, ", groupID, streamID, timeStamp,
-                        e);
-            }
-        } else {
-            statistic.addAndGet(msgCnt);
-        }
-        statisticDataPackage.compute(key, (k, v) -> {
+        statisticData.compute(key, (k, v) -> {
             if (v == null) {
-                v = new AtomicLong(msgCnt);
+                try {
+                    sInfos.put(new StatisticInfo(groupID, streamID, timeStamp, latestLogPosition, jobID, key));
+                } catch (InterruptedException e) {
+                    logger.error("put {}#{} StatisticInfo {} error, ", groupID, streamID, timeStamp,
+                            e);
+                }
+                return new AtomicLong(msgCnt);
             } else {
                 v.addAndGet(msgCnt);
+                return v;
+            }
+        });
+        statisticDataPackage.compute(key, (k, v) -> {
+            if (v == null) {
+                v = new AtomicLong(1);
+            } else {
+                v.addAndGet(1);
             }
             return v;
         });

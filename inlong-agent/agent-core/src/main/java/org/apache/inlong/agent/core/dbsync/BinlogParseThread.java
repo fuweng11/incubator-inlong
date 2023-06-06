@@ -314,12 +314,12 @@ public class BinlogParseThread extends Thread implements MetricReport {
         String pbInstName = "";
         if (logPosition != null && logPosition.getIdentity() != null) {
             InetSocketAddress address = logPosition.getIdentity().getSourceAddress();
-            if (address != null) {
-                pbInstName = address.toString();
+            if (address != null && address.getAddress() != null) {
+                pbInstName = address.getAddress().getHostAddress() + ":" + address.getPort();
             }
         }
         if (StringUtils.isEmpty(pbInstName)) {
-            pbInstName = dbSyncReadJob.getCurrentDbIpAddress();
+            pbInstName = dbSyncReadJob.getCurrentDbIpPortStr();
         }
         return pbInstName;
     }

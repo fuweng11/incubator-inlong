@@ -63,4 +63,8 @@ public class DbAddConfigInfo {
     public String toString() {
         return "dbAddress=" + dbAddress + ",port=" + port + ",realRemoteIp=" + realRemoteIp;
     }
+
+    public String getIpPortStr() {
+        return dbAddress + ":" + port;
+    }
 }

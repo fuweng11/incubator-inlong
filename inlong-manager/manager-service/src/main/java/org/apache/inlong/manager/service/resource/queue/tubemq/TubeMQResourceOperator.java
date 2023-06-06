@@ -17,9 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.queue.tubemq;
 
-import com.google.common.base.Objects;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ClusterType;
@@ -37,6 +34,10 @@ import org.apache.inlong.manager.service.consume.InlongConsumeService;
 import org.apache.inlong.manager.service.resource.queue.QueueResourceOperator;
 import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
+
+import com.google.common.base.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

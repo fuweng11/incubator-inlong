@@ -1097,6 +1097,13 @@ public class DbAgentReadJob implements MetricReport {
         return "";
     }
 
+    public String getCurrentDbIpPortStr() {
+        if (mysqlCurrentAddress != null) {
+            return mysqlCurrentAddress.getIpPortStr();
+        }
+        return "";
+    }
+
     private boolean isValidCheckSum(byte[] data) {
         return Arrays.equals(data, new byte[]{0x00, 0x00, 0x00, 0x00})
                 || Arrays.equals(data, new byte[]{0x00, 0x00, 0x00, 0x01});
