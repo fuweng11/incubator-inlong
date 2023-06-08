@@ -486,10 +486,11 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
 
         DbSyncClusterInfo oldCluster = request.getDbSyncCluster();
         String ip = request.getIp();
-        InlongClusterNodeEntity clusterNode = clusterNodeMapper.selectByParentIdAndIp(oldCluster.getParentId(), ip);
-        // if clusterNode is null, it means the IP goes offline from the original cluster
         String oldName = oldCluster.getClusterName();
-        if (clusterNode == null) {
+        List<InlongClusterNodeEntity> clusterNodeList =
+                clusterNodeMapper.selectByParentIdAndIp(oldCluster.getParentId(), ip);
+        // if clusterNode is null, it means the IP goes offline from the original cluster
+        if (CollectionUtils.isEmpty(clusterNodeList)) {
             List<String> oldServerNames = sourceMapper.selectNodeNames(oldName, SourceType.HA_BINLOG);
             fullTaskInfo.setOfflineServers(oldServerNames);
             LOGGER.info("ip {} has already removed, offline all server names {}", ip, oldServerNames);

@@ -42,8 +42,6 @@ public interface InlongClusterNodeEntityMapper {
     List<InlongClusterNodeEntity> selectByParentId(@Param("parentId") Integer parentId,
             @Param("protocolType") String protocolType);
 
-    InlongClusterNodeEntity selectByParentIdAndIp(@Param("parentId") Integer parentId, @Param("ip") String ip);
-
     List<InlongClusterNodeEntity> selectByIpAndType(@Param("ip") String ip, @Param("type") String type);
 
     List<InlongClusterNodeEntity> selectByParentIdAndIp(@Param("parentId") Integer parentId, @Param("ip") String ip);
