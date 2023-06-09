@@ -112,6 +112,13 @@ public class DBSyncJob implements AbstractJob {
             heartbeatManager.putStopHeartbeat(stopHb);
         }
         readJob.stop();
+
+        if (dbSyncTasks != null) {
+            dbSyncTasks.forEachKey(1, taskId -> {
+                agentManager.getTaskManager().removeTask(String.valueOf(taskId));
+                dbSyncTasks.remove(taskId);
+            });
+        }
         dbSyncMetric.stop();
     }
 

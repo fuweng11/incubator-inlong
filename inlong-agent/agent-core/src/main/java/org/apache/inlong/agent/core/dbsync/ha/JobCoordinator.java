@@ -106,7 +106,7 @@ public class JobCoordinator {
 
     public synchronized void updateServerIDList(Integer clusterId, long dbJobIdListVersion,
             CopyOnWriteArraySet<String> dbJobIdSet) {
-        if (this.clusterId != clusterId || this.dbJobIdListVersion != dbJobIdListVersion) {
+        if ((clusterId != null && !clusterId.equals(this.clusterId)) || this.dbJobIdListVersion != dbJobIdListVersion) {
             this.clusterIdStr = String.valueOf(clusterId);
             this.clusterId = clusterId;
             this.dbJobIdSet.clear();
@@ -123,7 +123,7 @@ public class JobCoordinator {
 
         private long dbJobIdListVersion = -1;
 
-        private long clusterId = -1;
+        private Integer clusterId = -1;
 
         private List<String> dbJobIdList = new ArrayList<>();
 
@@ -138,9 +138,10 @@ public class JobCoordinator {
         public void run() {
             try {
                 if (!jobHaDispatcher.isDbsyncUpdating() && jobHaDispatcher.isCoordinator()) {
+                    Long maxJobsSize = 0L;
                     synchronized (JobCoordinator.this) {
                         if ((dbJobIdListVersion != JobCoordinator.this.dbJobIdListVersion)
-                                || (clusterId != JobCoordinator.this.clusterId)) {
+                                || (!clusterId.equals(JobCoordinator.this.clusterId))) {
                             dbJobIdList.clear();
                             dbJobIdList.addAll(JobCoordinator.this.dbJobIdSet);
                             dbJobIdListVersion = JobCoordinator.this.dbJobIdListVersion;
@@ -189,6 +190,7 @@ public class JobCoordinator {
                             if (serverIdSet != null) {
                                 entry.getValue().setDbJobIdNum(serverIdSet.size());
                             }
+                            maxJobsSize += entry.getValue().getMaxDbJobsThreshold();
                             cadLoadSet.add(entry.getValue());
                         }
                     }
@@ -227,6 +229,9 @@ public class JobCoordinator {
                         lastPrintStatTimeStamp = currentTimeStamp;
                         isNeedUpdateRunNodeMap = true;
                     }
+                    LOGGER.info("JobCoordinator current clusterId = {}, dbJobIdListVersion = {}, "
+                            + "maxJobsSize = {}, allJobSize = {}", clusterId, dbJobIdListVersion,
+                            maxJobsSize, dbJobIdList.size());
                 } else {
                     LOGGER.info("JobCoordinator current is updating !!!!");
                 }
@@ -569,8 +574,8 @@ public class JobCoordinator {
             if (runNodeInfo == null) {
                 return;
             }
-            if (runNodeInfo.getRunningModel() != DBSyncJobConf.RUNNING_MODEL_NORMAL) {
-                if (runNodeInfo.getHandleType() == DBSyncJobConf.HANDLE_TYPE_AUTO) {
+            if (!DBSyncJobConf.RUNNING_MODEL_NORMAL.equals(runNodeInfo.getRunningModel())) {
+                if (DBSyncJobConf.HANDLE_TYPE_AUTO.equals(runNodeInfo.getHandleType())) {
                     LOGGER.info("handleUnNormalModelJob change dbJobId {} runModel from 4 to 1.", dbJobId);
                     runNodeInfo.setRunningModel(DBSyncJobConf.RUNNING_MODEL_NORMAL);
                     runNodeInfo.setHandleType(DBSyncJobConf.HANDLE_TYPE_AUTO);

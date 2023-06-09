@@ -777,7 +777,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
             return false;
         }
         LOGGER.info("newClusterId = {}, clusterId = {}, zkServer = {}!", newClusterId, clusterId, zkServer);
-        if ((newClusterId != clusterId)
+        if ((!newClusterId.equals(clusterId))
                 || (zkUrl == null || !zkUrl.equals(zkServer))) {
             if (checkNodeRegisterStatus(newClusterId, zkServer)) {
                 LOGGER.info("change zkUrl Info from old = {} , to new = {}", zkUrl, zkServer);
@@ -805,7 +805,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
             }
         }
 
-        if (clusterId != newClusterId || this.dbJobIdListVersion != dbJobIdListVersion
+        if (!newClusterId.equals(clusterId) || this.dbJobIdListVersion != dbJobIdListVersion
                 || !needCheckClusterIdOrDbJobIdListVersion) {
             Set<String> currentDbJobIdList = this.allDbJobIdClusterSet;
             /*
@@ -868,7 +868,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
     }
 
     private boolean initClusterInfoToZk(Integer newClusterId) {
-        if (newClusterId != clusterId) {
+        if (newClusterId != null && !newClusterId.equals(clusterId)) {
 
             if (StringUtils.isEmpty(zkUrl) || newClusterId == null) {
                 LOGGER.warn("zkServer = {}, clusterId = {} params has error", zkUrl,
