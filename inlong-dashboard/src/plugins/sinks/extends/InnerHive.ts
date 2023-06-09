@@ -323,7 +323,7 @@ export default class InnerHiveSink
       disabled: [110, 130].includes(values?.status),
     }),
   })
-  @I18n('meta.Sinks.InnerHive.Responsible')
+  @I18n('meta.Sinks.InnerHive.ProxyUser')
   virtualUser: string;
 
   @FieldDecorator({

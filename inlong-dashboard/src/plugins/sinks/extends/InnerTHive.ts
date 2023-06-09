@@ -361,6 +361,15 @@ export default class InnerThiveSink
     props: values => ({
       disabled: [110, 130].includes(values?.status),
     }),
+  })
+  @I18n('meta.Sinks.THive.ProxyUser')
+  virtualUser: string;
+
+  @FieldDecorator({
+    type: 'input',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
     isPro: true,
   })
   @I18n('meta.Sinks.THive.SecondaryPartition')
