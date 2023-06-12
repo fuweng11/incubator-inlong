@@ -204,7 +204,9 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             String dbName = hiveFullInfo.getDbName();
             String tbName = hiveFullInfo.getTableName();
             String superUser = hiveFullInfo.getUsername();
-
+            if (superUser.startsWith("tdw_")) {
+                superUser = superUser.replaceFirst("tdw_", "");
+            }
             boolean isExist = upsOperator.checkTableExist(hiveFullInfo, dbName, tbName);
             DealResult dealResult;
             if (isExist) {
