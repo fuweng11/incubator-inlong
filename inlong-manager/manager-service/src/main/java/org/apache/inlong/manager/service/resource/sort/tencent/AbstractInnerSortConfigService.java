@@ -210,6 +210,10 @@ public class AbstractInnerSortConfigService {
                 DeserializationInfo inner = new CsvDeserializationInfo(separator, escape);
                 deserializationInfo = new InlongMsgPbV1DeserializationInfo(Constants.CompressionType.GZIP, inner);
                 break;
+            case TencentConstants.DATA_TYPE_INLONG_MSG_V1_KV:
+                DeserializationInfo innerKv = new KvDeserializationInfo(separator, '=', escape);
+                deserializationInfo = new InlongMsgPbV1DeserializationInfo(Constants.CompressionType.GZIP, innerKv);
+                break;
             case TencentConstants.DATA_TYPE_SEA_CUBE:
                 deserializationInfo = new InlongMsgSeaCubeDeserializationInfo(streamId);
                 break;

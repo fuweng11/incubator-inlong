@@ -49,6 +49,7 @@ public class TencentConstants {
     public static final String DATA_TYPE_KV = "KV";
     public static final String DATA_TYPE_RAW_KV = "RAW_KV";
     public static final String DATA_TYPE_INLONG_MSG_V1 = "INLONG_MSG_V1";
+    public static final String DATA_TYPE_INLONG_MSG_V1_KV = "INLONG_MSG_V1_KV";
     public static final String DATA_TYPE_BINLOG = "BINLOG";
     public static final String DATA_TYPE_SEA_CUBE = "SEA_CUBE";
 

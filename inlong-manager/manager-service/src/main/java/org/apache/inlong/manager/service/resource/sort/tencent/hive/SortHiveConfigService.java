@@ -85,6 +85,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.inlong.manager.common.consts.TencentConstants.PART_ARRIVED;
@@ -421,7 +422,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
         // info.getUsername(); // Create partitions through the thive JDBC server link
         // info.getCreator() - tdwUsername // Go to TDW to query whether the partition exists
-        String hadoopProxyUser = "tdwadmin"; // Sort write HDFS use
+        String hadoopProxyUser = Optional.ofNullable(hiveFullInfo.getVirtualUser()).orElse("inlong_online");
         if (StringUtils.isBlank(sortExtConfig.getBackupDataPath())) {
             sortExtConfig.setBackupDataPath(dataPath);
         }
