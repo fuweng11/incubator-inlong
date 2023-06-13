@@ -6,7 +6,7 @@
     "@ant-design/icons": "^5.0.1",
     "@ant-design/pro-layout": "^7.10.3",
     "@tencent/wedata": "file:src/@tencent",
-    "@tencent/long-web-sdk": "^1.0.46",
+    "@tencent/long-web-sdk": "^1.0.47",
     "ahooks": "^2.10.0",
     "antd": "^5.3.3",
     "dayjs": "^1.10.4",

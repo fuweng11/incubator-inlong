@@ -3086,9 +3086,9 @@
       }
     },
     "@tencent/long-web-sdk": {
-      "version": "1.0.46",
-      "resolved": "https://mirrors.tencent.com/npm/@tencent/long-web-sdk/-/@tencent/long-web-sdk-1.0.46.tgz",
-      "integrity": "sha512-lTNPp4KWKwc6deET9kFrzct505MMEKsuxXCjWZMKzM1oNJFY+T4arpeWr9n3St2MVGbvko1J9TI1lUDhRAw64A==",
+      "version": "1.0.47",
+      "resolved": "https://mirrors.tencent.com/npm/@tencent/long-web-sdk/-/@tencent/long-web-sdk-1.0.47.tgz",
+      "integrity": "sha512-TPNzO9DLbIZTAieuNIARML7qVlDDMhudZ/mCujkmZGrurFWJ8sOFRN+mI37Ra+fpR0z7eC1JiNG4ApiI7DEISQ==",
       "requires": {
         "ahooks": "~3.0.8",
         "lodash": "^4.17.21",
