@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Radio } from '@tencent/tea-component';
+import { Segment, Radio } from '@tencent/tea-component';
 import React from 'react';
 
 type radios = {
@@ -34,6 +34,23 @@ export interface ContentRadioProps {
 }
 
 const ContentRadio = ({ radios, value, ...props }: ContentRadioProps) => {
+  // if (radios) {
+  //   const curRadio = radios.find(radio => radio.value == value);
+  //   console.log(curRadio);
+  //   console.log(value);
+  //   return (
+  //     <>
+  //       <Segment
+  //         {...props}
+  //         rimless={false}
+  //         value={value}
+  //         options={radios.map(radio => ({ text: radio.text, value: radio.value }))}
+  //       />
+  //       {curRadio?.operations}
+  //     </>
+  //   );
+  // }
+
   return (
     <Radio.Group layout="column" value={value} {...props}>
       {radios &&

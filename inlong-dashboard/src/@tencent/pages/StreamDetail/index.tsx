@@ -35,7 +35,7 @@ import Test from './Test';
 
 const tabs = [
   { id: 'info', label: '基本信息', Component: Info },
-  { id: 'test', label: '数据测试', Component: Test, disabled: true },
+  { id: 'test', label: '数据测试', Component: Test },
   { id: 'subscribe', label: '数据订阅', Component: SubscribeList },
   { id: 'statistic', label: '数据统计', Component: () => <div />, disabled: true },
   { id: 'schema', label: 'schema管理', Component: () => <div />, disabled: true },

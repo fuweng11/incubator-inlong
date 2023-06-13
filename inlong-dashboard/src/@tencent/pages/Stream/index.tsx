@@ -133,7 +133,6 @@ export default function StreamList() {
           </a>
         </Alert>
       )}
-
       <Container>
         <div style={{ display: 'flex', marginBottom: -10, background: '#fff' }}>
           <ProForm
@@ -150,7 +149,6 @@ export default function StreamList() {
           <Button onClick={() => formRef.current.reset()}>重置</Button>
         </div>
       </Container>
-
       <Justify
         left={
           <>
@@ -269,7 +267,6 @@ export default function StreamList() {
           ]}
         />
       </div>
-
       <PublishModal
         {...publishModal}
         onOk={data => setPublishModal({ visible: false })}

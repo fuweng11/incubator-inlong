@@ -66,6 +66,7 @@ const Page: React.FC<PageContainerProps> = ({
 
   return (
     <Content className={`${styles.panel} ${className}`} style={style}>
+      <div id="alert_node"></div>
       <Content.Header
         showBackButton={breadcrumbs.length > 1}
         onBackButtonClick={() => history.goBack()}
@@ -79,7 +80,6 @@ const Page: React.FC<PageContainerProps> = ({
           </>
         }
       />
-
       <Content.Body>
         {useDefaultContainer ? <Container>{children}</Container> : children}
       </Content.Body>

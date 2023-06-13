@@ -3085,6 +3085,43 @@
         "web-vitals": "^3.3.0"
       }
     },
+    "@tencent/long-web-sdk": {
+      "version": "1.0.46",
+      "resolved": "https://mirrors.tencent.com/npm/@tencent/long-web-sdk/-/@tencent/long-web-sdk-1.0.46.tgz",
+      "integrity": "sha512-lTNPp4KWKwc6deET9kFrzct505MMEKsuxXCjWZMKzM1oNJFY+T4arpeWr9n3St2MVGbvko1J9TI1lUDhRAw64A==",
+      "requires": {
+        "ahooks": "~3.0.8",
+        "lodash": "^4.17.21",
+        "md5": "^2.3.0",
+        "react-draggable": "^4.4.5",
+        "react-resizable": "^3.0.4"
+      },
+      "dependencies": {
+        "ahooks": {
+          "version": "3.0.8",
+          "resolved": "https://mirrors.tencent.com/npm/ahooks/-/ahooks-3.0.8.tgz",
+          "integrity": "sha512-5baHmCZHeuR5QKYdUyZwPhCT4MZJcyWsjSp7CdaE4XvnOsI8NSfLYld4KAIEHKUrNVUZxF3xi0/QGudAC4id8Q==",
+          "requires": {
+            "dayjs": "^1.9.1",
+            "intersection-observer": "^0.12.0",
+            "js-cookie": "^3.0.0",
+            "lodash": "^4.17.21",
+            "resize-observer-polyfill": "^1.5.1",
+            "screenfull": "^5.0.0"
+          }
+        },
+        "intersection-observer": {
+          "version": "0.12.2",
+          "resolved": "https://mirrors.tencent.com/npm/intersection-observer/-/intersection-observer-0.12.2.tgz",
+          "integrity": "sha512-7m1vEcPCxXYI8HqnL8CKI6siDyD+eIWSwgB3DZA+ZTogxk9I4CDnj4wilt9x/+/QbHI4YG5YZNmC6458/e9Ktg=="
+        },
+        "js-cookie": {
+          "version": "3.0.5",
+          "resolved": "https://mirrors.tencent.com/npm/js-cookie/-/js-cookie-3.0.5.tgz",
+          "integrity": "sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw=="
+        }
+      }
+    },
     "@tencent/tea-app": {
       "version": "2.1.15",
       "resolved": "https://mirrors.tencent.com/npm/@tencent/tea-app/-/@tencent/tea-app-2.1.15.tgz",
@@ -5466,6 +5503,11 @@
       "integrity": "sha512-kWWXztvZ5SBQV+eRgKFeh8q5sLuZY2+8WUIzlxWVTg+oGwY14qylx1KbKzHd8P6ZYkAg0xyIDU9JMHhyJMZ1jw==",
       "dev": true
     },
+    "charenc": {
+      "version": "0.0.2",
+      "resolved": "https://mirrors.tencent.com/npm/charenc/-/charenc-0.0.2.tgz",
+      "integrity": "sha1-wKHS86cJLgN3S/qD8UwPxXkKhmc="
+    },
     "check-types": {
       "version": "11.1.2",
       "resolved": "https://registry.npmjs.org/check-types/-/check-types-11.1.2.tgz",
@@ -5607,6 +5649,11 @@
         "kind-of": "^6.0.2",
         "shallow-clone": "^3.0.0"
       }
+    },
+    "clsx": {
+      "version": "1.2.1",
+      "resolved": "https://mirrors.tencent.com/npm/clsx/-/clsx-1.2.1.tgz",
+      "integrity": "sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg=="
     },
     "co": {
       "version": "4.6.0",
@@ -5900,6 +5947,11 @@
         "shebang-command": "^2.0.0",
         "which": "^2.0.1"
       }
+    },
+    "crypt": {
+      "version": "0.0.2",
+      "resolved": "https://mirrors.tencent.com/npm/crypt/-/crypt-0.0.2.tgz",
+      "integrity": "sha1-iNf/fsDfuG9xPch7u0LQRNPmxBs="
     },
     "crypto-random-string": {
       "version": "2.0.0",
@@ -8828,6 +8880,11 @@
         "has-tostringtag": "^1.0.0"
       }
     },
+    "is-buffer": {
+      "version": "1.1.6",
+      "resolved": "https://mirrors.tencent.com/npm/is-buffer/-/is-buffer-1.1.6.tgz",
+      "integrity": "sha512-NcdALwpXkTm5Zvvbk7owOUSvVvBKDgKP5/ewfXEznmQFfs4ZRmanOeKBTjRVjka3QFoN6XJ+9F3USqfHqTaU5w=="
+    },
     "is-callable": {
       "version": "1.2.4",
       "resolved": "https://registry.npmjs.org/is-callable/-/is-callable-1.2.4.tgz",
@@ -11316,6 +11373,16 @@
       "resolved": "https://registry.npmjs.org/mathml-tag-names/-/mathml-tag-names-2.1.3.tgz",
       "integrity": "sha512-APMBEanjybaPzUrfqU0IMU5I0AswKMH7k8OTLs0vvV4KZpExkTkY87nR/zpbuTPj+gARop7aGUbl11pnDfW6xg==",
       "dev": true
+    },
+    "md5": {
+      "version": "2.3.0",
+      "resolved": "https://mirrors.tencent.com/npm/md5/-/md5-2.3.0.tgz",
+      "integrity": "sha512-T1GITYmFaKuO91vxyoQMFETst+O71VUPEU3ze5GNzDm0OWdP8v1ziTaAEPUr/3kLsY3Sftgz242A1SetQiDL7g==",
+      "requires": {
+        "charenc": "0.0.2",
+        "crypt": "0.0.2",
+        "is-buffer": "~1.1.6"
+      }
     },
     "mdn-data": {
       "version": "2.0.4",
@@ -13855,6 +13922,15 @@
         "scheduler": "^0.20.1"
       }
     },
+    "react-draggable": {
+      "version": "4.4.5",
+      "resolved": "https://mirrors.tencent.com/npm/react-draggable/-/react-draggable-4.4.5.tgz",
+      "integrity": "sha512-OMHzJdyJbYTZo4uQE393fHcqqPYsEtkjfMgvCHr6rejT+Ezn4OZbNyGH50vv+SunC1RMvwOTSWkEODQLzw1M9g==",
+      "requires": {
+        "clsx": "^1.1.1",
+        "prop-types": "^15.8.1"
+      }
+    },
     "react-dropzone": {
       "version": "11.7.1",
       "resolved": "https://registry.npmjs.org/react-dropzone/-/react-dropzone-11.7.1.tgz",
@@ -13939,6 +14015,15 @@
       "resolved": "https://registry.npmjs.org/react-refresh/-/react-refresh-0.14.0.tgz",
       "integrity": "sha512-wViHqhAd8OHeLS/IRMJjTSDHF3U9eWi62F/MledQGPdJGDhodXJ9PBLNGr6WWL7qlH12Mt3TyTpbS+hGXMjCzQ==",
       "dev": true
+    },
+    "react-resizable": {
+      "version": "3.0.5",
+      "resolved": "https://mirrors.tencent.com/npm/react-resizable/-/react-resizable-3.0.5.tgz",
+      "integrity": "sha512-vKpeHhI5OZvYn82kXOs1bC8aOXktGU5AmKAgaZS4F5JPburCtbmDPqE7Pzp+1kN4+Wb81LlF33VpGwWwtXem+w==",
+      "requires": {
+        "prop-types": "15.x",
+        "react-draggable": "^4.0.3"
+      }
     },
     "react-router": {
       "version": "5.3.3",

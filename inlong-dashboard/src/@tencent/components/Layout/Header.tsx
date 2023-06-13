@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Layout, NavMenu, Select } from '@tencent/tea-component';
 import styles from './index.module.less';
 import menuTree, { MenuItemType } from '@/configs/menus';
@@ -26,6 +26,7 @@ import { config } from '@/configs/default';
 import { useProjectInfo, useProjectList } from '@/@tencent/components/Use/usePlatformAPIs';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { stringify } from 'qs';
+import { MessageCenter } from '@tencent/long-web-sdk';
 
 const { Header } = Layout;
 
@@ -39,6 +40,10 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
   userName,
 }: LayoutHeaderProps) => {
   const [projectId] = useProjectId();
+  const [msgVisible, setMsgVisible] = useState<boolean>(false);
+  (window as any).LONG_SDK_CONFIG = {
+    productId: 28,
+  };
 
   const { data: projectListData } = useProjectList({
     onSuccess: result => {
@@ -142,6 +147,15 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
         }
         right={
           <div className={styles.userInfo}>
+            <MessageCenter
+              visible={msgVisible}
+              onVisibleChange={setMsgVisible}
+              showCount
+              alertDomId="alert_node"
+            >
+              <span style={{ color: '#ffffff', fontSize: 12, marginRight: 10 }}>消息</span>
+            </MessageCenter>
+
             <img
               className={styles.avatar}
               src={
