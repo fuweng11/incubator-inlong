@@ -298,6 +298,17 @@ public class AbstractInnerSortConfigService {
                         sinkEntity.getVersion());
                 throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
             }
+        } else {
+            // check if the cluster belongs to this tag
+            List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
+                    clusterTag, sortClusterName, sortTaskType);
+            if (CollectionUtils.isEmpty(sortClusters) || sortClusters.size() > 1) {
+                String errMsg = String.format("not fond cluster=[%s] in the cluster tag=[%s]",
+                        sortClusterName, clusterTag);
+                LOGGER.error(errMsg);
+                throw new BusinessException(errMsg);
+            }
+
         }
         return sortClusterName;
     }
