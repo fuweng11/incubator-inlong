@@ -41,7 +41,6 @@ import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_PAC
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID_QUEUE_MAX_NUMBER;
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_PACKAGE_MAX_SIZE;
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_PACKAGE_MAX_TIMEOUT_MS;
-import static org.apache.inlong.agent.constant.CommonConstants.PROXY_SEND_SYNC;
 import static org.apache.inlong.common.msg.AttributeConstants.DATA_TIME;
 import static org.apache.inlong.common.msg.AttributeConstants.MESSAGE_TOPIC;
 import static org.apache.inlong.common.msg.AttributeConstants.STREAM_ID;
@@ -85,9 +84,6 @@ public class PackProxyMessage {
         this.messageQueue = new LinkedBlockingQueue<>(maxQueueNumber);
         this.groupId = groupId;
         this.streamId = streamId;
-        // handle syncSend flag
-        this.syncSend = jobConf.getBoolean(PROXY_SEND_SYNC, false);
-        extraMap.put(AttributeConstants.MESSAGE_SYNC_SEND, String.valueOf(syncSend));
     }
 
     public void generateExtraMap(String dataKey) {

@@ -24,5 +24,7 @@ public interface ITaskPositionManager extends Service {
 
     void updateSinkPosition(BatchProxyMessage batchMsg, String sourcePath, long size);
 
-    void updateSinkPosition(String jobInstanceId, String sourcePath, long size, boolean reset);
+    void updateSinkPosition(String jobInstanceId, String sourcePath, long size);
+
+    long getPosition(String sourcePath, String jobInstanceId);
 }
