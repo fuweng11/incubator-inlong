@@ -19,10 +19,7 @@ package org.apache.inlong.manager.service.resource.sort;
 
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
-import org.apache.inlong.manager.common.enums.StreamStatus;
-import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
-import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
@@ -49,7 +46,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -64,8 +60,6 @@ public class InnerSortConfigOperator implements SortConfigOperator {
     private StreamSinkService sinkService;
     @Autowired
     private DataNodeService dataNodeService;
-    @Autowired
-    private InlongStreamEntityMapper streamMapper;
     @Autowired
     private StreamSinkEntityMapper sinkMapper;
 
@@ -90,27 +84,24 @@ public class InnerSortConfigOperator implements SortConfigOperator {
             LOGGER.warn("group info is null or stream infos is empty, no need to build sort config for disable zk");
             return;
         }
-        String groupId = groupInfo.getInlongGroupId();
-        Set<String> streamSet = streamMapper.selectByGroupId(groupId).stream()
-                .filter(stream -> !StreamStatus.CONFIG_SUCCESSFUL.getCode().equals(stream.getStatus()))
-                .map(InlongStreamEntity::getInlongStreamId)
-                .collect(Collectors.toSet());
-        List<String> streamIds = streamInfos.stream()
-                .map(InlongStreamInfo::getInlongStreamId)
-                .filter(streamSet::contains).collect(Collectors.toList());
-        Map<String, InlongStreamInfo> streamInfoMap = streamInfos.stream()
-                .collect(Collectors.toMap(InlongStreamInfo::getInlongStreamId, v -> v));
-        if (CollectionUtils.isEmpty(streamIds)) {
+
+        if (!isStream) {
+            LOGGER.info("no need to build all sort config since the workflow is not stream level, groupId={}",
+                    groupInfo.getInlongGroupId());
             return;
         }
 
+        String groupId = groupInfo.getInlongGroupId();
+        List<String> streamIds = streamInfos.stream()
+                .map(InlongStreamInfo::getInlongStreamId).collect(Collectors.toList());
+        Map<String, InlongStreamInfo> streamInfoSet = streamInfos.stream()
+                .collect(Collectors.toMap(InlongStreamInfo::getInlongStreamId, v -> v));
         List<SinkInfo> configList = sinkMapper.selectAllConfig(groupId, streamIds);
         List<InnerHiveFullInfo> hiveInfos = new ArrayList<>();
         List<ClickHouseSink> clickHouseSinkList = new ArrayList<>();
         List<InnerIcebergSink> icebergSinkList = new ArrayList<>();
         List<ElasticsearchSink> elasticsearchSinkList = new ArrayList<>();
         for (SinkInfo sinkInfo : configList) {
-            InlongStreamInfo streamInfo = streamInfoMap.get(sinkInfo.getInlongStreamId());
             switch (sinkInfo.getSinkType()) {
                 case SinkType.INNER_HIVE:
                 case SinkType.INNER_THIVE:
@@ -118,7 +109,8 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                     StreamSinkEntity sink = sinkMapper.selectByPrimaryKey(sinkInfo.getId());
                     InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) dataNodeService.get(
                             sink.getDataNodeName(), sink.getSinkType());
-                    InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo, streamInfo, hiveInfo,
+                    InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo,
+                            streamInfoSet.get(sinkInfo.getInlongStreamId()), hiveInfo,
                             sinkInfo, dataNodeInfo);
                     hiveInfos.add(hiveFullInfo);
                     break;
