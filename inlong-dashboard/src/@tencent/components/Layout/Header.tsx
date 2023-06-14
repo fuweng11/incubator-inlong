@@ -27,6 +27,7 @@ import { useProjectInfo, useProjectList } from '@/@tencent/components/Use/usePla
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { stringify } from 'qs';
 import { MessageCenter } from '@tencent/long-web-sdk';
+import { Vector } from '../Icons';
 
 const { Header } = Layout;
 
@@ -153,7 +154,9 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
               showCount
               alertDomId="alert_node"
             >
-              <span style={{ color: '#ffffff', fontSize: 12, marginRight: 10 }}>消息</span>
+              <span style={{ fontSize: 12, marginRight: 20, cursor: 'pointer' }}>
+                <Vector />
+              </span>
             </MessageCenter>
 
             <img

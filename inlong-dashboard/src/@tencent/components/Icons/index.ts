@@ -22,3 +22,4 @@ export { ReactComponent as AcquisitionManage } from './svg/AcquisitionManage.svg
 export { ReactComponent as ConvertTip } from './svg/ConvertTip.svg';
 export { ReactComponent as AutoAdd } from './svg/AutoAdd.svg';
 export { ReactComponent as Delete } from './svg/Delete.svg';
+export { ReactComponent as Vector } from './svg/Vector.svg';
