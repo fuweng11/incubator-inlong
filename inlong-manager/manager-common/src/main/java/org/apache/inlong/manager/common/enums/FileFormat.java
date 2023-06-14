@@ -19,7 +19,7 @@ package org.apache.inlong.manager.common.enums;
 
 public enum FileFormat {
 
-    TextFile, ORCFile, SequenceFile, Parquet;
+    TextFile, ORCFile, SequenceFile, Parquet, RCFile, IgnoreKeyText, Format;
 
     public static FileFormat forName(String name) {
         for (FileFormat value : values()) {

@@ -253,6 +253,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         Character separator = (char) Integer.parseInt(hiveFullInfo.getTargetSeparator());
         HiveFileFormatInfo fileFormat;
         String format = hiveFullInfo.getFileFormat();
+        CompressionType compressionType = COMPRESSION_TYPE_MAP.get(hiveFullInfo.getCompressionType());
 
         // when the file format is text, set all fields to string.
         boolean isTextFormat = false;
@@ -267,9 +268,14 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                     SequenceCompressionCodec.DEFAULT, SequenceCompressionType.NONE);
         } else if (TencentConstants.FILE_FORMAT_PARQUET.equalsIgnoreCase(format)) {
             fileFormat = new HiveSinkInfo.ParquetFileFormatInfo();
+        } else if (TencentConstants.FILE_FORMAT_IGNORE_KEY_TEXT.equalsIgnoreCase(format)) {
+            fileFormat = new HiveSinkInfo.IgnoreKeyTextFileFormatInfo(separator);
+        } else if (TencentConstants.FILE_FORMAT_RC.equalsIgnoreCase(format)) {
+            fileFormat = new HiveSinkInfo.RcFileFormatInfo();
+        } else if (TencentConstants.FILE_FORMAT_FORMAT_STORAGE.equalsIgnoreCase(format)) {
+            fileFormat = new HiveSinkInfo.FormatStorageFormatInfo();
         } else {
             isTextFormat = true;
-            CompressionType compressionType = COMPRESSION_TYPE_MAP.get(hiveFullInfo.getCompressionType());
             if (!Objects.isNull(compressionType)) {
                 fileFormat = new HiveSinkInfo.TextFileFormatInfo(separator, compressionType,
                         new HiveSinkInfo.TextFileFormatInfo.FixedReplaceEscapeMode(String.valueOf(separator)));

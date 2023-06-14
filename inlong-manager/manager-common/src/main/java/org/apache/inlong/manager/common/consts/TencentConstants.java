@@ -61,6 +61,12 @@ public class TencentConstants {
 
     public static final String FILE_FORMAT_PARQUET = "Parquet";
 
+    public static final String FILE_FORMAT_IGNORE_KEY_TEXT = "IgnoreKeyText";
+
+    public static final String FILE_FORMAT_RC = "RcFile";
+
+    public static final String FILE_FORMAT_FORMAT_STORAGE = "Format";
+
     /**
      * Responsible person for sort consumption, consistent with the old system
      */
