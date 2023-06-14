@@ -134,6 +134,7 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
             String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
                     entity.getSinkName());
             LOGGER.error(errMsg, e);
+            throw new BusinessException(errMsg);
         }
         // If the type is inner hive, the US task needs to be frozen
         if (Objects.equals(entity.getSinkType(), SinkType.INNER_THIVE)) {
