@@ -234,6 +234,7 @@ public class PulsarSink extends AbstractSink {
             AgentUtils.silenceSleepInMs(batchFlushInterval);
         }
         shutdown = true;
+        EXECUTOR_SERVICE.shutdown();
         if (CollectionUtils.isNotEmpty(pulsarSenders)) {
             for (PulsarTopicSender sender : pulsarSenders) {
                 sender.close();

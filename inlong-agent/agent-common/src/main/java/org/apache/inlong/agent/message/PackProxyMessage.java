@@ -119,6 +119,7 @@ public class PackProxyMessage {
             if (queueIsFull()) {
                 LOGGER.warn("message queue is greater than {}, stop adding message, "
                         + "maybe proxy get stuck", maxQueueNumber);
+                return false;
             }
             messageQueue.put(message);
             queueSize.addAndGet(message.getBody().length);
@@ -157,15 +158,12 @@ public class PackProxyMessage {
             while (!messageQueue.isEmpty()) {
                 // pre check message size
                 ProxyMessage peekMessage = messageQueue.peek();
-                if (peekMessage == null) {
-                    break;
-                }
-
-                // if the message size is greater than max pack size,should drop it.
                 int peekMessageLength = peekMessage.getBody().length;
                 if (peekMessageLength > maxPackSize) {
                     LOGGER.warn("message size is {}, greater than max pack size {}, drop it!",
                             peekMessage.getBody().length, maxPackSize);
+                    int bodySize = peekMessage.getBody().length;
+                    queueSize.addAndGet(-bodySize);
                     messageQueue.remove();
                     break;
                 }

@@ -153,26 +153,30 @@ public class TaskPositionManager extends AbstractDaemon implements ITaskPosition
     /**
      * update job sink position
      *
-     * @param size add this size to beforePosition
+     * @param newPosition
      */
-    public void updateSinkPosition(String jobInstanceId, String sourcePath, long size, boolean reset) {
+    public void updateSinkPosition(String jobInstanceId, String sourcePath, long newPosition) {
+        LOGGER.info("updateSinkPosition jobInstanceId {} sourcePath {} newPosition {}", jobInstanceId, sourcePath,
+                newPosition);
         ConcurrentHashMap<String, Long> positionTemp = new ConcurrentHashMap<>();
-        ConcurrentHashMap<String, Long> position = jobTaskPositionMap.putIfAbsent(jobInstanceId, positionTemp);
-        if (position == null) {
-            JobProfile jobProfile = jobConfDb.getJobById(jobInstanceId);
-            if (jobProfile == null) {
-                return;
-            }
-            positionTemp.put(sourcePath, jobProfile.getLong(sourcePath + POSITION_SUFFIX, 0));
-            position = positionTemp;
+        ConcurrentHashMap<String, Long> lastPosition = jobTaskPositionMap.putIfAbsent(jobInstanceId, positionTemp);
+        if (lastPosition == null) {
+            positionTemp.put(sourcePath, newPosition);
+        } else {
+            lastPosition.put(sourcePath, newPosition);
+        }
+    }
+
+    public long getPosition(String sourcePath, String jobInstanceId) {
+        JobProfile jobProfile = jobConfDb.getJobById(jobInstanceId);
+        if (jobProfile == null) {
+            LOGGER.error("getPosition but jobProfile not exist! sourcePath {} jobInstanceId {} return position 0",
+                    sourcePath,
+                    jobInstanceId);
+            return 0;
         }
 
-        if (!reset) {
-            Long beforePosition = position.getOrDefault(sourcePath, 0L);
-            position.put(sourcePath, beforePosition + size);
-        } else {
-            position.put(sourcePath, size);
-        }
+        return jobProfile.getLong(sourcePath + POSITION_SUFFIX, 0);
     }
 
     @Override
@@ -186,12 +190,5 @@ public class TaskPositionManager extends AbstractDaemon implements ITaskPosition
         }
         Long beforePosition = position.getOrDefault(sourcePath, 0L);
         position.put(sourcePath, beforePosition + size);
-    }
-    public ConcurrentHashMap<String, Long> getTaskPositionMap(String jobId) {
-        return jobTaskPositionMap.get(jobId);
-    }
-
-    public ConcurrentHashMap<String, ConcurrentHashMap<String, Long>> getJobTaskPosition() {
-        return jobTaskPositionMap;
     }
 }
