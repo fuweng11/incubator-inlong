@@ -153,10 +153,9 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({
               onVisibleChange={setMsgVisible}
               showCount
               alertDomId="alert_node"
+              style={{ marginRight: 20, cursor: 'pointer' }}
             >
-              <span style={{ fontSize: 12, marginRight: 20, cursor: 'pointer' }}>
-                <Vector />
-              </span>
+              <Vector />
             </MessageCenter>
 
             <img
