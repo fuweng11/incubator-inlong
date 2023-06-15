@@ -122,10 +122,9 @@ public class ProtocolSwitchServiceImpl extends AbstractInnerSortConfigService im
         Configuration config = new Configuration();
         config.setString(Constants.ZOOKEEPER_QUORUM, zkUrl);
         config.setString(Constants.ZOOKEEPER_ROOT, zkRoot);
-        CuratorFramework zkClient = ZooKeeperUtils.startCuratorFramework(config);
         ProtocolSwitchInfo protocolSwitchInfo;
 
-        try {
+        try (CuratorFramework zkClient = ZooKeeperUtils.startCuratorFramework(config)) {
             if (zkClient.checkExists().forPath(zkPath) == null) {
                 protocolSwitchInfo = new ProtocolSwitchInfo();
             } else {
