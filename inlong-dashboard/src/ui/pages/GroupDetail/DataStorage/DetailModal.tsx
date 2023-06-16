@@ -26,6 +26,7 @@ import EditableTable from '@/ui/components/EditableTable';
 import FormGenerator, { useForm } from '@/ui/components/FormGenerator';
 import { useLoadMeta, SinkMetaType } from '@/plugins';
 import request from '@/core/utils/request';
+import { innerHiveFieldTypes } from '@/plugins/sinks/extends/InnerHive';
 
 export interface DetailModalProps extends ModalProps {
   inlongGroupId: string;
@@ -105,6 +106,21 @@ const Comp: React.FC<DetailModalProps> = ({
       streamDetail.fieldList?.length &&
       Entity.FieldList?.some(item => item.name === 'sinkFieldList')
     ) {
+      if (sinkType === 'INNER_HIVE' || sinkType === 'INNER_THIVE') {
+        form.setFieldsValue({
+          sinkFieldList: streamDetail.fieldList.map(item => ({
+            sourceFieldName: item.fieldName,
+            sourceFieldType: item.fieldType,
+            fieldName:
+              sinkType === 'INNER_HIVE' || sinkType === 'INNER_THIVE'
+                ? item.fieldName.toLowerCase()
+                : item.fieldName,
+            fieldType:
+              innerHiveFieldTypes.find(type => type.value === item.fieldType)?.value || 'bigint',
+          })),
+        });
+        return;
+      }
       form.setFieldsValue({
         sinkFieldList: streamDetail.fieldList.map(item => ({
           sourceFieldName: item.fieldName,
@@ -114,7 +130,7 @@ const Comp: React.FC<DetailModalProps> = ({
         })),
       });
     }
-  }, [Entity, streamDetail, form, id]);
+  }, [Entity, streamDetail, form, id, sinkType]);
 
   useUpdateEffect(() => {
     if (modalProps.open) {

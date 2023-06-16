@@ -29,7 +29,7 @@ import NodeSelect from '@/ui/components/NodeSelect';
 const { I18n } = DataWithBackend;
 const { FieldDecorator } = RenderRow;
 
-const innerHiveFieldTypes = [
+export const innerHiveFieldTypes = [
   'string',
   'varchar',
   'char',
