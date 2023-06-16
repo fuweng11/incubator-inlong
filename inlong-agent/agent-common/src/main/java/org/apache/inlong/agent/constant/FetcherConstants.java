@@ -98,4 +98,16 @@ public class FetcherConstants {
 
     public static final String INTERNAL_MANAGER_AUTH_USER_KEY = "agent.internal.manager.auth.user.key";
 
+
+    public static final String AGENT_GLOBAL_READER_SOURCE_PERMIT = "agent.global.reader.source.permit";
+    public static final int DEFAULT_AGENT_GLOBAL_READER_SOURCE_PERMIT = 16 * 1000 * 1000;
+
+    public static final String AGENT_GLOBAL_READER_QUEUE_PERMIT = "agent.global.reader.queue.permit";
+    public static final int DEFAULT_AGENT_GLOBAL_READER_QUEUE_PERMIT = 16 * 1000 * 1000;
+
+    public static final String AGENT_GLOBAL_CHANNEL_PERMIT = "agent.global.channel.permit";
+    public static final int DEFAULT_AGENT_GLOBAL_CHANNEL_PERMIT = 16 * 1000 * 1000;
+
+    public static final String AGENT_GLOBAL_WRITER_PERMIT = "agent.global.writer.permit";
+    public static final int DEFAULT_AGENT_GLOBAL_WRITER_PERMIT = 96 * 1000 * 1000;
 }

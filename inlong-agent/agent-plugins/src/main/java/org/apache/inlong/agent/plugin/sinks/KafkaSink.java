@@ -20,8 +20,8 @@ package org.apache.inlong.agent.plugin.sinks;
 import org.apache.inlong.agent.common.AgentThreadFactory;
 import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
+import org.apache.inlong.agent.core.task.PositionManager;
 import org.apache.inlong.agent.core.task.ITaskPositionManager;
-import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.message.EndMessage;
 import org.apache.inlong.agent.message.PackProxyMessage;
@@ -94,7 +94,7 @@ public class KafkaSink extends AbstractSink {
     @Override
     public void init(JobProfile jobConf) {
         super.init(jobConf);
-        taskPositionManager = TaskPositionManager.getInstance();
+        taskPositionManager = PositionManager.getInstance();
         int sendQueueSize = agentConf.getInt(KAFKA_SINK_SEND_QUEUE_SIZE, DEFAULT_SEND_QUEUE_SIZE);
         kafkaSendQueue = new LinkedBlockingQueue<>(sendQueueSize);
         producerNum = agentConf.getInt(KAFKA_SINK_PRODUCER_NUM, DEFAULT_PRODUCER_NUM);

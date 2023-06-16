@@ -63,7 +63,6 @@ public class PackProxyMessage {
     // streamId -> list of proxyMessage
     private final LinkedBlockingQueue<ProxyMessage> messageQueue;
     private final AtomicLong queueSize = new AtomicLong(0);
-    private boolean syncSend;
     private int currentSize;
     /**
      * extra map used when sending to dataproxy
@@ -185,7 +184,7 @@ public class PackProxyMessage {
             // make sure result is not empty.
             if (!result.isEmpty()) {
                 return new BatchProxyMessage(jobId, groupId, streamId, result,
-                        getBatchProxyMessageDataTime(getBatchDataTimeMsg), extraMap, syncSend, positions);
+                        getBatchProxyMessageDataTime(getBatchDataTimeMsg), extraMap, positions);
             }
         }
         return null;

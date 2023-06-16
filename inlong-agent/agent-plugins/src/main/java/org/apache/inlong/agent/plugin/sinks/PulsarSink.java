@@ -24,7 +24,7 @@ import org.apache.inlong.agent.constant.CommonConstants;
 import org.apache.inlong.agent.core.dbsync.DBSyncJob;
 import org.apache.inlong.agent.core.dbsync.DbAgentMetricManager;
 import org.apache.inlong.agent.core.task.ITaskPositionManager;
-import org.apache.inlong.agent.core.task.TaskPositionManager;
+import org.apache.inlong.agent.core.task.PositionManager;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.message.EndMessage;
 import org.apache.inlong.agent.message.PackProxyMessage;
@@ -98,7 +98,7 @@ public class PulsarSink extends AbstractSink {
     private static final ExecutorService EXECUTOR_SERVICE = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
             60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new AgentThreadFactory("PulsarSink"));
     private final AgentConfiguration agentConf = AgentConfiguration.getAgentConf();
-    private ITaskPositionManager taskPositionManager;
+    private ITaskPositionManager positionManager;
     private volatile boolean shutdown = false;
     private List<MQClusterInfo> mqClusterInfos;
     private String topic;
@@ -132,7 +132,7 @@ public class PulsarSink extends AbstractSink {
     public void init(JobProfile jobConf, AbstractJob job) {
         super.init(jobConf);
         this.job = (DBSyncJob) job;
-        taskPositionManager = TaskPositionManager.getInstance();
+        positionManager = PositionManager.getInstance();
         // agentConf
         sendQueueSize = agentConf.getInt(PULSAR_SINK_SEND_QUEUE_SIZE, DEFAULT_SEND_QUEUE_SIZE);
         sendQueueSemaphore = new Semaphore(sendQueueSize);
@@ -356,7 +356,7 @@ public class PulsarSink extends AbstractSink {
                 batchMsg.getStreamId(), batchMsg.getDataTime(), batchMsg.getMsgCnt(),
                 batchMsg.getTotalSize());
         sinkMetric.pluginSendSuccessCount.addAndGet(batchMsg.getMsgCnt());
-        taskPositionManager.updateSinkPosition(batchMsg, sourceName, batchMsg.getMsgCnt());
+        positionManager.updateSinkPosition(batchMsg, sourceName, batchMsg.getMsgCnt());
         addSuccessMetrics(batchMsg);
     }
 
