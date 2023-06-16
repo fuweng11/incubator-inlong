@@ -25,8 +25,8 @@ import org.apache.inlong.agent.core.dbsync.DbAgentHeartbeatManager;
 import org.apache.inlong.agent.core.dbsync.DbAgentJobManager;
 import org.apache.inlong.agent.core.dbsync.DbColumnChangeManager;
 import org.apache.inlong.agent.core.task.ITaskPositionManager;
+import org.apache.inlong.agent.core.task.PositionManager;
 import org.apache.inlong.agent.core.task.TaskManager;
-import org.apache.inlong.agent.core.task.TaskPositionManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +57,7 @@ public class DbAgentManager extends AbstractDaemon {
         /*
          * 单例初始化，避免npe
          */
-        taskPositionManager = TaskPositionManager.getInstance(this);
+        taskPositionManager = PositionManager.getInstance(this);
         heartbeatManager = DbAgentHeartbeatManager.getInstance(this);
         taskManager = new TaskManager();
         fetcher = initFetcher(this);

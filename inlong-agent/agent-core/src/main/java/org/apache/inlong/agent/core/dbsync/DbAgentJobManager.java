@@ -386,7 +386,7 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
     }
 
     @Override
-    public void updateSinkPosition(String jobInstanceId, String sourcePath, long size) {
+    public void updateSinkPosition(String jobInstanceId, String sourcePath, long size, boolean reset) {
 
     }
 

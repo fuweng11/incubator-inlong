@@ -44,7 +44,6 @@ public class BatchProxyMessage {
     private List<byte[]> dataList;
     private long dataTime;
     private Map<String, String> extraMap;
-    private boolean isSyncSend;
     // dbsync ack LogPosition
     private List<Pair<LogPosition, Long>> positions;
     public InLongMsg getInLongMsg() {
