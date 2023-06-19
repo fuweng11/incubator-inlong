@@ -269,11 +269,16 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         } else if (TencentConstants.FILE_FORMAT_PARQUET.equalsIgnoreCase(format)) {
             fileFormat = new HiveSinkInfo.ParquetFileFormatInfo();
         } else if (TencentConstants.FILE_FORMAT_IGNORE_KEY_TEXT.equalsIgnoreCase(format)) {
-            fileFormat = new HiveSinkInfo.IgnoreKeyTextFileFormatInfo(separator);
+            if (!Objects.isNull(compressionType)) {
+                fileFormat = new HiveSinkInfo.IgnoreKeyTextFileFormatInfo(separator, compressionType,
+                        new HiveSinkInfo.IgnoreKeyTextFileFormatInfo.FixedReplaceEscapeMode(String.valueOf(separator)));
+            } else {
+                fileFormat = new HiveSinkInfo.IgnoreKeyTextFileFormatInfo(separator);
+            }
         } else if (TencentConstants.FILE_FORMAT_RC.equalsIgnoreCase(format)) {
-            fileFormat = new HiveSinkInfo.RcFileFormatInfo();
+            fileFormat = new HiveSinkInfo.RcFileFormatInfo(CompressionType.LZO);
         } else if (TencentConstants.FILE_FORMAT_FORMAT_STORAGE.equalsIgnoreCase(format)) {
-            fileFormat = new HiveSinkInfo.FormatStorageFormatInfo();
+            fileFormat = new HiveSinkInfo.FormatStorageFormatInfo(CompressionType.LZO);
         } else {
             isTextFormat = true;
             if (!Objects.isNull(compressionType)) {
