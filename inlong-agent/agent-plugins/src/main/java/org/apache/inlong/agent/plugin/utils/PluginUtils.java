@@ -21,6 +21,7 @@ import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.conf.TriggerProfile;
 import org.apache.inlong.agent.constant.CommonConstants;
 import org.apache.inlong.agent.constant.JobConstants;
+import org.apache.inlong.agent.plugin.Message;
 import org.apache.inlong.agent.plugin.trigger.PathPattern;
 import org.apache.inlong.agent.utils.AgentUtils;
 
@@ -180,6 +181,30 @@ public class PluginUtils {
                         Files.readAllBytes((new File(Config.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH)).toPath())))
                 .build();
         return new KubernetesClientBuilder().withConfig(config).build();
+    }
+
+    public static String getTopic(Message message) {
+        String topic = "dbsync_default_topic";
+        if (message != null && message.getHeader() != null) {
+            topic = message.getHeader().get(CommonConstants.PROXY_KEY_TOPIC);
+        }
+        return topic;
+    }
+
+    public static String getGroupId(Message message) {
+        String groupId = "dbsync_default_group_id";
+        if (message != null && message.getHeader() != null) {
+            groupId = message.getHeader().get(CommonConstants.PROXY_KEY_GROUP_ID);
+        }
+        return groupId;
+    }
+
+    public static String getStreamId(Message message) {
+        String streamId = "dbsync_default_stream_id";
+        if (message != null && message.getHeader() != null) {
+            streamId = message.getHeader().get(CommonConstants.PROXY_KEY_STREAM_ID);
+        }
+        return streamId;
     }
 
 }

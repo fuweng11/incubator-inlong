@@ -39,6 +39,7 @@ import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_INL
 import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_PACKAGE_MAX_SIZE;
 import static org.apache.inlong.agent.constant.CommonConstants.DEFAULT_PROXY_PACKAGE_MAX_TIMEOUT_MS;
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_INLONG_STREAM_ID_QUEUE_MAX_NUMBER;
+import static org.apache.inlong.agent.constant.CommonConstants.PROXY_KEY_TASK_ID;
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_PACKAGE_MAX_SIZE;
 import static org.apache.inlong.agent.constant.CommonConstants.PROXY_PACKAGE_MAX_TIMEOUT_MS;
 import static org.apache.inlong.common.msg.AttributeConstants.DATA_TIME;
@@ -58,12 +59,14 @@ public class PackProxyMessage {
     private final String jobId;
     private final int maxPackSize;
     private final int maxQueueNumber;
+    private int maxFlushMsgNumber = 64;
     // ms
     private final int cacheTimeout;
     // streamId -> list of proxyMessage
     private final LinkedBlockingQueue<ProxyMessage> messageQueue;
     private final AtomicLong queueSize = new AtomicLong(0);
-    private int currentSize;
+
+    private boolean enableDiscardExceedMsg = true;
     /**
      * extra map used when sending to dataproxy
      */
@@ -89,10 +92,18 @@ public class PackProxyMessage {
         this.extraMap.put(AttributeConstants.MESSAGE_PARTITION_KEY, dataKey);
     }
 
+    public void addTaskId(String taskId) {
+        this.extraMap.put(PROXY_KEY_TASK_ID, taskId);
+    }
+
     public void addTopicAndDataTime(String topic, long dataTime) {
         this.extraMap.put(STREAM_ID, streamId);
         this.extraMap.put(MESSAGE_TOPIC, topic);
         this.extraMap.put(DATA_TIME, String.valueOf(dataTime));
+    }
+
+    private boolean queueIsExceedMaxFlushNum() {
+        return messageQueue.size() >= maxFlushMsgNumber;
     }
 
     /**
@@ -102,6 +113,10 @@ public class PackProxyMessage {
      */
     private boolean queueIsFull() {
         return messageQueue.size() >= maxQueueNumber - 1;
+    }
+
+    public long getCurrentMessageQueueSize() {
+        return queueSize.get();
     }
 
     /**
@@ -138,10 +153,13 @@ public class PackProxyMessage {
      * @return map of message list, key is stream id for the batch; return null if there are no valid messages.
      */
     public BatchProxyMessage fetchBatch() {
+        return fetchBatch(false);
+    }
+    public BatchProxyMessage fetchBatch(boolean isEnd) {
         // if queue is nearly full or package size is satisfied or timeout
         long currentTime = System.currentTimeMillis();
-        if (queueSize.get() > maxPackSize || queueIsFull()
-                || currentTime - currentCacheTime > cacheTimeout) {
+        if (queueSize.get() > maxPackSize || queueIsExceedMaxFlushNum()
+                || (currentTime - currentCacheTime) > cacheTimeout || isEnd) {
             // refresh cache time.
             currentCacheTime = currentTime;
             long resultBatchSize = 0;
@@ -155,14 +173,14 @@ public class PackProxyMessage {
                 ProxyMessage peekMessage = messageQueue.peek();
                 int peekMessageLength = peekMessage.getBody().length;
                 if (peekMessageLength > maxPackSize) {
-                    LOGGER.warn("message size is {}, greater than max pack size {}, drop it!",
-                            peekMessage.getBody().length, maxPackSize);
-                    int bodySize = peekMessage.getBody().length;
-                    queueSize.addAndGet(-bodySize);
-                    messageQueue.remove();
-                    break;
+                    LOGGER.warn("BatchKey [{}] message size is {}, greater than max pack size {}, drop it!",
+                            peekMessage.getBatchKey(), peekMessage.getBody().length, maxPackSize);
+                    if (enableDiscardExceedMsg) {
+                        messageQueue.remove();
+                        break;
+                    }
                 }
-                if (resultBatchSize + peekMessageLength > maxPackSize) {
+                if (resultBatchSize > 0 && (resultBatchSize + peekMessageLength > maxPackSize)) {
                     break;
                 }
                 ProxyMessage message = messageQueue.remove();
@@ -210,4 +228,11 @@ public class PackProxyMessage {
         return extraMap;
     }
 
+    public void setEnableDiscardExceedMsg(boolean enableDiscardExceedMsg) {
+        this.enableDiscardExceedMsg = enableDiscardExceedMsg;
+    }
+
+    public void setMaxFlushMsgNumber(int maxFlushMsgNumber) {
+        this.maxFlushMsgNumber = maxFlushMsgNumber;
+    }
 }

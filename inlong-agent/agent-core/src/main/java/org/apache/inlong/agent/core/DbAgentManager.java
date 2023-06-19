@@ -223,8 +223,8 @@ public class DbAgentManager extends AbstractDaemon {
                     if (dbSyncJobManager != null) {
                         dbSyncJobManager.report();
                     }
-                } catch (InterruptedException e) {
-                    LOGGER.error("Interrupted when flush agent conf.", e);
+                } catch (Throwable e) {
+                    LOGGER.error("MetricReportThread has exception !", e);
                 }
             }
         }

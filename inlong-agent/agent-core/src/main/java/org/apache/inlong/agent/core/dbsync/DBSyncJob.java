@@ -23,6 +23,7 @@ import org.apache.inlong.agent.conf.MysqlTableConf;
 import org.apache.inlong.agent.constant.JobConstants;
 import org.apache.inlong.agent.core.DbAgentManager;
 import org.apache.inlong.agent.core.task.Task;
+import org.apache.inlong.agent.core.task.TaskWrapper;
 import org.apache.inlong.agent.metrics.dbsync.StatisticInfo;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.plugin.AbstractJob;
@@ -41,7 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class DBSyncJob implements AbstractJob {
 
@@ -49,7 +49,7 @@ public class DBSyncJob implements AbstractJob {
     private final DbAgentManager agentManager;
     private final DbAgentMetricManager dbSyncMetric;
     private final DbAgentHeartbeatManager heartbeatManager;
-    private final ConcurrentHashMap<Integer, Task> dbSyncTasks;
+    private final Task dbSyncTask;
     private final DBSyncJobConf dbSyncJobConf;
 
     private final String dbJobId;
@@ -58,11 +58,11 @@ public class DBSyncJob implements AbstractJob {
     public DBSyncJob(DbAgentManager agentManager, DBSyncJobConf dbSyncJobConf) {
         this.dbSyncJobConf = dbSyncJobConf;
         this.agentManager = agentManager;
-        dbSyncTasks = new ConcurrentHashMap<>();
-        dbJobId = this.dbSyncJobConf.getDbJobId();
-        heartbeatManager = DbAgentHeartbeatManager.getInstance();
-        dbSyncMetric = new DbAgentMetricManager(this);
-        readJob = new DbAgentReadJob(this);
+        this.dbJobId = this.dbSyncJobConf.getDbJobId();
+        this.dbSyncTask = initJobArcTask(dbJobId);
+        this.heartbeatManager = DbAgentHeartbeatManager.getInstance();
+        this.dbSyncMetric = new DbAgentMetricManager(this);
+        this.readJob = new DbAgentReadJob(this);
     }
 
     public DbAgentMetricManager getDBSyncMetric() {
@@ -73,8 +73,8 @@ public class DBSyncJob implements AbstractJob {
         return readJob;
     }
 
-    public Task getTaskById(Integer taskId) {
-        return dbSyncTasks.get(taskId);
+    public Task getTask() {
+        return dbSyncTask;
     }
 
     public DBSyncJobConf getDBSyncJobConf() {
@@ -92,15 +92,18 @@ public class DBSyncJob implements AbstractJob {
     public void start() {
         // create tasks and submit
         for (MysqlTableConf taskConf : dbSyncJobConf.getMysqlTableConfList()) {
-            createAndAddTask(taskConf);
+            if (initMetric(taskConf)) {
+                LOGGER.info("Db Job {} send metric init finished!", dbJobId);
+                break;
+            }
         }
 
-        // make sure all tasks are inited finished before starting dbsyncReadOperator
+        // make sure all tasks are inited finished before starting dbsyncReader
         do {
             DBSyncUtils.sleep(1000);
-        } while (!dbSyncTasks.values().stream().allMatch(Task::isTaskFinishInit));
+        } while (!dbSyncTask.isTaskFinishInit());
+        LOGGER.info("Arc Task{} init finished, start dbsync read job!", dbJobId);
 
-        LOGGER.info("task{} init finished, start dbsync readJob!", dbSyncTasks.keySet());
         dbSyncMetric.start();
         readJob.start();
 
@@ -113,29 +116,37 @@ public class DBSyncJob implements AbstractJob {
         }
         readJob.stop();
 
-        if (dbSyncTasks != null) {
-            dbSyncTasks.forEachKey(1, taskId -> {
-                agentManager.getTaskManager().removeTask(String.valueOf(taskId));
-                dbSyncTasks.remove(taskId);
-            });
+        if (dbSyncTask != null) {
+            TaskWrapper taskWrapper = agentManager.getTaskManager().getTaskWrapper(String.valueOf(dbJobId));
+            agentManager.getTaskManager().removeTask(String.valueOf(dbJobId));
+            boolean isTaskWrapperRunning = taskWrapper.isTaskWrapperRunning();
+            if (taskWrapper != null && isTaskWrapperRunning) {
+                do {
+                    DBSyncUtils.sleep(10);
+                    // check whether all tasks have finished.
+                    isTaskWrapperRunning = taskWrapper.isTaskWrapperRunning();
+                } while (isTaskWrapperRunning);
+            }
         }
         dbSyncMetric.stop();
     }
 
-    public void createAndAddTask(MysqlTableConf taskConf) {
-        JobProfile taskProfile = JobProfile.parseDbSyncTaskInfo(taskConf);
-        Integer taskId = taskConf.getTaskId();
-        LOGGER.info("job id: {}, create new taskId[{}], source: {}, channel: {}, sink: {}", taskProfile.getInstanceId(),
-                taskId, taskProfile.get(JobConstants.JOB_SOURCE_CLASS),
-                taskProfile.get(JobConstants.JOB_CHANNEL), taskProfile.get(JobConstants.JOB_SINK));
-
+    private boolean initMetric(MysqlTableConf taskConf) {
         if (dbSyncMetric != null && taskConf.getTaskInfo() != null
                 && taskConf.getTaskInfo().getMqClusters() != null
                 && taskConf.getTaskInfo().getMqClusters().size() >= 1) {
             dbSyncMetric.init(taskConf.getTaskInfo().getMqClusters().get(0).getUrl(),
                     this.dbSyncJobConf.getDbJobId());
+            return true;
         }
-
+        return false;
+    }
+    /*
+     * 初始化agent 框架使用的task，而不是dbsync 配置的task
+     */
+    private Task initJobArcTask(String dbJobId) {
+        JobProfile taskProfile = JobProfile.parseDbSyncTaskInfo(dbJobId, dbSyncJobConf.getMqClusterInfos());
+        Task task = null;
         try {
             Source source = (Source) Class.forName(taskProfile.get(JobConstants.JOB_SOURCE_CLASS)).newInstance();
             for (Reader reader : source.split(taskProfile)) {
@@ -143,16 +154,17 @@ public class DBSyncJob implements AbstractJob {
                 writer.setSourceName(reader.getReadSource());
                 Channel channel = (Channel) Class.forName(taskProfile.get(JobConstants.JOB_CHANNEL)).newInstance();
                 taskProfile.set(reader.getReadSource(), DigestUtils.md5Hex(reader.getReadSource()));
-                Task task = new Task(String.valueOf(taskId), reader, writer, channel, taskProfile, this);
+                task = new Task(dbJobId, reader, writer, channel, taskProfile, this);
                 agentManager.getTaskManager().submitTask(task);
-                dbSyncTasks.put(taskId, task);
-                LOGGER.info("task [{}-{}] create and start success", dbJobId, taskId);
+                LOGGER.info("Arc task [{}] create and start success", dbJobId);
+                break;
             }
         } catch (Throwable e) {
-            LOGGER.error("create task[{}-{}] failed", dbJobId, taskId, e);
+            LOGGER.error("Arc task create [{}] failed", dbJobId, e);
             ThreadUtils.threadThrowableHandler(Thread.currentThread(), e);
             throw new RuntimeException(e);
         }
+        return task;
     }
 
     protected void sendMetricPositionRecord(LogPosition newestLogPosition, LogPosition sendPosition,
@@ -167,7 +179,8 @@ public class DBSyncJob implements AbstractJob {
                             System.currentTimeMillis(), sendPosition,
                             dbJobId, dbJobId);
             if (dbAgentMetricManager != null) {
-                dbAgentMetricManager.sendMetricsToPulsar(info, 0, newestLogPosition, oldestLogPosition, jobStat);
+                dbAgentMetricManager.sendMetricsToPulsar(info, 0, newestLogPosition,
+                        oldestLogPosition, jobStat);
             }
         }
     }

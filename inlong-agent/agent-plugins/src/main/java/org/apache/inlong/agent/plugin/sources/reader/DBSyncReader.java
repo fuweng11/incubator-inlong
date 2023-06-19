@@ -24,6 +24,7 @@ import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.metrics.audit.AuditUtils;
 import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Message;
+import org.apache.inlong.agent.plugin.utils.PluginUtils;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 
 import org.slf4j.Logger;
@@ -75,11 +76,12 @@ public class DBSyncReader extends AbstractReader {
         }
         try {
             queueSemaphore.acquire();
-
             DBSyncMessage dbSyncMessage = (DBSyncMessage) message;
             readerMetric.pluginReadCount.incrementAndGet();
             messageQueue.put(dbSyncMessage);
-            AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_READ_SUCCESS, inlongGroupId, inlongStreamId,
+            AuditUtils.add(AuditUtils.AUDIT_ID_AGENT_READ_SUCCESS,
+                    PluginUtils.getGroupId(message),
+                    PluginUtils.getStreamId(message),
                     getMessageTimeStamp(dbSyncMessage), 1, dbSyncMessage.getBody().length);
             readerMetric.pluginReadSuccessCount.incrementAndGet();
         } catch (Throwable e) {

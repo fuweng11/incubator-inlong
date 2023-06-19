@@ -27,7 +27,7 @@ import java.util.Map;
  * MQ cluster info.
  */
 @ToString
-public class MQClusterInfo {
+public class MQClusterInfo implements Comparable<MQClusterInfo> {
 
     private String url;
     private String token;
@@ -74,5 +74,19 @@ public class MQClusterInfo {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public int compareTo(MQClusterInfo o) {
+        if (o == null) {
+            return -1;
+        }
+        if (url != o.getUrl() || (url != null && !url.equals(o.getUrl()))) {
+            return -1;
+        }
+        if (token != o.token || (token != null && token.equals(o.getToken()))) {
+            return -1;
+        }
+        return 0;
     }
 }

@@ -229,7 +229,7 @@ public class JobCoordinator {
                         lastPrintStatTimeStamp = currentTimeStamp;
                         isNeedUpdateRunNodeMap = true;
                     }
-                    LOGGER.info("JobCoordinator current clusterId = {}, dbJobIdListVersion = {}, "
+                    jobCoordinatorLogger.info("JobCoordinator current clusterId = {}, dbJobIdListVersion = {}, "
                             + "maxJobsSize = {}, allJobSize = {}", clusterId, dbJobIdListVersion,
                             maxJobsSize, dbJobIdList.size());
                 } else {

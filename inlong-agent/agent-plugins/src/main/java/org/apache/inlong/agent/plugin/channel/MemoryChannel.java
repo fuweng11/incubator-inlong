@@ -22,6 +22,7 @@ import org.apache.inlong.agent.constant.AgentConstants;
 import org.apache.inlong.agent.message.DBSyncMessage;
 import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
+import org.apache.inlong.agent.metrics.MetricReport;
 import org.apache.inlong.agent.plugin.AbstractJob;
 import org.apache.inlong.agent.plugin.Channel;
 import org.apache.inlong.agent.plugin.Message;
@@ -47,7 +48,7 @@ import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_PLUGIN_ID;
 /**
  * memory channel
  */
-public class MemoryChannel implements Channel {
+public class MemoryChannel implements Channel, MetricReport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MemoryChannel.class);
 
@@ -178,5 +179,10 @@ public class MemoryChannel implements Channel {
         LOGGER.debug("plugin send failed:{}", dimensions.toString());
         Thread.currentThread().interrupt();
         return;
+    }
+
+    @Override
+    public String report() {
+        return "channelQueueSize:" + (queue == null ? 0 : queue.size());
     }
 }

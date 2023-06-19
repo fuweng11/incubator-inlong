@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -376,11 +377,11 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
                         if (!checkValidConfig(entry, jobHaInfo, confList)) {
                             return jobHaInfo;
                         }
+                        List<Integer> preAddTaskIds = new ArrayList();
+                        List<Integer> afterAddTaskIds = new ArrayList();
                         String startPositionFromZk = getStartPositionFromZk(jobHaInfo);
                         for (DbSyncTaskInfo taskConf : confList) {
-                            LOGGER.info("startJobWithAllTaskOnce add task dbJobId[{}] "
-                                    + ", taskId[{}]",
-                                    taskConf.getServerName(), taskConf.getId());
+                            preAddTaskIds.add(taskConf.getId());
                             CompletableFuture<Void> opFuture = new CompletableFuture<>();
                             initStartPosition(startPositionFromZk, taskConf);
                             jobHaInfo.setSyncPosition(taskConf.getStartPosition());
@@ -388,9 +389,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
                             if (dbJob != null) {
                                 dbJobsMap.putIfAbsent(jobHaInfo.getDbJobId(), dbJob);
                             }
-                            LOGGER.info("startJobWithAllTaskOnce add task dbJobId[{}] "
-                                    + ", taskId[{}] finished!",
-                                    taskConf.getServerName(), taskConf.getId());
+                            afterAddTaskIds.add(taskConf.getId());
                             opFuture.whenComplete((v, e) -> {
                                 if (e != null && !isJobExceedException(e)) {
                                     LOGGER.error("update task has error! e = {}", e);
@@ -411,6 +410,10 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
                                 }
                             });
                         }
+                        LOGGER.info("startJobWithAllTaskOnce add task dbJobId = [{}] "
+                                + ", preAddTaskIds = [{}], afterAddTaskIds = [{}]",
+                                jobHaInfo.getDbJobId(), StringUtils.join(preAddTaskIds, ","),
+                                StringUtils.join(afterAddTaskIds, ","));
                     }
                     return jobHaInfo;
                 });
@@ -511,14 +514,15 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
             String checkPath = ZkUtil.getZkPath(jobCandidateParentPath, registerKey);
             boolean hasExist = configDelegate.checkPathIsExist(ConfigDelegate.ZK_GROUP, checkPath);
             if (hasExist) {
-                LOGGER.error(
-                        "Same registerKey app has started, please change localIp or agent uniq config to start again!"
-                                + ",clusterId = {}, zkServer = {}, registerKey = {}!",
-                        clusterId, zkServer, registerKey);
+                String errorMsg = "Same registerKey app has started, please change localIp "
+                        + "or agent uniq config to start again! clusterId = "
+                        + clusterId + ", zkServer = " + zkServer + ", registerKey = " + registerKey + "!";
+                LOGGER.error(errorMsg);
+                throw new RuntimeException(errorMsg);
             }
             try {
                 configDelegate.close();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 // LOGGER.error("Close configDelegate has error !", e);
             }
             return !hasExist;
@@ -776,8 +780,8 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
             LOGGER.error("newClusterId = {}, zkServer = {} has error!", newClusterId, zkServer);
             return false;
         }
-        LOGGER.info("newClusterId = {}, clusterId = {}, zkServer = {}!", newClusterId, clusterId, zkServer);
-        if ((!newClusterId.equals(clusterId))
+        LOGGER.info("c{}, clusterId = {}, zkServer = {}!", newClusterId, clusterId, zkServer);
+        if ((!Objects.equals(newClusterId, clusterId))
                 || (zkUrl == null || !zkUrl.equals(zkServer))) {
             if (checkNodeRegisterStatus(newClusterId, zkServer)) {
                 LOGGER.info("change zkUrl Info from old = {} , to new = {}", zkUrl, zkServer);
@@ -824,7 +828,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
                 this.allDbJobIdClusterSet.removeAll(cleanDbJobIdList);
                 cleanMovedJobInfo(cleanDbJobIdList, zkServer);
             }
-            LOGGER.info("update clusterId {}/{} or dbJobIdListVersion {}/{}!", clusterId,
+            LOGGER.info("update clusterId {}/{} and dbJobIdListVersion {}/{}!", clusterId,
                     newClusterId, this.dbJobIdListVersion, dbJobIdListVersion);
             /*
              * register new info to zk
@@ -1214,11 +1218,15 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
                 /*
                  * retry register local for coordinate
                  */
-                if (isNeedRetryRegisterLocalCoordinator) {
+                if (isNeedRetryRegisterLocalForCoordinator()) {
                     try {
+                        String oldLocalRegisterCoordinatorPath = localRegisterCoordinatorPath;
                         String coordinatorNodeParentPath =
                                 ZkUtil.getCoordinatorParentPath(String.valueOf(clusterId));
                         registerForCoordinator(coordinatorNodeParentPath);
+                        LOGGER.info("retry to register local for coordinator clusterId = {} for {} to"
+                                + "{}!", clusterId, oldLocalRegisterCoordinatorPath,
+                                localRegisterCoordinatorPath);
                     } catch (Exception e) {
                         LOGGER.error("retry to register local for coordinator clusterId = {} has "
                                 + "exception!", clusterId, e);
@@ -1246,6 +1254,11 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
                     if (!running) {
                         return null;
                     }
+                    if (this.getClusterId() == null) {
+                        LOGGER.warn("Monitor jobHaDispatcherImpl init is not completed!,"
+                                + " need wait a moment!", dbJobId);
+                        return null;
+                    }
                     if (jobHaInfo == null || !jobManager.isRunningJob(dbJobId)) {
                         LOGGER.info("Monitor start new dbJobId[{}]", dbJobId);
                         CompletableFuture re = addDbJobIdAsync(dbJobId);
@@ -1264,5 +1277,19 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
                 LOGGER.error("getPositionUpdateTask has exception ", e);
             }
         };
+    }
+
+    public boolean isNeedRetryRegisterLocalForCoordinator() {
+        String coordinatorNodeParentPath =
+                ZkUtil.getCoordinatorParentPath(String.valueOf(clusterId));
+        if (StringUtils.isNotEmpty(localRegisterCoordinatorPath)) {
+            String fullPath = coordinatorNodeParentPath + "/" + localRegisterCoordinatorPath;
+            ConfigDelegate configDelegate = getZkConfigDelegate();
+            if (configDelegate != null
+                    && !configDelegate.checkPathIsExist(ConfigDelegate.ZK_GROUP, fullPath)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -24,10 +24,13 @@ import org.apache.inlong.agent.conf.MysqlTableConf;
 import org.apache.inlong.agent.core.DbAgentManager;
 import org.apache.inlong.agent.core.dbsync.ha.JobHaDispatcherImpl;
 import org.apache.inlong.agent.core.task.ITaskPositionManager;
+import org.apache.inlong.agent.core.task.Task;
 import org.apache.inlong.agent.except.DataSourceConfigException;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.metrics.MetricReport;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
+import org.apache.inlong.agent.plugin.Channel;
+import org.apache.inlong.agent.plugin.Sink;
 import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.JsonUtils;
@@ -57,6 +60,7 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
     private static final Logger LOGGER = LoggerFactory.getLogger(DbAgentJobManager.class);
     private static final Logger jobReportLogger = LoggerFactory.getLogger("jobReport");
     private static final Logger jobManagerReportLogger = LoggerFactory.getLogger("jobManagerReport");
+    private static final Logger jobSenderReportLogger = LoggerFactory.getLogger("jobSenderReport");
     private static final Logger jobTaskLogger = LoggerFactory.getLogger("jobTaskMonitor");
 
     private final int maxConDbSize;
@@ -172,6 +176,7 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
                     startPosition, taskConf.getServerName());
             conf.setMaxUnAckedLogPositions(agentConf.getInt(DBSYNC_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD,
                     DEFAULT_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD));
+            conf.updateMqClusterInfos(taskConf.getMqClusters());
             if (bakDbUrl != null) {
                 conf.setBakMysqlInfo(DBSyncUtils.getHost(bakDbUrl), DBSyncUtils.getPort(bakDbUrl));
             }
@@ -185,6 +190,7 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
             conf.updateUserPasswd(taskConf.getDbServerInfo().getUsername(),
                     taskConf.getDbServerInfo().getPassword());
             conf.updateCharset(charset, taskConf.getId());
+            conf.updateMqClusterInfos(taskConf.getMqClusters());
             String dbUrl = taskConf.getDbServerInfo().getUrl();
             try {
                 conf.resetDbInfo(dbUrl, bakDbUrl);
@@ -198,9 +204,6 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
         String tableName = taskConf.getTableName();
         if (!conf.containsTask(taskId)) {
             MysqlTableConf tbConf = new MysqlTableConf(conf.getDbJobId(), taskConf, charset, skipDelete);
-            if (runningJobs.containsKey(conf.getDbJobId())) {
-                runningJobs.get(conf.getDbJobId()).createAndAddTask(tbConf);
-            }
             conf.addTable(tbConf);
             conf.getMysqlTableConfList(dbName, taskConf.getTableName())
                     .forEach(myconf -> myconf.updateJobStatus(JobStat.TaskStat.NORMAL));
@@ -238,17 +241,17 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
             // not exist, delete ok!
             future.complete(null);
         } else {
-            String jobName = conf.getDbJobId();
+            String dbJobId = conf.getDbJobId();
             conf.removeTable(taskId);
             if (conf.bNoNeedDb()) {
-                stopJob(jobName);
+                stopJob(dbJobId);
             }
             future.complete(null);
         }
     }
 
-    public void checkAndStopJobForce(String jobName) {
-        DBSyncJob job = runningJobs.get(jobName);
+    public void checkAndStopJobForce(String dbJobId) {
+        DBSyncJob job = runningJobs.get(dbJobId);
         if (job == null) {
             return;
         }
@@ -256,7 +259,7 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
         if (!conf.bNoNeedDb()) {
             LOGGER.warn("There are some task is not stop in Job! {}", conf.getMysqlTableConfList());
         }
-        stopJob(jobName);
+        stopJob(dbJobId);
     }
 
     /**
@@ -267,14 +270,14 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
         if (newJobs != null && newJobs.size() > 0) {
             LOGGER.info("start new jobs {}", newJobs.size());
             for (DBSyncJob job : newJobs) {
-                String jobName = job.getDBSyncJobConf() == null ? "" : job.getDBSyncJobConf().getDbJobId();
+                String dbJobId = job.getDBSyncJobConf() == null ? "" : job.getDBSyncJobConf().getDbJobId();
                 List taskIds = job.getDBSyncJobConf() == null ? null : job.getDBSyncJobConf().getTaskIdList();
-                if (StringUtils.isNotEmpty(jobName)) {
-                    runningJobs.compute(jobName, (k, v) -> {
+                if (StringUtils.isNotEmpty(dbJobId)) {
+                    runningJobs.compute(dbJobId, (k, v) -> {
                         if (v == null) {
-                            LOGGER.info("Start new job after init, jobName={}, conf={}, "
+                            LOGGER.info("Start new job after init, dbJobId={}, conf={}, "
                                     + "taskIdsSize = {}, taskIdList = {}",
-                                    jobName,
+                                    dbJobId,
                                     job.getDBSyncJobConf(),
                                     (taskIds == null ? 0 : taskIds.size()),
                                     (taskIds == null ? "" : StringUtils.join(taskIds, ",")));
@@ -284,7 +287,7 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
                         List vTaskIds =
                                 (v.getDBSyncJobConf() == null ? null : v.getDBSyncJobConf().getTaskIdList());
                         LOGGER.info("Job {} has started! taskIdsSize = {}, taskIdList = {}",
-                                jobName, (vTaskIds == null ? 0 : vTaskIds.size()),
+                                dbJobId, (vTaskIds == null ? 0 : vTaskIds.size()),
                                 (vTaskIds == null ? "" : StringUtils.join(vTaskIds, ",")));
                         return v;
                     });
@@ -363,25 +366,25 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
     /**
      * Get the position control of job; backup job should be considered
      */
-    private ReadJobPositionManager getJobPositionManager(String jobName) {
-        DBSyncJob dbSyncJob = allJobs.get(jobName);
+    private ReadJobPositionManager getJobPositionManager(String dbJobId) {
+        DBSyncJob dbSyncJob = allJobs.get(dbJobId);
         if (dbSyncJob != null) {
             return dbSyncJob.getReadJob().getJobPositionManager();
         } else {
-            LOGGER.warn("[{}] get get job position manager!", jobName);
+            LOGGER.warn("[{}] get get job position manager!", dbJobId);
         }
         return null;
     }
 
     @Override
     public void updateSinkPosition(BatchProxyMessage batchMsg, String sourcePath, long size) {
-        String jobName = batchMsg.getJobId();
-        ReadJobPositionManager readJobPositionManager = this.getJobPositionManager(jobName);
+        String dbJobId = batchMsg.getJobId();
+        ReadJobPositionManager readJobPositionManager = this.getJobPositionManager(dbJobId);
 
         if (readJobPositionManager != null) {
             readJobPositionManager.ackSendPosition(batchMsg);
         } else {
-            LOGGER.warn("[{}] can not find position while update sink ack msg! {}", jobName, batchMsg.getPositions());
+            LOGGER.warn("[{}] can not find position while update sink ack msg! {}", dbJobId, batchMsg.getPositions());
         }
     }
 
@@ -395,8 +398,8 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
         return 0;
     }
 
-    public DBSyncJob getJob(String jobName) {
-        return allJobs.get(jobName);
+    public DBSyncJob getJob(String dbJobId) {
+        return allJobs.get(dbJobId);
     }
 
     public ConcurrentHashMap<String, DBSyncJob> getRunningJobs() {
@@ -465,16 +468,16 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
                      */
                     for (Map.Entry<String, DBSyncJob> runningJob : runningJobs.entrySet()) {
                         DBSyncJob dbSyncJob = runningJob.getValue();
-                        String jobName = runningJob.getKey();
+                        String dbJobId = runningJob.getKey();
                         if (dbSyncJob == null) {
-                            LOGGER.warn("runningJob posControl [{}] is null!", jobName);
+                            LOGGER.warn("runningJob posControl [{}] is null!", dbJobId);
                             continue;
                         }
                         ReadJobPositionManager readJobPositionManager =
                                 runningJob.getValue().getReadJob().getJobPositionManager();
                         LogPosition storePos = readJobPositionManager.getSendAndAckedLogPosition();
                         if (storePos == null) {
-                            LOGGER.warn("runningJob [{}] store position is null", jobName);
+                            LOGGER.warn("runningJob [{}] store position is null", dbJobId);
                             continue;
                         }
                         readJobPositionManager.updateSendAndAckedPosition(storePos,
@@ -521,9 +524,13 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
          */
         for (Map.Entry<String, DBSyncJob> entry : runningJobs.entrySet()) {
             bs = new StringBuilder();
-            bs.append("JobName:" + entry.getKey()).append("|");
+            bs.append("dbJobId:" + entry.getKey()).append("|");
             DBSyncJob tmpJob = entry.getValue();
-
+            if (tmpJob.getDBSyncJobConf() != null) {
+                bs.append("taskNum:" + tmpJob.getDBSyncJobConf().getMysqlTableConfList().size()).append("|");
+            } else {
+                bs.append("taskNum:0").append("|");
+            }
             DbAgentReadJob dbAgentReadJob = tmpJob.getReadJob();
             ReadJobPositionManager readJobPositionManager = dbAgentReadJob.getJobPositionManager();
 
@@ -533,7 +540,22 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
             }
             bs.append(readJobPositionManager.report());
             jobReportLogger.info(bs.toString());
-            MonitorLogUtils.printDumpMetric("JobName:" + entry.getKey(), dbAgentReadJob.report());
+            MonitorLogUtils.printDumpMetric("dbJobId:" + entry.getKey(),
+                    dbAgentReadJob.getDumpMetricInfo());
+            bs = new StringBuilder();
+            bs.append("dbJobId:").append(entry.getKey());
+            Task task = tmpJob.getTask();
+            if (task != null) {
+                Channel channel = task.getChannel();
+                if (channel != null && channel instanceof MetricReport) {
+                    bs.append("|").append(((MetricReport) channel).report());
+                }
+                Sink sink = task.getSink();
+                if (sink != null && sink instanceof MetricReport) {
+                    bs.append("|").append(((MetricReport) sink).report());
+                }
+                jobSenderReportLogger.info(bs.toString());
+            }
         }
         return "";
     }

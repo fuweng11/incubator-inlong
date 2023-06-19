@@ -21,6 +21,7 @@ import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.message.PackProxyMessage;
 import org.apache.inlong.agent.metrics.AgentMetricItem;
 import org.apache.inlong.agent.metrics.AgentMetricItemSet;
+import org.apache.inlong.agent.metrics.MetricReport;
 import org.apache.inlong.agent.plugin.MessageFilter;
 import org.apache.inlong.agent.plugin.Sink;
 import org.apache.inlong.common.metric.MetricRegister;
@@ -48,7 +49,7 @@ import static org.apache.inlong.agent.metrics.AgentMetricItem.KEY_PLUGIN_ID;
 /**
  * abstract sink: sink data to remote data center
  */
-public abstract class AbstractSink implements Sink {
+public abstract class AbstractSink implements Sink, MetricReport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSink.class);
     protected String inlongGroupId;
@@ -103,5 +104,10 @@ public abstract class AbstractSink implements Sink {
         this.metricItemSet = new AgentMetricItemSet(metricName);
         MetricRegister.register(metricItemSet);
         sinkMetric = metricItemSet.findMetricItem(dimensions);
+    }
+
+    @Override
+    public String report() {
+        return "";
     }
 }

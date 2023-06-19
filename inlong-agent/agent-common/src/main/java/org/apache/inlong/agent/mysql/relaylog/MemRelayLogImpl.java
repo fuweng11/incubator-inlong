@@ -121,7 +121,7 @@ public class MemRelayLogImpl implements RelayLog {
 
     @Override
     public String report() {
-        return "dataList size:" + dataList.size() + "|data size:" + (containDataLength.get() / 1024 / 1024);
+        return "dataList size:" + dataList.size() + "|data size:" + (containDataLength.get() / 1024 / 1024) + "M";
     }
 
 }

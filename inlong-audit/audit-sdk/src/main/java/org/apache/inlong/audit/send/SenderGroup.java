@@ -78,10 +78,12 @@ public class SenderGroup {
     public SenderResult send(ByteBuf dataBuf) {
         LinkedBlockingQueue<SenderChannel> channels = channelGroups.get(mIndex);
         SenderChannel channel = null;
+        boolean dataBufHasRelease = false;
         try {
             if (channels.size() <= 0) {
                 logger.error("channels is empty");
                 dataBuf.release();
+                dataBufHasRelease = true;
                 return new SenderResult("channels is empty", 0, false);
             }
             boolean isOk = false;
@@ -114,6 +116,7 @@ public class SenderGroup {
             if (channel == null) {
                 logger.error("can not get a channel");
                 dataBuf.release();
+                dataBufHasRelease = true;
                 return new SenderResult("can not get a channel", 0, false);
             }
 
@@ -126,18 +129,29 @@ public class SenderGroup {
                     }
                     t = channel.getChannel().writeAndFlush(dataBuf).sync().await();
                 }
+                dataBufHasRelease = true;
             } else {
                 dataBuf.release();
+                dataBufHasRelease = true;
             }
             return new SenderResult(channel.getIpPort().ip, channel.getIpPort().port, t.isSuccess());
         } catch (Throwable ex) {
-            logger.error(ex.getMessage());
+            logger.error("SenderResult has exception {},{}", ex, ex.getMessage());
             this.setHasSendError(true);
-            return new SenderResult(ex.getMessage(), 0, false);
+            String defaultIp = "127.0.0.1";
+            int port = 0;
+            if (channel != null && channel.getIpPort() != null) {
+                defaultIp = channel.getIpPort().ip;
+                port = channel.getIpPort().port;
+            }
+            return new SenderResult(defaultIp, port, false);
         } finally {
             if (channel != null) {
                 channel.release();
                 channels.offer(channel);
+            }
+            if (!dataBufHasRelease && dataBuf != null) {
+                dataBuf.release();
             }
         }
     }

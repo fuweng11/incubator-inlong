@@ -143,16 +143,6 @@ public class ReadJobPositionManager implements MetricReport {
 
     }
 
-    private String getSyncIdFromInstanceName(String key) {
-        if (key != null) {
-            String[] splitA = key.split(":");
-            if (splitA.length >= 3) {
-                return splitA[2];
-            }
-        }
-        return null;
-    }
-
     public void ackSendPosition(BatchProxyMessage sendData) {
         if (sendData == null || CollectionUtils.isEmpty(sendData.getPositions())) {
             LOGGER.warn("ackSendPosition position is empty jobName {}, groupId {}, streamId",
@@ -280,8 +270,9 @@ public class ReadJobPositionManager implements MetricReport {
             } catch (Throwable t) {
                 LOGGER.warn("can't get max position " + ExceptionUtils.getStackTrace(t));
             } finally {
-                LOGGER.info("GetMaxLogPosition finished! MaxLogPosition {}", (logPosition == null ? ""
-                        : logPosition.getPosition()));
+                LOGGER.info("GetMaxLogPosition finished! MaxLogPosition {}", (logPosition != null
+                        && logPosition.getIdentity() != null && logPosition.getPosition() != null) ? ""
+                                : logPosition);
             }
         }
         return logPosition;
@@ -488,6 +479,8 @@ public class ReadJobPositionManager implements MetricReport {
     @Override
     public String report() {
         StringBuilder bs = new StringBuilder();
+        bs.append("|sendLogPositionCache:[").append(sendLogPositionCache.size()).append("]");
+        bs.append("|ackLogPositionList:[").append(ackLogPositionList.size()).append("]");
         if (sendAndAckedLogPosition != null) {
             bs.append("Current-ackPosition:[").append(sendAndAckedLogPosition.toMinString()).append("]");
         }
@@ -497,8 +490,6 @@ public class ReadJobPositionManager implements MetricReport {
         if (oldestLogPosition != null) {
             bs.append("|DB-oldestPosition:[").append(oldestLogPosition.toMinString()).append("]");
         }
-        bs.append("|sendLogPositionCache:[").append(sendLogPositionCache.size()).append("]");
-        bs.append("|ackLogPositionList:[").append(ackLogPositionList.size()).append("]");
         return bs.toString();
     }
 

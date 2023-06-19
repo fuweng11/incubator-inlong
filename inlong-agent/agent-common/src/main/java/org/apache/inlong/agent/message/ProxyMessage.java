@@ -20,6 +20,8 @@ package org.apache.inlong.agent.message;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 import org.apache.inlong.agent.plugin.Message;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Map;
 
 import static org.apache.inlong.agent.constant.CommonConstants.*;
@@ -44,6 +46,7 @@ public class ProxyMessage implements Message {
     // dbsync logposition
     private LogPosition logPosition;
     private long msgId;
+    private String taskID;
 
     public ProxyMessage(byte[] body, Map<String, String> header) {
         this.body = body;
@@ -52,8 +55,13 @@ public class ProxyMessage implements Message {
         this.inlongStreamId = header.getOrDefault(PROXY_KEY_STREAM_ID, DEFAULT_INLONG_STREAM_ID);
         this.dataKey = header.getOrDefault(PROXY_KEY_DATA, "");
         this.dateKey = header.getOrDefault(PROXY_KEY_DATE, "");
+        this.taskID = header.get(PROXY_KEY_TASK_ID);
         // use the batch key of user and inlongStreamId to determine one batch
-        this.batchKey = dataKey + inlongStreamId;
+        if (StringUtils.isNotEmpty(taskID)) {
+            this.batchKey = dataKey + taskID + inlongStreamId;
+        } else {
+            this.batchKey = dataKey + inlongStreamId;
+        }
     }
 
     public ProxyMessage(Message message) {
@@ -110,5 +118,9 @@ public class ProxyMessage implements Message {
 
     public String getDateKey() {
         return dateKey;
+    }
+
+    public String getTaskID() {
+        return taskID;
     }
 }

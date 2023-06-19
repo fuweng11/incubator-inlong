@@ -158,7 +158,7 @@ public class AgentConstants {
     public static final int DEFAULT_DBSYNC_JOB_RECV_BUFFER_KB = 64;
 
     public static final String DBSYNC_ACK_THREAD_NUM = "agent.dbsync.ack.thread.num";
-    public static final int DEFAULT_ACK_THREAD_NUM = 5;
+    public static final int DEFAULT_ACK_THREAD_NUM = 4;
 
     public static final String DBSYNC_IS_READ_FROM_FIRST_BINLOG_IF_MISS = "agent.dbsync.is.read.first.if.miss";
     public static final boolean DEFAULT_DBSYNC_IS_READ_FROM_FIRST_BINLOG_IF_MISS = false;
@@ -235,7 +235,7 @@ public class AgentConstants {
     public static final long DEFAULT_HA_JOB_STATE_MONITOR_INTERVAL_MS = 1 * 60 * 1000L;
 
     public static final String DBSYNC_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD =
-            "agent.dbsync.ha.job.state.monitor.intervalms";
+            "agent.dbsync.unack.logpositions.max.threshold";
     public static final int DEFAULT_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD = 100000;
 
     public static final String DBSYNC_UPDATE_POSITION_INTERVAL = "agent.dbsync.default.update.position.interval";
@@ -296,6 +296,9 @@ public class AgentConstants {
             "agent.sink.pulsar.max.messages.across.partition";
     public static final int DEFAULT_MAX_PENDING_MESSAGES_ACROSS_PARTITION = 500000;
 
+    public static final String PULSAR_SINK_MAX_CACHE_BYTES = "agent.sink.pulsar.max.cache.bytes";
+    public static final int DEFAULT_PULSAR_SINK_MAX_CACHE_BYTES = 1024 * 1024 * 1024;
+
     public static final String PULSAR_CLIENT_MAX_BATCH_BYTES = "agent.sink.pulsar.max.batch.bytes";
     public static final int DEFAULT_MAX_BATCH_BYTES = 128 * 1024;
 
@@ -313,12 +316,16 @@ public class AgentConstants {
     public static final int DEFAULT_PRODUCER_NUM = 3;
 
     public static final String PULSAR_CLIENT_ENABLE_ASYNC_SEND = "agent.sink.pulsar.enbale.async.send";
+    public static final String PULSAR_SINK_ENABLE_DISCARD_EXCEED_MSG = "agent.sink.pulsar.enable.discard.exceed.msg";
     public static final String KAFKA_PRODUCER_ENABLE_ASYNC_SEND = "agent.sink.kafka.enbale.async.send";
     public static final boolean DEFAULT_ENABLE_ASYNC_SEND = true;
 
     public static final String PULSAR_SINK_SEND_QUEUE_SIZE = "agent.sink.pulsar.send.queue.size";
     public static final String KAFKA_SINK_SEND_QUEUE_SIZE = "agent.sink.kafka.send.queue.size";
     public static final int DEFAULT_SEND_QUEUE_SIZE = 20000;
+
+    public static final String PULSAR_SINK_SEND_THREAD_SIZE = "agent.sink.pulsar.send.thread.size";
+    public static final int DEFAULT_PULSAR_SINK_SEND_THREAD_SIZE = 4;
 
     public static final String DEFAULT_KAFKA_SINK_SEND_ACKS = "1";
     public static final long DEFAULT_KAFKA_SINK_SYNC_SEND_TIMEOUT_MS = 3000;
@@ -333,6 +340,10 @@ public class AgentConstants {
 
     public static final String AGENT_JOB_STORE_TIME = "agent.job.store.time";
     public static final long DEFAULT_JOB_STORE_TIME = 10 * 60 * 1000;
+
+    public static final String PULSAR_SINK_SEND_PACKAGE_WAIT_CNT = "agent.send.package.wait.cnt";
+    public static final String PULSAR_SINK_FLUSH_CACHE_MAX_INTERVAL = "agent.send.flush.cache.max.interval";
+    public static final String PULSAR_SINK_FLUSH_CACHE_MAX_MSG_NUM = "agent.send.flush.cache.max.msg.num";
 
     // dbsync metric config
     public static final String DBSYNC_SEND_THREAD_SIZE = "dbsync.metric.send.thread.size";

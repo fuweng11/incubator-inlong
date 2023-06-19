@@ -55,6 +55,7 @@ public class TaskWrapper extends AbstractStateWrapper {
     private final int pushMaxWaitTime;
     private final int pullMaxWaitTime;
     private ExecutorService executorService;
+    private volatile Boolean isRunning = false;
 
     public TaskWrapper(TaskManager manager, Task task) {
         super();
@@ -91,7 +92,7 @@ public class TaskWrapper extends AbstractStateWrapper {
                 } else {
                     message = task.getReader().read();
                     if (message == null) {
-                        AgentUtils.silenceSleepInMs(100);
+                        AgentUtils.silenceSleepInMs(10);
                     } else {
                         task.getChannel().push(message);
                     }
@@ -113,14 +114,14 @@ public class TaskWrapper extends AbstractStateWrapper {
     private CompletableFuture<?> submitWriteThread() {
         return CompletableFuture.runAsync(() -> {
             while (!isException()) {
-                Message message = task.getChannel().pull(pullMaxWaitTime, TimeUnit.SECONDS);
-                if (message instanceof EndMessage) {
-                    break;
-                }
+                Message message = task.getChannel().pull(pullMaxWaitTime, TimeUnit.MILLISECONDS);
                 if (LOGGER.isDebugEnabled() && message instanceof DBSyncMessage) {
                     LOGGER.debug("submitWriteThread msg position : " + ((DBSyncMessage) message).getLogPosition());
                 }
                 task.getSink().write(message);
+                if (message instanceof EndMessage) {
+                    break;
+                }
             }
         }, executorService);
     }
@@ -202,6 +203,7 @@ public class TaskWrapper extends AbstractStateWrapper {
     @Override
     public void run() {
         try {
+            isRunning = true;
             AgentThreadFactory.nameThread(task.getTaskId());
             LOGGER.info("start to run {}, retry time is {}", task.getTaskId(), retryTime.get());
             AgentUtils.silenceSleepInSeconds(task.getJobConf()
@@ -217,6 +219,12 @@ public class TaskWrapper extends AbstractStateWrapper {
         } catch (Exception ex) {
             LOGGER.error("error while running wrapper", ex);
             doChangeState(State.FAILED);
+        } finally {
+            isRunning = false;
         }
+    }
+
+    public boolean isTaskWrapperRunning() {
+        return isRunning;
     }
 }

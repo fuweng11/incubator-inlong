@@ -215,7 +215,8 @@ public class DbAgentBinlogFetcher extends AbstractDaemon implements ProfileFetch
         CommonResponse<DbSyncTaskFullInfo> commonResponse =
                 CommonResponse.fromJson(jobConfigString, DbSyncTaskFullInfo.class);
         if (commonResponse == null || !parseJobAndCheckForStart(commonResponse)) {
-            throw new Exception("get task's configs has error by server Id!");
+            throw new Exception("Get task's configs has error by server Id! dbJobId = "
+                    + dbJobId + ", cluster id = " + dbsyncClusterId);
         }
         List<DbSyncTaskInfo> data = commonResponse.getData().getTaskInfoList();
         if (data != null) {

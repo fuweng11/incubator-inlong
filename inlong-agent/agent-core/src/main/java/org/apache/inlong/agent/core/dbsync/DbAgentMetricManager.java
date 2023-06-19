@@ -129,10 +129,9 @@ public class DbAgentMetricManager implements MetricReport {
                             if (v != null) {
                                 messageValue.set(v.longValue());
                             }
-                            sInfos.poll();
+
                             return null;
                         });
-
                         AtomicLong packageValue = new AtomicLong(0);
                         statisticDataPackage.compute(sInfo.getKey(), (k, v) -> {
                             if (v != null) {
@@ -145,6 +144,7 @@ public class DbAgentMetricManager implements MetricReport {
                         LogPosition oldestPosition =
                                 dbSyncJob.getReadJob().getJobPositionManager().getOldestLogPositionFromCache();
                         sendStatMetric(sInfo, messageValue.get(), newPosition, oldestPosition);
+                        sInfos.poll();
                     } while (sInfo != null);
                     sleep(10 * 1000L);
                 } catch (Throwable e) {

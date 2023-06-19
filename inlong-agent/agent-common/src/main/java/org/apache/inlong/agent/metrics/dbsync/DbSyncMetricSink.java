@@ -78,7 +78,7 @@ import static org.apache.inlong.agent.constant.AgentConstants.PULSAR_BUSY_SIZE;
 public class DbSyncMetricSink {
 
     private static final Logger logger = LogManager.getLogger(DbSyncMetricSink.class);
-    private static final Logger jobSenderReportLogger = LogManager.getLogger("jobSenderReport");
+    private static final Logger jobSenderReportLogger = LogManager.getLogger("jobSendMetric");
     public static final String DATA_KEY_DELIMITER = "#";
 
     // private DBSyncConf config;
@@ -111,7 +111,7 @@ public class DbSyncMetricSink {
     private boolean async = true;
 
     // private boolean isMetric;
-    private volatile boolean running = true;
+    private volatile boolean running = false;
 
     private String urlPrefix;
 
@@ -180,7 +180,7 @@ public class DbSyncMetricSink {
         } catch (Exception e) {
             logger.error("init pulsar client fail", e);
         }
-
+        running = true;
         for (int i = 0; i < sendThreadSize; i++) {
             SenderRunner sender = new SenderRunner();
             sender.setName("Pulsar-Metric-sender-" + i);
@@ -225,7 +225,7 @@ public class DbSyncMetricSink {
             }
             while (running) {
                 try {
-                    Object data = sendQueue.poll(1, TimeUnit.MILLISECONDS);
+                    Object data = sendQueue.poll(1, TimeUnit.SECONDS);
                     if (data == null) {
                         if (!running) {
                             logger.info("Stop send Runner!");
@@ -267,7 +267,6 @@ public class DbSyncMetricSink {
             sendQueue.put(data);
             return;
         }
-        sendingCnt.incrementAndGet();
         if (async) {
             CompletableFuture<MessageId> future = producer
                     .newMessage()
@@ -284,14 +283,15 @@ public class DbSyncMetricSink {
                     }
                 } else {
                     semaphore.release();
+                    sendingCnt.decrementAndGet();
                 }
-                sendingCnt.decrementAndGet();
             });
         } else {
             try {
                 producer.newMessage()
                         .value(JSONObject.toJSONString(data).getBytes(StandardCharsets.UTF_8)).send();
                 semaphore.release();
+                sendingCnt.decrementAndGet();
             } catch (PulsarClientException e) {
                 logger.error("send data fail to pulsar,add back to send queue, send queue "
                         + "size {}", sendQueue.size(), e);
@@ -301,7 +301,6 @@ public class DbSyncMetricSink {
                     logger.error("put metrics to queue has exception:", e);
                 }
             }
-            sendingCnt.decrementAndGet();
         }
     }
 
@@ -396,6 +395,7 @@ public class DbSyncMetricSink {
         try {
             semaphore.acquire();
             sendQueue.put(data);
+            sendingCnt.incrementAndGet();
         } catch (Exception e) {
             semaphore.release();
             logger.error("send data fail to send queue", e);
@@ -414,6 +414,7 @@ public class DbSyncMetricSink {
         StringBuilder bs = new StringBuilder();
         bs.append("clusterUrlPrefix:").append(urlPrefix).append("|")
                 .append("sendQueueSize:").append(sendQueue.size()).append("|")
+                .append("sendingMsgSize:").append(sendingCnt.get()).append("|")
                 .append("semaphoreSize:").append(semaphore.availablePermits()).append("|")
                 .append("isBusy:").append(isBusy()).append("|");
         return bs.toString();

@@ -26,7 +26,6 @@ import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.state.State;
 import org.apache.inlong.agent.utils.AgentUtils;
 import org.apache.inlong.agent.utils.HttpManager;
-import org.apache.inlong.agent.utils.ThreadUtils;
 import org.apache.inlong.common.enums.ComponentTypeEnum;
 import org.apache.inlong.common.heartbeat.AbstractHeartbeatManager;
 import org.apache.inlong.common.heartbeat.GroupHeartbeat;
@@ -157,7 +156,7 @@ public class DbAgentHeartbeatManager extends AbstractDaemon implements AbstractH
                     SECONDS.sleep(heartbeatInterval());
                 } catch (Throwable e) {
                     LOGGER.error("interrupted while report heartbeat", e);
-                    ThreadUtils.threadThrowableHandler(Thread.currentThread(), e);
+                    // ThreadUtils.threadThrowableHandler(Thread.currentThread(), e);
                 }
             }
         };
@@ -198,7 +197,7 @@ public class DbAgentHeartbeatManager extends AbstractDaemon implements AbstractH
                         hbList.add(runningJobHb);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Create dbsync heartbeat has exception !", dbSyncJob.getDbJobId());
+                    LOGGER.error("Create dbJobId = {} heartbeat has exception !", dbSyncJob.getDbJobId(), e);
                 }
             }
         }

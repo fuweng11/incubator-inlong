@@ -54,10 +54,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.apache.inlong.agent.constant.AgentConstants.DBSYNC_NEED_SKIP_DELETE_DATA;
 import static org.apache.inlong.agent.constant.AgentConstants.DEFAULT_DBSYNC_NEED_SKIP_DELETE_DATA;
@@ -76,9 +78,10 @@ public class BinlogParseThread extends Thread implements MetricReport {
     private InetSocketAddress newDbAddress;
     private String lastBinlogFileName;
     private final DbAgentReadJob dbSyncReadJob;
-    private String jobName;
+    private String dbJobId;
     private char ipSep = '@';
     private char sep = ',';
+    private Map<Integer, AtomicLong> skipMsgNumMap = new HashMap();
 
     public BinlogParseThread(String parserName, InetSocketAddress curDbAddress,
             DbAgentReadJob dbSyncReadJob, SnowFlakeManager snowFlakeManager) {
@@ -86,12 +89,12 @@ public class BinlogParseThread extends Thread implements MetricReport {
         this.curDbAddress = curDbAddress;
         queue = new LinkedBlockingQueue<>();
         this.dbSyncReadJob = dbSyncReadJob;
-        this.jobName = dbSyncReadJob.getJobName();
+        this.dbJobId = dbSyncReadJob.getDbJobId();
         this.snowFlakeManager = snowFlakeManager;
         super.setUncaughtExceptionHandler((t, e) -> {
             parseStatus = JobStat.State.STOP;
             LOGGER.error("{} Parse Thread has an uncaught error {}, \n {}",
-                    jobName, parserJobName, DBSyncUtils.getExceptionStack(e));
+                    dbJobId, parserJobName, DBSyncUtils.getExceptionStack(e));
         });
         parseStatus = JobStat.State.INIT;
         readJobPositionManager = dbSyncReadJob.getJobPositionManager();
@@ -109,7 +112,7 @@ public class BinlogParseThread extends Thread implements MetricReport {
         ArrayList<Object> eventList = null;
         parseStatus = JobStat.State.RUN;
         long parseMsgId = 0;
-        LOGGER.info("{}, {} begin running!", jobName, this.parserJobName);
+        LOGGER.info("{}, {} begin running!", dbJobId, this.parserJobName);
         while (bParseRunning || !queue.isEmpty()) {
             try {
                 pkgEvent = queue.poll(1, TimeUnit.SECONDS);
@@ -117,15 +120,14 @@ public class BinlogParseThread extends Thread implements MetricReport {
                 if (pkgEvent == null) {
                     if (!bParseRunning && dbSyncReadJob.getParseDispatcherStatus() == JobStat.State.STOP
                             && queue.isEmpty()) {
-                        LOGGER.error("{}, {} stopped occure trans end event missing!!!",
-                                jobName, parserJobName);
+                        LOGGER.info("{}, {} job is stopped when pkgEvent is null!",
+                                dbJobId, parserJobName);
                     }
                     continue;
                 }
                 eventList = pkgEvent.getEventLists();
                 parseMsgId = pkgEvent.getIndex();
 
-                ArrayList<Entry> entryList = new ArrayList<>();
                 LogPosition firstEventPos = null;
                 for (Object eventObj : eventList) {
                     dbSyncReadJob.setHeartBeat(System.currentTimeMillis());
@@ -143,7 +145,7 @@ public class BinlogParseThread extends Thread implements MetricReport {
                                 try {
                                     if (retryCnt > 10 || !bParseRunning) {
                                         LOGGER.error("{}, {} retry 10, now skip an event, pos {} !",
-                                                jobName, parserJobName, event.getLogPos());
+                                                dbJobId, parserJobName, event.getLogPos());
                                         MonitorLogUtils.printEventDiscard(dbSyncReadJob.getCurrentJobAndDbInfo(),
                                                 MonitorLogUtils.EVENT_DISCARD_EXCEED_RETRY_CNT, "");
                                         break;
@@ -158,7 +160,7 @@ public class BinlogParseThread extends Thread implements MetricReport {
                                     throw tie;
                                 } catch (CanalParseException te) {
                                     LOGGER.error("async parse binlog error: ", te);
-                                    LOGGER.error("{}, {} parse binlog event error ", jobName, parserJobName, te);
+                                    LOGGER.error("{}, {} parse binlog event error ", dbJobId, parserJobName, te);
                                     retryCnt++;
                                     DBSyncUtils.sleep(100);
                                     continue;
@@ -197,17 +199,16 @@ public class BinlogParseThread extends Thread implements MetricReport {
                         parseMsgId++;
                     } catch (Throwable e) {
                         if (bParseRunning || LOGGER.isDebugEnabled()) {
-                            LOGGER.error("{}, {} async parse binlog Error", jobName, parserJobName, e);
+                            LOGGER.error("{}, {} async parse binlog Error", dbJobId, parserJobName, e);
                         }
                     }
                 }
             } catch (InterruptedException e) {
-                LOGGER.error("{} {} get binlog error", jobName, parserJobName, e);
             } catch (Throwable e) {
-                LOGGER.error("{}, {} get binlog error", jobName, parserJobName, e);
+                LOGGER.error("{}, {} get binlog error", dbJobId, parserJobName, e);
             }
         }
-        LOGGER.info("stop parse");
+        LOGGER.info("[{}] stop parse has finished", parserJobName);
         parseStatus = JobStat.State.STOP;
     }
 
@@ -217,11 +218,36 @@ public class BinlogParseThread extends Thread implements MetricReport {
         String tbName = entry.getHeader().getTableName();
 
         List<MysqlTableConf> myConfList;
+        long lastCheckTaskInitTime = 0;
         if (dbSyncReadJob.dbSyncJobConf.bInNeedTable(dbName, tbName)
                 && (myConfList = dbSyncReadJob.dbSyncJobConf.getMysqlTableConfList(dbName, tbName)) != null) {
             AtomicInteger sendIndex = new AtomicInteger(0);
             for (MysqlTableConf myConf : myConfList) {
                 // multi business report
+                if (!dbSyncReadJob.taskIsTaskFinishInit()) {
+                    long nowCheckTime = Instant.now().toEpochMilli();
+                    skipMsgNumMap.compute(myConf.getTaskId(), (k, v) -> {
+                        if (v == null) {
+                            return new AtomicLong(0);
+                        }
+                        v.incrementAndGet();
+                        return v;
+                    });
+                    if ((nowCheckTime - lastCheckTaskInitTime) > (60 * 1000)) {
+                        lastCheckTaskInitTime = nowCheckTime;
+                        LOGGER.warn("[{}] new task [{}] has not finish init so skip send message to this task,"
+                                + " total skip messages = {}!",
+                                parserJobName, myConf.getTaskId(), skipMsgNumMap.get(myConf.getTaskId()).get());
+                    }
+                    continue;
+                } else {
+                    AtomicLong skipMsgs = skipMsgNumMap.remove(myConf.getTaskId());
+                    if (skipMsgs != null) {
+                        LOGGER.warn("[{}] task [{}] has finished init so remove skip send message to this task,"
+                                + " total skip messages = {}!",
+                                parserJobName, myConf.getTaskId(), skipMsgs);
+                    }
+                }
                 RowChange rowChange;
                 try {
                     rowChange = RowChange.parseFrom(entry.getStoreValue());
@@ -286,6 +312,8 @@ public class BinlogParseThread extends Thread implements MetricReport {
             headerMap.put(CommonConstants.PROXY_KEY_DATE, String.valueOf(timeStample));
             headerMap.put(CommonConstants.PROXY_KEY_GROUP_ID, myConf.getGroupId());
             headerMap.put(CommonConstants.PROXY_KEY_STREAM_ID, myConf.getStreamId());
+            headerMap.put(CommonConstants.PROXY_KEY_TOPIC, myConf.getTaskInfo().getTopicInfo().getTopic());
+            headerMap.put(CommonConstants.PROXY_KEY_TASK_ID, String.valueOf(myConf.getTaskId()));
             String pbInstName = getPbInstName(logPosition);
             String jobName = dbSyncReadJob.getDbSyncJobConf().getDbJobId();
             for (RowData rowData : rowChange.getRowDatasList()) {
@@ -298,12 +326,12 @@ public class BinlogParseThread extends Thread implements MetricReport {
                 DBSyncMessage message = new DBSyncMessage(body, headerMap, jobName, timeStample);
                 message.setLogPosition(sendPosition);
                 message.setMsgId(parseMsgId);
-                dbSyncReadJob.addMessage(myConf.getTaskId(), message);
+                readJobPositionManager.addLogPositionToSendCache(sendPosition);
+                dbSyncReadJob.addMessage(message);
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("[{}] send message task {} position = {}", jobName, myConf.getTaskId(),
                             sendPosition.toMinString());
                 }
-                readJobPositionManager.addLogPositionToSendCache(sendPosition);
             }
             return true;
         }

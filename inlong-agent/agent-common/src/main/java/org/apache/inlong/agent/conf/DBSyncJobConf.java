@@ -25,6 +25,7 @@ import org.apache.inlong.agent.state.JobStat;
 import org.apache.inlong.agent.state.JobStat.TaskStat;
 import org.apache.inlong.agent.utils.DBSyncUtils;
 import org.apache.inlong.agent.utils.LRUMap;
+import org.apache.inlong.common.pojo.dataproxy.MQClusterInfo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -104,6 +105,7 @@ public class DBSyncJobConf {
 
     private LogPosition startPos;
     private String dbJobId;
+    private List<MQClusterInfo> mqClusterInfos = new ArrayList<>();
 
     public DBSyncJobConf(String add, int port, String bakDbIp, int bakDbPort,
             String userName, String passwd, Charset charset, LogPosition startPos, String dbJobId) {
@@ -154,6 +156,55 @@ public class DBSyncJobConf {
         } else {
             return null;
         }
+    }
+
+    public synchronized void updateMqClusterInfos(List<MQClusterInfo> newMqClusterInfos) {
+        if (newMqClusterInfos == null || newMqClusterInfos.size() == 0) {
+            return;
+        }
+        if (mqClusterInfos != null && mqClusterInfos.size() == 0) {
+            mqClusterInfos.addAll(newMqClusterInfos);
+        } else if (compareMqClusterInfoForEqual(mqClusterInfos, newMqClusterInfos)) {
+            mqClusterInfos.clear();
+            mqClusterInfos.addAll(newMqClusterInfos);
+        }
+    }
+
+    private boolean compareMqClusterInfoForEqual(List<MQClusterInfo> oldMqClusterInfos,
+            List<MQClusterInfo> newMqClusterInfos) {
+        boolean result = true;
+        if (oldMqClusterInfos.size() != newMqClusterInfos.size()) {
+            result = false;
+        }
+        for (MQClusterInfo newMqClusterInfo : newMqClusterInfos) {
+            for (MQClusterInfo oldMqClusterInfo : oldMqClusterInfos) {
+                if (newMqClusterInfo.compareTo(oldMqClusterInfo) != 0) {
+                    result = false;
+                    break;
+                }
+            }
+            if (!result) {
+                break;
+            }
+        }
+        return result;
+    }
+
+    public synchronized List<MQClusterInfo> getMqClusterInfos() {
+        if (mqClusterInfos != null && mqClusterInfos.size() > 0) {
+            return mqClusterInfos;
+        } else {
+            Collection<MysqlTableConf> col = getMysqlTableConfList();
+            if (col != null && col.size() > 0) {
+                for (MysqlTableConf mysqlTableConf : col) {
+                    List<MQClusterInfo> list = mysqlTableConf.getTaskInfo().getMqClusters();
+                    if (list != null && list.size() > 0) {
+                        mqClusterInfos = list;
+                    }
+                }
+            }
+        }
+        return mqClusterInfos;
     }
 
     public MysqlTableConf getMysqlTableConf(Integer taskId) {

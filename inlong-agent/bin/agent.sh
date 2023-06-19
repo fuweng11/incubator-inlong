@@ -18,6 +18,7 @@
 
 BASE_DIR=$(dirname $0)/..
 
+AGENT_CONF="${BASE_DIR}"/conf/agent.properties
 source "${BASE_DIR}"/bin/agent-env.sh
 CONSOLE_OUTPUT_FILE="${LOG_DIR}/agent-out.log"
 
@@ -32,7 +33,10 @@ function help() {
 }
 
 function running() {
-  process=$("$JPS" | grep "AgentMain" | grep -v grep)
+  agent_uniq=`cat ${AGENT_CONF}|grep -E 'agent.uniq.id'`
+  check_agent_uniq="${agent_uniq:-'agent.uniq.id=1'}"
+  arg_uniq="-D${check_agent_uniq}"
+  process=$(ps -aux | grep 'java' | grep 'inlong_agent' | grep "$check_agent_uniq" | awk '{print $2}')
   if [ "${process}" = "" ]; then
     return 1;
   else
@@ -46,7 +50,7 @@ function start_agent() {
     echo "agent is running."
     exit 1
   fi
-  nohup ${JAVA} ${AGENT_ARGS} org.apache.inlong.agent.core.AgentMain > /dev/null 2>&1 &
+  nohup ${JAVA} ${AGENT_ARGS} ${arg_uniq} org.apache.inlong.agent.core.AgentMain > /dev/null 2>&1 &
 }
 
 # stop agent
@@ -56,7 +60,7 @@ function stop_agent() {
     exit 1
   fi
   count=0
-  pid=$("$JPS" | grep "AgentMain" | grep -v grep | awk '{print $1}')
+  pid=$(ps -aux | grep 'java' | grep 'inlong_agent' | grep "$check_agent_uniq" | awk '{print $2}')
   while running;
   do
     (( count++ ))

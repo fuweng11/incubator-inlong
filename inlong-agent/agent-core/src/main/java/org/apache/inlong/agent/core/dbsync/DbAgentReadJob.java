@@ -126,7 +126,7 @@ public class DbAgentReadJob implements MetricReport {
     protected volatile long heartBeat = 0;
     private boolean isDebug;
     private DbAddConfigInfo mysqlCurrentAddress;
-    private String jobName;
+    private String dbJobId;
     private LogPosition lastLog;
 
     private LogPosition expectedStartPosition = null;
@@ -198,11 +198,11 @@ public class DbAgentReadJob implements MetricReport {
     }
 
     private void initFromJobConfig(DBSyncJobConf jobconf) {
-        jobName = jobconf.getDbJobId();
+        dbJobId = jobconf.getDbJobId();
         lastLog = jobconf.getStartPos();
         mysqlCurrentAddress = jobconf.getCurMysqlAddress();
         eventFilter = jobconf.getFilter();
-        slaveId = DBSyncUtils.generateSlaveId(jobName, jobconf.getDbJobId());
+        slaveId = DBSyncUtils.generateSlaveId(dbJobId, jobconf.getDbJobId());
         binlogParser = buildParser();
         relayLog = mkRelayLog();
     }
@@ -225,10 +225,14 @@ public class DbAgentReadJob implements MetricReport {
         MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(), MonitorLogUtils.JOB_STAT_START_RUN);
     }
 
-    public void addMessage(Integer taskId, DBSyncMessage message) {
-        Task task = job.getTaskById(taskId);
+    public boolean taskIsTaskFinishInit() {
+        return job.getTask().isTaskFinishInit();
+    }
+
+    public void addMessage(DBSyncMessage message) {
+        Task task = job.getTask();
         if (task == null || task.getReader() == null) {
-            LOGGER.warn("fail to get task[{}] or reader from dbsyncReaderOperator [{}]", taskId, jobName);
+            LOGGER.warn("Fail to get task[{}]!", dbJobId);
             return;
         }
         task.getReader().addMessage(message);
@@ -261,7 +265,7 @@ public class DbAgentReadJob implements MetricReport {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        LOGGER.info("jobName {} buildErosaConnection url {}, ip = {}", jobName, mysqlAddress, ip);
+        LOGGER.info("dbJobId {} buildErosaConnection url {}, ip = {}", dbJobId, mysqlAddress, ip);
         if (!address.equals(ip)) {
             mysqlAddress.updateRemoteIp(ip);
         }
@@ -300,7 +304,7 @@ public class DbAgentReadJob implements MetricReport {
 
         // stop parse
         if (parseDispatcherStatus != null && parseDispatcherStatus != JobStat.State.STOP) {
-            LOGGER.warn("Now wait [{}] in dispatcher thread to stop!", jobName);
+            LOGGER.warn("Now wait [{}] in dispatcher thread to stop!", dbJobId);
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -324,7 +328,7 @@ public class DbAgentReadJob implements MetricReport {
             }
             if (!isAllClosed) {
                 try {
-                    LOGGER.warn("Now wait [{}] BinlogParseThread to stop!", jobName);
+                    LOGGER.warn("Now wait [{}] BinlogParseThread to stop!", dbJobId);
                     Thread.sleep(10);
                 } catch (InterruptedException interruptedException) {
                     interruptedException.printStackTrace();
@@ -348,7 +352,7 @@ public class DbAgentReadJob implements MetricReport {
     protected BinlogParser<LogEvent> buildParser() {
         LogEventConvert convert = new LogEventConvert();
         if (eventFilter != null && eventFilter instanceof CanalEventFilter<?>) {
-            LOGGER.info("Job {} set job filter!", this.jobName);
+            LOGGER.info("Job {} set job filter!", this.dbJobId);
             convert.setNameFilter(eventFilter);
         }
 
@@ -399,7 +403,7 @@ public class DbAgentReadJob implements MetricReport {
         } else {
             LOGGER.error("Detected job :{} is in wrong state :{}", dbSyncJobConf.getDbJobId(), status);
             hbInfo.setErrorMsg(getErrorMsg());
-            hbInfo.setAgentStatus(status.name());
+            hbInfo.setAgentStatus(status == null ? "ERROR" : status.name());
             LogPosition jobPosition = readJobPositionManager.getSendAndAckedLogPosition();
             LogPosition newestLogPosition = readJobPositionManager.getNewestLogPositionFromCache();
             LogPosition oldestLogPosition = readJobPositionManager.getOldestLogPositionFromCache();
@@ -459,10 +463,10 @@ public class DbAgentReadJob implements MetricReport {
             InetSocketAddress inetSocketAddress = metaConnection.getConnector().getAddress();
             if (dispatcherThread != null && parseThreadMap.size() == 0) {
                 readJobPositionManager.clearCache();
-                LOGGER.info("{} build binlog parser!", this.jobName);
+                LOGGER.info("{} build binlog parser!", this.dbJobId);
                 for (int i = 0; i < jobParseMaxThreadNum; i++) {
                     BinlogParseThread parser = new BinlogParseThread("parser-"
-                            + i + "-" + this.jobName, inetSocketAddress, this, snowFlakeManager);
+                            + i + "-" + this.dbJobId, inetSocketAddress, this, snowFlakeManager);
                     parser.start();
                     parseThreadMap.put(i, parser);
                 }
@@ -474,7 +478,7 @@ public class DbAgentReadJob implements MetricReport {
             }
             readJobPositionManager.updateMetaConnection(metaConnection);
             readJobPositionManager.setNeedUpdateLogPosition(true);
-            LOGGER.info("TableMetaCache use MysqlConnection port : {} : {}", jobName, metaConnection.getLocalPort());
+            LOGGER.info("TableMetaCache use MysqlConnection port : {} : {}", dbJobId, metaConnection.getLocalPort());
         }
     }
 
@@ -503,7 +507,7 @@ public class DbAgentReadJob implements MetricReport {
         Thread dispatcher = new Thread(() -> {
             LogDecoder decoder = new LogDecoder(LogEvent.UNKNOWN_EVENT, LogEvent.ENUM_END_EVENT);
             LogContext context = new LogContext();
-            LOGGER.info("{} dispatcher thread begin work!", jobName);
+            LOGGER.info("{} dispatcher thread begin work!", dbJobId);
 
             boolean bInTransaction = false;
             parseDispatcherStatus = State.RUN;
@@ -567,7 +571,7 @@ public class DbAgentReadJob implements MetricReport {
                         } else {
                             bufferList.add(entry);
                             index = dispatchEventToParseThread(index, eventTmStp,
-                                    bufferList, logfileName, 1);
+                                    bufferList, logfileName, 10);
                             bufferList = new ArrayList<>();
                         }
                         if (entry.getEntryType() == EntryType.TRANSACTIONEND) {
@@ -585,23 +589,23 @@ public class DbAgentReadJob implements MetricReport {
                     } else if (event.getHeader().getType() == LogEvent.HEARTBEAT_LOG_EVENT) {
                         bufferList.add(event);
                         index = dispatchEventToParseThread(index, lastEventStp,
-                                bufferList, logfileName, 1);
+                                bufferList, logfileName, 10);
                         bufferList = new ArrayList<>();
                     } else {
                         entry = parseAndProfilingIfNecessary(event, dbSyncJobConf);
                         if (entry != null) {
                             bufferList.add(entry);
                             index = dispatchEventToParseThread(index, lastEventStp,
-                                    bufferList, logfileName, 1);
+                                    bufferList, logfileName, 10);
                             bufferList = new ArrayList<>();
                         }
                     }
                 } catch (InterruptedException e) {
                 } catch (Exception e) {
-                    LOGGER.error("{} async dispatcher Error : {}", jobName, DBSyncUtils.getExceptionStack(e));
+                    LOGGER.error("{} async dispatcher Error : {}", dbJobId, DBSyncUtils.getExceptionStack(e));
                 }
             }
-            LOGGER.info("Job : " + jobName + " dispatcher Thread stopped!");
+            LOGGER.info("Job : " + dbJobId + " dispatcher Thread stopped!");
 
             /*
              * in case that dump thread won't be properly stopped
@@ -611,14 +615,14 @@ public class DbAgentReadJob implements MetricReport {
             parseDispatcherStatus = State.STOP;
         });
 
-        dispatcher.setName(jobName + "-dispatcher");
+        dispatcher.setName(dbJobId + "-dispatcher");
         dispatcher.setUncaughtExceptionHandler((t, e) -> {
             setState(State.STOP);
             MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(), MonitorLogUtils.JOB_STAT_STOP,
                     ErrorCode.OP_EXCEPTION_DISPATCH_THREAD_EXIT_UNCAUGHT);
             setErrorMsg(e.getMessage());
             LOGGER.error("{} dispatcher Thread has an uncaught error {}",
-                    jobName, DBSyncUtils.getExceptionStack(e));
+                    dbJobId, DBSyncUtils.getExceptionStack(e));
         });
 
         return dispatcher;
@@ -678,8 +682,8 @@ public class DbAgentReadJob implements MetricReport {
         return binlogParser;
     }
 
-    public String getJobName() {
-        return jobName;
+    public String getDbJobId() {
+        return dbJobId;
     }
 
     private void updateLogPosition() {
@@ -688,7 +692,7 @@ public class DbAgentReadJob implements MetricReport {
             if (tmpPos != null) {
                 lastLog = new LogPosition(tmpPos);
                 LOGGER.info("Job {} HA reset pos to {}!",
-                        jobName, tmpPos.getJsonObj().toJSONString());
+                        dbJobId, tmpPos.getJsonObj().toJSONString());
             }
         }
     }
@@ -707,12 +711,12 @@ public class DbAgentReadJob implements MetricReport {
                         updateLogPosition();
                         MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(), MonitorLogUtils.JOB_STAT_RESET);
                         if (doReset()) {
-                            LOGGER.info("Job {} reset to master ok, new reBuild Relay-log!", jobName);
+                            LOGGER.info("Job {} reset to master ok, new reBuild Relay-log!", dbJobId);
                             relayLog.close();
                             relayLog = mkRelayLog();
                             bNeedClearParseThread = true;
                         } else {
-                            LOGGER.info("Job {} reset to master failed", jobName);
+                            LOGGER.info("Job {} reset to master failed", dbJobId);
                         }
                         MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(),
                                 MonitorLogUtils.JOB_STAT_RESET_FINISHED, "",
@@ -734,7 +738,7 @@ public class DbAgentReadJob implements MetricReport {
                         MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(),
                                 MonitorLogUtils.JOB_STAT_SWITCH);
                         if (doSwitch()) {
-                            LOGGER.info("Job {} switch ok, new reBuild Relay-log!", jobName);
+                            LOGGER.info("Job {} switch ok, new reBuild Relay-log!", dbJobId);
                             relayLog.close();
                             relayLog = mkRelayLog();
                         }
@@ -750,7 +754,7 @@ public class DbAgentReadJob implements MetricReport {
                                 parser.stopParse();
                             }
                             parseThreadMap.clear();
-                            LOGGER.info("Job {} clear binlog parser!", jobName);
+                            LOGGER.info("Job {} clear binlog parser!", dbJobId);
                         }
                     }
 
@@ -765,8 +769,8 @@ public class DbAgentReadJob implements MetricReport {
                     if (dbConnectionAddress != null) {
                         updateCurrentJobAndDbInfo(dbConnectionAddress.toString());
                     }
-                    LOGGER.info("Dumper use MysqlConnection JobName/mysqlAddress/remoteIp/port : "
-                            + "{}/{}/{}/{}/{}", jobName, mysqlCurrentAddress.getDbAddress(),
+                    LOGGER.info("Dumper use MysqlConnection dbJobId/mysqlAddress/remoteIp/port : "
+                            + "{}/{}/{}/{}/{}", dbJobId, mysqlCurrentAddress.getDbAddress(),
                             mysqlCurrentAddress.getRealRemoteIp(), remoteIp, erosaConnection.getLocalPort());
                     // 3. get last position info
                     MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(),
@@ -777,17 +781,17 @@ public class DbAgentReadJob implements MetricReport {
                     }
                     final EntryPosition startPosition = findStartPosition(erosaConnection);
                     if (startPosition == null) {
-                        LOGGER.error("{} can't find start position", jobName);
+                        LOGGER.error("{} can't find start position", dbJobId);
                         throw new CanalParseException("can't find start position");
                     }
                     MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(),
                             MonitorLogUtils.JOB_STAT_GET_POSITION_FINISHED, "",
                             startPosition.getJsonObj().toJSONString());
-                    LOGGER.info("job {}, find start position : {}", jobName, startPosition);
+                    LOGGER.info("job {}, find start position : {}", dbJobId, startPosition);
                     // reconnect
                     erosaConnection.reconnect();
-                    LOGGER.info("Dumper use MysqlConnection reconnect JobName/mysqlAddress/remoteIp/port : "
-                            + "{}/{}/{}/{}", jobName, mysqlCurrentAddress, remoteIp, erosaConnection.getLocalPort());
+                    LOGGER.info("Dumper use MysqlConnection reconnect dbJobId/mysqlAddress/remoteIp/port : "
+                            + "{}/{}/{}/{}", dbJobId, mysqlCurrentAddress, remoteIp, erosaConnection.getLocalPort());
 
                     final LogPosition lastPosition = new LogPosition();
                     lastPosition.setPosition(startPosition);
@@ -863,9 +867,9 @@ public class DbAgentReadJob implements MetricReport {
                             ErrorCode.DB_EXCEPTION_RELAY_LOG_POSITION);
                     setErrorMsg(re.getMessage());
 
-                    LOGGER.error("JobName [{}] relay-log file magic error : ", jobName, re);
-                    LOGGER.error("JobName [{}] relay-log use RedumpPosition is : {} ",
-                            jobName, lastLog);
+                    LOGGER.error("DbJobId [{}] relay-log file magic error : ", dbJobId, re);
+                    LOGGER.error("DbJobId [{}] relay-log use RedumpPosition is : {} ",
+                            dbJobId, lastLog);
                 } catch (TableIdNotFoundException e) {
                     setState(State.ERROR);
                     MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(), MonitorLogUtils.JOB_STAT_ERROR,
@@ -873,15 +877,15 @@ public class DbAgentReadJob implements MetricReport {
                     setErrorMsg(e.getMessage());
 
                     needTransactionPosition.compareAndSet(false, true);
-                    LOGGER.error("JobName [{}] dump address {} has an error, retrying. caused by",
-                            jobName, getCurrentDbIpAddress(), e);
+                    LOGGER.error("DbJobId [{}] dump address {} has an error, retrying. caused by",
+                            dbJobId, getCurrentDbIpAddress(), e);
                 } catch (BinlogMissException e) {
                     setState(State.ERROR);
                     setErrorMsg(e.getMessage());
-                    LOGGER.error("JobName [{}] Dump {} Error : ",
-                            jobName, getCurrentDbIpAddress(), e);
-                    LOGGER.error("JobName [{}] Flush old position log : {}",
-                            jobName, lastLog.getJsonObj().toJSONString());
+                    LOGGER.error("DbJobId [{}] Dump {} Error : ",
+                            dbJobId, getCurrentDbIpAddress(), e);
+                    LOGGER.error("DbJobId [{}] Flush old position log : {}",
+                            dbJobId, lastLog.getJsonObj().toJSONString());
                     // lastLog = null;
                     bBinlogMiss = true;
                     jumpPoint = true;
@@ -898,8 +902,8 @@ public class DbAgentReadJob implements MetricReport {
                                 ErrorCode.DB_EXCEPTION_OTHER);
                         setErrorMsg(e.getMessage());
                         if (running || LOGGER.isDebugEnabled()) {
-                            LOGGER.error("JobName [{}] dump address {} has an error, retrying. caused by ",
-                                    jobName, getCurrentDbIpAddress(), e);
+                            LOGGER.error("DbJobId [{}] dump address {} has an error, retrying. caused by ",
+                                    dbJobId, getCurrentDbIpAddress(), e);
                         }
                     }
                 } finally {
@@ -931,19 +935,19 @@ public class DbAgentReadJob implements MetricReport {
                 }
             }
 
-            LOGGER.info("Job : " + jobName + " dump Thread stopped!");
+            LOGGER.info("Job : " + dbJobId + " dump Thread stopped!");
             setState(State.STOP);
             MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(), MonitorLogUtils.JOB_STAT_STOP,
                     ErrorCode.OP_EXCEPTION_DUMPER_THREAD_EXIT);
         });
-        dumperThread.setName(jobName + "-dumper");
+        dumperThread.setName(dbJobId + "-dumper");
         dumperThread.setPriority(Thread.MAX_PRIORITY);
         dumperThread.setUncaughtExceptionHandler((t, e) -> {
             setState(State.STOP);
             setErrorMsg(e.getMessage());
             MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(), MonitorLogUtils.JOB_STAT_STOP,
                     ErrorCode.OP_EXCEPTION_DUMPER_THREAD_EXIT_UNCAUGHT);
-            LOGGER.error("{} dump Thread has an uncaught error ", jobName, e);
+            LOGGER.error("{} dump Thread has an uncaught error ", dbJobId, e);
         });
 
         return dumperThread;
@@ -976,11 +980,11 @@ public class DbAgentReadJob implements MetricReport {
         String nextAddr = mysqlAddr.getDbAddress();
         int nextPort = mysqlAddr.getPort();
         if (StringUtils.isEmpty(nextAddr) || -1 == nextPort) {
-            LOGGER.warn("jobName can't do HA switch , next database : {}:{}", nextAddr, nextPort);
+            LOGGER.warn("DbJobId can't do HA switch , next database : {}:{}", nextAddr, nextPort);
             return false;
         }
-        LOGGER.info("jobName {} HA switch next database : {}:{}, last pos : {}",
-                this.jobName, nextAddr, nextPort, this.lastLog);
+        LOGGER.info("DbJobId {} HA switch next database : {}:{}, last pos : {}",
+                this.dbJobId, nextAddr, nextPort, this.lastLog);
         doSwitchFinal(mysqlAddr);
         return true;
     }
@@ -988,7 +992,7 @@ public class DbAgentReadJob implements MetricReport {
     private void doSwitchFinal(DbAddConfigInfo mysqlAddr) {
         this.mysqlCurrentAddress = mysqlAddr;
 
-        this.jobName = dbSyncJobConf.getDbJobId();
+        this.dbJobId = dbSyncJobConf.getDbJobId();
         this.dbSyncJobConf.setStatus(TaskStat.SWITCHED);
     }
 
@@ -1001,14 +1005,14 @@ public class DbAgentReadJob implements MetricReport {
     private boolean doReset() throws IOException {
         DbAddConfigInfo masterAddr = dbSyncJobConf.getMstMysqlAddr();
         if (masterAddr == null) {
-            LOGGER.warn("jobName [{}] reset masterAddr is null!", jobName);
+            LOGGER.warn("DbJobId [{}] reset masterAddr is null!", dbJobId);
             resetFuture.complete(null);
             return false;
         }
         int dbPort = masterAddr.getPort();
         String dbAddr = masterAddr.getDbAddress();
         if (StringUtils.isBlank(dbAddr) || -1 == dbPort) {
-            LOGGER.warn("{} can't reset, invalid database: {}:{}", this.jobName, dbAddr, dbPort);
+            LOGGER.warn("{} can't reset, invalid database: {}:{}", this.dbJobId, dbAddr, dbPort);
             dbSyncJobConf.setStatus(TaskStat.RESET);
             resetFuture.completeExceptionally(new DataSourceConfigException(
                     "invalid config, database: " + dbAddr + ":" + dbPort));
@@ -1021,7 +1025,7 @@ public class DbAgentReadJob implements MetricReport {
             return true;
         }
         LOGGER.info("begin switch to master database : {}:{}", dbAddr, dbPort);
-        LOGGER.info("{} switch to master, last pos: {}", this.jobName, this.lastLog);
+        LOGGER.info("{} switch to master, last pos: {}", this.dbJobId, this.lastLog);
         doResetFinal(masterAddr);
         resetFuture.complete(null);
         return true;
@@ -1031,29 +1035,29 @@ public class DbAgentReadJob implements MetricReport {
         this.mysqlCurrentAddress = masterAddr;
 
         this.dbSyncJobConf.doReset();
-        this.jobName = dbSyncJobConf.getDbJobId();
+        this.dbJobId = dbSyncJobConf.getDbJobId();
     }
 
     public void updateRunningNodeInfo(JobRunNodeInfo jobRunNodeInfo) {
         int oldParseThreadNum = jobParseMaxThreadNum;
         if (jobRunNodeInfo != null && jobRunNodeInfo.getParseThreadNum() > 0
                 && (jobRunNodeInfo.getParseThreadNum() > jobParseMaxThreadNum)) {
-            LOGGER.info("jobName = {} updateRunningNodeInfo parseThreadNum from = {}, to = {}",
-                    jobName, jobParseMaxThreadNum, jobRunNodeInfo.getParseThreadNum());
+            LOGGER.info("DbJobId = {} updateRunningNodeInfo parseThreadNum from = {}, to = {}",
+                    dbJobId, jobParseMaxThreadNum, jobRunNodeInfo.getParseThreadNum());
             jobParseMaxThreadNum = jobRunNodeInfo.getParseThreadNum();
         }
         if (jobRunNodeInfo.getRunningModel() != null
                 && (jobRunningModel != jobRunNodeInfo.getRunningModel())) {
-            LOGGER.info("jobName = {} updateRunningNodeInfo jobRunningModel from = {}, to = {}",
-                    jobName, jobRunningModel, jobRunNodeInfo.getRunningModel());
+            LOGGER.info("DbJobId = {} updateRunningNodeInfo jobRunningModel from = {}, to = {}",
+                    dbJobId, jobRunningModel, jobRunNodeInfo.getRunningModel());
             jobRunningModel = jobRunNodeInfo.getRunningModel();
         }
         if (parseThreadMap != null && parseThreadMap.size() == oldParseThreadNum) {
             if (jobParseMaxThreadNum > oldParseThreadNum) {
                 InetSocketAddress inetSocketAddress = metaConnection.getConnector().getAddress();
                 for (int i = 0; i < (jobParseMaxThreadNum - oldParseThreadNum); i++) {
-                    String threadName = "parser-" + (i + oldParseThreadNum) + "-" + this.jobName;
-                    LOGGER.info("jobName = {} Update parse thread {}", jobName, threadName);
+                    String threadName = "parser-" + (i + oldParseThreadNum) + "-" + this.dbJobId;
+                    LOGGER.info("DbJobId = {} Update parse thread {}", dbJobId, threadName);
                     BinlogParseThread parser = new BinlogParseThread(threadName, inetSocketAddress,
                             this, snowFlakeManager);
                     parser.start();
@@ -1067,7 +1071,7 @@ public class DbAgentReadJob implements MetricReport {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
         if (!needReset.compareAndSet(false, true)) {
-            future.completeExceptionally(new JobInResetStatus("job " + jobName + " is being resetting"));
+            future.completeExceptionally(new JobInResetStatus("job " + dbJobId + " is being resetting"));
         } else {
             resetFuture = future;
         }
@@ -1206,13 +1210,13 @@ public class DbAgentReadJob implements MetricReport {
 
         if (needTransactionPosition.get()) {
             if (startPosition != null) {
-                LOGGER.info("jobName {} prepare to find last position : {}",
-                        jobName, startPosition.getJsonObj());
+                LOGGER.info("DbJobId {} prepare to find last position : {}",
+                        dbJobId, startPosition.getJsonObj());
             }
             Long preTransactionStartPosition = findTransactionBeginPosition(connection, startPosition);
             if (!preTransactionStartPosition.equals(startPosition.getPosition())) {
-                LOGGER.info("jobName {} find new start Transaction Position , old : {} , new : {}",
-                        jobName, startPosition.getPosition(), preTransactionStartPosition);
+                LOGGER.info("DbJobId {} find new start Transaction Position , old : {} , new : {}",
+                        dbJobId, startPosition.getPosition(), preTransactionStartPosition);
                 startPosition.setPosition(preTransactionStartPosition);
             }
             needTransactionPosition.compareAndSet(true, false);
@@ -1322,14 +1326,14 @@ public class DbAgentReadJob implements MetricReport {
                         lastPosition = buildLastPosition(entry, address);
                         return false;
                     } else {
-                        LOGGER.info("jobName {} set reDump to true", dbSyncJobConf.getDbJobId(),
+                        LOGGER.info("DbJobId {} set reDump to true", dbSyncJobConf.getDbJobId(),
                                 entry.getEntryType());
                         reDump.set(true);
                         lastPosition = buildLastPosition(entry, address);
                         return false;
                     }
                 } catch (Exception e) {
-                    LOGGER.error("jobName {} parse error", dbSyncJobConf.getDbJobId(), e);
+                    LOGGER.error("DbJobId {} parse error", dbSyncJobConf.getDbJobId(), e);
                     processError(e, lastPosition, entryPosition.getJournalName(), entryPosition.getPosition());
                     reDump.set(true);
                     return false;
@@ -1374,8 +1378,8 @@ public class DbAgentReadJob implements MetricReport {
                                 }
 
                                 if (logHead.getLogPos() >= entryPosition.getPosition()) {
-                                    LOGGER.info("JobName [{}] find first start position before entry "
-                                            + "position {}", jobName, entryPosition.getJsonObj());
+                                    LOGGER.info("DbJobId [{}] find first start position before entry "
+                                            + "position {}", dbJobId, entryPosition.getJsonObj());
                                     return false;// exit
                                 }
 
@@ -1391,8 +1395,8 @@ public class DbAgentReadJob implements MetricReport {
                     });
 
             if (preTransactionStartPosition.get() > entryPosition.getPosition()) {
-                LOGGER.error("JobName [{}] preTransactionEndPosition greater than startPosition, "
-                        + "maybe lost data", jobName);
+                LOGGER.error("DbJobId [{}] preTransactionEndPosition greater than startPosition, "
+                        + "maybe lost data", dbJobId);
                 throw new CanalParseException(
                         "preTransactionStartPosition greater than startPosition, maybe lost data");
             }
@@ -1463,7 +1467,7 @@ public class DbAgentReadJob implements MetricReport {
             /*
              * return the first binlog position exist in back db
              */
-            MonitorLogUtils.printStartPositionWhileMiss(jobName,
+            MonitorLogUtils.printStartPositionWhileMiss(dbJobId,
                     mysqlConnection.getConnector().getAddress().toString(),
                     (startPosition == null ? "null" : startPosition.getJsonObj().toJSONString()));
             LOGGER.info("start get start position {}", startPosition);
@@ -1603,4 +1607,5 @@ public class DbAgentReadJob implements MetricReport {
     public String report() {
         return getDumpMetricInfo();
     }
+
 }
