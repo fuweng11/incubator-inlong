@@ -100,7 +100,6 @@ public class HeartbeatManager implements AbstractHeartbeatManager {
                 "http://" + mgrHostPort + ConfigConstants.MANAGER_PATH + ConfigConstants.MANAGER_HEARTBEAT_REPORT;
         try {
             HttpPost post = HttpUtils.getHttPost(url);
-
             String body = gson.toJson(heartbeat);
             StringEntity stringEntity = new StringEntity(body);
             stringEntity.setContentType("application/json");
