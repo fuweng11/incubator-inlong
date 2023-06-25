@@ -25,7 +25,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
-
+import java.util.function.Supplier;
 /**
  * AuthInterceptor
  * Before okhttp call a request, uniformly encapsulate the relevant parameters of authentication
@@ -38,10 +38,12 @@ public class AuthInterceptor implements Interceptor {
 
     private final String username;
     private final String password;
+    private final Supplier<String> tenantGetter;
 
-    public AuthInterceptor(String username, String password) {
+    public AuthInterceptor(String username, String password, Supplier<String> tenantGetter) {
         this.username = username;
         this.password = password;
+        this.tenantGetter = tenantGetter;
     }
 
     @Override
@@ -60,6 +62,7 @@ public class AuthInterceptor implements Interceptor {
                     .addHeader(MANAGER_CLIENT_REQUEST, "true")
                     .addHeader(MANAGER_SECURE_AUTH, encodedAuthentication)
                     .url(builder.build())
+                    .addHeader("tenant", tenantGetter.get())
                     .build();
 
             return chain.proceed(newRequest);
