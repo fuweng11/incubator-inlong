@@ -18,12 +18,12 @@
 package org.apache.inlong.manager.plugin.auth.openapi;
 
 import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
+import org.apache.inlong.manager.pojo.user.LoginUserUtils;
 import org.apache.inlong.manager.pojo.user.TenantRoleInfo;
 import org.apache.inlong.manager.pojo.user.TenantRolePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.pojo.user.UserRoleCode;
 import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
-import org.apache.inlong.manager.service.user.LoginUserUtils;
 import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 

@@ -22,10 +22,11 @@ import org.apache.inlong.manager.pojo.tencent.sc.AppGroup;
 import org.apache.inlong.manager.pojo.tencent.sc.Product;
 import org.apache.inlong.manager.pojo.tencent.sc.ScHiveResource;
 import org.apache.inlong.manager.pojo.tencent.sc.Staff;
+import org.apache.inlong.manager.pojo.user.LoginUserUtils;
 import org.apache.inlong.manager.service.resource.sc.ScService;
 import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.service.tencentauth.StaffBaseInfo;
-import org.apache.inlong.manager.service.user.LoginUserUtils;
+
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
