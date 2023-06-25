@@ -24,10 +24,10 @@ import org.apache.inlong.manager.common.util.NetworkUtils;
 import org.apache.inlong.manager.plugin.auth.openapi.BasicAuthenticationToken;
 import org.apache.inlong.manager.plugin.auth.openapi.TAuthAuthenticationToken;
 import org.apache.inlong.manager.plugin.common.pojo.user.StaffDTO;
+import org.apache.inlong.manager.pojo.user.LoginUserUtils;
 import org.apache.inlong.manager.pojo.user.TenantRoleInfo;
 import org.apache.inlong.manager.pojo.user.TenantRolePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
-import org.apache.inlong.manager.service.user.LoginUserUtils;
 import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
