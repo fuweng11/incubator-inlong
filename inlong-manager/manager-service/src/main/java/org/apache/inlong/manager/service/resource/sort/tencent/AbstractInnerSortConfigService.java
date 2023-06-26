@@ -17,6 +17,26 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent;
 
+import com.tencent.flink.formats.common.FormatInfo;
+import com.tencent.oceanus.etl.ZkTools;
+import com.tencent.oceanus.etl.configuration.Constants;
+import com.tencent.oceanus.etl.protocol.FieldInfo;
+import com.tencent.oceanus.etl.protocol.KafkaClusterInfo;
+import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgBinlogDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgPbV1DeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgSeaCubeDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.source.KafkaSourceInfo;
+import com.tencent.oceanus.etl.protocol.source.PulsarSourceInfo;
+import com.tencent.oceanus.etl.protocol.source.SourceInfo;
+import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
@@ -46,27 +66,6 @@ import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.service.cluster.InlongClusterOperatorFactory;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
-
-import com.tencent.flink.formats.common.FormatInfo;
-import com.tencent.oceanus.etl.ZkTools;
-import com.tencent.oceanus.etl.configuration.Constants;
-import com.tencent.oceanus.etl.protocol.FieldInfo;
-import com.tencent.oceanus.etl.protocol.KafkaClusterInfo;
-import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgBinlogDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgPbV1DeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgSeaCubeDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.source.KafkaSourceInfo;
-import com.tencent.oceanus.etl.protocol.source.PulsarSourceInfo;
-import com.tencent.oceanus.etl.protocol.source.SourceInfo;
-import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +73,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Default operation of inner sort config.
@@ -272,16 +273,16 @@ public class AbstractInnerSortConfigService {
     public String getSortTaskName(String groupId, String clusterTag, Integer sinkId, String sortTaskType) {
         StreamSinkEntity sinkEntity = sinkMapper.selectByPrimaryKey(sinkId);
         String sortClusterName = sinkEntity.getInlongClusterName();
+        List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
+                clusterTag, null, sortTaskType);
         if (StringUtils.isBlank(sortClusterName)) {
-            List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                    clusterTag, null, sortTaskType);
             int minCount = -1;
             for (InlongClusterEntity sortCluster : sortClusters) {
-                int isUsedCount = sinkMapper.selectExistByGroupIdAndTaskName(groupId, sortCluster.getName());
-                if (minCount < 0 || isUsedCount <= minCount) {
-                    minCount = isUsedCount;
-                    if (StringUtils.isNotBlank(sortCluster.getExtParams())) {
-                        BaseSortClusterDTO dto = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
+                if (StringUtils.isNotBlank(sortCluster.getExtParams())) {
+                    BaseSortClusterDTO dto = BaseSortClusterDTO.getFromJson(sortCluster.getExtParams());
+                    int isUsedCount = sinkMapper.selectExistByGroupIdAndTaskName(groupId, dto.getApplicationName());
+                    if (minCount < 0 || isUsedCount <= minCount) {
+                        minCount = isUsedCount;
                         sortClusterName = dto.getApplicationName();
                     }
                 }
@@ -300,9 +301,12 @@ public class AbstractInnerSortConfigService {
             }
         } else {
             // check if the cluster belongs to this tag
-            List<InlongClusterEntity> sortClusters = clusterMapper.selectByKey(
-                    clusterTag, sortClusterName, sortTaskType);
-            if (CollectionUtils.isEmpty(sortClusters) || sortClusters.size() > 1) {
+            Set<String> sortTaskNames = sortClusters.stream()
+                    .filter(entity -> StringUtils.isNotBlank(entity.getExtParams())).map(entity -> {
+                        BaseSortClusterDTO dto = BaseSortClusterDTO.getFromJson(entity.getExtParams());
+                        return dto.getApplicationName();
+                    }).collect(Collectors.toSet());
+            if (!sortTaskNames.contains(sortClusterName)) {
                 String errMsg = String.format("not fond cluster=[%s] in the cluster tag=[%s]",
                         sortClusterName, clusterTag);
                 LOGGER.error(errMsg);
