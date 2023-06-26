@@ -665,7 +665,8 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                     String tenant = pulsarInfo.getPulsarTenant();
                     if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarCluster.getPulsarTenant())) {
                         tenant = pulsarCluster.getPulsarTenant();
-                    } else {
+                    }
+                    if (StringUtils.isBlank(tenant)) {
                         tenant = InlongConstants.DEFAULT_PULSAR_TENANT;
                     }
                     String topic = String.format(InlongConstants.PULSAR_TOPIC_FORMAT,

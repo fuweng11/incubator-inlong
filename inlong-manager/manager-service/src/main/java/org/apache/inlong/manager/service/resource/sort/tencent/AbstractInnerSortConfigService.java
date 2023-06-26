@@ -381,7 +381,8 @@ public class AbstractInnerSortConfigService {
             String tenant = pulsarInfo.getPulsarTenant();
             if (StringUtils.isBlank(tenant) && StringUtils.isNotBlank(pulsarClusterDTO.getPulsarTenant())) {
                 tenant = pulsarClusterDTO.getPulsarTenant();
-            } else {
+            }
+            if (StringUtils.isBlank(tenant)) {
                 tenant = InlongConstants.DEFAULT_PULSAR_TENANT;
             }
 
