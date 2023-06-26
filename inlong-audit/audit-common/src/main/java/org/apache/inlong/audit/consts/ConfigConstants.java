@@ -71,6 +71,8 @@ public class ConfigConstants {
 
     public static final String MANAGER_GET_CONFIG_PATH = "/audit/getConfig";
 
+    public static final String MSG_VALID_THRESHOLD_DAYS = "msg.valid.threshold.days";
+
     public static final String INTER_MANAGER_SECURE_AUTH = "manager.internal.secure.auth";
     public static final String DEFAULT_INTER_MANAGER_SECURE_AUTH = "secure-authentication";
 
