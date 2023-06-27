@@ -27,6 +27,8 @@ import {
   TitleComponent,
   GridComponent,
   LegendComponent,
+  ToolboxComponent,
+  DataZoomComponent,
 } from 'echarts/components';
 import { merge } from './generate-config';
 
@@ -38,6 +40,8 @@ echarts.use([
   GridComponent,
   LegendComponent,
   CanvasRenderer,
+  ToolboxComponent,
+  DataZoomComponent,
 ]);
 
 export interface Props {

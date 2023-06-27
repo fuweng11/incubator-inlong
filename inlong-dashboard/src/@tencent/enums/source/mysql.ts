@@ -29,10 +29,22 @@ export enum AllSyncEnum {
   NO = false as any,
 }
 
+export enum SkipDeleteEnum {
+  YES = true as any,
+  NO = false as any,
+}
+
 export const snapshotModeMap: Map<SnapshotModeEnum, string> = (() => {
   return new Map([
     [SnapshotModeEnum.FULL, '全量'],
     [SnapshotModeEnum.INC, '增量'],
+  ]);
+})();
+
+export const skipDeleteMap: Map<SkipDeleteEnum, string> = (() => {
+  return new Map([
+    [SkipDeleteEnum.YES, '是'],
+    [SkipDeleteEnum.NO, '否'],
   ]);
 })();
 

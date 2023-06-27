@@ -22,12 +22,7 @@ import { Form, Input, Radio, Button } from '@tencent/tea-component';
 import { Controller } from 'react-hook-form';
 import FetchSelect from '@/@tencent/components/FetchSelect';
 import request from '@/core/utils/request';
-import {
-  AllSyncEnum,
-  allSyncMap,
-  SnapshotModeEnum,
-  snapshotModeMap,
-} from '@/@tencent/enums/source/mysql';
+import { AllSyncEnum, SkipDeleteEnum, skipDeleteMap } from '@/@tencent/enums/source/mysql';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import { useParams } from 'react-router-dom';
 
@@ -37,12 +32,46 @@ export default function Mysql({ form }) {
   const { id: streamId } = useParams<{ id: string }>();
   const [projectId] = useProjectId();
 
-  const watchAllSync = watch('allSync', AllSyncEnum.YES);
-
   return (
     <>
       <Form.Item
-        label="数据库"
+        label="采集器集群"
+        align="middle"
+        required
+        status={errors.inLongClusterName?.message ? 'error' : undefined}
+        message={errors.inLongClusterName?.message}
+      >
+        <Controller
+          name="inLongClusterName"
+          shouldUnregister
+          control={control}
+          rules={{ required: '请选择采集器集群' }}
+          render={({ field }) => (
+            <FetchSelect
+              {...field}
+              searchable={false}
+              request={async () => {
+                const result = await request({
+                  url: '/cluster/search',
+                  method: 'POST',
+                  data: {
+                    pageNum: 1,
+                    pageSize: 500,
+                    type: 'AGENT',
+                  },
+                });
+                return result.records?.map(item => ({
+                  text: item.displayName,
+                  value: item.name,
+                }));
+              }}
+            />
+          )}
+        />
+      </Form.Item>
+
+      <Form.Item
+        label="数据源名称"
         align="middle"
         required
         suffix={
@@ -61,7 +90,7 @@ export default function Mysql({ form }) {
           name="dataSourceID"
           shouldUnregister
           control={control}
-          rules={{ required: '请填写数据库' }}
+          rules={{ required: '请选择数据源' }}
           render={({ field }: any) => {
             if (streamId) {
               const values = getValues();
@@ -94,61 +123,25 @@ export default function Mysql({ form }) {
         />
       </Form.Item>
 
-      <Form.Item label="是否整库同步" required>
+      <Form.Item label="表" required>
         <Controller
-          name="allSync"
-          defaultValue={AllSyncEnum.YES}
+          name="tableName"
+          // defaultValue={AllSyncEnum.YES}
           shouldUnregister
           control={control}
-          render={({ field }) => (
-            <Radio.Group {...field}>
-              {Array.from(allSyncMap).map(([key, ctx]) => (
-                <Radio name={key as any} key={ctx}>
-                  {ctx}
-                </Radio>
-              ))}
-            </Radio.Group>
-          )}
+          render={({ field }) => <Input {...field} maxLength={1000} />}
         />
       </Form.Item>
 
-      {watchAllSync === AllSyncEnum.NO && (
-        <Form.Item
-          label="表名白名单"
-          tips="白名单应该是一个以逗号分隔的正则表达式列表，与要监控的表的完全限定名称相匹配。表的完全限定名称的格式为 <dbName>.<tableName>，其中 dbName 和 tablename 都可以配置正则表达式。比如：test_db.table*,inlong_db*.user*，表示采集 test_db 库中以 table 开头的所有表 + 以 inlong_db 开头的所有库下的以 user 开头的所有表。"
-          align="middle"
-          required
-          status={errors.tableWhiteList?.message ? 'error' : undefined}
-          message={errors.tableWhiteList?.message}
-        >
-          <Controller
-            name="tableWhiteList"
-            shouldUnregister
-            control={control}
-            rules={{ required: '请填写表名白名单' }}
-            render={({ field }) => <Input {...field} maxLength={1000} />}
-          />
-        </Form.Item>
-      )}
-
-      <Form.Item
-        label="读取方式"
-        tips={
-          <>
-            <div>全量：初始化从日志文件内容第一行开始读取，后续增量读取。</div>
-            <div>增量：从日志末尾开始读取最新内容。</div>
-          </>
-        }
-        required
-      >
+      <Form.Item label="跳过delete事件" required>
         <Controller
-          name="snapshotMode"
-          defaultValue={SnapshotModeEnum.FULL}
+          name="skipDelete"
+          defaultValue={SkipDeleteEnum.YES}
           shouldUnregister
           control={control}
           render={({ field }) => (
             <Radio.Group {...field}>
-              {Array.from(snapshotModeMap).map(([key, ctx]) => (
+              {Array.from(skipDeleteMap).map(([key, ctx]) => (
                 <Radio name={key as any} key={ctx}>
                   {ctx}
                 </Radio>

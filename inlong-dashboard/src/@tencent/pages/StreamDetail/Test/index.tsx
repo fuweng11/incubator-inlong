@@ -16,130 +16,53 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import ContentRadio from '@/@tencent/components/ContentRadio';
-import FileUpload from '@/@tencent/components/FileUpload';
-import { TabPanel, Tabs, Status } from '@tencent/tea-component';
+import { Table, Button, Icon } from '@tencent/tea-component';
 import { ProForm, ProFormProps } from '@tencent/tea-material-pro-table';
-import React, { useRef, useState } from 'react';
-import Editor from '@monaco-editor/react';
+import React, { useState } from 'react';
+import PageStatus from '@/@tencent/components/PageStatus';
+import { TestEmpty } from '@/@tencent/components/Icons';
+import request from '@/core/utils/request';
+import moment from 'moment';
 
-const tabs = [
-  { id: 'result', label: '调试结果' },
-  { id: 'log', label: '调试日志' },
-];
+const { scrollable } = Table.addons;
+const infoStyle: React.CSSProperties = { marginTop: -3, marginRight: 2 };
 
-const STATUSMAP = {
-  success: {
-    text: '运行成功',
-    color: '#01CBAB',
-  },
-  failed: {
-    text: '运行失败',
-    color: '#E54545',
-  },
-};
-
-const Test = () => {
+const Test = ({ info }) => {
   const [testRes, setTestRes] = useState<any>('');
-  const onlineRef = useRef<any>('');
-  const fileRef = useRef<any>('');
+  const [loading, setLoading] = useState<any>(false);
   const handleTest = async values => {
-    const mockRes = {
-      status: 'success',
-      time: '2022-01-11 10:23:23',
-      result: '这是调试结果',
-      log: '这是调试日志',
-    };
-    const res = await new Promise(resolve => {
-      setTimeout(() => {
-        resolve(mockRes);
-      }, 1000);
+    setLoading(true);
+    const data = await request({
+      url: '/data/preview/query',
+      method: 'POST',
+      data: {
+        count: values.count,
+        inLongGroupID: info.inLongGroupID,
+        inLongStreamID: info.inLongStreamID,
+      },
     });
-    setTestRes(res);
+    setLoading(false);
+    setTestRes(data);
   };
+
+  const infoTips = (text: String) => (
+    <span>
+      <Icon type="info" style={infoStyle} />
+      <span style={{ color: '#bbb' }}>{text}</span>
+    </span>
+  );
 
   const fields: ProFormProps['fields'] = [
     {
-      name: 'source',
-      type: 'string',
-      title: '数据来源',
+      name: 'count',
+      type: 'number',
+      title: '抽样数量',
       required: true,
-      component: ContentRadio,
-      reaction: (field, values) => {
-        //设置默认值
-        field.setValue('online');
-        //设置组件参数
-        field.setComponentProps({
-          style: { width: '80%' },
-          radios: [
-            {
-              value: 'online',
-              text: '在线抽样',
-              operations: (
-                <ProForm
-                  style={{ padding: '0', marginBottom: '-10px' }}
-                  fields={[
-                    {
-                      name: 'number',
-                      type: 'number',
-                      title: '抽样数量',
-                      suffix: (
-                        <span style={{ color: '#bbb' }}>（请配置小于等于1,000条的抽样数量）</span>
-                      ),
-                      required: true,
-                      component: 'inputNumber',
-                      defaultValue: 100,
-                      max: 1000,
-                      min: 1,
-                      unit: '条',
-                    },
-                  ]}
-                  onRef={form => (onlineRef.current = form)}
-                  submitter={false}
-                />
-              ),
-            },
-            {
-              value: 'file',
-              text: '文件上传',
-              operations: (
-                <ProForm
-                  style={{ padding: '0', marginBottom: '-10px' }}
-                  fields={[
-                    {
-                      name: 'file',
-                      type: 'string',
-                      required: true,
-                      component: () => (
-                        <FileUpload
-                          message="请上传CSV、KV文件，大小在10M以内"
-                          action={''} //TODO上传地址
-                          maxSize={10 * 1024 * 1024}
-                          accept={['.csv', '.kv']}
-                        />
-                      ),
-                    },
-                  ]}
-                  onRef={form => (fileRef.current = form)}
-                  submitter={false}
-                />
-              ),
-            },
-          ],
-        });
-      },
-    },
-    {
-      name: 'subscribe',
-      type: 'boolean',
-      title: '数据订阅',
-      defaultValue: false,
-      component: 'switch',
-      reaction: (fields, values) => {
-        fields.setComponentProps({
-          children: !values.subscribe ? '暂不开启' : '开启',
-        });
-      },
+      component: 'inputNumber',
+      defaultValue: 10,
+      min: 1,
+      max: 50,
+      suffix: infoTips('请配置小于等于50条的抽样数量'),
     },
   ];
 
@@ -149,44 +72,52 @@ const Test = () => {
         style={{ marginTop: '20px' }}
         fields={fields}
         submitter={{
-          submitText: '开始测试',
-          resetText: '重置参数',
+          render: form => (
+            <div>
+              <Button type="primary" loading={loading} onClick={() => form.submit()}>
+                开始抽样
+              </Button>
+              {infoTips('仅抽取最新上报的数据')}
+            </div>
+          ),
         }}
         onFinish={handleTest}
       />
       <div style={{ marginTop: '10px' }}>
         {testRes ? (
           <>
-            <div style={{ border: '1px solid #DDD' }}>
-              <Tabs
-                tabs={tabs}
-                tabBarStyle={{
-                  padding: '5px 10px',
-                }}
-                addon={
-                  <div style={{ lineHeight: '30px', verticalAlign: 'middle' }}>
-                    <span style={{ color: '#444', display: 'inline-block', marginRight: '20px' }}>
-                      {testRes.time}测试结果
-                    </span>
-                    <span>
-                      调试状态：
-                      <span style={{ color: STATUSMAP[testRes.status].color }}>
-                        {STATUSMAP[testRes.status].text}
-                      </span>
-                    </span>
-                  </div>
-                }
-              >
-                {tabs.map(tab => (
-                  <TabPanel id={tab.id} key={tab.id}>
-                    <Editor height="150px" value={testRes[tab.id]} options={{ readOnly: true }} />
-                  </TabPanel>
-                ))}
-              </Tabs>
-            </div>
+            <Table
+              bordered
+              verticalTop
+              records={testRes}
+              recordKey="id"
+              columns={[
+                {
+                  key: 'dt',
+                  header: '上报时间戳',
+                  render: (row: any) => moment.unix(row.dt / 1000).format('YYYY-MM-DD HH:mm'),
+                },
+                {
+                  key: 'body',
+                  header: '原始数据',
+                },
+                {
+                  key: 'nodeIp',
+                  header: '上报节点',
+                },
+              ]}
+              addons={[
+                // 支持表格滚动，高度超过 192 开始显示滚动条
+                scrollable({
+                  maxHeight: 392,
+                  // minWidth: 3600,
+                  onScrollBottom: () => console.log('到达底部'),
+                }),
+              ]}
+            />
           </>
         ) : (
-          <Status icon="blank" title="暂无数据" size="s" />
+          <PageStatus icon={<TestEmpty />} description="暂无数据" />
         )}
       </div>
     </>

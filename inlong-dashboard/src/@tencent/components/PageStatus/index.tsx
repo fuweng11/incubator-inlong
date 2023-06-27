@@ -16,11 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-export { ReactComponent as StreamManage } from './svg/StreamManage.svg';
-export { ReactComponent as SubscribeManage } from './svg/SubscribeManage.svg';
-export { ReactComponent as AcquisitionManage } from './svg/AcquisitionManage.svg';
-export { ReactComponent as ConvertTip } from './svg/ConvertTip.svg';
-export { ReactComponent as AutoAdd } from './svg/AutoAdd.svg';
-export { ReactComponent as Delete } from './svg/Delete.svg';
-export { ReactComponent as Vector } from './svg/Vector.svg';
-export { ReactComponent as TestEmpty } from './svg/TestEmpty.svg';
+
+import React, { ReactNode } from 'react';
+
+interface PageStatusProps {
+  icon: ReactNode;
+  description: ReactNode | string;
+}
+
+const style: React.CSSProperties = {
+  maxWidth: 400,
+  margin: '0 auto',
+  padding: '120px 0',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'column',
+  fontSize: '12',
+};
+
+export default function PageStatus({ icon, description }: PageStatusProps) {
+  return (
+    <div style={style}>
+      {icon}
+      <div style={{ marginTop: 16 }}>{description}</div>
+    </div>
+  );
+}

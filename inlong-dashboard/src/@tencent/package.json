@@ -13,7 +13,9 @@
     "@tencent/tea-component": "^2.7.8",
     "@tencent/tea-dcpg": "^0.1.81",
     "@tencent/tea-material-pro-form": "~0.0.25",
-    "@tencent/tea-material-pro-table": "~0.0.6"
+    "@tencent/tea-material-pro-table": "~0.0.6",
+    "tdesign-react": "^1.1.10",
+    "dayjs": "^1.11.8"
   },
   "devDependencies": {
     "@types/react": "^16.9.41"

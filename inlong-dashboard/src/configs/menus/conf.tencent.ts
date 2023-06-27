@@ -29,16 +29,16 @@ const conf: MenuItemType[] = [
         name: '接入管理',
         icon: StreamManage,
       },
-      {
-        path: '/subscribe',
-        name: '数据订阅',
-        icon: SubscribeManage,
-      },
-      {
-        path: '/collector',
-        name: '采集器管理',
-        icon: AcquisitionManage,
-      },
+      // {
+      //   path: '/subscribe',
+      //   name: '数据订阅',
+      //   icon: SubscribeManage,
+      // },
+      // {
+      //   path: '/collector',
+      //   name: '采集器管理',
+      //   icon: AcquisitionManage,
+      // },
     ],
   },
 ];

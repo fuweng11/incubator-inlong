@@ -32,14 +32,15 @@ import { useProjectId } from '@/@tencent/components/Use/useProject';
 import Info from './Info';
 import SubscribeList, { SubscribeListRef } from './Subscribe';
 import Test from './Test';
+import Statistics from './Statistics';
 
 const tabs = [
   { id: 'info', label: '基本信息', Component: Info },
-  { id: 'test', label: '数据测试', Component: Test },
+  { id: 'test', label: '数据抽样', Component: Test },
   { id: 'subscribe', label: '数据订阅', Component: SubscribeList },
-  { id: 'statistic', label: '数据统计', Component: () => <div />, disabled: true },
-  { id: 'schema', label: 'schema管理', Component: () => <div />, disabled: true },
-  { id: 'devops', label: '采集治理', Component: () => <div />, disabled: true },
+  { id: 'statistic', label: '数据统计', Component: Statistics },
+  // { id: 'schema', label: 'schema管理', Component: () => <div />, disabled: true },
+  // { id: 'devops', label: '采集治理', Component: () => <div />, disabled: true },
 ];
 
 export default function StreamDetail() {

@@ -20,7 +20,7 @@
 export enum SourceTypeEnum {
   SDK = 'AUTO_PUSH',
   FILE = 'FILE',
-  MySQL = 'MYSQL_BINLOG',
+  MySQL = 'HA_BINLOG',
   PostgreSQL = 'POSTGRESQL',
 }
 

@@ -240,6 +240,7 @@ const AccessForm = forwardRef(
                   value: key,
                   text: ctx,
                 }))}
+                disabled={isUpdate}
               />
             )}
           />
@@ -263,6 +264,7 @@ const AccessForm = forwardRef(
                   value: key,
                   text: ctx,
                 }))}
+                disabled={isUpdate}
               />
             )}
           />
