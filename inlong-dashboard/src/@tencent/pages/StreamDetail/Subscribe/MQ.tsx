@@ -32,7 +32,7 @@ export { fields, MQTypeEnum } from '@/@tencent/enums/subscribe/mq';
 const MQ = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
   const {
     fields,
-    streamInfo: { inLongGroupID },
+    streamInfo: { inLongGroupID, inLongStreamID },
     setTargetFields,
     ...rest
   } = props;
@@ -54,10 +54,11 @@ const MQ = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) =>
       name: 'topic',
       type: 'string',
       title: 'topic',
-      component: 'select',
+      component: 'input',
       required: true,
       appearance: 'button',
       size: 'm',
+      readonly: true,
       reaction: async (field, values) => {
         const data = await request({
           url: '/access/topic/query',
@@ -65,13 +66,11 @@ const MQ = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) =>
           data: {
             projectID: projectId,
             inLongGroupID,
+            inLongStreamID,
           },
         });
         formRef.current?.setValues({ mqType: data.mqType });
-        field.setComponentProps({
-          options: (data?.topics || []).map(t => ({ text: t, value: t })),
-        });
-        field.setValue(data.topics[0]);
+        field.setValue(data.topic);
       },
     },
     {

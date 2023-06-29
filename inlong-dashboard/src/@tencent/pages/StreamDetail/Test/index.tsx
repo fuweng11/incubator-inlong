@@ -23,12 +23,13 @@ import PageStatus from '@/@tencent/components/PageStatus';
 import { TestEmpty } from '@/@tencent/components/Icons';
 import request from '@/core/utils/request';
 import moment from 'moment';
+import isEmpty from 'lodash/isEmpty';
 
 const { scrollable } = Table.addons;
 const infoStyle: React.CSSProperties = { marginTop: -3, marginRight: 2 };
 
 const Test = ({ info }) => {
-  const [testRes, setTestRes] = useState<any>('');
+  const [testRes, setTestRes] = useState<any>([]);
   const [loading, setLoading] = useState<any>(false);
   const handleTest = async values => {
     setLoading(true);
@@ -84,7 +85,7 @@ const Test = ({ info }) => {
         onFinish={handleTest}
       />
       <div style={{ marginTop: '10px' }}>
-        {testRes ? (
+        {!isEmpty(testRes) ? (
           <>
             <Table
               bordered
