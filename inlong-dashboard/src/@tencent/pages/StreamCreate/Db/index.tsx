@@ -23,12 +23,14 @@ import { Controller } from 'react-hook-form';
 import { DbTypeEnum, dbTypeMap } from '@/@tencent/enums/source';
 import Mysql from './Mysql';
 import PostgreSql from './PostgreSql';
+import { useParams } from 'react-router-dom';
 
 export default function Db({ form }) {
   const { control, formState, watch, setValue } = form;
   const { errors } = formState;
-
   const watchDbType = watch('sourceType', DbTypeEnum.MySQL);
+
+  const { id: streamId } = useParams<{ id: string }>();
 
   return (
     <>
@@ -58,6 +60,7 @@ export default function Db({ form }) {
                 setValue('sourceType', v);
                 setValue('dataSourceID', undefined);
               }}
+              disabled={!!streamId}
             />
           )}
         />

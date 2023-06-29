@@ -98,6 +98,8 @@ const EditableTable = forwardRef((props: EditableTableProps, ref: Ref<EditableTa
     return () => unsubscribe();
   }, [watch, onChange]);
 
+  const btnStyle: React.CSSProperties = { zIndex: 9 };
+
   return (
     <div>
       <Table
@@ -148,12 +150,17 @@ const EditableTable = forwardRef((props: EditableTableProps, ref: Ref<EditableTa
             width: 100,
             render: (row, rowKey, index) => [
               (typeof rowC === 'function' ? rowC(rowKey, index) : rowC) && (
-                <Button key="add" type="link" onClick={() => append({ ...defaultValues[0] })}>
+                <Button
+                  style={btnStyle}
+                  key="add"
+                  type="link"
+                  onClick={() => append({ ...defaultValues[0] })}
+                >
                   添加
                 </Button>
               ),
               (typeof rowR === 'function' ? rowR(rowKey, index) : rowR) && (
-                <Button key="del" type="link" onClick={() => remove(index)}>
+                <Button style={btnStyle} key="del" type="link" onClick={() => remove(index)}>
                   删除
                 </Button>
               ),
@@ -165,7 +172,7 @@ const EditableTable = forwardRef((props: EditableTableProps, ref: Ref<EditableTa
       <div style={{ padding: '6px 10px', border: '1px solid #cfd5df', borderTop: 'none' }}>
         <Button
           type="link"
-          style={{ display: 'flex', alignItems: 'center' }}
+          style={{ display: 'flex', alignItems: 'center', zIndex: 9 }}
           onClick={() => append({ ...defaultValues[0] })}
         >
           <Icon type="plus" />
