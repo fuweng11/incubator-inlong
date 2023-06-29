@@ -34,6 +34,7 @@ public class DataNodeType {
     public static final String KUDU = "KUDU";
     public static final String POSTGRESQL = "POSTGRESQL";
     public static final String ORACLE = "ORACLE";
+    public static final String SQLSERVER = "SQLSERVER";
 
     // --------------------------------------------------------------------------------------------
     // Inner parameters
@@ -42,5 +43,4 @@ public class DataNodeType {
     public static final String INNER_THIVE = "INNER_THIVE";
     public static final String INNER_CK = "INNER_CK";
     public static final String CUSTOM = "CUSTOM";
-
 }
