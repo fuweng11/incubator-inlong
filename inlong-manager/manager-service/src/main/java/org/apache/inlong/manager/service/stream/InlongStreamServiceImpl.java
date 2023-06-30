@@ -1056,7 +1056,7 @@ public class InlongStreamServiceImpl implements InlongStreamService {
         List<BriefMQMessage> messageList = new ArrayList<>();
         QueueResourceOperator queueOperator = queueOperatorFactory.getInstance(groupEntity.getMqType());
         try {
-            messageList = queueOperator.queryLastestMessage(groupInfo, inlongStreamInfo, messageCount);
+            messageList = queueOperator.queryLatestMessages(groupInfo, inlongStreamInfo, messageCount);
         } catch (Exception e) {
             LOGGER.error("query message error ", e);
         }

@@ -309,9 +309,9 @@ public class PulsarResourceOperator implements QueueResourceOperator {
     }
 
     /**
-     * Query lastest message from pulsar
+     * Query latest message from pulsar
      */
-    public List<BriefMQMessage> queryLastestMessage(InlongGroupInfo groupInfo,
+    public List<BriefMQMessage> queryLatestMessages(InlongGroupInfo groupInfo,
             InlongStreamInfo streamInfo, Integer messageCount) throws PulsarClientException {
         String groupId = streamInfo.getInlongGroupId();
         InlongPulsarInfo inlongPulsarInfo = ((InlongPulsarInfo) groupInfo);
@@ -331,7 +331,7 @@ public class PulsarResourceOperator implements QueueResourceOperator {
             String clusterTag = inlongPulsarInfo.getInlongClusterTag();
             String subs = String.format(PULSAR_SUBSCRIPTION_REALTIME_REVIEW, clusterTag, topicName);
             briefMQMessages =
-                    pulsarOperator.queryLastestMessage(pulsarAdmin, fullTopicName, subs, messageCount, streamInfo);
+                    pulsarOperator.queryLatestMessage(pulsarAdmin, fullTopicName, subs, messageCount, streamInfo);
 
             // insert the consumer group info into the inlong_consume table
             Integer id = consumeService.saveBySystem(groupInfo, topicName, subs);

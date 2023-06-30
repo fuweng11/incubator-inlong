@@ -15,31 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.dao.mapper;
+package org.apache.inlong.manager.pojo.queue.tubemq;
 
-import org.apache.inlong.manager.common.tenant.MultiTenantQuery;
-import org.apache.inlong.manager.dao.entity.InlongClusterTagEntity;
-import org.apache.inlong.manager.pojo.cluster.ClusterTagPageRequest;
-
-import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Repository;
+import lombok.Data;
 
 import java.util.List;
 
-@MultiTenantQuery
-@Repository
-public interface InlongClusterTagEntityMapper {
+/**
+ * The message info from TubeMQ.
+ */
+@Data
+public class TubeMessageResponse {
 
-    int insert(InlongClusterTagEntity record);
+    // true, or false
+    private boolean result;
 
-    InlongClusterTagEntity selectById(Integer id);
+    // 0 is success, other is failed
+    private int errCode;
 
-    InlongClusterTagEntity selectByTag(@Param("clusterTag") String clusterTag);
+    // OK, or err msg
+    private String errMsg;
 
-    List<InlongClusterTagEntity> selectByCondition(ClusterTagPageRequest request);
+    private List<TubeDataInfo> dataSet;
 
-    int updateByIdSelective(InlongClusterTagEntity record);
+    @Data
+    public static class TubeDataInfo {
 
-    int deleteByPrimaryKey(Integer id);
-
+        private int index;
+        private String data;
+        private String attr;
+    }
 }

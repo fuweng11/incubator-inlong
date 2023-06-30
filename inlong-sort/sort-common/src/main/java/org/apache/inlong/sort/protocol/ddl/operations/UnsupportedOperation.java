@@ -15,33 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.dao.entity;
+package org.apache.inlong.sort.protocol.ddl.operations;
+
+import org.apache.inlong.sort.protocol.ddl.enums.OperationType;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonCreator;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude.Include;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonTypeName;
 
-import java.io.Serializable;
-import java.util.Date;
-
-/**
- * Inlong cluster tag entity.
- */
+@EqualsAndHashCode(callSuper = true)
+@JsonTypeName("unsupportedOperation")
+@JsonInclude(Include.NON_NULL)
 @Data
-public class InlongClusterTagEntity implements Serializable {
+public class UnsupportedOperation extends Operation {
 
-    private static final long serialVersionUID = 1L;
-    private Integer id;
-    private String clusterTag;
-    private String extParams;
-    private String description;
-    private String tenant;
-    private String inCharges;
-
-    private Integer status;
-    private Integer isDeleted;
-    private String creator;
-    private String modifier;
-    private Date createTime;
-    private Date modifyTime;
-    private Integer version;
-
+    @JsonCreator
+    public UnsupportedOperation() {
+        super(OperationType.OTHER);
+    }
 }
