@@ -29,6 +29,7 @@ import { SourceTypeEnum, sourceTypeApiPathMap } from '@/@tencent/enums/source';
 import { AccessTypeEnum, accessTypeMap } from '@/@tencent/enums/stream';
 import BasicForm, { BasicFormRef } from './BasicForm';
 import AccessForm, { AccessFormRef } from './AccessForm';
+import { ReadModeEnum } from '@/@tencent/enums/source/file';
 
 export default function StreamCreate() {
   const { id: streamId } = useParams<{ id: string }>();
@@ -74,6 +75,10 @@ export default function StreamCreate() {
       },
     },
   );
+  // 如果有时间偏移量 读取方式为自定义开始时间
+  if (savedData?.timeOffset) {
+    savedData.readMode = ReadModeEnum.DIY;
+  }
 
   const history = useHistory();
 
@@ -84,7 +89,15 @@ export default function StreamCreate() {
         basicFormRef.current.submit(),
         accessFormRef.current.submit(),
       ]);
-      const values = { ...basicV, ...accessV };
+      const values: any = {
+        ...basicV,
+        ...accessV,
+      };
+      // 如果读取方式为自定义开始时间(DIY) 则不需要传readMode字段
+      if (values.timeOffset) {
+        delete values.readMode;
+      }
+
       console.log('values: ', values);
       const path =
         sourceTypeApiPathMap.get(values.accessModel) ||

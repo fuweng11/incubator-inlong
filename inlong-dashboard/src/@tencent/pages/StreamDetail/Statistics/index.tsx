@@ -48,7 +48,7 @@ const Statistics = ({ info }) => {
   const [presets]: any = useState({
     今天: [dayjs(), dayjs()],
     近一周: [dayjs().subtract(6, 'day'), dayjs()],
-    近一月: [dayjs().subtract(1, 'month'), dayjs()],
+    // 近一月: [dayjs().subtract(1, 'month'), dayjs()],
   });
 
   const [range1, setRange1] = useState(['2023-06-20', '2023-06-26']);
@@ -62,12 +62,12 @@ const Statistics = ({ info }) => {
       url: '/audit/list',
       method: 'POST',
       data: {
-        endTime: `${range1[1]} 23:59:59`,
+        endTime: `${range1[1]}`,
         inLongGroupId: info.inLongGroupID,
         inLongStreamId: info.inLongStreamID,
         pageNum: 1,
         pageSize: 9999,
-        startTime: `${range1[0]} 00:00:00`,
+        startTime: `${range1[0]}`,
         timeStaticsDim: segmentValue1,
       },
     });
@@ -162,6 +162,10 @@ const Statistics = ({ info }) => {
               value={range1}
               presets={presets}
               onChange={(val: any) => setRange1(val)}
+              disableDate={{
+                before: dayjs().subtract(7, 'day').format(),
+                after: dayjs().add(0, 'day').format(),
+              }}
             />
           </div>
         }

@@ -240,7 +240,7 @@ const AccessForm = forwardRef(
                   value: key,
                   text: ctx,
                 }))}
-                disabled={isUpdate}
+                disabled={savedData?.status === StatusEnum.Success}
               />
             )}
           />
@@ -264,7 +264,7 @@ const AccessForm = forwardRef(
                   value: key,
                   text: ctx,
                 }))}
-                disabled={isUpdate}
+                disabled={savedData?.status === StatusEnum.Success}
               />
             )}
           />
