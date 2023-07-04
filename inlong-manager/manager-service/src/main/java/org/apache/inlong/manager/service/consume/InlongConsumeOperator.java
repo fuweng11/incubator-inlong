@@ -18,6 +18,7 @@
 package org.apache.inlong.manager.service.consume;
 
 import org.apache.inlong.manager.dao.entity.InlongConsumeEntity;
+import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeInfo;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeRequest;
 
@@ -69,5 +70,7 @@ public interface InlongConsumeOperator {
      * @param operator name of operator
      */
     void updateOpt(InlongConsumeRequest request, String operator);
+
+    void autoCreateConsumeGroup(InlongConsumeRequest request, InlongGroupEntity groupEntity, String operator);
 
 }

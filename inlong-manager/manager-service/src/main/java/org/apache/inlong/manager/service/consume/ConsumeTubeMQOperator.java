@@ -18,17 +18,23 @@
 package org.apache.inlong.manager.service.consume;
 
 import org.apache.inlong.common.constant.MQType;
+import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
+import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongConsumeEntity;
+import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
+import org.apache.inlong.manager.pojo.cluster.tubemq.TubeClusterInfo;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeInfo;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeRequest;
 import org.apache.inlong.manager.pojo.consume.pulsar.ConsumePulsarInfo;
 import org.apache.inlong.manager.pojo.consume.tubemq.ConsumeTubeMQDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupTopicInfo;
 import org.apache.inlong.manager.pojo.group.tubemq.InlongTubeMQTopicInfo;
+import org.apache.inlong.manager.service.cluster.InlongClusterService;
 import org.apache.inlong.manager.service.group.InlongGroupService;
+import org.apache.inlong.manager.service.resource.queue.tubemq.TubeMQOperator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -48,6 +54,10 @@ public class ConsumeTubeMQOperator extends AbstractConsumeOperator {
 
     @Autowired
     private InlongGroupService groupService;
+    @Autowired
+    private InlongClusterService clusterService;
+    @Autowired
+    private TubeMQOperator tubeMQOperator;
 
     @Override
     public Boolean accept(String mqType) {
@@ -90,4 +100,15 @@ public class ConsumeTubeMQOperator extends AbstractConsumeOperator {
         LOGGER.info("do nothing for inlong consume with TubeMQ");
     }
 
+    @Override
+    public void autoCreateConsumeGroup(InlongConsumeRequest request, InlongGroupEntity groupEntity, String operator) {
+        String clusterTag = groupEntity.getInlongClusterTag();
+        TubeClusterInfo clusterInfo = (TubeClusterInfo) clusterService.getOne(clusterTag, null, ClusterType.TUBEMQ);
+        try {
+            tubeMQOperator.createConsumerGroup(clusterInfo, request.getTopic(), request.getConsumerGroup(), operator);
+        } catch (Exception e) {
+            LOGGER.error("failed to create tubemq consumer group: ", e);
+            throw new WorkflowListenerException("failed to create tubemq consumer group: " + e.getMessage());
+        }
+    }
 }

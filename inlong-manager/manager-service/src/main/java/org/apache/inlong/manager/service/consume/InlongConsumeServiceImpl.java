@@ -21,13 +21,19 @@ import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.ConsumeStatus;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongConsumeEntity;
+import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
+import org.apache.inlong.manager.dao.entity.tencent.ConsumptionAlertConfigEntity;
 import org.apache.inlong.manager.dao.mapper.InlongConsumeEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
+import org.apache.inlong.manager.dao.mapper.tencent.ConsumptionAlertConfigEntityMapper;
 import org.apache.inlong.manager.pojo.common.CountInfo;
 import org.apache.inlong.manager.pojo.common.OrderFieldEnum;
 import org.apache.inlong.manager.pojo.common.OrderTypeEnum;
 import org.apache.inlong.manager.pojo.common.PageResult;
+import org.apache.inlong.manager.pojo.consume.ConsumptionAlertInfo;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeBriefInfo;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeCountInfo;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeInfo;
@@ -42,11 +48,13 @@ import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -68,6 +76,14 @@ public class InlongConsumeServiceImpl implements InlongConsumeService {
     private InlongConsumeOperatorFactory consumeOperatorFactory;
     @Autowired
     private UserService userService;
+    @Autowired
+    private InlongGroupEntityMapper groupEntityMapper;
+    @Autowired
+    private ConsumptionAlertConfigEntityMapper consumptionAlertMapper;
+
+    @Autowired
+    @Lazy
+    private InlongConsumeProcessService consumeProcessService;
 
     @Override
     public Integer save(InlongConsumeRequest request, String operator) {
@@ -85,6 +101,11 @@ public class InlongConsumeServiceImpl implements InlongConsumeService {
         InlongConsumeOperator consumeOperator = consumeOperatorFactory.getInstance(request.getMqType());
         Integer id = consumeOperator.saveOpt(request, operator);
 
+        ConsumptionAlertInfo alertInfo = CommonBeanUtils.copyProperties(request, ConsumptionAlertInfo::new);
+        alertInfo.setConsumptionId(id);
+        alertInfo.setCreator(operator);
+        Date now = new Date();
+        saveConsumptionAlert(alertInfo, now, operator);
         LOGGER.info("success to save inlong consume for consumer group={} by user={}", consumerGroup, operator);
         return id;
     }
@@ -216,6 +237,14 @@ public class InlongConsumeServiceImpl implements InlongConsumeService {
         InlongConsumeOperator consumeOperator = consumeOperatorFactory.getInstance(request.getMqType());
         consumeOperator.updateOpt(request, operator);
 
+        if (request.getAlertEnabled() != null) {
+            ConsumptionAlertInfo alert = CommonBeanUtils.copyProperties(request, ConsumptionAlertInfo::new);
+            alert.setConsumptionId(request.getId());
+            alert.setCreator(operator);
+            alert.setModifier(operator);
+            Date now = new Date();
+            saveConsumptionAlert(alert, now, operator);
+        }
         LOGGER.info("success to update inlong consume={} by user={}", request, operator);
         return consumeId;
     }
@@ -267,4 +296,93 @@ public class InlongConsumeServiceImpl implements InlongConsumeService {
         return true;
     }
 
+    @Override
+    public Integer autoAdd(InlongConsumeRequest request, String operator) {
+        String groupId = request.getInlongGroupId();
+        InlongGroupEntity groupEntity = groupEntityMapper.selectByGroupId(request.getInlongGroupId());
+        if (groupEntity == null) {
+            throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND,
+                    String.format("InlongGroup does not exist with InlongGroupId=%s", groupId));
+        }
+        boolean isInCharge = Preconditions.inSeparatedString(request.getInCharges(), groupEntity.getInCharges(),
+                InlongConstants.COMMA);
+        Integer id;
+        if (isInCharge) {
+            id = autoCreate(request, groupEntity);
+        } else {
+            id = save(request, request.getInCharges());
+            consumeProcessService.startProcess(id, request.getInCharges());
+        }
+        ConsumptionAlertInfo alertInfo = CommonBeanUtils.copyProperties(request, ConsumptionAlertInfo::new);
+        alertInfo.setConsumptionId(id);
+        alertInfo.setCreator(operator);
+        Date now = new Date();
+        saveConsumptionAlert(alertInfo, now, operator);
+        return id;
+    }
+
+    private Integer autoCreate(InlongConsumeRequest request, InlongGroupEntity groupEntity) {
+        String groupId = request.getInlongGroupId();
+        String consumerGroup = request.getConsumerGroup();
+        String topic = request.getTopic();
+        String operator = request.getInCharges();
+        InlongConsumeOperator consumeOperator = consumeOperatorFactory.getInstance(groupEntity.getMqType());
+        consumeOperator.autoCreateConsumeGroup(request, groupEntity, operator);
+
+        InlongConsumeEntity existEntity = consumeMapper.selectExists(consumerGroup, topic, groupId);
+        if (existEntity != null) {
+            LOGGER.warn("inlong consume already exists for groupId={} topic={} consumerGroup={}, skip to create",
+                    groupId, topic, consumerGroup);
+            return existEntity.getId();
+        }
+
+        LOGGER.debug("begin to save inlong consume for groupId={} topic={} group={}", groupId, topic, consumerGroup);
+        InlongConsumeEntity entity = new InlongConsumeEntity();
+        entity.setConsumerGroup(consumerGroup);
+        entity.setMqType(groupEntity.getMqType());
+        entity.setTopic(topic);
+        entity.setInlongGroupId(groupId);
+        entity.setFilterEnabled(0);
+
+        entity.setInCharges(groupEntity.getInCharges());
+        entity.setStatus(ConsumeStatus.APPROVE_PASSED.getCode());
+        entity.setDescription("Auto add consume group ");
+        entity.setCreator(operator);
+        entity.setModifier(operator);
+
+        consumeMapper.insert(entity);
+        LOGGER.debug("success save inlong consume for groupId={} topic={} group={}", groupId, topic, consumerGroup);
+        return entity.getId();
+    }
+
+    private void saveConsumptionAlert(ConsumptionAlertInfo info, Date now, String operator) {
+        ConsumptionAlertConfigEntity alertExist = consumptionAlertMapper.selectByConsumptionId(info.getConsumptionId());
+        if (alertExist != null && info.getAlertEnabled() == 0) {
+            consumptionAlertMapper.deleteByPrimaryKey(alertExist.getId());
+            return;
+        }
+
+        if (alertExist != null) {
+            ConsumptionAlertConfigEntity entity = CommonBeanUtils.copyProperties(info,
+                    ConsumptionAlertConfigEntity::new);
+            entity.setId(alertExist.getId());
+            entity.setCreator(alertExist.getCreator());
+            entity.setCreateTime(alertExist.getCreateTime());
+            entity.setModifyTime(now);
+            entity.setModifier(operator);
+            entity.setIsDeleted(InlongConstants.UN_DELETED);
+            consumptionAlertMapper.updateByPrimaryKey(entity);
+            return;
+        }
+
+        if (Objects.equals(info.getAlertEnabled(), 1)) {
+            alertExist = CommonBeanUtils.copyProperties(info, ConsumptionAlertConfigEntity::new);
+            alertExist.setIsDeleted(InlongConstants.UN_DELETED);
+            alertExist.setCreator(operator);
+            alertExist.setModifier(operator);
+            alertExist.setCreateTime(now);
+            alertExist.setModifyTime(now);
+            consumptionAlertMapper.insert(alertExist);
+        }
+    }
 }

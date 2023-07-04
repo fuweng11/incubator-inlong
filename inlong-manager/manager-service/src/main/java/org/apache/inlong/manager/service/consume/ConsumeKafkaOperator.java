@@ -22,6 +22,7 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongConsumeEntity;
+import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeInfo;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeRequest;
 import org.apache.inlong.manager.pojo.consume.kafka.ConsumeKafkaDTO;
@@ -84,6 +85,11 @@ public class ConsumeKafkaOperator extends AbstractConsumeOperator {
 
     @Override
     protected void setTargetEntity(InlongConsumeRequest request, InlongConsumeEntity targetEntity) {
+        LOGGER.info("do nothing for inlong consume with Kafka");
+    }
+
+    @Override
+    public void autoCreateConsumeGroup(InlongConsumeRequest request, InlongGroupEntity groupEntity, String operator) {
         LOGGER.info("do nothing for inlong consume with Kafka");
     }
 }

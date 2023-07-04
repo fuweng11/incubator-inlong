@@ -22,9 +22,12 @@ import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongConsumeEntity;
+import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterInfo;
@@ -35,14 +38,20 @@ import org.apache.inlong.manager.pojo.consume.pulsar.ConsumePulsarInfo;
 import org.apache.inlong.manager.pojo.consume.pulsar.ConsumePulsarRequest;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupTopicInfo;
+import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarDTO;
 import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
 import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarTopicInfo;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
 import org.apache.inlong.manager.service.group.InlongGroupService;
+import org.apache.inlong.manager.service.resource.queue.pulsar.PulsarOperator;
+import org.apache.inlong.manager.service.resource.queue.pulsar.PulsarUtils;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -53,6 +62,8 @@ import java.util.List;
  */
 @Service
 public class ConsumePulsarOperator extends AbstractConsumeOperator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConsumePulsarOperator.class);
 
     private static final Integer DLQ_RLQ_ENABLE = 1;
     private static final Integer DLQ__RLQ_DISABLE = 0;
@@ -71,6 +82,8 @@ public class ConsumePulsarOperator extends AbstractConsumeOperator {
     private InlongStreamService streamService;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private PulsarOperator pulsarOperator;
 
     @Override
     public Boolean accept(String mqType) {
@@ -177,6 +190,44 @@ public class ConsumePulsarOperator extends AbstractConsumeOperator {
         }
         String namespace = groupInfo.getMqResource();
         return String.format(InlongConstants.PULSAR_TOPIC_FORMAT, tenant, namespace, topic);
+    }
+
+    @Override
+    public void autoCreateConsumeGroup(InlongConsumeRequest request, InlongGroupEntity groupEntity, String operator) {
+        // get pulsar cluster via the inlong cluster tag from the inlong group
+        String groupId = request.getInlongGroupId();
+        String streamId = request.getInlongStreamId();
+        List<ClusterInfo> clusterInfos = clusterService.listByTagAndType(groupEntity.getInlongClusterTag(),
+                ClusterType.PULSAR);
+        InlongStreamEntity streamEntity = streamMapper.selectByIdentifier(groupId, streamId);
+        for (ClusterInfo clusterInfo : clusterInfos) {
+            PulsarClusterInfo pulsarCluster = (PulsarClusterInfo) clusterInfo;
+            try (PulsarAdmin pulsarAdmin = PulsarUtils.getPulsarAdmin(pulsarCluster)) {
+                InlongPulsarDTO pulsarDTO = InlongPulsarDTO.getFromJson(groupEntity.getExtParams());
+                String tenant = pulsarDTO.getPulsarTenant();
+                if (StringUtils.isBlank(tenant)) {
+                    tenant = pulsarCluster.getPulsarTenant();
+                }
+                String namespace = groupEntity.getMqResource();
+                String topicName = streamEntity.getMqResource();
+                String fullTopicName = tenant + "/" + namespace + "/" + topicName;
+                boolean exist = pulsarOperator.topicExists(pulsarAdmin, tenant, namespace, topicName,
+                        InlongConstants.PULSAR_QUEUE_TYPE_PARALLEL.equals(pulsarDTO.getQueueModule()));
+                if (!exist) {
+                    String serviceUrl = pulsarCluster.getAdminUrl();
+                    LOGGER.error("topic={} not exists in {}", fullTopicName, serviceUrl);
+                    throw new WorkflowListenerException("topic=" + fullTopicName + " not exists in " + serviceUrl);
+                }
+                String subs = request.getConsumerGroup();
+                pulsarOperator.createSubscription(pulsarAdmin, fullTopicName, pulsarDTO.getQueueModule(), subs);
+                LOGGER.info("success to create subs={} for groupId={}, topic={}", subs, groupId, fullTopicName);
+            } catch (Exception e) {
+                LOGGER.error("create pulsar subscription failed", e);
+                throw new WorkflowListenerException(
+                        "failed to create pulsar subscription for groupId=" + groupId + ", reason: "
+                                + e.getMessage());
+            }
+        }
     }
 
 }

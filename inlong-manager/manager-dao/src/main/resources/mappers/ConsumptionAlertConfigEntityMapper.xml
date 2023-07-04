@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.apache.inlong.manager.dao.mapper.tencent.ConsumptionAlertConfigEntityMapper">
+    <resultMap id="BaseResultMap" type="org.apache.inlong.manager.dao.entity.tencent.ConsumptionAlertConfigEntity">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="consumption_id" jdbcType="INTEGER" property="consumptionId"/>
+        <result column="consumer_group" jdbcType="VARCHAR" property="consumerGroup"/>
+        <result column="inlong_group_id" jdbcType="VARCHAR" property="inlongGroupId"/>
+        <result column="mq_type" jdbcType="VARCHAR" property="mqType"/>
+        <result column="topic" jdbcType="VARCHAR" property="topic"/>
+        <result column="alert_type" jdbcType="VARCHAR" property="alertType"/>
+        <result column="start_times" jdbcType="INTEGER" property="startTimes"/>
+        <result column="upgrade_times" jdbcType="INTEGER" property="upgradeTimes"/>
+        <result column="reset_period" jdbcType="INTEGER" property="resetPeriod"/>
+        <result column="threshold" jdbcType="BIGINT" property="threshold"/>
+        <result column="mask_switch" jdbcType="INTEGER" property="maskSwitch"/>
+        <result column="mask_start_time" jdbcType="TIMESTAMP" property="maskStartTime"/>
+        <result column="mask_end_time" jdbcType="TIMESTAMP" property="maskEndTime"/>
+        <result column="is_deleted" jdbcType="INTEGER" property="isDeleted"/>
+        <result column="creator" jdbcType="VARCHAR" property="creator"/>
+        <result column="modifier" jdbcType="VARCHAR" property="modifier"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, consumption_id, consumer_group, inlong_group_id, mq_type, topic,
+        alert_type, start_times, upgrade_times, reset_period, threshold, mask_switch, mask_start_time,
+        mask_end_time, is_deleted, creator, modifier, create_time, modify_time
+    </sql>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from consumption_alert_config
+        where id = #{id,jdbcType=INTEGER} and is_deleted = 0
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        update consumption_alert_config
+        set is_deleted = 1
+        where id = #{id,jdbcType=INTEGER}
+          and is_deleted = 0
+    </delete>
+    <insert id="insert" parameterType="org.apache.inlong.manager.dao.entity.tencent.ConsumptionAlertConfigEntity">
+        insert into consumption_alert_config (id, consumption_id, consumer_group,
+                                              inlong_group_id, mq_type, topic,
+                                              alert_type, start_times, upgrade_times,
+                                              reset_period, threshold, mask_switch,
+                                              mask_start_time, mask_end_time, is_deleted,
+                                              creator, modifier, create_time,
+                                              modify_time)
+        values (#{id,jdbcType=INTEGER}, #{consumptionId,jdbcType=INTEGER}, #{consumerGroup,jdbcType=VARCHAR},
+                #{inlongGroupId,jdbcType=VARCHAR}, #{mqType,jdbcType=VARCHAR}, #{topic,jdbcType=VARCHAR},
+                #{alertType,jdbcType=VARCHAR}, #{startTimes,jdbcType=INTEGER}, #{upgradeTimes,jdbcType=INTEGER},
+                #{resetPeriod,jdbcType=INTEGER}, #{threshold,jdbcType=BIGINT}, #{maskSwitch,jdbcType=INTEGER},
+                #{maskStartTime,jdbcType=TIMESTAMP}, #{maskEndTime,jdbcType=TIMESTAMP}, #{isDeleted,jdbcType=INTEGER},
+                #{creator,jdbcType=VARCHAR}, #{modifier,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP},
+                #{modifyTime,jdbcType=TIMESTAMP})
+    </insert>
+    <update id="updateByPrimaryKeySelective"
+            parameterType="org.apache.inlong.manager.dao.entity.tencent.ConsumptionAlertConfigEntity">
+        update consumption_alert_config
+        <set>
+            <if test="consumptionId != null">
+                consumption_id = #{consumptionId,jdbcType=INTEGER},
+            </if>
+            <if test="consumerGroup != null">
+                consumer_group = #{consumerGroup,jdbcType=VARCHAR},
+            </if>
+            <if test="inlongGroupId != null">
+                inlong_group_id = #{inlongGroupId,jdbcType=VARCHAR},
+            </if>
+            <if test="mqType != null">
+                mq_type = #{mqType,jdbcType=VARCHAR},
+            </if>
+            <if test="topic != null">
+                topic = #{topic,jdbcType=VARCHAR},
+            </if>
+            <if test="alertType != null">
+                alert_type = #{alertType,jdbcType=VARCHAR},
+            </if>
+            <if test="startTimes != null">
+                start_times = #{startTimes,jdbcType=INTEGER},
+            </if>
+            <if test="upgradeTimes != null">
+                upgrade_times = #{upgradeTimes,jdbcType=INTEGER},
+            </if>
+            <if test="resetPeriod != null">
+                reset_period = #{resetPeriod,jdbcType=INTEGER},
+            </if>
+            <if test="threshold != null">
+                threshold = #{threshold,jdbcType=BIGINT},
+            </if>
+            <if test="maskSwitch != null">
+                mask_switch = #{maskSwitch,jdbcType=INTEGER},
+            </if>
+            <if test="maskStartTime != null">
+                mask_start_time = #{maskStartTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="maskEndTime != null">
+                mask_end_time = #{maskEndTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted,jdbcType=INTEGER},
+            </if>
+            <if test="creator != null">
+                creator = #{creator,jdbcType=VARCHAR},
+            </if>
+            <if test="modifier != null">
+                modifier = #{modifier,jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="modifyTime != null">
+                modify_time = #{modifyTime,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id,jdbcType=INTEGER} and is_deleted=0
+    </update>
+    <update id="updateByPrimaryKey" parameterType="org.apache.inlong.manager.dao.entity.tencent.ConsumptionAlertConfigEntity">
+        update consumption_alert_config
+        set consumption_id      = #{consumptionId,jdbcType=INTEGER},
+            consumer_group      = #{consumerGroup,jdbcType=VARCHAR},
+            inlong_group_id     = #{inlongGroupId,jdbcType=VARCHAR},
+            mq_type             = #{mqType,jdbcType=VARCHAR},
+            topic               = #{topic,jdbcType=VARCHAR},
+            alert_type          = #{alertType,jdbcType=VARCHAR},
+            start_times         = #{startTimes,jdbcType=INTEGER},
+            upgrade_times       = #{upgradeTimes,jdbcType=INTEGER},
+            reset_period        = #{resetPeriod,jdbcType=INTEGER},
+            threshold           = #{threshold,jdbcType=BIGINT},
+            mask_switch         = #{maskSwitch,jdbcType=INTEGER},
+            mask_start_time     = #{maskStartTime,jdbcType=TIMESTAMP},
+            mask_end_time       = #{maskEndTime,jdbcType=TIMESTAMP},
+            is_deleted          = #{isDeleted,jdbcType=INTEGER},
+            creator             = #{creator,jdbcType=VARCHAR},
+            modifier            = #{modifier,jdbcType=VARCHAR},
+            create_time         = #{createTime,jdbcType=TIMESTAMP},
+            modify_time         = #{modifyTime,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=INTEGER}
+          and is_deleted = 0
+    </update>
+    <select id="selectByConsumptionId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from consumption_alert_config
+        where consumption_id = #{consumptionId, jdbcType=INTEGER}
+        and is_deleted=0
+    </select>
+</mapper>

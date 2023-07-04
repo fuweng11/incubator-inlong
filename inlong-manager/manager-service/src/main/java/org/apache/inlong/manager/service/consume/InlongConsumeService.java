@@ -112,4 +112,12 @@ public interface InlongConsumeService {
      */
     Boolean delete(Integer id, String operator);
 
+    /**
+     * Auto add inlong consume info.
+     *
+     * @param request consume request need to save
+     * @param operator name of operator
+     * @return inlong consume id after saving
+     */
+    Integer autoAdd(InlongConsumeRequest request, String operator);
 }
