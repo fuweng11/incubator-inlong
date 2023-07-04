@@ -49,6 +49,9 @@ public class InnerIcebergSinkDTO {
     @ApiModelProperty("Table primary key")
     private String primaryKey;
 
+    @ApiModelProperty("cluster tag")
+    private String clusterTag;
+
     /**
      * Get the dto instance from the request
      */

@@ -27,6 +27,7 @@ import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateReq
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest.FieldsBean;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.QueryIcebergTableResponse;
+import org.apache.inlong.manager.service.resource.sc.ScService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 
 import com.tencent.tdw.security.authentication.v2.TauthClient;
@@ -44,6 +45,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.apache.inlong.manager.common.util.JsonUtils.OBJECT_MAPPER;
@@ -54,6 +56,8 @@ import static org.apache.inlong.manager.common.util.JsonUtils.OBJECT_MAPPER;
 @Service
 @Slf4j
 public class IcebergBaseOptService {
+
+    private static final int MAX_RETRY_TIMES = 20;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -70,8 +74,13 @@ public class IcebergBaseOptService {
     @Value("${dla.auth.cmk}")
     private String cmk;
 
+    @Value("#{'${dla.grant.user:wedata}'.split(',')}")
+    private List<String> dlaGrantUser;
+
     @Autowired
     private StreamSinkService sinkService;
+    @Autowired
+    private ScService scService;
 
     public QueryIcebergTableResponse getTableDetail(InnerIcebergSink icebergSink) {
         try {
@@ -97,6 +106,9 @@ public class IcebergBaseOptService {
         log.info("try to create new iceberg table, request: {}", OBJECT_MAPPER.writeValueAsString(request));
 
         try {
+            if (dlaGrantUser.contains(icebergSink.getCreator())) {
+                grantPrivilegeBySc(icebergSink, icebergSink.getCreator(), "all", true, false);
+            }
             QueryIcebergTableResponse queryRsp = this.getTableDetail(icebergSink);
             log.info("get iceberg table detail result={}", queryRsp);
             // the table exists, and the flow direction status is modified to [Configuration Succeeded].
@@ -106,7 +118,6 @@ public class IcebergBaseOptService {
                 log.warn("iceberg table [{}.{}] already exists", request.getDb(), request.getTable());
                 url = dlaApiUrl + "/formation/v2/metadata/updateTableSchema";
             }
-
             // the table does not exist. Create a new table
             String rsp = HttpUtils.postRequest(restTemplate, url,
                     request, getTauthHeader(icebergSink.getCreator()), new ParameterizedTypeReference<String>() {
@@ -177,5 +188,51 @@ public class IcebergBaseOptService {
         }
         httpHeaders.add("secure-authentication", encodedAuthentication);
         return httpHeaders;
+    }
+
+    public void grantPrivilegeBySc(InnerIcebergSink icebergSink, String username, String accessType, boolean isAll,
+            boolean isAppGroup)
+            throws Exception {
+        String database = icebergSink.getDbName();
+        String tableName = isAll ? "*" : icebergSink.getTableName();
+        String clusterTag = StringUtils.isBlank(icebergSink.getClusterTag()) ? "tl" : icebergSink.getClusterTag();
+        scService.grant(username, icebergSink.getDbName(), tableName, accessType, "LAKEHOUSE",
+                clusterTag, isAppGroup);
+        boolean isSuccess = checkAndGrant(icebergSink, username, accessType, isAll, isAppGroup);
+        if (!isSuccess) {
+            String errMsg = String.format("grant %s permission failed for user=%s, database=%s, table=%s", accessType,
+                    username, database, tableName);
+            log.info(errMsg);
+            sinkService.updateStatus(icebergSink.getId(), SinkStatus.CONFIG_FAILED.getCode(), errMsg);
+            throw new WorkflowException(errMsg);
+        }
+        log.info("success to grant privilege {} for user={}, database={}, table={}", accessType, username, database,
+                tableName);
+    }
+
+    /**
+     * check permission for database or table through security center
+     */
+    public boolean checkAndGrant(InnerIcebergSink icebergSink, String username, String accessType, boolean isAll,
+            boolean isAppGroup)
+            throws Exception {
+        String dbName = icebergSink.getDbName();
+        String tableName = isAll ? "*" : icebergSink.getTableName();
+        String clusterTag = StringUtils.isBlank(icebergSink.getClusterTag()) ? "tl" : icebergSink.getClusterTag();
+        log.info("check whether the user has permission to {} a table for user={}, database={}", accessType,
+                username, dbName);
+        boolean hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType, clusterTag,
+                isAppGroup);
+        AtomicInteger retryTimes = new AtomicInteger(0);
+        while (!hasPermissions && retryTimes.get() < MAX_RETRY_TIMES) {
+            log.info("check permission with user={}, hasPermission={}, retryTimes={}, maxRetryTimes={}",
+                    username, hasPermissions, retryTimes.get(), MAX_RETRY_TIMES);
+            // sleep 5 minute
+            Thread.sleep(3 * 1000);
+            retryTimes.incrementAndGet();
+            hasPermissions = scService.checkPermissions(username, dbName, tableName, accessType, clusterTag,
+                    isAppGroup);
+        }
+        return hasPermissions;
     }
 }

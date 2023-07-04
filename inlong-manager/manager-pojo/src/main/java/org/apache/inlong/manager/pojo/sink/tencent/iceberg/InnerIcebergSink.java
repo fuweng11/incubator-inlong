@@ -57,6 +57,9 @@ public class InnerIcebergSink extends StreamSink {
     @ApiModelProperty("Table primary key")
     private String primaryKey;
 
+    @ApiModelProperty("cluster tag")
+    private String clusterTag;
+
     @Override
     public SinkRequest genSinkRequest() {
         return CommonBeanUtils.copyProperties(this, InnerIcebergSinkRequest::new);

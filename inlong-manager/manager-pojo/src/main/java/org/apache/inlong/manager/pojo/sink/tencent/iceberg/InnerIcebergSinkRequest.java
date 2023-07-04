@@ -49,4 +49,7 @@ public class InnerIcebergSinkRequest extends SinkRequest {
     @ApiModelProperty("Table primary key")
     private String primaryKey;
 
+    @ApiModelProperty("cluster tag")
+    private String clusterTag;
+
 }

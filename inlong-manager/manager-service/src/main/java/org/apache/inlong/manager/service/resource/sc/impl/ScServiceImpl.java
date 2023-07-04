@@ -303,7 +303,9 @@ public class ScServiceImpl implements ScService {
         params.put("type", "AUTH_HIVE_RS");
         Map<String, Object> resource = new HashMap<>();
         resource.put("type", "HIVE");
-        resource.put("hiveType", hiveType);
+        if (!Objects.equals(hiveType, "LAKEHOUSE")) {
+            resource.put("hiveType", hiveType);
+        }
         resource.put("clusterIdentifier", clusterTag);
         resource.put("database", database);
         resource.put("table", table);
@@ -331,7 +333,7 @@ public class ScServiceImpl implements ScService {
         params.put("principal", username);
         params.put("operatorRole", "ADMIN");
         params.put("ignoreCheckForAdmin", true);
-        params.put("remark", "grant privilege");
+        params.put("remark", "grant privilege by InLong");
 
         String url = scOpenApiUrl + GRANT_AUTH;
         String rsp = HttpUtils.postRequest(restTemplate, url, params,
