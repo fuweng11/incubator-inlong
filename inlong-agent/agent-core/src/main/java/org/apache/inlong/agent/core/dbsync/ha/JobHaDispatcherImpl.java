@@ -987,9 +987,9 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
         return false;
     }
 
-    private void cleanMovedJobInfo(List<Integer> serverIdList, String zkUrl) {
+    private void cleanMovedJobInfo(List<String> serverIdList, String zkUrl) {
         if (serverIdList != null) {
-            for (Integer dbJobId : serverIdList) {
+            for (String dbJobId : serverIdList) {
                 JobHaInfo jobHaInfo = jobHaInfoMap.remove(String.valueOf(dbJobId));
                 if (jobHaInfo != null) {
                     stopJob(jobHaInfo);

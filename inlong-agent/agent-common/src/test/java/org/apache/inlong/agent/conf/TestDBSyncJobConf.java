@@ -36,7 +36,7 @@ public class TestDBSyncJobConf {
     @Before
     public void setUp() throws Exception {
         conf = new DBSyncJobConf("127.0.0.1", 3306, "127.0.0.1", 3306,
-                "test", "test", StandardCharsets.UTF_8, null, "serverId");
+                "test", "test", StandardCharsets.UTF_8, null, "serverId", 1);
     }
 
     @Test

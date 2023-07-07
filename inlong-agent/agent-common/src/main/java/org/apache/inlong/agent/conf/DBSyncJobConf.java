@@ -44,10 +44,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -100,15 +102,18 @@ public class DBSyncJobConf {
     private volatile DbAddConfigInfo currConfigAddress;
     private ConcurrentHashMap<String, Pattern> namePatternMap;
     private ConcurrentHashMap<String, List<MysqlTableConf>> table2MysqlConf;
-    private LRUMap<String, CopyOnWriteArrayList<String>> lruCache;
+    private LRUMap<String, List<String>> lruCache;
     private TableNameFilter filter;
 
     private LogPosition startPos;
     private String dbJobId;
+    private long dbNodeId;
     private List<MQClusterInfo> mqClusterInfos = new ArrayList<>();
+    private AtomicInteger taskNum = new AtomicInteger(0);
+    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     public DBSyncJobConf(String add, int port, String bakDbIp, int bakDbPort,
-            String userName, String passwd, Charset charset, LogPosition startPos, String dbJobId) {
+            String userName, String passwd, Charset charset, LogPosition startPos, String dbJobId, long dbNodeId) {
         this.currConfigAddress = initDbAddressList(add, port, bakDbIp, bakDbPort, startPos);
         this.mysqlUserName = userName;
         this.mysqlPassWd = passwd;
@@ -119,18 +124,8 @@ public class DBSyncJobConf {
         this.table2MysqlConf = new ConcurrentHashMap<>();
         this.lruCache = new LRUMap<>(24 * 60 * 60 * 1000L);
         this.filter = new TableNameFilter();
+        this.dbNodeId = dbNodeId;
         STATUS_UPDATER.set(DBSyncJobConf.this, TaskStat.NORMAL);
-    }
-
-    private void addMysqlTableConf(String key, Pattern pattern, MysqlTableConf mysqlTableConf) {
-        namePatternMap.put(key, pattern);
-        table2MysqlConf.compute(key, (k, v) -> {
-            if (v == null) {
-                v = Lists.newArrayList();
-            }
-            v.add(mysqlTableConf);
-            return v;
-        });
     }
 
     public void updateUserPasswd(String userName, String passwd) {
@@ -147,6 +142,41 @@ public class DBSyncJobConf {
         String namePatternStr = tableConf.getDataBaseName() + "." + tableConf.getTableName();
         Pattern pattern = Pattern.compile(namePatternStr, Pattern.CASE_INSENSITIVE);
         addMysqlTableConf(namePatternStr, pattern, tableConf);
+    }
+
+    private void addMysqlTableConf(String key, Pattern pattern, MysqlTableConf mysqlTableConf) {
+        try {
+            rwLock.writeLock().lock();
+            namePatternMap.put(key, pattern);
+            table2MysqlConf.compute(key, (k, v) -> {
+                if (v == null) {
+                    v = Lists.newArrayList();
+                }
+                taskNum.incrementAndGet();
+                v.add(mysqlTableConf);
+                return v;
+            });
+            upDateLruCache(key, pattern);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+    public void upDateLruCache(String key, Pattern pattern) {
+        Set<String> keySet = lruCache.keySet();
+        for (String realDbFullName : keySet) {
+            if (pattern != null && pattern.matcher(realDbFullName).matches()) {
+                List<String> newFindEvents = new ArrayList<>();
+                List oldList = lruCache.get(realDbFullName);
+                if (oldList != null) {
+                    newFindEvents.addAll(oldList);
+                }
+                if (!newFindEvents.contains(key)) {
+                    newFindEvents.add(key);
+                }
+                lruCache.put(realDbFullName, newFindEvents);
+            }
+        }
     }
 
     public MysqlTableConf getMysqlTableConf(String dbName, String tbName) {
@@ -220,7 +250,7 @@ public class DBSyncJobConf {
 
     public List<MysqlTableConf> getMysqlTableConfList(String dbName, String tbName) {
         String fullName = dbName + "." + tbName;
-        CopyOnWriteArrayList<String> namePatterns = lruCache.get(fullName);
+        List<String> namePatterns = lruCache.get(fullName);
         List<MysqlTableConf> confList = new ArrayList<>();
         if (namePatterns != null) {
             for (String namePattern : namePatterns) {
@@ -503,27 +533,37 @@ public class DBSyncJobConf {
     private class TableNameFilter implements CanalEventFilter<String> {
 
         @Override
-        public boolean filter(final String event) throws CanalFilterException {
+        public boolean filter(final String dbRealFullName) throws CanalFilterException {
 
             boolean bFind = false;
-            CopyOnWriteArrayList<String> findEvents = new CopyOnWriteArrayList<>();
-
-            boolean lruCacheFound = false;
-            if (lruCache.containsKey(event)) {
+            if (lruCache.containsKey(dbRealFullName)) {
                 // confirm get table conf
-                List<String> pattern = lruCache.get(event);
-                lruCacheFound = pattern.stream().anyMatch(table2MysqlConf::containsKey);
-            }
-            for (Map.Entry<String, Pattern> e : namePatternMap.entrySet()) {
-                if (e.getValue().matcher(event).matches()) {
-                    bFind = true;
-                    findEvents.add(e.getKey());
+                List<String> pattern = lruCache.get(dbRealFullName);
+                return pattern.stream().anyMatch(table2MysqlConf::containsKey);
+            } else {
+                try {
+                    rwLock.writeLock().lock();
+                    if (lruCache.containsKey(dbRealFullName)) {
+                        // confirm get table conf
+                        List<String> pattern = lruCache.get(dbRealFullName);
+                        return pattern.stream().anyMatch(table2MysqlConf::containsKey);
+                    } else {
+                        List<String> findEvents = new ArrayList<>();
+                        for (Map.Entry<String, Pattern> e : namePatternMap.entrySet()) {
+                            if (e.getValue().matcher(dbRealFullName).matches()) {
+                                bFind = true;
+                                findEvents.add(e.getKey());
+                            }
+                            if (bFind) {
+                                lruCache.put(dbRealFullName, findEvents);
+                            }
+                        }
+                    }
+                } finally {
+                    rwLock.writeLock().unlock();
                 }
-                if (bFind) {
-                    lruCache.put(event, findEvents);
-                }
             }
-            return lruCacheFound || bFind;
+            return bFind;
         }
     }
 
@@ -539,5 +579,13 @@ public class DBSyncJobConf {
             LOGGER.error("getIpByHostname has Exception url {}, ip is null", mysqlAddress, e);
         }
         return ip;
+    }
+
+    public int getTaskNum() {
+        return taskNum.get();
+    }
+
+    public long getDbNodeId() {
+        return dbNodeId;
     }
 }

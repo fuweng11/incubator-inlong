@@ -22,6 +22,7 @@ import org.apache.inlong.agent.common.protocol.CanalEntry.RowChange;
 import org.apache.inlong.agent.common.protocol.DBSyncMsg.Column;
 import org.apache.inlong.agent.common.protocol.DBSyncMsg.RowData;
 import org.apache.inlong.agent.except.DataSourceConfigException;
+import org.apache.inlong.common.enums.DataReportTypeEnum;
 import org.apache.inlong.common.pojo.agent.dbsync.DBServerInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 
@@ -170,7 +171,8 @@ public class DBSyncUtils {
                 result = false;
             } else if (!checkDbUrl(dbConf.getUrl())
                     || StringUtils.isEmpty(taskConf.getDbName())
-                    || StringUtils.isEmpty(dbConf.getUsername()) || StringUtils.isEmpty(dbConf.getPassword())) {
+                    || StringUtils.isEmpty(dbConf.getUsername())
+                    || StringUtils.isEmpty(dbConf.getPassword())) {
                 future.completeExceptionally(new DataSourceConfigException("db config has error! "
                         + "dbName=" + taskConf.getDbName() + ", dbUrl=" + dbConf.getUrl()
                         + ", userName=" + dbConf.getUsername() + ", password = " + dbConf.getPassword()));
@@ -181,7 +183,9 @@ public class DBSyncUtils {
             result = false;
         }
         // check data report info
-        if (!taskConf.isValid()) {
+        if ((taskConf.getDataReportType() == null)
+                || (taskConf.getDataReportType() != DataReportTypeEnum.DIRECT_SEND_TO_MQ.getType())
+                || (!taskConf.isValid())) {
             future.completeExceptionally(new DataSourceConfigException("taskConf dataReport info has error"));
             result = false;
         }
@@ -289,7 +293,6 @@ public class DBSyncUtils {
         for (byte b : serverId.getBytes(StandardCharsets.UTF_8)) {
             result = result << 8 | (b & 0xFF);
         }
-        result %= SnowFlake.MAX_MACHINE_NUM;
         return result;
     }
 

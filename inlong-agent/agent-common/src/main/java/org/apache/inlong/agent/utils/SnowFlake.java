@@ -21,27 +21,45 @@ public class SnowFlake {
 
     // start timestamp
     private static final long START_STMP = 1480166465631L;
+    private static final long MILLS_ONE_DAY = 86400000L;
 
-    private static final long SEQUENCE_BIT = 9;
-    private static final long MACHINE_BIT = 13;
+    private long sequenceBit = 9;
+    private long machineBit = 13;
 
-    public static final long MAX_MACHINE_NUM = -1L ^ (-1L << MACHINE_BIT);
-    private static final long MAX_SEQUENCE = -1L ^ (-1L << SEQUENCE_BIT);
+    private long maxMachineNum = -1L ^ (-1L << machineBit);
+    private long maxSequence = -1L ^ (-1L << sequenceBit);
 
-    private static final long MACHINE_LEFT = SEQUENCE_BIT;
-    private static final long TIMESTMP_LEFT = SEQUENCE_BIT + MACHINE_BIT;
+    private long machineLeft = sequenceBit;
+    private long timestmpLeft = sequenceBit + machineBit;
 
     private long machineId;
     private long sequence = 0L;
     private long lastStmp = -1L;
+    private boolean generateForOneDay = false;
 
     public SnowFlake(long machineId) {
-        if (machineId > MAX_MACHINE_NUM || machineId < 0) {
+        if (machineId < 0) {
             throw new IllegalArgumentException(
                     machineId + "machineId can't be greater than MAX_MACHINE_NUM or less than 0 MAX_MACHINE_NUM"
-                            + MAX_MACHINE_NUM);
+                            + maxMachineNum);
         }
-        this.machineId = machineId;
+
+        this.machineId = machineId % maxMachineNum;
+    }
+
+    public SnowFlake(long machineId, boolean generateForOneDay) {
+        this.generateForOneDay = generateForOneDay;
+        if (generateForOneDay) {
+            machineBit = 27;
+            timestmpLeft = sequenceBit + machineBit;
+            maxMachineNum = -1L ^ (-1L << machineBit);
+        }
+        if (machineId < 0) {
+            throw new IllegalArgumentException(
+                    machineId + "machineId can't be greater than MAX_MACHINE_NUM or less than 0 MAX_MACHINE_NUM"
+                            + maxMachineNum);
+        }
+        this.machineId = machineId % maxMachineNum;
     }
 
     /**
@@ -49,12 +67,12 @@ public class SnowFlake {
      */
     public synchronized long nextId() {
         long currStmp = getNewstmp();
-        if (currStmp < lastStmp) {
+        if (currStmp < lastStmp && !generateForOneDay) {
             throw new RuntimeException("Clock moved backwards.  Refusing to generate id");
         }
 
         if (currStmp == lastStmp) {
-            sequence = (sequence + 1) & MAX_SEQUENCE;
+            sequence = (sequence + 1) & maxSequence;
             if (sequence == 0L) {
                 currStmp = getNextMill();
             }
@@ -63,10 +81,11 @@ public class SnowFlake {
         }
 
         lastStmp = currStmp;
-
-        return (currStmp - START_STMP) << TIMESTMP_LEFT
-                | machineId << MACHINE_LEFT
-                | sequence;
+        long timeValue = (currStmp - START_STMP);
+        if (generateForOneDay) {
+            timeValue = currStmp;
+        }
+        return timeValue << timestmpLeft | machineId << machineLeft | sequence;
     }
 
     private long getNextMill() {
@@ -78,6 +97,9 @@ public class SnowFlake {
     }
 
     private long getNewstmp() {
+        if (generateForOneDay) {
+            return System.currentTimeMillis() % MILLS_ONE_DAY;
+        }
         return System.currentTimeMillis();
     }
 }

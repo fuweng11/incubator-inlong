@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +64,6 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
 
     private final int maxConDbSize;
     private final ConcurrentHashMap<String, DBSyncJob> allJobs; // TODO:merge to jobs
-    private final ArrayList<DBSyncJobConf> newJobs;
     private final DbAgentManager agentManager;
     private final AgentConfiguration agentConf;
     private final ConcurrentHashMap<String, DBSyncJob> runningJobs;
@@ -74,7 +72,6 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
         this.agentManager = agentManager;
         this.allJobs = new ConcurrentHashMap<>();
         this.runningJobs = new ConcurrentHashMap<>();
-        this.newJobs = new ArrayList<>();
         this.agentConf = AgentConfiguration.getAgentConf();
         this.maxConDbSize = agentConf.getDbSyncMaxConDbSize();
         this.updateZkInterval = agentConf.getInt(DBSYNC_UPDATE_POSITION_INTERVAL, DEFAULT_UPDATE_POSITION_INTERVAL);
@@ -173,14 +170,13 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
             conf = new DBSyncJobConf(DBSyncUtils.getHost(masterUrl), DBSyncUtils.getPort(masterUrl),
                     DBSyncUtils.getHost(backupUrl), DBSyncUtils.getPort(backupUrl),
                     taskConf.getDbServerInfo().getUsername(), taskConf.getDbServerInfo().getPassword(), charset,
-                    startPosition, taskConf.getServerName());
+                    startPosition, taskConf.getServerName(), taskConf.getDbServerInfo().getId());
             conf.setMaxUnAckedLogPositions(agentConf.getInt(DBSYNC_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD,
                     DEFAULT_JOB_UNACK_LOGPOSITIONS_MAX_THRESHOLD));
             conf.updateMqClusterInfos(taskConf.getMqClusters());
             if (bakDbUrl != null) {
                 conf.setBakMysqlInfo(DBSyncUtils.getHost(bakDbUrl), DBSyncUtils.getPort(bakDbUrl));
             }
-            newJobs.add(conf);
         } else {
             isFound = true;
         }
@@ -212,6 +208,9 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
             MysqlTableConf mysqlTableConf = conf.getMysqlTableConf(taskConf.getId());
             if (mysqlTableConf != null) {
                 mysqlTableConf.setSkipDelete(skipDelete);
+                if (taskConf.getTopicInfo() != null && StringUtils.isNotEmpty(taskConf.getTopicInfo().getTopic())) {
+                    mysqlTableConf.getTaskInfo().setTopicInfo(taskConf.getTopicInfo());
+                }
             }
             LOGGER.warn("dbName {}, tableName {} already in conf, taskId {}", dbName, tableName, taskConf.getId());
         }

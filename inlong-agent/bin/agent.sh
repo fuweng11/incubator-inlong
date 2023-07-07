@@ -33,10 +33,10 @@ function help() {
 }
 
 function running() {
-  agent_uniq=`cat ${AGENT_CONF}|grep -E 'agent.uniq.id'`
-  check_agent_uniq="${agent_uniq:-'agent.uniq.id=1'}"
+  agent_uniq=`cat ${AGENT_CONF}|grep -Ev '^[[:space:]].*|^#' |grep -E 'agent.uniq.id'`
+  check_agent_uniq="${agent_uniq:-"agent.uniq.id=1"}"
   arg_uniq="-D${check_agent_uniq}"
-  process=$(ps -aux | grep 'java' | grep 'inlong_agent' | grep "$check_agent_uniq" | awk '{print $2}')
+  process=$(ps -aux | grep 'java' | grep 'inlong-agent' | grep "$check_agent_uniq" | awk '{print $2}')
   if [ "${process}" = "" ]; then
     return 1;
   else
@@ -60,12 +60,12 @@ function stop_agent() {
     exit 1
   fi
   count=0
-  pid=$(ps -aux | grep 'java' | grep 'inlong_agent' | grep "$check_agent_uniq" | awk '{print $2}')
+  pid=$(ps -aux | grep 'java' | grep 'inlong-agent' | grep "$check_agent_uniq" | awk '{print $2}')
   while running;
   do
     (( count++ ))
     echo "Stopping agent $count times"
-    if [ "${count}" -gt 10 ]; then
+    if [ "${count}" -gt 100 ]; then
         echo "kill -9 $pid"
         kill -9 "${pid}"
     else

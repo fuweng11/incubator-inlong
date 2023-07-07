@@ -220,13 +220,15 @@ public class PulsarSink extends AbstractSink {
     public void destroy() {
         LOGGER.info("destroy pulsar sink, job[{}], source[{}]", jobInstanceId, sourceName);
         isDestroyed = true;
+        for (PulsarSendThread pulsarSendThread : senderThreadList) {
+            pulsarSendThread.preShutdown();
+        }
+        cache.clear();
+        pulsarSendQueue.clear();
         while (!sinkFinish()) {
             LOGGER.warn("job {} wait until cache all data to pulsar cache size = {}, "
                     + "sendingCnt = {}, pulsarSendQueue size = {}",
                     jobInstanceId, cache.size(), sendingCnt.get(), pulsarSendQueue.size());
-            if (cache != null && cache.size() > 0) {
-                flushCache(true);
-            }
             AgentUtils.silenceSleepInMs(batchFlushInterval);
         }
 
@@ -324,7 +326,6 @@ public class PulsarSink extends AbstractSink {
             try {
                 sendQueueSemaphore.acquire();
                 pulsarSendQueue.put(batchProxyMessage);
-                sendingCnt.incrementAndGet();
             } catch (Exception e) {
                 sendQueueSemaphore.release();
                 LOGGER.error("flush data to send queue", e);

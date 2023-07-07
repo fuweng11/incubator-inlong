@@ -20,6 +20,7 @@ package org.apache.inlong.agent.metrics.dbsync;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 
 import lombok.Data;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Data
 public class StatisticInfo {
@@ -32,6 +33,8 @@ public class StatisticInfo {
     private String topic;
     private long timestamp;
     private String dbJobId = "";
+    private AtomicLong cnt = new AtomicLong(0);
+    private AtomicLong packageCnt = new AtomicLong(0);
 
     public StatisticInfo(String groupID, String streamID, long timestamp,
             LogPosition logPosition, String dbJobId, String key) {
@@ -61,5 +64,21 @@ public class StatisticInfo {
 
     public String getStreamID() {
         return streamID;
+    }
+
+    public void updateLatestLogPosition(LogPosition logPosition) {
+        this.latestLogPosition = logPosition;
+    }
+
+    public void updateTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public void addCnt(long cnt) {
+        this.cnt.addAndGet(cnt);
+    }
+
+    public void addPackageCnt(long packageCnt) {
+        this.packageCnt.addAndGet(packageCnt);
     }
 }

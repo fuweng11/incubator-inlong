@@ -24,7 +24,7 @@ public class SnowFlakeManager {
     /**
      * key: serverId, value: snowflake
      */
-    private final ConcurrentHashMap<Long, SnowFlake> idGeneratorMap;
+    private final ConcurrentHashMap<String, SnowFlake> idGeneratorMap;
 
     public SnowFlakeManager() {
         idGeneratorMap = new ConcurrentHashMap<>();
@@ -35,8 +35,15 @@ public class SnowFlakeManager {
      * @param serverId
      */
     public long generateSnowId(long serverId) {
-        idGeneratorMap.computeIfAbsent(serverId, k -> new SnowFlake(serverId));
-        return idGeneratorMap.get(serverId).nextId();
+        String key = serverId + "-false";
+        idGeneratorMap.computeIfAbsent(key, k -> new SnowFlake(serverId));
+        return idGeneratorMap.get(key).nextId();
+    }
+
+    public long generateSnowId(long serverId, boolean generateForOneDay) {
+        String key = serverId + "-" + generateForOneDay;
+        idGeneratorMap.computeIfAbsent(key, k -> new SnowFlake(serverId, generateForOneDay));
+        return idGeneratorMap.get(key).nextId();
     }
 
 }

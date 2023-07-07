@@ -255,17 +255,15 @@ public class BinlogParseThread extends Thread implements MetricReport {
                     throw new RuntimeException("parse event has an error , data:" + entry, e);
                 }
                 EventType eventType = rowChange.getEventType();
-                if (eventType == EventType.QUERY) {
-                    continue;
-                } else if (rowChange.getIsDdl()) {
+                if (rowChange.getIsDdl()) {
                     String sql = rowChange.getSql();
                     if (StringUtils.isNotEmpty(sql) && sql.toLowerCase().contains("add")
                             && sql.toLowerCase().contains("alter")) {
                         DbColumnChangeManager.getInstance().addAlterFieldString(myConf.getGroupId(), myConf.getTaskId(),
                                 sql);
+                        break;
                     }
-                    continue;
-                } else {
+                } else if (eventType != EventType.QUERY) {
                     sendDataByPbProtoc(rowChange, entry, dbName, tbName, myConf,
                             parsePosition, parseMsgId, dbSyncReadJob.dbSyncJobConf.getDbJobId(), readJobPositionManager,
                             sendIndex);

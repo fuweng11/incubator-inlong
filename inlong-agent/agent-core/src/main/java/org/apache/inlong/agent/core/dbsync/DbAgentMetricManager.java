@@ -30,8 +30,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static org.apache.inlong.agent.constant.AgentConstants.*;
 
@@ -40,15 +38,12 @@ public class DbAgentMetricManager implements MetricReport {
     private final Logger logger = LogManager.getLogger(this.getClass());
     protected final Logger jobSendMetricLogger = LogManager.getLogger("jobSendMetric");
     protected volatile boolean metricSenderRunning = true;
-    protected LinkedBlockingQueue<StatisticInfo> sInfos;
+    protected volatile boolean preStop = false;
     /**
      * key: serverId, value: snowflake
      */
     private ConcurrentHashMap<Long, SnowFlake> idGeneratorMap;
-    private ConcurrentHashMap<String, AtomicLong> statisticData;
-    private ConcurrentHashMap<String, AtomicLong> statisticDataPackage;
-
-    private String pulsarCluster;
+    private ConcurrentHashMap<String, StatisticInfo> statisticData;
 
     private DbSyncMetricSink dbSyncMetricSink;
 
@@ -64,8 +59,6 @@ public class DbAgentMetricManager implements MetricReport {
 
     public DbAgentMetricManager(DBSyncJob dbSyncJob) {
         this.statisticData = new ConcurrentHashMap<>();
-        this.statisticDataPackage = new ConcurrentHashMap<>();
-        this.sInfos = new LinkedBlockingQueue<>();
         this.idGeneratorMap = new ConcurrentHashMap<>();
         this.dbSyncJob = dbSyncJob;
     }
@@ -76,7 +69,6 @@ public class DbAgentMetricManager implements MetricReport {
                 return;
             }
             hasInited = true;
-            this.pulsarCluster = pulsarCluster;
             this.dbJobId = dbJobId;
             dbSyncMetricSink = new DbSyncMetricSink(pulsarCluster);
         }
@@ -85,7 +77,7 @@ public class DbAgentMetricManager implements MetricReport {
 
     public void start() {
         if (!hasInited) {
-            logger.error("DBSyncMetric is not init! ");
+            logger.info("DBSyncMetric has been init! ");
             return;
         }
         logger.info("DBSyncMetric  start.");
@@ -94,10 +86,11 @@ public class DbAgentMetricManager implements MetricReport {
     }
 
     public void stop() {
+        preStop = true;
         if (dbSyncMetricSink != null) {
-            while (sInfos != null && !sInfos.isEmpty()) {
+            while (statisticData != null && !statisticData.isEmpty()) {
                 try {
-                    logger.warn("Now wait in sInfos:{} to stop!", sInfos.size());
+                    logger.warn("Now wait in sInfos:{} to stop!", statisticData.size());
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
                 }
@@ -111,42 +104,31 @@ public class DbAgentMetricManager implements MetricReport {
 
         public void run() {
             logger.info("DBSyncMetricThread Thread start.");
-            while (metricSenderRunning || !sInfos.isEmpty()) {
+            while (metricSenderRunning || !statisticData.isEmpty()) {
                 try {
                     // deal statistic info
-                    StatisticInfo sInfo;
-                    do {
-                        // !!!should sort by datetime
-                        sInfo = sInfos.peek();
-                        if (sInfo == null) {
-                            if (logger.isDebugEnabled()) {
-                                logger.debug("there's no sInfo, break");
-                            }
+                    ConcurrentHashMap.KeySetView<String, StatisticInfo> keys = statisticData.keySet();
+                    if (keys != null) {
+                        keys.stream().forEach((key) -> {
+                            statisticData.compute(key, (k, v) -> {
+                                LogPosition newPosition =
+                                        dbSyncJob.getReadJob().getJobPositionManager().getNewestLogPositionFromCache();
+                                LogPosition oldestPosition =
+                                        dbSyncJob.getReadJob().getJobPositionManager().getOldestLogPositionFromCache();
+                                sendStatMetric(v, v.getCnt().get(), newPosition, oldestPosition);
+                                return null;
+                            });
+                        });
+                    }
+                    /*
+                     * 每分钟输出一下指标
+                     */
+                    for (int i = 0; i < 60; i++) {
+                        if (preStop) {
                             break;
                         }
-                        AtomicLong messageValue = new AtomicLong(0);
-                        statisticData.compute(sInfo.getKey(), (k, v) -> {
-                            if (v != null) {
-                                messageValue.set(v.longValue());
-                            }
-
-                            return null;
-                        });
-                        AtomicLong packageValue = new AtomicLong(0);
-                        statisticDataPackage.compute(sInfo.getKey(), (k, v) -> {
-                            if (v != null) {
-                                packageValue.set(v.longValue());
-                            }
-                            return null;
-                        });
-                        LogPosition newPosition =
-                                dbSyncJob.getReadJob().getJobPositionManager().getNewestLogPositionFromCache();
-                        LogPosition oldestPosition =
-                                dbSyncJob.getReadJob().getJobPositionManager().getOldestLogPositionFromCache();
-                        sendStatMetric(sInfo, messageValue.get(), newPosition, oldestPosition);
-                        sInfos.poll();
-                    } while (sInfo != null);
-                    sleep(10 * 1000L);
+                        sleep(1 * 1000L);
+                    }
                 } catch (Throwable e) {
                     logger.error("getPositionUpdateTask has exception ", e);
                 }
@@ -212,7 +194,7 @@ public class DbAgentMetricManager implements MetricReport {
                         .dbNewestBinlog(newestPositionBinlogName)
                         .dbOldestBinlog(oldestPositionBinlogName)
                         .clusterId(agentConf.get(AGENT_CLUSTER_NAME, ""))
-                        .idx(generateSnowId(1000))
+                        .idx(generateSnowId(dbSyncJob.getJobServerId()))
                         .ip(agentConf.get(AGENT_LOCAL_IP, DEFAULT_AGENT_UNIQ_ID))
                         .reportTime(System.currentTimeMillis())
                         .streamID(sInfo.getStreamID())
@@ -232,23 +214,13 @@ public class DbAgentMetricManager implements MetricReport {
             long msgCnt, LogPosition latestLogPosition, String jobID, String key) {
         statisticData.compute(key, (k, v) -> {
             if (v == null) {
-                try {
-                    sInfos.put(new StatisticInfo(groupID, streamID, timeStamp, latestLogPosition, jobID, key));
-                } catch (InterruptedException e) {
-                    logger.error("put {}#{} StatisticInfo {} error, ", groupID, streamID, timeStamp,
-                            e);
-                }
-                return new AtomicLong(msgCnt);
+                StatisticInfo info = new StatisticInfo(groupID, streamID, timeStamp, latestLogPosition, jobID, key);
+                info.addCnt(msgCnt);
+                v = info;
             } else {
-                v.addAndGet(msgCnt);
-                return v;
-            }
-        });
-        statisticDataPackage.compute(key, (k, v) -> {
-            if (v == null) {
-                v = new AtomicLong(1);
-            } else {
-                v.addAndGet(1);
+                v.updateTimestamp(timeStamp);
+                v.updateLatestLogPosition(latestLogPosition);
+                v.addCnt(msgCnt);
             }
             return v;
         });
@@ -260,13 +232,13 @@ public class DbAgentMetricManager implements MetricReport {
      * @param serverId
      */
     private long generateSnowId(long serverId) {
-        idGeneratorMap.computeIfAbsent(serverId, k -> new SnowFlake(serverId));
+        idGeneratorMap.computeIfAbsent(serverId, k -> new SnowFlake(serverId, true));
         return idGeneratorMap.get(serverId).nextId();
     }
 
     @Override
     public String report() {
         dbSyncMetricSink.report();
-        return "sInfos:" + sInfos.size();
+        return "statisticData:" + statisticData.size();
     }
 }

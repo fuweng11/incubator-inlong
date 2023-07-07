@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * DB server info
@@ -47,9 +48,11 @@ public class DBServerInfo {
     private String backupUrl;
 
     @ApiModelProperty("Username")
+    @ToString.Exclude
     private String username;
 
     @ApiModelProperty("Password")
+    @ToString.Exclude
     private String password;
 
 }

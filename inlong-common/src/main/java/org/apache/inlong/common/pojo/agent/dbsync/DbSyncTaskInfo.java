@@ -122,7 +122,7 @@ public class DbSyncTaskInfo {
             return true;
         }
         if (reportType == DIRECT_SEND_TO_MQ && CollectionUtils.isNotEmpty(mqClusters) && mqClusters.stream()
-                .allMatch(MQClusterInfo::isValid) && topicInfo.isValid()) {
+                .allMatch(MQClusterInfo::isValid) && (topicInfo != null) && topicInfo.isValid()) {
             return true;
         }
         return false;

@@ -17,6 +17,7 @@
 
 package org.apache.inlong.agent.core.dbsync;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.conf.MysqlTableConf;
@@ -40,7 +41,10 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.Collection;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 public class DBSyncJob implements AbstractJob {
@@ -54,6 +58,7 @@ public class DBSyncJob implements AbstractJob {
 
     private final String dbJobId;
     private final DbAgentReadJob readJob;
+    private final long jobServerId;
 
     public DBSyncJob(DbAgentManager agentManager, DBSyncJobConf dbSyncJobConf) {
         this.dbSyncJobConf = dbSyncJobConf;
@@ -61,6 +66,7 @@ public class DBSyncJob implements AbstractJob {
         this.dbJobId = this.dbSyncJobConf.getDbJobId();
         this.dbSyncTask = initJobArcTask(dbJobId);
         this.heartbeatManager = DbAgentHeartbeatManager.getInstance();
+        this.jobServerId = generateServerId(dbSyncJobConf.getDbNodeId());
         this.dbSyncMetric = new DbAgentMetricManager(this);
         this.readJob = new DbAgentReadJob(this);
     }
@@ -190,5 +196,47 @@ public class DBSyncJob implements AbstractJob {
             return readJob.resetRead();
         }
         return null;
+    }
+
+    public long getJobServerId() {
+        return jobServerId;
+    }
+
+    /**
+     * 因为指标流水存储在天表中 时间用28位表示即可。
+     * serverid 占指标idx 中的27位，
+     * @return
+     */
+    private long generateServerId(Long dbNodeId) {
+        long jobServerId = -1L;
+        boolean isGenerateByDbJobId = false;
+        if (dbNodeId != null) {
+            long pid = getProcessId();
+            jobServerId = ((pid << 22) | dbNodeId);
+        } else if (jobServerId < 0 && StringUtils.isNumeric(dbJobId)) {
+            try {
+                long pid = getProcessId();
+                jobServerId = Long.parseLong(dbJobId);
+                jobServerId = ((pid << 22) | jobServerId);
+                isGenerateByDbJobId = true;
+            } catch (Exception e) {
+                LOGGER.warn("[{}] Generate job server id parser db job id has error!", dbJobId);
+            }
+        }
+        LOGGER.info("[{}] Generate job server id [{}] by {}", dbJobId, jobServerId,
+                isGenerateByDbJobId ? "dbJobId" : "local");
+        return jobServerId;
+    }
+
+    private Long getProcessId() {
+        try {
+            RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+            String name = runtime.getName();
+            String pid = name.substring(0, name.indexOf('@'));
+            return Long.parseLong(pid);
+        } catch (Exception e) {
+            Random random = new Random(65535);
+            return random.nextLong();
+        }
     }
 }

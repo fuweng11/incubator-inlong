@@ -270,9 +270,11 @@ public class ReadJobPositionManager implements MetricReport {
             } catch (Throwable t) {
                 LOGGER.warn("can't get max position " + ExceptionUtils.getStackTrace(t));
             } finally {
-                LOGGER.info("GetMaxLogPosition finished! MaxLogPosition {}", (logPosition != null
-                        && logPosition.getIdentity() != null && logPosition.getPosition() != null) ? ""
-                                : logPosition);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("GetMaxLogPosition finished! MaxLogPosition {}", (logPosition != null
+                            && logPosition.getIdentity() != null && logPosition.getPosition() != null) ? logPosition
+                                    : "");
+                }
             }
         }
         return logPosition;

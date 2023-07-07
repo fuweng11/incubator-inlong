@@ -34,6 +34,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -51,6 +52,8 @@ public class PulsarSendThread extends Thread {
     private static final AtomicInteger CLIENT_INDEX = new AtomicInteger(0);
 
     private volatile boolean shutdown = false;
+
+    private volatile boolean preShutdown = false;
 
     private LinkedBlockingQueue<BatchProxyMessage> pulsarSendQueue;
 
@@ -77,6 +80,10 @@ public class PulsarSendThread extends Thread {
     private String threadId;
 
     private volatile boolean threadRunning = false;
+
+    private long lastPrintErrorLog = 0L;
+
+    private long printErrorLogInterval = 60 * 1000L;
 
     public PulsarSendThread(LinkedBlockingQueue<BatchProxyMessage> pulsarSendQueue, List<PulsarClient> pulsarClients,
             AgentMetricItem sinkMetric, DbAgentMetricManager dbSyncMetricJob,
@@ -123,11 +130,18 @@ public class PulsarSendThread extends Thread {
         Producer producer = selectProducer(dbJobId, topic);
         if (ObjectUtils.isEmpty(producer)) {
             pulsarSendQueue.put(batchMsg);
-            LOGGER.error("send dbJobId = [{}] threadId = [{}] , topic = [{}] data err, empty pulsar producer",
-                    dbJobId, threadId, topic);
+            long nowTime = Instant.now().toEpochMilli();
+            if (shouldPrintLog(nowTime, lastPrintErrorLog, printErrorLogInterval)) {
+                LOGGER.error("send dbJobId = [{}] threadId = [{}] , topic = [{}] data err, empty pulsar producer",
+                        dbJobId, threadId, topic);
+            }
             return;
         }
         InLongMsg message = batchMsg.getInLongMsg();
+        if (preShutdown) {
+            return;
+        }
+        sendingCnt.incrementAndGet();
         sinkMetric.pluginSendCount.addAndGet(batchMsg.getMsgCnt());
         if (asyncSend) {
             CompletableFuture<MessageId> future = producer.newMessage().eventTime(batchMsg.getDataTime())
@@ -136,8 +150,11 @@ public class PulsarSendThread extends Thread {
                 if (t != null) {
                     // send error
                     sinkMetric.pluginSendFailCount.addAndGet(batchMsg.getMsgCnt());
-                    LOGGER.error("send data fail to pulsar, add back to send queue, current queue size {}",
-                            pulsarSendQueue.size(), t);
+                    long nowTime = Instant.now().toEpochMilli();
+                    if (shouldPrintLog(nowTime, lastPrintErrorLog, printErrorLogInterval)) {
+                        LOGGER.error("send data fail to pulsar, add back to send queue, current queue size {}",
+                                pulsarSendQueue.size(), t);
+                    }
                     try {
                         pulsarSendQueue.put(batchMsg);
                     } catch (InterruptedException e) {
@@ -202,9 +219,11 @@ public class PulsarSendThread extends Thread {
                 data.getPositions().get(0).getKey(), data.getJobId(), dataKey);
     }
     private String getDataKey(BatchProxyMessage data) {
+        long minuteStepTime = data.getDataTime();
+        long tenMinuteStepTime = minuteStepTime - (minuteStepTime % (10 * 60 * 1000L));
         return String.join(DATA_KEY_DELIMITER, data.getGroupId(), data.getStreamId(),
                 getTopicFromBatchMessage(data),
-                String.valueOf(data.getDataTime()), data.getJobId());
+                String.valueOf(tenMinuteStepTime), data.getJobId());
     }
 
     private String getTopicFromBatchMessage(BatchProxyMessage batchMsg) {
@@ -218,7 +237,19 @@ public class PulsarSendThread extends Thread {
         this.shutdown = true;
     }
 
+    public void preShutdown() {
+        this.preShutdown = true;
+    }
+
     public boolean isThreadRunning() {
         return threadRunning;
+    }
+
+    private boolean shouldPrintLog(long nowTime, long lastPrintTime, long interval) {
+        if ((nowTime - lastPrintTime) > interval) {
+            lastPrintErrorLog = nowTime;
+            return true;
+        }
+        return false;
     }
 }
