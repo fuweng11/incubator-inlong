@@ -33,6 +33,7 @@ import Info from './Info';
 import SubscribeList, { SubscribeListRef } from './Subscribe';
 import Test from './Test';
 import Statistics from './Statistics';
+import { ReadModeEnum } from '@/@tencent/enums/source/file';
 
 const tabs = [
   { id: 'info', label: '基本信息', Component: Info },
@@ -80,6 +81,10 @@ export default function StreamDetail() {
       pageNum: 1,
     },
   });
+
+  if (data?.timeOffset) {
+    data.readMode = ReadModeEnum.DIY;
+  }
 
   return (
     <PageContainer useDefaultContainer={false} breadcrumb={[{ name: '接入详情' }]}>

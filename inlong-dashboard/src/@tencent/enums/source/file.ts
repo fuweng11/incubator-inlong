@@ -38,4 +38,5 @@ export const fields: FieldItemType[] = [
   { label: '数据源IP', value: 'clusterIPs' },
   { label: '文件路径', value: 'filePath' },
   { label: '读取方式', value: 'readMode', enumMap: readModeMap },
+  { label: '时间偏移量', value: 'timeOffset' },
 ];

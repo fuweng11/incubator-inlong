@@ -51,7 +51,10 @@ const Statistics = ({ info }) => {
     // 近一月: [dayjs().subtract(1, 'month'), dayjs()],
   });
 
-  const [range1, setRange1] = useState(['2023-06-20', '2023-06-26']);
+  const [range1, setRange1] = useState([
+    dayjs().subtract(6, 'day').format('YYYY-MM-DD'),
+    dayjs().format('YYYY-MM-DD'),
+  ]);
 
   useEffect(() => {
     getAuditList();
@@ -72,7 +75,12 @@ const Statistics = ({ info }) => {
       },
     });
     const legends = data.filter(d => !isEmpty(d.auditSet));
+    // 图标的数据按时间升序
+    legends.forEach(l => {
+      l.auditSet.sort((a, b) => (a.logTs < b.logTs ? -1 : 1));
+    });
     setAuditData(legends);
+    // 表格的数据暂不处理 目前后台返回是按时间降序
     setAuditList(toTableList(legends));
   };
 
@@ -82,12 +90,25 @@ const Statistics = ({ info }) => {
   ];
 
   const getOption = () => {
+    // 取数据最多的那个来作为时间线
+    auditData.sort((a, b) => (a.auditSet?.length > b.auditSet?.length ? -1 : 1));
     const xAxisData = auditData[0]?.auditSet?.map(r => r.logTs);
-    const series = auditData.map(d => ({
-      name: StatisticsNameMap.get(d.auditId),
-      type: 'line',
-      data: d?.auditSet?.map(r => r.count),
-    }));
+    const series = auditData.map(d => {
+      // 对没有对应日期的数据做补0操作
+      const data = xAxisData.map(r => {
+        const raw = d.auditSet.find(a => a.logTs === r);
+        return raw ? raw.count : undefined;
+      });
+
+      return {
+        name: StatisticsNameMap.get(d.auditId),
+        type: 'line',
+        data,
+      };
+    });
+
+    // console.log(xAxisData);
+    // console.log(series);
 
     return {
       title: {
