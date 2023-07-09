@@ -119,7 +119,7 @@ public abstract class AbstractGroupOperator implements InlongGroupOperator {
     @Override
     @Transactional(rollbackFor = Throwable.class, isolation = Isolation.REPEATABLE_READ)
     public void updateOpt(InlongGroupRequest request, String operator) {
-        InlongGroupEntity entity = CommonBeanUtils.copyProperties(request, InlongGroupEntity::new);
+        InlongGroupEntity entity = groupMapper.selectByGroupId(request.getInlongGroupId());
         // set the ext params
         setTargetEntity(request, entity);
         entity.setModifier(operator);
