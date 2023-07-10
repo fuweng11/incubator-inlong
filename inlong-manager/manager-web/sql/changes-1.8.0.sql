@@ -153,3 +153,27 @@ CREATE TABLE IF NOT EXISTS `audit_source`
     UNIQUE KEY `unique_audit_source` (url, `is_deleted`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='Audit source table';
+
+CREATE TABLE IF NOT EXISTS `consumption_alert_config` (
+    `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Incremental primary key',
+    `consumption_id` int(11) NOT NULL COMMENT 'Consumer id',
+    `consumer_group` varchar(255) NOT NULL COMMENT 'Consumer group name',
+    `inlong_group_id` varchar(255) NOT NULL COMMENT 'Group id',
+    `mq_type` varchar(64) NOT NULL COMMENT 'Mq type',
+    `topic` varchar(255) NOT NULL COMMENT 'topic',
+    `alert_type` varchar(64) NOT NULL COMMENT 'Alert type',
+    `start_times` int(11) NOT NULL COMMENT 'Alert start times',
+    `upgrade_times` int(11) NOT NULL COMMENT 'Upgrade times',
+    `reset_period` int(5) NOT NULL COMMENT 'Reset period',
+    `threshold` bigint(20) NOT NULL DEFAULT '16777216' COMMENT 'Threshold',
+    `mask_switch` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'If mask consumption alert',
+    `mask_start_time` timestamp NULL DEFAULT NULL COMMENT 'Mask consumption start time',
+    `mask_end_time` timestamp NULL DEFAULT NULL COMMENT 'Mask consumption end time',
+    `is_deleted` int(11) NOT NULL DEFAULT '0' COMMENT 'Is deleted',
+    `creator` varchar(64) NOT NULL COMMENT 'Creator',
+    `modifier` varchar(64) DEFAULT NULL COMMENT 'Modifier',
+    `create_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    `modify_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Modify time',
+    PRIMARY KEY (`id`)
+    ) ENGINE = InnoDB
+    DEFAULT CHARSET = utf8 COMMENT='Consumption alert config table'

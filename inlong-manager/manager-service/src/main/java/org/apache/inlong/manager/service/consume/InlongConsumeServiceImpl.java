@@ -304,14 +304,14 @@ public class InlongConsumeServiceImpl implements InlongConsumeService {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND,
                     String.format("InlongGroup does not exist with InlongGroupId=%s", groupId));
         }
-        boolean isInCharge = Preconditions.inSeparatedString(request.getInCharges(), groupEntity.getInCharges(),
+        boolean isInCharge = Preconditions.inSeparatedString(operator, groupEntity.getInCharges(),
                 InlongConstants.COMMA);
         Integer id;
         if (isInCharge) {
             id = autoCreate(request, groupEntity);
         } else {
-            id = save(request, request.getInCharges());
-            consumeProcessService.startProcess(id, request.getInCharges());
+            id = save(request, operator);
+            consumeProcessService.startProcess(id, operator);
         }
         ConsumptionAlertInfo alertInfo = CommonBeanUtils.copyProperties(request, ConsumptionAlertInfo::new);
         alertInfo.setConsumptionId(id);
