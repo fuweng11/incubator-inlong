@@ -65,7 +65,7 @@ public class ZkClusterOperator extends AbstractClusterOperator {
         ZkClusterRequest zkClusterRequest = (ZkClusterRequest) request;
         CommonBeanUtils.copyProperties(zkClusterRequest, targetEntity, true);
         try {
-            ZkClusterDTO dto = ZkClusterDTO.getFromRequest(zkClusterRequest);
+            ZkClusterDTO dto = ZkClusterDTO.getFromRequest(zkClusterRequest, targetEntity.getExtParams());
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
             LOGGER.info("success to set entity for zk cluster");
         } catch (Exception e) {

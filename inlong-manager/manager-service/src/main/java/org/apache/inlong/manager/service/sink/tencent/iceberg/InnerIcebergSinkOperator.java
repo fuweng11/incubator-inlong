@@ -67,7 +67,7 @@ public class InnerIcebergSinkOperator extends AbstractSinkOperator {
                 ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT.getMessage() + ": " + getSinkType());
         InnerIcebergSinkRequest sinkRequest = (InnerIcebergSinkRequest) request;
         try {
-            InnerIcebergSinkDTO dto = InnerIcebergSinkDTO.getFromRequest(sinkRequest);
+            InnerIcebergSinkDTO dto = InnerIcebergSinkDTO.getFromRequest(sinkRequest, targetEntity.getExtParams());
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
         } catch (Exception e) {
             LOGGER.error("parsing json string to sink info failed", e);

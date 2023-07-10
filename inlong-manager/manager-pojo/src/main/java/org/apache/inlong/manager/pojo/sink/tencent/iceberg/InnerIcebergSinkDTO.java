@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotNull;
 
@@ -55,8 +56,11 @@ public class InnerIcebergSinkDTO {
     /**
      * Get the dto instance from the request
      */
-    public static InnerIcebergSinkDTO getFromRequest(InnerIcebergSinkRequest request) {
-        return CommonBeanUtils.copyProperties(request, InnerIcebergSinkDTO::new, true);
+    public static InnerIcebergSinkDTO getFromRequest(InnerIcebergSinkRequest request, String extParams) {
+        InnerIcebergSinkDTO dto = StringUtils.isNotBlank(extParams)
+                ? InnerIcebergSinkDTO.getFromJson(extParams)
+                : new InnerIcebergSinkDTO();
+        return CommonBeanUtils.copyProperties(request, dto, true);
 
     }
 

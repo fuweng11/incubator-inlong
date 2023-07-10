@@ -67,7 +67,7 @@ public class InnerClickHouseSinkOperator extends AbstractSinkOperator {
                 ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT.getMessage() + ": " + getSinkType());
         InnerClickHouseSinkRequest sinkRequest = (InnerClickHouseSinkRequest) request;
         try {
-            InnerClickHouseDTO dto = InnerClickHouseDTO.getFromRequest(sinkRequest);
+            InnerClickHouseDTO dto = InnerClickHouseDTO.getFromRequest(sinkRequest, targetEntity.getExtParams());
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
         } catch (Exception e) {
             LOGGER.error("parsing json string to sink info failed", e);

@@ -80,7 +80,7 @@ public class HaBinlogSourceOperator extends AbstractSourceOperator {
         CommonBeanUtils.copyProperties(sourceRequest, targetEntity, true);
         try {
             targetEntity.setStartPosition(objectMapper.writeValueAsString(sourceRequest.getBinlogStartPosition()));
-            HaBinlogSourceDTO dto = HaBinlogSourceDTO.getFromRequest(sourceRequest);
+            HaBinlogSourceDTO dto = HaBinlogSourceDTO.getFromRequest(sourceRequest, targetEntity.getExtParams());
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
         } catch (Exception e) {
             throw new BusinessException(ErrorCodeEnum.SOURCE_INFO_INCORRECT.getMessage() + ": " + e.getMessage());

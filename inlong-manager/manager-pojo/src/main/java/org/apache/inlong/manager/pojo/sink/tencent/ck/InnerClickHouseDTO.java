@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.pojo.sink.tencent.ck;
 
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonUtils;
 
 import io.swagger.annotations.ApiModelProperty;
@@ -24,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotNull;
 
@@ -75,21 +77,11 @@ public class InnerClickHouseDTO {
     /**
      * Get the dto instance from the request
      */
-    public static InnerClickHouseDTO getFromRequest(InnerClickHouseSinkRequest request) {
-        return InnerClickHouseDTO.builder()
-                .url(request.getUrl())
-                .username(request.getUsername())
-                .password(request.getPassword())
-                .dbName(request.getDbName())
-                .tableName(request.getTableName())
-                .flushInterval(request.getFlushInterval())
-                .packageSize(request.getPackageSize())
-                .retryTime(request.getRetryTime())
-                .isDistribute(request.getIsDistribute())
-                .partitionStrategy(request.getPartitionStrategy())
-                .partitionFields(request.getPartitionFields())
-                .dataConsistency(request.getDataConsistency())
-                .build();
+    public static InnerClickHouseDTO getFromRequest(InnerClickHouseSinkRequest request, String extParams) {
+        InnerClickHouseDTO dto = StringUtils.isNotBlank(extParams)
+                ? InnerClickHouseDTO.getFromJson(extParams)
+                : new InnerClickHouseDTO();
+        return CommonBeanUtils.copyProperties(request, dto, true);
     }
 
     public static InnerClickHouseDTO getFromJson(@NotNull String extParams) {

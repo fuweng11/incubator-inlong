@@ -179,8 +179,11 @@ public class InnerBaseHiveSinkDTO {
     /**
      * Get the dto instance from the request
      */
-    public static InnerBaseHiveSinkDTO getFromRequest(InnerBaseHiveSinkRequest request) throws Exception {
-        return CommonBeanUtils.copyProperties(request, InnerBaseHiveSinkDTO::new, true);
+    public static InnerBaseHiveSinkDTO getFromRequest(InnerBaseHiveSinkRequest request, String extParams) throws Exception {
+        InnerBaseHiveSinkDTO dto = StringUtils.isNotBlank(extParams)
+                ? InnerBaseHiveSinkDTO.getFromJson(extParams)
+                : new InnerBaseHiveSinkDTO();
+        return CommonBeanUtils.copyProperties(request, dto, true);
     }
 
     /**

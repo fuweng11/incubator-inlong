@@ -17,14 +17,15 @@
 
 package org.apache.inlong.manager.pojo.cluster.tencent.sort;
 
-import org.apache.inlong.manager.common.util.JsonUtils;
-
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
+import org.apache.inlong.manager.common.util.JsonUtils;
 
 import javax.validation.constraints.NotNull;
 
@@ -50,12 +51,11 @@ public class BaseSortClusterDTO {
     /**
      * Get the dto instance from the request
      */
-    public static BaseSortClusterDTO getFromRequest(BaseSortClusterRequest request) throws Exception {
-        return BaseSortClusterDTO.builder()
-                .backupDataPath(request.getBackupDataPath())
-                .backupHadoopProxyUser(request.getBackupHadoopProxyUser())
-                .applicationName(request.getApplicationName())
-                .build();
+    public static BaseSortClusterDTO getFromRequest(BaseSortClusterRequest request, String extParams) throws Exception {
+        BaseSortClusterDTO dto = StringUtils.isNotBlank(extParams)
+                ? BaseSortClusterDTO.getFromJson(extParams)
+                : new BaseSortClusterDTO();
+        return CommonBeanUtils.copyProperties(request, dto, true);
     }
 
     /**

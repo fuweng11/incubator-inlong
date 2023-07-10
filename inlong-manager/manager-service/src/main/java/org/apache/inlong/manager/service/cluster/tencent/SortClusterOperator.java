@@ -78,7 +78,7 @@ public class SortClusterOperator extends AbstractClusterOperator {
         BaseSortClusterRequest clusterRequest = (BaseSortClusterRequest) request;
         CommonBeanUtils.copyProperties(clusterRequest, targetEntity, true);
         try {
-            BaseSortClusterDTO dto = BaseSortClusterDTO.getFromRequest(clusterRequest);
+            BaseSortClusterDTO dto = BaseSortClusterDTO.getFromRequest(clusterRequest, targetEntity.getExtParams());
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
             LOGGER.info("success to set entity for sort cluster");
         } catch (Exception e) {

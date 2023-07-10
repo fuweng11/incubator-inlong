@@ -86,7 +86,7 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
             this.setThiveParam(sinkRequest);
         }
         try {
-            InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromRequest(sinkRequest);
+            InnerBaseHiveSinkDTO dto = InnerBaseHiveSinkDTO.getFromRequest(sinkRequest, targetEntity.getExtParams());
             targetEntity.setExtParams(objectMapper.writeValueAsString(dto));
         } catch (Exception e) {
             LOGGER.error("parsing json string to sink info failed", e);

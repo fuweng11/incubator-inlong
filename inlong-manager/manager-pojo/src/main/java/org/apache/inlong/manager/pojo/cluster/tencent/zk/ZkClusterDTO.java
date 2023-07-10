@@ -17,14 +17,15 @@
 
 package org.apache.inlong.manager.pojo.cluster.tencent.zk;
 
-import org.apache.inlong.manager.common.util.JsonUtils;
-
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
+import org.apache.inlong.manager.common.util.JsonUtils;
 
 import javax.validation.constraints.NotNull;
 
@@ -50,12 +51,11 @@ public class ZkClusterDTO {
     /**
      * Get the dto instance from the request
      */
-    public static ZkClusterDTO getFromRequest(ZkClusterRequest request) {
-        return ZkClusterDTO.builder()
-                .tubeRoot(request.getTubeRoot())
-                .pulsarRoot(request.getPulsarRoot())
-                .kafkaRoot(request.getKafkaRoot())
-                .build();
+    public static ZkClusterDTO getFromRequest(ZkClusterRequest request, String extParams) {
+        ZkClusterDTO dto = StringUtils.isNotBlank(extParams)
+                ? ZkClusterDTO.getFromJson(extParams)
+                : new ZkClusterDTO();
+        return CommonBeanUtils.copyProperties(request, dto, true);
     }
 
     /**
