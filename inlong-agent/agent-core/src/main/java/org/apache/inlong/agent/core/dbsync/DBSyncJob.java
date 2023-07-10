@@ -17,7 +17,6 @@
 
 package org.apache.inlong.agent.core.dbsync;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.agent.conf.DBSyncJobConf;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.conf.MysqlTableConf;
@@ -38,6 +37,7 @@ import org.apache.inlong.agent.utils.ThreadUtils;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncHeartbeat;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

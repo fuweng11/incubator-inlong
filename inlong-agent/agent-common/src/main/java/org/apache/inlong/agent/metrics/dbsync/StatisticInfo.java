@@ -20,6 +20,7 @@ package org.apache.inlong.agent.metrics.dbsync;
 import org.apache.inlong.agent.mysql.protocol.position.LogPosition;
 
 import lombok.Data;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 @Data

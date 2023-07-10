@@ -179,7 +179,8 @@ public class InnerBaseHiveSinkDTO {
     /**
      * Get the dto instance from the request
      */
-    public static InnerBaseHiveSinkDTO getFromRequest(InnerBaseHiveSinkRequest request, String extParams) throws Exception {
+    public static InnerBaseHiveSinkDTO getFromRequest(InnerBaseHiveSinkRequest request, String extParams)
+            throws Exception {
         InnerBaseHiveSinkDTO dto = StringUtils.isNotBlank(extParams)
                 ? InnerBaseHiveSinkDTO.getFromJson(extParams)
                 : new InnerBaseHiveSinkDTO();
