@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import React from 'react';
-import { Form, Input, Radio, Button, TagSelect } from '@tencent/tea-component';
+import React, { useEffect, useState } from 'react';
+import { Form, Input, Radio, Button, SelectMultiple } from '@tencent/tea-component';
 import { Controller } from 'react-hook-form';
 import { ReadModeEnum, readModeMap } from '@/@tencent/enums/source/file';
 import FetchSelect from '@/@tencent/components/FetchSelect';
@@ -30,7 +30,35 @@ export default function File({ form }) {
   const { errors } = formState;
 
   const watchReadMode = watch('readMode', ReadModeEnum.FULL);
+  const clusterName = watch('clusterName');
   const [projectId] = useProjectId();
+  const [clusterOptions, setClusterOptions] = useState<any[]>([]);
+  const [ipOptions, setIpOptions] = useState<any[]>([]);
+
+  const reqClusterOptions = async () => {
+    const result = await request({
+      url: '/cluster/search',
+      method: 'POST',
+      data: {
+        pageNum: 1,
+        pageSize: 500,
+        type: 'AGENT',
+      },
+    });
+    setClusterOptions(result?.records);
+    return result;
+  };
+
+  useEffect(() => {
+    reqClusterOptions();
+  }, []);
+
+  useEffect(() => {
+    const cluster = clusterOptions.find(c => c.name === clusterName);
+    if (cluster) {
+      setIpOptions(cluster.clusterNodes.map(i => ({ name: i.ip, value: i.ip })));
+    }
+  }, [clusterName, clusterOptions]);
 
   return (
     <>
@@ -60,15 +88,7 @@ export default function File({ form }) {
               {...field}
               searchable={false}
               request={async () => {
-                const result = await request({
-                  url: '/cluster/search',
-                  method: 'POST',
-                  data: {
-                    pageNum: 1,
-                    pageSize: 500,
-                    type: 'AGENT',
-                  },
-                });
+                const result = await reqClusterOptions();
                 return result.records?.map(item => ({
                   text: item.displayName,
                   value: item.name,
@@ -91,7 +111,15 @@ export default function File({ form }) {
           shouldUnregister
           control={control}
           rules={{ required: '请填写数据源IP' }}
-          render={({ field }) => <TagSelect {...field} tips="" style={{ width: 200 }} />}
+          render={({ field }) => (
+            <SelectMultiple
+              {...field}
+              appearance="button"
+              style={{ minWidth: 200 }}
+              searchable={false}
+              options={ipOptions}
+            />
+          )}
         />
       </Form.Item>
 

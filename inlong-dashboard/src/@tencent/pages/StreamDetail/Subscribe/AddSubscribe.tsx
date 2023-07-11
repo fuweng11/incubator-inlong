@@ -141,6 +141,7 @@ const AddSubscribeDrawer = ({
           value: key,
           text: ctx,
         })),
+        disabled: pageType === 'u',
       },
     ] as ProFormProps['fields'],
     streamInfo: info,
@@ -160,7 +161,8 @@ const AddSubscribeDrawer = ({
   const handleOk = async () => {
     setLoading(true);
     try {
-      const basicFrom = pageType === 'u' ? savedData : await formRef.current?.submit();
+      let basicFrom = await formRef.current?.submit();
+      basicFrom = { ...savedData, ...basicFrom };
       const fieldMappings = selectedFields.map(item => ({
         fieldName: item.targetField.fieldName,
         fieldType: item.targetField.fieldType,
@@ -284,7 +286,7 @@ const AddSubscribeDrawer = ({
                 [SinkTypeEnum.Iceberg]: [Iceberg, []],
                 [SinkTypeEnum.MQ]: [MQ, MqFields],
               };
-              if (pageType === 'r' || pageType === 'u') {
+              if (pageType === 'r') {
                 const fields = (dict[writeType]?.[1] || MqFields) as ReadonlyFormFieldItemType[];
                 return (
                   fields && (
@@ -306,13 +308,14 @@ const AddSubscribeDrawer = ({
                     />
                   )
                 );
-              } else if (visible && pageType === 'c') {
+              } else if ((visible && pageType === 'c') || pageType === 'u') {
                 const Form = dict[writeType]?.[0] as typeof Hive;
                 return (
                   Form && (
                     <Form
                       {...props}
                       submitter={false}
+                      initialValues={pageType === 'u' ? savedData : undefined}
                       onFormValuesChange={(form: ProFormIns) => {
                         setWriteType(form.values?.writeType);
                       }}

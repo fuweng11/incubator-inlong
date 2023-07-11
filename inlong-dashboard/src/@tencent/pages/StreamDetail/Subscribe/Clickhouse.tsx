@@ -17,7 +17,15 @@
  * under the License.
  */
 
-import React, { useRef, useCallback, forwardRef, useImperativeHandle, Ref } from 'react';
+import React, {
+  useRef,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+  Ref,
+  useState,
+  useEffect,
+} from 'react';
 import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
 import { SubscribeFormProps, SubscribeFormRef } from './common';
 import request from '@/core/utils/request';
@@ -26,11 +34,25 @@ import { useProjectId } from '@/@tencent/components/Use/useProject';
 export { fields } from '@/@tencent/enums/subscribe/clickhouse';
 
 const Clickhouse = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
-  const { fields, streamInfo, setTargetFields, ...rest } = props;
+  const { fields, streamInfo, setTargetFields, initialValues, ...rest } = props;
+  const [clusterOptions, setClusterOptions] = useState<any[]>([]);
 
   const formRef = useRef<Form>();
 
   const [projectId] = useProjectId();
+
+  useEffect(() => {
+    if (initialValues) {
+      // 编辑状态
+      const valueOption = clusterOptions?.find(i => i.displayName === initialValues.inLongNodeName);
+      if (valueOption) formRef.current?.setValues({ inLongNodeName: valueOption.name });
+
+      formRef.current?.setValues({
+        dbName: initialValues.dbName,
+        tableName: initialValues.tableName,
+      });
+    }
+  }, [clusterOptions, initialValues]);
 
   const params: ProFormProps['fields'] = fields.concat([
     {
@@ -51,6 +73,7 @@ const Clickhouse = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeForm
             pageNum: 0,
           },
         });
+        setClusterOptions(data?.records);
         field.setComponentProps({
           options: (data?.records || []).map(item => ({
             text: item.displayName,

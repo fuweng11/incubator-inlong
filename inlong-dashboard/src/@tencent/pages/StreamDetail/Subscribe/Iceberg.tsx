@@ -17,7 +17,15 @@
  * under the License.
  */
 
-import React, { useRef, useCallback, forwardRef, useImperativeHandle, Ref } from 'react';
+import React, {
+  useRef,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+  Ref,
+  useState,
+  useEffect,
+} from 'react';
 import { Button } from '@tencent/tea-component';
 import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
 import { WriteModeEnum, writeModeMap } from '@/@tencent/enums/subscribe/iceberg';
@@ -28,11 +36,23 @@ import { useProjectId } from '@/@tencent/components/Use/useProject';
 export { fields } from '@/@tencent/enums/subscribe/iceberg';
 
 const Iceberg = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
-  const { fields, streamInfo, setTargetFields, ...rest } = props;
+  const { fields, streamInfo, setTargetFields, initialValues, ...rest } = props;
+  const [clusterOptions, setClusterOptions] = useState<any[]>([]);
 
   const formRef = useRef<Form>();
 
   const [projectId] = useProjectId();
+
+  useEffect(() => {
+    if (initialValues) {
+      // 编辑状态
+      formRef.current?.setValues({
+        inLongNodeName: initialValues.inLongNodeName,
+        dbName: initialValues.dbName,
+        tableName: initialValues.tableName,
+      });
+    }
+  }, [clusterOptions, initialValues]);
 
   const params: ProFormProps['fields'] = fields.concat([
     {
@@ -54,6 +74,7 @@ const Iceberg = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef
             pageNum: 0,
           },
         });
+        setClusterOptions(data?.records);
         field.setComponentProps({
           options: (data?.records || []).map(item => ({
             text: item.displayName,

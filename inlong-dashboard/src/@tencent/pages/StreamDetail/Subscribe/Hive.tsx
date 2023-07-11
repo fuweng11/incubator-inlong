@@ -17,22 +17,31 @@
  * under the License.
  */
 
-import React, { useState, useRef, useCallback, forwardRef, useImperativeHandle, Ref } from 'react';
-import { ProForm, ProFormProps, Form } from '@tencent/tea-material-pro-form';
+import React, {
+  forwardRef,
+  Ref,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
+import { Form, ProForm, ProFormProps } from '@tencent/tea-material-pro-form';
 import ContentRadio from '@/@tencent/components/ContentRadio';
 import { partitionUnitMap } from '@/@tencent/enums/subscribe/hive';
 import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
-import { SubscribeFormProps, SubscribeFormRef, FieldData } from './common';
+import { FieldData, SubscribeFormProps, SubscribeFormRef } from './common';
 
 export { fields } from '@/@tencent/enums/subscribe/hive';
 
 const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) => {
-  const { fields, streamInfo, setTargetFields, ...rest } = props;
+  const { fields, streamInfo, setTargetFields, initialValues, ...rest } = props;
 
   const [projectId] = useProjectId();
 
   const [selectedTable, setSelectedTable] = useState<string>('');
+  const [clusterOptions, setClusterOptions] = useState<any[]>([]);
 
   const formRef = useRef<Form>();
 
@@ -41,6 +50,31 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
   const selectTableRef = useRef<Form>();
 
   const [isCreateTable, setIsCreateTable] = useState<boolean>();
+
+  useEffect(() => {
+    if (initialValues) {
+      // 编辑状态
+      const valueOption = clusterOptions?.find(i => i.displayName === initialValues.inLongNodeName);
+      if (valueOption) formRef.current?.setValues({ inLongNodeName: valueOption.name });
+
+      formRef.current?.setValues({
+        partitionUnit: initialValues.partitionUnit,
+        dbName: initialValues.dbName,
+        isCreateTable:
+          typeof initialValues.isCreateResource === 'boolean'
+            ? initialValues.isCreateResource
+            : true,
+      });
+
+      autoCreateTableRef.current?.setValues({
+        tableName: initialValues.tableName,
+      });
+
+      selectTableRef.current?.setValues({
+        tableName: initialValues.tableName,
+      });
+    }
+  }, [clusterOptions, initialValues]);
 
   const getTableList = useCallback(async (db: string) => {
     //todo 接口暂未提供
@@ -63,7 +97,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
   //TODO 暂未提供接口 //根据选择的table获取字段
   const getTargetFields: SubscribeFormRef['getTargetFields'] = useCallback(async () => {
     // const selectedTable
-    const res = await new Promise<FieldData[]>(resolve => {
+    return await new Promise<FieldData[]>(resolve => {
       setTimeout(() => {
         resolve([
           {
@@ -75,7 +109,6 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
         ]);
       }, 300);
     });
-    return res;
   }, []);
 
   const submit = useCallback(async () => {
@@ -119,6 +152,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
             pageNum: 0,
           },
         });
+        setClusterOptions(data?.records);
         field.setComponentProps({
           options: (data?.records || []).map(item => ({
             text: item.displayName,
@@ -174,7 +208,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
         field.setComponentProps({
           options: data.map(item => ({ text: item.dbName, value: item.dbName })),
         });
-        field.setValue(data[0]?.dbName);
+        // field.setValue(data[0]?.dbName);
       },
       suffix: (
         <a href="/" target="_blank">
