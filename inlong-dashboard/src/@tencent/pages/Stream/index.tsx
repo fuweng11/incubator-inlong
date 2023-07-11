@@ -31,6 +31,7 @@ import { SourceTypeEnum, sourceTypeMap } from '@/@tencent/enums/source';
 import { useProjectComputeResources } from '@/@tencent/components/Use/usePlatformAPIs';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 import PublishModal from './PublishModal';
+import UserSelect from '@/@tencent/components/UserSelect';
 
 const fields: FieldConfig[] = [
   {
@@ -63,7 +64,10 @@ const fields: FieldConfig[] = [
   {
     type: 'string',
     name: 'principal',
+    component: UserSelect,
     title: '负责人',
+    style: { minWidth: 200, marginTop: -6 },
+    clearable: true,
   },
 ];
 

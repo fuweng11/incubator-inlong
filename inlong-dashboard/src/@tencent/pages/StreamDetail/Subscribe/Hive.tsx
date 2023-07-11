@@ -49,7 +49,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
 
   const selectTableRef = useRef<Form>();
 
-  const [isCreateTable, setIsCreateTable] = useState<boolean>();
+  const [isCreateResource, setIsCreateResource] = useState<boolean>();
 
   useEffect(() => {
     if (initialValues) {
@@ -60,7 +60,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
       formRef.current?.setValues({
         partitionUnit: initialValues.partitionUnit,
         dbName: initialValues.dbName,
-        isCreateTable:
+        isCreateResource:
           typeof initialValues.isCreateResource === 'boolean'
             ? initialValues.isCreateResource
             : true,
@@ -119,7 +119,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
     ]);
     return {
       ...basicForm,
-      ...(basicForm.isCreateTable ? autoTableForm : selectTableForm),
+      ...(basicForm.isCreateResource ? autoTableForm : selectTableForm),
       partitionInterval: 1,
     };
   }, []);
@@ -128,7 +128,7 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
     submit,
     getTargetFields,
     fieldsMapProps: {
-      candoAutoAdd: !isCreateTable,
+      candoAutoAdd: !isCreateResource,
     },
   }));
 
@@ -217,16 +217,16 @@ const Hive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>) 
       ),
     },
     {
-      name: 'isCreateTable',
+      name: 'isCreateResource',
       type: 'string',
       title: '数据来源',
       required: true,
       component: ContentRadio,
       defaultValue: true,
       reaction: async (field, values) => {
-        setIsCreateTable(values.isCreateTable);
+        setIsCreateResource(values.isCreateResource);
         if (streamInfo?.fieldsData) {
-          if (values.isCreateTable) {
+          if (values.isCreateResource) {
             setTargetFields(true);
           } else {
             const res = await getTargetFields();
