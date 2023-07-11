@@ -49,7 +49,7 @@ const THive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>)
 
   const selectTableRef = useRef<Form>();
 
-  const [isCreateResource, setIsCreateResource] = useState<boolean>();
+  const [createResource, setCreateResource] = useState<boolean>();
 
   useEffect(() => {
     if (initialValues) {
@@ -60,10 +60,8 @@ const THive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>)
       formRef.current?.setValues({
         partitionUnit: initialValues.partitionUnit,
         dbName: initialValues.dbName,
-        isCreateResource:
-          typeof initialValues.isCreateResource === 'boolean'
-            ? initialValues.isCreateResource
-            : true,
+        createResource:
+          typeof initialValues.createResource === 'boolean' ? initialValues.createResource : true,
       });
 
       autoCreateTableRef.current?.setValues({
@@ -119,8 +117,7 @@ const THive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>)
     ]);
     return {
       ...basicForm,
-      ...(basicForm.isCreateResource ? autoTableForm : selectTableForm),
-      isCreateResource: isCreateResource,
+      ...(basicForm.createResource ? autoTableForm : selectTableForm),
       partitionInterval: 1,
     };
   }, []);
@@ -129,7 +126,7 @@ const THive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>)
     submit,
     getTargetFields,
     fieldsMapProps: {
-      candoAutoAdd: !isCreateResource,
+      candoAutoAdd: !createResource,
     },
   }));
 
@@ -218,16 +215,16 @@ const THive = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef>)
       ),
     },
     {
-      name: 'isCreateResource',
+      name: 'createResource',
       type: 'string',
       title: '数据来源',
       required: true,
       component: ContentRadio,
       defaultValue: true,
       reaction: async (field, values) => {
-        setIsCreateResource(values.isCreateResource);
+        setCreateResource(values.createResource);
         if (streamInfo?.fieldsData) {
-          if (values.isCreateResource) {
+          if (values.createResource) {
             setTargetFields(true);
           } else {
             const res = await getTargetFields();

@@ -101,6 +101,7 @@ const Test = ({ info }) => {
                 {
                   key: 'body',
                   header: '原始数据',
+                  width: 800,
                 },
                 {
                   key: 'nodeIp',
