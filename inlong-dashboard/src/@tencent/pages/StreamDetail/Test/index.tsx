@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Table, Button, Icon } from '@tencent/tea-component';
+import { Table, Button, Icon, Justify } from '@tencent/tea-component';
 import { ProForm, ProFormProps } from '@tencent/tea-material-pro-table';
 import React, { useState } from 'react';
 import PageStatus from '@/@tencent/components/PageStatus';
@@ -24,6 +24,8 @@ import { TestEmpty } from '@/@tencent/components/Icons';
 import request from '@/core/utils/request';
 import moment from 'moment';
 import isEmpty from 'lodash/isEmpty';
+import exportIcon from './export.svg';
+import { CSVLink } from 'react-csv';
 
 const { scrollable } = Table.addons;
 const infoStyle: React.CSSProperties = { marginTop: -3, marginRight: 2 };
@@ -67,6 +69,8 @@ const Test = ({ info }) => {
     },
   ];
 
+  const title = `${moment().format('YYYY-MM-DD HH:mm:ss')}的抽样结果`;
+
   return (
     <>
       <ProForm
@@ -87,6 +91,26 @@ const Test = ({ info }) => {
       <div style={{ marginTop: '10px' }}>
         {!isEmpty(testRes) ? (
           <>
+            <Justify
+              style={{ marginBottom: 10 }}
+              left={<div style={{ color: '#000', fontSize: 12 }}>{title}</div>}
+              right={
+                <>
+                  <CSVLink
+                    style={{
+                      color: '#337AFC',
+                      fontSize: 12,
+                      display: 'inline-flex',
+                      cursor: 'pointer',
+                    }}
+                    filename={title}
+                    data={testRes.map(r => Object.values(r))}
+                  >
+                    <img src={exportIcon} alt="下载数据" /> 导出为CSV
+                  </CSVLink>
+                </>
+              }
+            />
             <Table
               bordered
               verticalTop
