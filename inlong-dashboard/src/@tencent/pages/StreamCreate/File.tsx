@@ -26,7 +26,7 @@ import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
 
 export default function File({ form }) {
-  const { control, formState, watch } = form;
+  const { control, formState, watch, setValue } = form;
   const { errors } = formState;
 
   const watchReadMode = watch('readMode', ReadModeEnum.FULL);
@@ -87,6 +87,13 @@ export default function File({ form }) {
             <FetchSelect
               {...field}
               searchable={false}
+              onChange={v => {
+                // 集群变更后需要重新选择数据源ip
+                setValue('clusterName', v);
+                if (v !== clusterName) {
+                  setValue('clusterIPs', []);
+                }
+              }}
               request={async () => {
                 const result = await reqClusterOptions();
                 return result.records?.map(item => ({

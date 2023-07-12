@@ -32,6 +32,7 @@ import { WriteModeEnum, writeModeMap } from '@/@tencent/enums/subscribe/iceberg'
 import { SubscribeFormProps, SubscribeFormRef } from './common';
 import request from '@/core/utils/request';
 import { useProjectId } from '@/@tencent/components/Use/useProject';
+import isEmpty from 'lodash/isEmpty';
 
 export { fields } from '@/@tencent/enums/subscribe/iceberg';
 
@@ -46,10 +47,24 @@ const Iceberg = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef
   useEffect(() => {
     if (initialValues) {
       // 编辑状态
+      let properties = '';
+      let _proConf = false;
+      if (!isEmpty(initialValues.properties)) {
+        _proConf = true;
+        let arr = [];
+        Object.keys(initialValues.properties).forEach(k => {
+          arr.push(`${k}=${initialValues.properties[k]}`);
+        });
+        properties = arr.join('\n');
+      }
       formRef.current?.setValues({
         inLongNodeName: initialValues.inLongNodeName,
         dbName: initialValues.dbName,
         tableName: initialValues.tableName,
+        writeMode: initialValues.writeMode,
+        primaryKey: initialValues.primaryKey,
+        properties,
+        _proConf,
       });
     }
   }, [clusterOptions, initialValues]);
@@ -142,9 +157,10 @@ const Iceberg = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef
       component: () => null,
     },
     {
-      name: 'advancedConfig',
+      name: 'properties',
       type: 'string',
       title: '参数',
+      placeholder: '请输入参数名称及值（格式为：parameter=value），多个参数使用换行符分割',
       component: 'textarea',
       visible: values => values._proConf,
     },
@@ -152,6 +168,17 @@ const Iceberg = forwardRef((props: SubscribeFormProps, ref: Ref<SubscribeFormRef
 
   const submit = useCallback(async () => {
     const [basicForm] = await Promise.all([formRef.current.submit() as Record<string, any>]);
+    // 格式化参数为object
+    if (basicForm.properties) {
+      let newObject = {};
+      basicForm.properties.split('\n').forEach((row: string) => {
+        const arr = row.split('=');
+        if (arr.length > 1) {
+          newObject[arr[0]] = arr[1];
+        }
+      });
+      basicForm.properties = newObject;
+    }
     delete basicForm._proConf;
     return basicForm;
   }, []);

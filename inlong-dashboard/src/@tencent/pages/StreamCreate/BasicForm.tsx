@@ -231,7 +231,7 @@ const BasicForm = forwardRef(
                 {field.value && (
                   <Alert type="info" hideIcon style={{ marginTop: 10 }}>
                     <ul style={{ listStyle: 'initial' }}>
-                      <li>
+                      <li style={{ /** 这里集群后台说先不展示 但又需要传过去 **/ display: 'none' }}>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                           <span style={{ marginRight: 5 }}>选择集群</span>
                           <Controller
