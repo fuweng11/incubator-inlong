@@ -39,6 +39,7 @@ ENV AGENT_HEARTBEAT_INTERVAL=10
 ENV CLUSTER_NAME=default_agent
 ENV CLUSTER_TAG=default_cluster
 ENV CLUSTER_IN_CHARGES=admin
+ENV NEED_TRACK_NATIVE_MEMORY=false
 ENV AGENT_JVM_HEAP_OPTS="-XX:+UseContainerSupport -XX:InitialRAMPercentage=40.0 -XX:MaxRAMPercentage=80.0 -XX:-UseAdaptiveSizePolicy"
 # enable dbsync, ture or false
 ENV DBSYNC_ENABLE=false

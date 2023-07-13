@@ -37,16 +37,17 @@ else
 fi
 
 if [ -z "$AGENT_JVM_HEAP_OPTS" ]; then
-  HEAP_OPTS=" -Xmx512m -Xss512k "
+  HEAP_OPTS="-Xmx512m -Xss512k"
 else
   HEAP_OPTS="$AGENT_JVM_HEAP_OPTS"
 fi
 
-EXETEN_PARAM=' -Djava.net.preferIPv4Stack=true  -Dfile.encoding=UTF-8 '
-GC_PARAM=' -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+TraceClassLoading -XX:InitiatingHeapOccupancyPercent=60'
-GC_PRINT=" -Xloggc:$BASE_DIR/logs/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=20M"
-
-AGENT_JVM_ARGS="$HEAP_OPTS $EXETEN_PARAM $GC_PARAM $GC_PRINT"
+GC_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+TraceClassLoading -XX:InitiatingHeapOccupancyPercent=60 -Djava.net.preferIPv4Stack=true -Dfile.encoding=UTF-8"
+LOG_OPTS="-Xloggc:$BASE_DIR/logs/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=20M"
+if [ -n "$NEED_TRACK_NATIVE_MEMORY" ] && [ "$NEED_TRACK_NATIVE_MEMORY" = "true" ]; then
+    GC_OPTS="$GC_OPTS -XX:NativeMemoryTracking"
+fi
+AGENT_JVM_ARGS="$HEAP_OPTS $GC_OPTS $LOG_OPTS"
 
 # Add Agent Rmi Args when necessary
 AGENT_RMI_ARGS="-Dcom.sun.management.jmxremote \
