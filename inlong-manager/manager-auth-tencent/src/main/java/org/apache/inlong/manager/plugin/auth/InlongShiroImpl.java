@@ -20,11 +20,15 @@ package org.apache.inlong.manager.plugin.auth;
 import org.apache.inlong.manager.common.auth.InlongShiro;
 import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthenticationFilter;
 import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthorizingRealm;
+import org.apache.inlong.manager.plugin.auth.tenant.TenantAuthenticatingFilter;
+import org.apache.inlong.manager.plugin.auth.tenant.TenantAuthenticatingRealm;
 import org.apache.inlong.manager.plugin.auth.web.WebAuthenticationFilter;
 import org.apache.inlong.manager.plugin.auth.web.WebAuthorizingRealm;
 import org.apache.inlong.manager.plugin.common.enums.Env;
+import org.apache.inlong.manager.service.tenant.InlongTenantService;
 import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
+import org.apache.inlong.manager.service.user.InlongRoleService;
 import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
@@ -59,12 +63,19 @@ public class InlongShiroImpl implements InlongShiro {
 
     private static final String FILTER_NAME_WEB = "authWeb";
     private static final String FILTER_NAME_API = "authAPI";
+    private static final String FILTER_NAME_TENANT = "authTenant";
 
     @Value("${openapi.auth.enabled:false}")
     private Boolean openAPIAuthEnabled;
 
     @Autowired
+    private InlongRoleService inlongRoleService;
+
+    @Autowired
     private TenantRoleService tenantRoleService;
+
+    @Autowired
+    private InlongTenantService tenantService;
 
     @Autowired
     private UserService userService;
@@ -93,7 +104,9 @@ public class InlongShiroImpl implements InlongShiro {
         AuthorizingRealm openAPIRealm = new OpenAPIAuthorizingRealm(userService, tenantRoleService, authConfig);
         openAPIRealm.setCredentialsMatcher(getCredentialsMatcher());
 
-        return Arrays.asList(webRealm, openAPIRealm);
+        Realm tenantRealm = new TenantAuthenticatingRealm(tenantRoleService, inlongRoleService,
+                userService, tenantService);
+        return Arrays.asList(webRealm, openAPIRealm, tenantRealm);
     }
 
     @Override
@@ -126,18 +139,15 @@ public class InlongShiroImpl implements InlongShiro {
         pathDefinitions.put("/swagger-resources/**/*", "anon");
         pathDefinitions.put("/swagger-resources", "anon");
 
-        // open api
-        pathDefinitions.put("/openapi/**/*", FILTER_NAME_API);
         // openapi
-        if (openAPIAuthEnabled) {
-            filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, tenantRoleService));
-            pathDefinitions.put("/openapi/**/*", FILTER_NAME_API);
-        } else {
-            pathDefinitions.put("/openapi/**/*", "anon");
-        }
+        filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, tenantRoleService));
+        pathDefinitions.put("/openapi/**/*", genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT));
 
         // other web
-        pathDefinitions.put("/**", FILTER_NAME_WEB);
+        pathDefinitions.put("/**", genFiltersInOrder(FILTER_NAME_WEB, FILTER_NAME_TENANT));
+
+        // tenant filter
+        filters.put(FILTER_NAME_TENANT, new TenantAuthenticatingFilter());
 
         shiroFilterFactoryBean.setFilterChainDefinitionMap(pathDefinitions);
         return shiroFilterFactoryBean;
@@ -149,5 +159,18 @@ public class InlongShiroImpl implements InlongShiro {
                 new AuthorizationAttributeSourceAdvisor();
         authorizationAttributeSourceAdvisor.setSecurityManager(securityManager);
         return authorizationAttributeSourceAdvisor;
+    }
+
+    private String genFiltersInOrder(String... filterNames) {
+        if (filterNames.length == 1) {
+            return filterNames[0];
+        }
+
+        StringBuilder builder = new StringBuilder();
+        for (String filterName : filterNames) {
+            builder.append(filterName).append(",");
+        }
+        builder.deleteCharAt(builder.length() - 1);
+        return builder.toString();
     }
 }

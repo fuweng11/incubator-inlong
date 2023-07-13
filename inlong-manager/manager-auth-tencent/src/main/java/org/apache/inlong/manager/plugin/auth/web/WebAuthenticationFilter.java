@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class WebAuthenticationFilter implements Filter {
 
-    private static final String MANAGER_CLIENT_REQUEST = "Manager_Client_Request";
+    private static final String MANAGER_CLIENT_REQUEST = "manager_client_request";
 
     private final boolean supportMockUsername;
 
@@ -173,7 +173,7 @@ public class WebAuthenticationFilter implements Filter {
     private boolean isManagerClientRequest(HttpServletRequest request) {
         String isManagerClientRequest = request.getHeader(MANAGER_CLIENT_REQUEST);
         if (StringUtils.isNotBlank(isManagerClientRequest)) {
-            log.info("It's the manager client request, use mock authentication");
+            log.info("It's the manager client request, use TAuth authentication");
             return true;
         }
         return false;

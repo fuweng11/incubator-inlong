@@ -129,11 +129,6 @@
             and type = #{type, jdbcType=VARCHAR}
         </if>
     </select>
-    <select id="selectAllSinkParams" resultType="org.apache.inlong.manager.pojo.sort.standalone.SortSinkInfo">
-        select name, type, ext_params
-        from data_node
-        where is_deleted = 0
-    </select>
     <select id="selectAllDataNodes" resultType="org.apache.inlong.manager.dao.entity.DataNodeEntity">
         select
         <include refid="Base_Column_List"/>
