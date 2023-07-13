@@ -27,6 +27,7 @@ import org.apache.inlong.manager.pojo.group.InlongGroupBriefInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupPageRequest;
 import org.apache.inlong.manager.pojo.group.InlongGroupRequest;
+import org.apache.inlong.manager.pojo.group.InlongGroupTopicInfo;
 import org.apache.inlong.manager.pojo.user.LoginUserUtils;
 import org.apache.inlong.manager.service.group.InlongGroupProcessService;
 import org.apache.inlong.manager.service.group.InlongGroupService;
@@ -104,5 +105,11 @@ public class OpenInLongGroupController {
         Preconditions.expectNotBlank(groupId, ErrorCodeEnum.INVALID_PARAMETER, "groupId cannot be blank");
         Preconditions.expectNotNull(LoginUserUtils.getLoginUser(), ErrorCodeEnum.LOGIN_USER_EMPTY);
         return Response.success(groupProcessOperation.deleteProcess(groupId, LoginUserUtils.getLoginUser()));
+    }
+
+    @GetMapping(value = "/group/getTopic/{groupId}")
+    @ApiOperation(value = "Get topic info")
+    public Response<InlongGroupTopicInfo> getTopic(@PathVariable String groupId) {
+        return Response.success(groupService.getTopic(groupId));
     }
 }
