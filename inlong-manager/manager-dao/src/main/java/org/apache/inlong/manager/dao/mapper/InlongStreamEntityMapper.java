@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.dao.mapper;
 
+import org.apache.inlong.manager.common.tenant.MultiTenantQuery;
 import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.pojo.sort.standalone.SortSourceStreamInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamBriefInfo;
@@ -78,4 +79,7 @@ public interface InlongStreamEntityMapper {
      * @return rows deleted
      */
     int deleteByInlongGroupIds(@Param("groupIdList") List<String> groupIdList);
+
+    @MultiTenantQuery
+    List<InlongStreamEntity> selectByTenant(@Param("request") InlongStreamPageRequest request);
 }

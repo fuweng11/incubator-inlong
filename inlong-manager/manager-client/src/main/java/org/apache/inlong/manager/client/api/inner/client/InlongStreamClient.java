@@ -270,4 +270,19 @@ public class InlongStreamClient {
         ClientUtils.assertRespSuccess(response);
         return response.getData();
     }
+
+    /**
+     * Paging query inlong stream brief info list by current tenant
+     *
+     * only wedata use
+     *
+     * @param request query request
+     * @return inlong stream brief list
+     */
+    public PageResult<InlongStreamBriefInfo> listByTenant(InlongStreamPageRequest request) {
+        Response<PageResult<InlongStreamBriefInfo>> response = ClientUtils.executeHttpCall(
+                inlongStreamApi.listByTenant(request));
+        ClientUtils.assertRespSuccess(response);
+        return response.getData();
+    }
 }

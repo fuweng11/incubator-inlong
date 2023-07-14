@@ -51,6 +51,7 @@ import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamPageRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamRequest;
 import org.apache.inlong.manager.pojo.stream.StreamField;
+import org.apache.inlong.manager.pojo.user.LoginUserUtils;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.pojo.user.UserRoleCode;
 import org.apache.inlong.manager.service.group.InlongGroupOperator;
@@ -1057,5 +1058,24 @@ public class InlongStreamServiceImpl implements InlongStreamService {
             LOGGER.error("query message error ", e);
         }
         return messageList;
+    }
+
+    @Override
+    public PageResult<InlongStreamBriefInfo> listBriefByTenant(InlongStreamPageRequest request) {
+        String tenant = LoginUserUtils.getLoginUser().getTenant();
+        LOGGER.debug("begin to list inlong stream page by tenant={}, request={}", tenant, request);
+
+        PageHelper.startPage(request.getPageNum(), request.getPageSize());
+        OrderFieldEnum.checkOrderField(request);
+        OrderTypeEnum.checkOrderType(request);
+        Page<InlongStreamEntity> entityPage = (Page<InlongStreamEntity>) streamMapper.selectByTenant(request);
+        List<InlongStreamBriefInfo> streamList = CommonBeanUtils.copyListProperties(entityPage,
+                InlongStreamBriefInfo::new);
+
+        PageResult<InlongStreamBriefInfo> pageResult = new PageResult<>(streamList,
+                entityPage.getTotal(), entityPage.getPageNum(), entityPage.getPageSize());
+
+        LOGGER.debug("success to list inlong stream info for tenant={}", tenant);
+        return pageResult;
     }
 }

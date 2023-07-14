@@ -78,4 +78,7 @@ public interface InlongStreamApi {
     @GET("stream/listMessages")
     Call<Response<List<BriefMQMessage>>> listMessages(@Query("groupId") String groupId,
             @Query("streamId") String streamId, @Query("messageCount") Integer messageCount);
+
+    @POST("stream/listByTenant")
+    Call<Response<PageResult<InlongStreamBriefInfo>>> listByTenant(@Body InlongStreamPageRequest request);
 }

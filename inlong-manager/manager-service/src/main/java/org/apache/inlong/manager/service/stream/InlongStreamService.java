@@ -275,4 +275,13 @@ public interface InlongStreamService {
      */
     List<BriefMQMessage> listMessages(String groupId, String streamId, Integer messageCount, String operator);
 
+    /**
+     * Paging query inlong stream brief info list
+     * only wedata use
+     *
+     * @param request query request
+     * @return inlong stream brief list
+     */
+    PageResult<InlongStreamBriefInfo> listBriefByTenant(InlongStreamPageRequest request);
+
 }

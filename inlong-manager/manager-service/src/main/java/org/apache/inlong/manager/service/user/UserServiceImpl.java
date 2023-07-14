@@ -83,6 +83,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.apache.inlong.manager.pojo.user.UserRoleCode.INLONG_ADMIN;
+
 /**
  * User service layer implementation
  */
@@ -356,10 +358,9 @@ public class UserServiceImpl implements UserService {
     }
 
     public void checkUser(String inCharges, String user, String errMsg) {
-        UserEntity userEntity = userMapper.selectByName(user);
         boolean isInCharge = Preconditions.inSeparatedString(user, inCharges, InlongConstants.COMMA);
         Preconditions.expectTrue(
-                isInCharge || TenantUserTypeEnum.TENANT_ADMIN.getCode().equals(userEntity.getAccountType()),
+                isInCharge || LoginUserUtils.getLoginUser().getRoles().contains(INLONG_ADMIN),
                 errMsg);
     }
 
