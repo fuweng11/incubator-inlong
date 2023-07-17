@@ -568,7 +568,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
         List<Integer> skipTaskIds = new ArrayList<>();
         List<DbSyncTaskInfo> resultList = new ArrayList<>(sourceEntities.size());
         for (StreamSourceEntity sourceEntity : sourceEntities) {
-            DbSyncTaskInfo taskInfo = fulfillTaskInfo(sourceEntity);
+            DbSyncTaskInfo taskInfo;
             int id = sourceEntity.getId();
             int status = sourceEntity.getStatus();
             if (SourceStatus.SOURCE_NORMAL.getCode() == status) {
@@ -578,9 +578,11 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                     skipTaskIds.add(id);
                     continue;
                 }
+                taskInfo = fulfillTaskInfo(sourceEntity);
             } else if (status / 100 == UNISSUED_STATUS || status / 100 == ISSUED_STATUS) {
                 // to be issued status(20x) - after modifying the source, status will change to intermediate
                 // been issued status(30x)
+                taskInfo = fulfillTaskInfo(sourceEntity);
                 taskInfo.setStatus(status % 100);
             } else {
                 // ignore tasks that with other status
