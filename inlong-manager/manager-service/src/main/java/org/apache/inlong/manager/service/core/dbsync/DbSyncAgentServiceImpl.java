@@ -441,6 +441,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                     taskInfo.setDbServerInfo(DBServerInfo.builder()
                             .id(mySqlNode.getId())
                             .dbType(DataNodeType.MYSQL)
+                            .displayName(mySqlNode.getDisplayName())
                             .url(mySqlNode.getUrl())
                             .backupUrl(mySqlNode.getBackupUrl())
                             .username(mySqlNode.getUsername())

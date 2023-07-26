@@ -38,6 +38,9 @@ public class DBServerInfo {
     @ApiModelProperty("Primary key")
     private Integer id;
 
+    @ApiModelProperty("DisplayName")
+    private String displayName;
+
     @ApiModelProperty("DB type, such as MySQL, Oracle, etc.")
     private String dbType;
 
