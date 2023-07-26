@@ -54,6 +54,7 @@
         <oceanus-etl-common.version>2.1.4-SNAPSHOT</oceanus-etl-common.version>
         <flink-format.version>1.9-tq-1.22</flink-format.version>
         <inlong.root.dir>${project.parent.basedir}</inlong.root.dir>
+        <manager-curator.version>2.7.1</manager-curator.version>
     </properties>
 
     <dependencyManagement>
@@ -146,7 +147,7 @@
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-client</artifactId>
-                <version>${curator.version}</version>
+                <version>${manager-curator.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
@@ -214,6 +215,16 @@
                 <groupId>com.tencent.flink</groupId>
                 <artifactId>flink-format-common</artifactId>
                 <version>${flink-format.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>${manager-curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-recipes</artifactId>
+                <version>${manager-curator.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
