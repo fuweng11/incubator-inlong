@@ -15,17 +15,33 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.service.group.coordinator;
+package org.apache.inlong.sort.iceberg.schema;
+
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.types.logical.LogicalType;
+
+import java.util.List;
+
+import static org.apache.inlong.sort.base.Constants.SWITCH_APPEND_UPSERT_ENABLE;
 
 /**
- * Operator which ensure the consistency of the state of all components within the group
+ * used in iceberg running in {@link SWITCH_APPEND_UPSERT_ENABLE}
  */
-public interface Coordinator {
+public class RowDataConverter {
 
-    /**
-     * Make inner state of one group to eventual consistency
-     * @param inlongGroupId
-     */
-    public void coordinate(String inlongGroupId);
+    private final RowData.FieldGetter[] fieldGetter;
+
+    public RowDataConverter(List<LogicalType> types) {
+        this.fieldGetter = new RowData.FieldGetter[types.size()];
+
+        for (int i = 0; i < types.size(); ++i) {
+            this.fieldGetter[i] = RowData.createFieldGetter(types.get(i), i);
+        }
+
+    }
+
+    public Object get(RowData struct, int index) {
+        return this.fieldGetter[index].getFieldOrNull(struct);
+    }
 
 }
