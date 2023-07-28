@@ -433,6 +433,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         // info.getUsername(); // Create partitions through the thive JDBC server link
         // info.getCreator() - tdwUsername // Go to TDW to query whether the partition exists
         String hadoopProxyUser = hiveFullInfo.getUsername(); // Sort write HDFS use
+        if (StringUtils.isNotBlank(dataPath) && !dataPath.contains("/user/tdw/warehouse")) {
+            hadoopProxyUser = "tdwadmin";
+        }
         if (StringUtils.isNotBlank(hiveFullInfo.getVirtualUser())) {
             hadoopProxyUser = hiveFullInfo.getVirtualUser();
         }
