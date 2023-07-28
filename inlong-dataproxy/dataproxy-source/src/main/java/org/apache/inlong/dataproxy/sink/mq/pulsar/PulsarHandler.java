@@ -88,6 +88,7 @@ public class PulsarHandler implements MessageQueueHandler {
     public static final String KEY_IOTHREADS = "ioThreads";
     public static final String KEY_MEMORYLIMIT = "memoryLimit";
     public static final String KEY_CONNECTIONSPERBROKER = "connectionsPerBroker";
+    public static final String KEY_ADDRRQUARANTINETIMESEC = "addrQuarantineTimeInSec";
 
     private CacheClusterConfig config;
     private String clusterName;
@@ -140,6 +141,7 @@ public class PulsarHandler implements MessageQueueHandler {
                     .ioThreads(context.getInteger(KEY_IOTHREADS, 1))
                     .memoryLimit(context.getLong(KEY_MEMORYLIMIT, 1073741824L), SizeUnit.BYTES)
                     .connectionsPerBroker(context.getInteger(KEY_CONNECTIONSPERBROKER, 10))
+                    .socketAddressQuarantineTimeSeconds(context.getInteger(KEY_ADDRRQUARANTINETIMESEC, 600))
                     .statsInterval(NumberUtils.toLong(config.getParams().get(KEY_STATS_INTERVAL_SECONDS), -1),
                             TimeUnit.SECONDS)
                     .build();
