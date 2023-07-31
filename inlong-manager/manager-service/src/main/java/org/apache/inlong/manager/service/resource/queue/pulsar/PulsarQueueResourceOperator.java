@@ -59,7 +59,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
-public class PulsarResourceOperator implements QueueResourceOperator {
+public class PulsarQueueResourceOperator implements QueueResourceOperator {
 
     /**
      * The name rule for Pulsar subscription: clusterTag_namespace_topic_sinkId_consumer_group

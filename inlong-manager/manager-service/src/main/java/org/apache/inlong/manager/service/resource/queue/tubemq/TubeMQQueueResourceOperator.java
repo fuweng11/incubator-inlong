@@ -49,7 +49,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
-public class TubeMQResourceOperator implements QueueResourceOperator {
+public class TubeMQQueueResourceOperator implements QueueResourceOperator {
 
     public static final String TUBE_CONSUME_GROUP = "%s_%s_%s_consumer_group";
 
