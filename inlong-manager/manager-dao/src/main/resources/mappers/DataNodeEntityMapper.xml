@@ -143,14 +143,10 @@
         </if>
     </select>
     <select id="selectAllDataNodes" resultType="org.apache.inlong.manager.dao.entity.DataNodeEntity">
-        <bind name="_isInlongService" value="LoginUser.InlongService"/>
         select
         <include refid="Base_Column_List"/>
         from data_node
         <where>
-            <if test="_isInlongService == false">
-                tenant = #{tenant,jdbcType=VARCHAR}
-            </if>
             and is_deleted = 0
         </where>
     </select>
