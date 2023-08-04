@@ -75,6 +75,7 @@ export default class PulsarSource
       filterOption: false,
       disabled: [200, 201, 202, 204, 205, 300, 301, 302, 304, 305].includes(values?.status),
       options: {
+        requestAuto: true,
         requestTrigger: ['onOpen', 'onSearch'],
         requestService: keyword => ({
           url: '/node/list',
