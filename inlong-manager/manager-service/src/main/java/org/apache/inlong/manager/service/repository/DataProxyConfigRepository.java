@@ -330,9 +330,10 @@ public class DataProxyConfigRepository implements IRepository {
 
         // to be compatible with multi-tenancy #7914
         String tenant = mapObj.get(KEY_NEW_TENANT_KEY);
-        mapObj.remove(KEY_NEW_TENANT_KEY);
-        mapObj.put(KEY_OLD_TENANT_KEY, tenant);
-
+        if (StringUtils.isNotBlank(tenant)) {
+            mapObj.remove(KEY_NEW_TENANT_KEY);
+            mapObj.put(KEY_OLD_TENANT_KEY, tenant);
+        }
         return mapObj;
     }
 
