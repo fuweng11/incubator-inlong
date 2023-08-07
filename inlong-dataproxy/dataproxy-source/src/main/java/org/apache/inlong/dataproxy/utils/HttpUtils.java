@@ -26,6 +26,7 @@ import com.tencent.tdw.security.authentication.v2.TauthClient;
 import com.tencent.tdw.security.exceptions.SecureException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 
@@ -70,5 +71,14 @@ public class HttpUtils {
         }
         return httpPost;
 
+    }
+
+    public static HttpGet getTDBankHttPost(String url) {
+        HttpGet httpGet = new HttpGet(url);
+        httpGet.addHeader(HttpHeaders.CONNECTION, "close");
+        httpGet.addHeader(HttpHeaders.AUTHORIZATION,
+                AuthUtils.genTDBankAuthToken(CommonConfigHolder.getInstance().getManagerAuthSecretId(),
+                        CommonConfigHolder.getInstance().getManagerAuthSecretKey()));
+        return httpGet;
     }
 }

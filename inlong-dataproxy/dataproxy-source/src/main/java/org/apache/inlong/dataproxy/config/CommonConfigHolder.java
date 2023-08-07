@@ -148,6 +148,16 @@ public class CommonConfigHolder {
     // prometheus http port
     public static final String KEY_PROMETHEUS_HTTP_PORT = "prometheusHttpPort";
     public static final int VAL_DEF_PROMETHEUS_HTTP_PORT = 8080;
+    // whether enable tdbank logic
+    public static final String KEY_ENABLE_TDBANK_LOGIC = "proxy.enable.tdbank.logic";
+    public static final boolean VAL_DEF_ENABLE_TDBANK_LOGIC = false;
+    // whether enable tdbank pcg log output
+    public static final String KEY_ENABLE_PCG_LOG_OUTPUT = "proxy.enable.pcg.log.output";
+    public static final boolean VAL_DEF_ENABLE_PCG_LOG_OUTPUT = false;
+    // cluster id
+    public static final String KEY_PROXY_CLUSTER_ID = "proxy.cluster.id";
+    public static final int VAL_DEF_CLUSTER_ID = -1;
+
     // **** allowed keys and default value, end
 
     // class instance
@@ -189,6 +199,9 @@ public class CommonConfigHolder {
     private String fileMetricEventOutName = VAL_DEF_FILE_METRIC_EVENT_OUTPUT_NAME;
     private boolean enableSendRetryAfterFailure = VAL_DEF_ENABLE_SEND_RETRY_AFTER_FAILURE;
     private int maxRetriesAfterFailure = VAL_DEF_MAX_RETRIES_AFTER_FAILURE;
+    private boolean enableTDBankLogic = VAL_DEF_ENABLE_TDBANK_LOGIC;
+    private boolean enablePCGLogOutput = VAL_DEF_ENABLE_PCG_LOG_OUTPUT;
+    private int clusterId = VAL_DEF_CLUSTER_ID;
 
     /**
      * get instance for common.properties config manager
@@ -231,6 +244,18 @@ public class CommonConfigHolder {
         String value = context.getString(key);
         value = (value != null) ? value : getInstance().getProperties().getOrDefault(key, defaultValue);
         return value;
+    }
+
+    public boolean isEnableTDBankLogic() {
+        return enableTDBankLogic;
+    }
+
+    public boolean isEnablePCGLogOutput() {
+        return enableTDBankLogic && enablePCGLogOutput;
+    }
+
+    public int getClusterId() {
+        return clusterId;
     }
 
     public String getClusterTag() {
@@ -574,6 +599,28 @@ public class CommonConfigHolder {
                 this.maxRetriesAfterFailure = retries;
             }
         }
+        // read whether use tdbank process logic
+        tmpValue = this.props.get(KEY_ENABLE_TDBANK_LOGIC);
+        if (StringUtils.isNotBlank(tmpValue)) {
+            this.enableTDBankLogic = "TRUE".equalsIgnoreCase(tmpValue.trim());
+        }
+        // read tdbank's parameters
+        if (this.enableTDBankLogic) {
+            // read whether output pcg index log
+            tmpValue = this.props.get(KEY_ENABLE_PCG_LOG_OUTPUT);
+            if (StringUtils.isNotBlank(tmpValue)) {
+                this.enablePCGLogOutput = "TRUE".equalsIgnoreCase(tmpValue.trim());
+            }
+            // read cluster id
+            tmpValue = this.props.get(KEY_PROXY_CLUSTER_ID);
+            if (StringUtils.isNotBlank(tmpValue)) {
+                int clusterIdVal = NumberUtils.toInt(tmpValue.trim(), VAL_DEF_CLUSTER_ID);
+                if (clusterIdVal >= 0) {
+                    this.clusterId = clusterIdVal;
+                }
+            }
+        }
+
         // initial ip parser
         try {
             Class<? extends IManagerIpListParser> ipListParserClass =

@@ -26,10 +26,12 @@ import org.apache.inlong.dataproxy.config.holder.GroupIdNumConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.MetaConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.SourceReportConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.SourceReportInfo;
+import org.apache.inlong.dataproxy.config.holder.TDBankMetaConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.WeightConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.WhiteListConfigHolder;
 import org.apache.inlong.dataproxy.config.pojo.CacheClusterConfig;
 import org.apache.inlong.dataproxy.config.pojo.IdTopicConfig;
+import org.apache.inlong.dataproxy.config.pojo.TDBankMetaConfig;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.utils.HttpUtils;
 
@@ -37,6 +39,7 @@ import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -75,6 +78,8 @@ public class ConfigManager {
     private final GroupIdNumConfigHolder groupIdConfig = new GroupIdNumConfigHolder();
     // mq configure and topic configure holder
     private final MetaConfigHolder metaConfigHolder = new MetaConfigHolder();
+    // tdbank topic configure holder
+    private final TDBankMetaConfigHolder tdbankMetaHolder = new TDBankMetaConfigHolder();
     // source report configure holder
     private final SourceReportConfigHolder sourceReportConfigHolder = new SourceReportConfigHolder();
     // mq clusters ready
@@ -153,6 +158,27 @@ public class ConfigManager {
 
     public Set<String> getAllTopicNames() {
         return metaConfigHolder.getAllTopicName();
+    }
+
+    public String getTDBankTopicName(String groupId) {
+        return tdbankMetaHolder.getTopicName(groupId);
+    }
+
+    public boolean updateTDBankMetaConfigInfo(String inDataJsonStr) {
+        return tdbankMetaHolder.updateConfigMap(inDataJsonStr);
+    }
+
+    public Set<String> getAllTDBankTopicNames() {
+        return tdbankMetaHolder.getAllTopicName();
+    }
+
+    public String getMxProperties(String groupId) {
+        return tdbankMetaHolder.getMxProperties(groupId);
+    }
+
+    // register meta-config callback
+    public void regTDBankMetaChgCallback(ConfigUpdateCallback callback) {
+        tdbankMetaHolder.addUpdateCallback(callback);
     }
 
     // get groupId num 2 name info
@@ -259,12 +285,20 @@ public class ConfigManager {
                     // connect to manager
                     if (fisrtCheck) {
                         fisrtCheck = false;
-                        checkRemoteConfig();
+                        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+                            checkTDBankRemoteConfig();
+                        } else {
+                            checkRemoteConfig();
+                        }
                         count = 0;
                     } else {
                         // wait for 3 * check-time to update remote config
                         if (count % 3 == 0) {
-                            checkRemoteConfig();
+                            if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+                                checkTDBankRemoteConfig();
+                            } else {
+                                checkRemoteConfig();
+                            }
                             count = 0;
                         }
                     }
@@ -323,6 +357,27 @@ public class ConfigManager {
             for (int i = 0; i < managerIpList.size(); i++) {
                 String host = managerIpList.get(Math.abs(managerIpListIndex.getAndIncrement()) % managerIpSize);
                 if (this.reloadDataProxyConfig(proxyClusterName, proxyClusterTag, host)) {
+                    break;
+                }
+            }
+        }
+
+        private void checkTDBankRemoteConfig() {
+            int clusterId = CommonConfigHolder.getInstance().getClusterId();
+            if (clusterId == CommonConfigHolder.VAL_DEF_CLUSTER_ID) {
+                LOG.error("Found {} is not configured in {}, can't quest remote configure!",
+                        CommonConfigHolder.KEY_PROXY_CLUSTER_ID, CommonConfigHolder.COMMON_CONFIG_FILE_NAME);
+                return;
+            }
+            List<String> managerIpList = CommonConfigHolder.getInstance().getManagerHosts();
+            if (managerIpList == null || managerIpList.size() == 0) {
+                LOG.error("Found manager ip list are empty, can't quest remote configure!");
+                return;
+            }
+            int managerIpSize = managerIpList.size();
+            for (int i = 0; i < managerIpList.size(); i++) {
+                String host = managerIpList.get(Math.abs(managerIpListIndex.getAndIncrement()) % managerIpSize);
+                if (this.reloadTDBankDataProxyConfig(clusterId, host)) {
                     break;
                 }
             }
@@ -392,6 +447,56 @@ public class ConfigManager {
             } finally {
                 if (httpPost != null) {
                     httpPost.releaseConnection();
+                }
+            }
+        }
+
+        /**
+         * reloadTDBankDataProxyConfig
+         */
+        private boolean reloadTDBankDataProxyConfig(int clusterId, String host) {
+            String url = null;
+            HttpGet httpGet = null;
+            try {
+                url = "http://" + host + "/business?opType=queryBusConfig&cluster_ids=" + clusterId;
+                httpGet = HttpUtils.getTDBankHttPost(url);
+                // request with post
+                LOG.info("Start to request {} to get config info, with headers: {}",
+                        url, httpGet.getAllHeaders());
+                CloseableHttpResponse response = httpClient.execute(httpGet);
+                String returnStr = EntityUtils.toString(response.getEntity());
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    LOG.warn("Failed to request {}, with headers: {}, the response is {}",
+                            url, httpGet.getAllHeaders(), returnStr);
+                    return false;
+                }
+                LOG.info("End to request {} to get config info:{}", url, returnStr);
+                // get bid <-> topic and m value.
+                TDBankMetaConfig metaConfig =
+                        gson.fromJson(returnStr, TDBankMetaConfig.class);
+                if (!metaConfig.isResult() || metaConfig.getErrCode() != 0) {
+                    LOG.warn("Fail to get config from url {}, with headers {}, the response is {}",
+                            url, httpGet.getAllHeaders(), returnStr);
+                    return false;
+                }
+                List<TDBankMetaConfig.ConfigItem> bidConfigs = metaConfig.getData();
+                if (bidConfigs == null || bidConfigs.isEmpty()) {
+                    LOG.warn("Get config empty from url:{}, with params {}, return:{}, cluster is empty!",
+                            url, httpGet.getAllHeaders(), returnStr);
+                    return true;
+                }
+                // update meta configure
+                if (configManager.updateTDBankMetaConfigInfo(returnStr)) {
+                    ConfigManager.handshakeManagerOk.set(true);
+                    LOG.info("Get config success from manager and updated, set handshake status is ok!");
+                }
+                return true;
+            } catch (Throwable ex) {
+                LOG.error("Request manager {} failure, throw exception", url, ex);
+                return false;
+            } finally {
+                if (httpGet != null) {
+                    httpGet.releaseConnection();
                 }
             }
         }

@@ -36,4 +36,10 @@ public class HttpAttrConst {
     public static final String VAL_DEF_CHARSET = "UTF-8";
     public static final String RET_CNT_TYPE = "application/json;charset=utf-8";
 
+    // for compatibility with tdbank logic
+    public static final String TDBANK_KEY_SRV_URL_HEARTBEAT = "/tdbus/heartbeat";
+    public static final String TDBANK_KEY_SRV_URL_REPORT_MSG = "/tdbus/message";
+    public static final String TDBANK_KEY_BUSINESS_ID = "bid";
+    public static final String TDBANK_KEY_INTERFACE_ID = "tid";
+
 }

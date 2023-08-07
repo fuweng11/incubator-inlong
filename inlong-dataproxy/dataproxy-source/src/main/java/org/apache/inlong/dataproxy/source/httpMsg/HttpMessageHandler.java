@@ -22,6 +22,7 @@ import org.apache.inlong.common.enums.DataProxyMsgEncType;
 import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
+import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.HttpAttrConst;
@@ -117,27 +118,46 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
                             + HttpMethod.POST.name() + "] methods");
             return;
         }
+        // get connection status
+        boolean closeConnection = isCloseConnection(req);
         // parse request uri
         QueryStringDecoder uriDecoder =
                 new QueryStringDecoder(req.uri(), Charsets.toCharset(CharEncoding.UTF_8));
         // check requested service url
-        if (!HttpAttrConst.KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())
-                && !HttpAttrConst.KEY_SRV_URL_REPORT_MSG.equals(uriDecoder.path())) {
-            if (!HttpAttrConst.KEY_URL_FAVICON_ICON.equals(uriDecoder.path())) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_PATH_INVALID);
-                sendErrorMsg(ctx, DataProxyErrCode.HTTP_UNSUPPORTED_SERVICE_URI,
-                        "Only support [" + HttpAttrConst.KEY_SRV_URL_HEARTBEAT + ", "
-                                + HttpAttrConst.KEY_SRV_URL_REPORT_MSG + "] paths!");
+        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+            if (!HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())
+                    && !HttpAttrConst.TDBANK_KEY_SRV_URL_REPORT_MSG.equals(uriDecoder.path())) {
+                if (!HttpAttrConst.KEY_URL_FAVICON_ICON.equals(uriDecoder.path())) {
+                    source.fileMetricIncSumStats(StatConstants.EVENT_MSG_PATH_INVALID);
+                    sendErrorMsg(ctx, DataProxyErrCode.HTTP_UNSUPPORTED_SERVICE_URI,
+                            "Only support [" + HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT + ", "
+                                    + HttpAttrConst.TDBANK_KEY_SRV_URL_REPORT_MSG + "] paths!");
+                }
+                return;
             }
-            return;
-        }
-        // get connection status
-        boolean closeConnection = isCloseConnection(req);
-        // process hb service
-        if (HttpAttrConst.KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())) {
-            source.fileMetricIncSumStats(StatConstants.EVENT_MSG_HB_SUCCESS);
-            sendSuccessResponse(ctx, closeConnection, null);
-            return;
+            // process hb service
+            if (HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_HB_SUCCESS);
+                sendSuccessResponse(ctx, closeConnection, null);
+                return;
+            }
+        } else {
+            if (!HttpAttrConst.KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())
+                    && !HttpAttrConst.KEY_SRV_URL_REPORT_MSG.equals(uriDecoder.path())) {
+                if (!HttpAttrConst.KEY_URL_FAVICON_ICON.equals(uriDecoder.path())) {
+                    source.fileMetricIncSumStats(StatConstants.EVENT_MSG_PATH_INVALID);
+                    sendErrorMsg(ctx, DataProxyErrCode.HTTP_UNSUPPORTED_SERVICE_URI,
+                            "Only support [" + HttpAttrConst.KEY_SRV_URL_HEARTBEAT + ", "
+                                    + HttpAttrConst.KEY_SRV_URL_REPORT_MSG + "] paths!");
+                }
+                return;
+            }
+            // process hb service
+            if (HttpAttrConst.KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_HB_SUCCESS);
+                sendSuccessResponse(ctx, closeConnection, null);
+                return;
+            }
         }
         // get request attributes
         final Map<String, String> reqAttrs = new HashMap<>();
@@ -245,38 +265,74 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
      */
     private void processMessage(ChannelHandlerContext ctx, Map<String, String> reqAttrs,
             long msgRcvTime, String clientIp, boolean isCloseCon) throws Exception {
+        String groupId;
+        String streamId;
+        String topicName;
         StringBuilder strBuff = new StringBuilder(512);
         String callback = reqAttrs.get(HttpAttrConst.KEY_CALLBACK);
-        String groupId = reqAttrs.get(HttpAttrConst.KEY_GROUP_ID);
-        if (StringUtils.isBlank(groupId)) {
-            source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPID_MISSING);
-            sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_GROUPID_ARGUMENT.getErrCode(),
-                    strBuff.append("Field ").append(HttpAttrConst.KEY_GROUP_ID)
-                            .append(" must exist and not blank!").toString(),
-                    isCloseCon, callback);
-            return;
-        }
-        // get and check streamId
-        String streamId = reqAttrs.get(HttpAttrConst.KEY_STREAM_ID);
-        if (StringUtils.isBlank(streamId)) {
-            source.fileMetricIncSumStats(StatConstants.EVENT_MSG_STREAMID_MISSING);
-            sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_STREAMID_ARGUMENT.getErrCode(),
-                    strBuff.append("Field ").append(HttpAttrConst.KEY_STREAM_ID)
-                            .append(" must exist and not blank!").toString(),
-                    isCloseCon, callback);
-            return;
-        }
-        // get and check topicName
-        String topicName = ConfigManager.getInstance().getTopicName(groupId, streamId);
-        if (StringUtils.isBlank(topicName)) {
-            source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
-            sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
-                    strBuff.append("Topic not configured for ").append(HttpAttrConst.KEY_GROUP_ID)
-                            .append("(").append(groupId).append("),")
-                            .append(HttpAttrConst.KEY_STREAM_ID)
-                            .append("(,").append(streamId).append(")").toString(),
-                    isCloseCon, callback);
-            return;
+        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+            groupId = reqAttrs.get(HttpAttrConst.TDBANK_KEY_BUSINESS_ID);
+            if (StringUtils.isBlank(groupId)) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPID_MISSING);
+                sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_GROUPID_ARGUMENT.getErrCode(),
+                        strBuff.append("Field ").append(HttpAttrConst.TDBANK_KEY_BUSINESS_ID)
+                                .append(" must exist and not blank!").toString(),
+                        isCloseCon, callback);
+                return;
+            }
+            // get and check streamId
+            streamId = reqAttrs.get(HttpAttrConst.TDBANK_KEY_INTERFACE_ID);
+            if (StringUtils.isBlank(streamId)) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_STREAMID_MISSING);
+                sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_STREAMID_ARGUMENT.getErrCode(),
+                        strBuff.append("Field ").append(HttpAttrConst.TDBANK_KEY_INTERFACE_ID)
+                                .append(" must exist and not blank!").toString(),
+                        isCloseCon, callback);
+                return;
+            }
+            // get and check topicName
+            topicName = ConfigManager.getInstance().getTDBankTopicName(groupId);
+            if (StringUtils.isBlank(topicName)) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
+                sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
+                        strBuff.append("Topic not configured for ")
+                                .append(HttpAttrConst.TDBANK_KEY_BUSINESS_ID)
+                                .append("(").append(groupId).append(")").toString(),
+                        isCloseCon, callback);
+                return;
+            }
+        } else {
+            groupId = reqAttrs.get(HttpAttrConst.KEY_GROUP_ID);
+            if (StringUtils.isBlank(groupId)) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPID_MISSING);
+                sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_GROUPID_ARGUMENT.getErrCode(),
+                        strBuff.append("Field ").append(HttpAttrConst.KEY_GROUP_ID)
+                                .append(" must exist and not blank!").toString(),
+                        isCloseCon, callback);
+                return;
+            }
+            // get and check streamId
+            streamId = reqAttrs.get(HttpAttrConst.KEY_STREAM_ID);
+            if (StringUtils.isBlank(streamId)) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_STREAMID_MISSING);
+                sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_STREAMID_ARGUMENT.getErrCode(),
+                        strBuff.append("Field ").append(HttpAttrConst.KEY_STREAM_ID)
+                                .append(" must exist and not blank!").toString(),
+                        isCloseCon, callback);
+                return;
+            }
+            // get and check topicName
+            topicName = ConfigManager.getInstance().getTopicName(groupId, streamId);
+            if (StringUtils.isBlank(topicName)) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
+                sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
+                        strBuff.append("Topic not configured for ").append(HttpAttrConst.KEY_GROUP_ID)
+                                .append("(").append(groupId).append("),")
+                                .append(HttpAttrConst.KEY_STREAM_ID)
+                                .append("(,").append(streamId).append(")").toString(),
+                        isCloseCon, callback);
+                return;
+            }
         }
         // get and check dt
         long dataTime = msgRcvTime;
@@ -321,14 +377,30 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
         String strMsgCount = String.valueOf(intMsgCnt);
         // build message attributes
         InLongMsg inLongMsg = InLongMsg.newInLongMsg(source.isCompressed());
-        strBuff.append("groupId=").append(groupId)
-                .append("&streamId=").append(streamId)
-                .append("&dt=").append(dataTime)
-                .append("&clientIp=").append(clientIp)
-                .append("&cnt=").append(strMsgCount)
-                .append("&rt=").append(msgRcvTime)
-                .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
-                .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
+        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+            String mxValue = ConfigManager.getInstance().getMxProperties(groupId);
+            if (StringUtils.isBlank(mxValue)) {
+                mxValue = "m=0";
+            }
+            strBuff.append(mxValue)
+                    .append("&bid=").append(groupId)
+                    .append("&tid=").append(streamId)
+                    .append("&dt=").append(dataTime)
+                    .append("&NodeIP=").append(clientIp)
+                    .append("&cnt=").append(strMsgCount)
+                    .append("&rt=").append(msgRcvTime)
+                    .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
+                    .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
+        } else {
+            strBuff.append("groupId=").append(groupId)
+                    .append("&streamId=").append(streamId)
+                    .append("&dt=").append(dataTime)
+                    .append("&clientIp=").append(clientIp)
+                    .append("&cnt=").append(strMsgCount)
+                    .append("&rt=").append(msgRcvTime)
+                    .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
+                    .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
+        }
         inLongMsg.addMsg(strBuff.toString(), body.getBytes(HttpAttrConst.VAL_DEF_CHARSET));
         byte[] inlongMsgData = inLongMsg.buildArray();
         long pkgTime = inLongMsg.getCreatetime();
