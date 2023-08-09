@@ -37,6 +37,8 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.CorruptedFrameException;
+import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -47,6 +49,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.util.CharsetUtil;
 import org.apache.commons.codec.CharEncoding;
 import org.apache.commons.codec.Charsets;
@@ -72,6 +75,8 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
     private static final Logger logger = LoggerFactory.getLogger(HttpMessageHandler.class);
     // log print count
     private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
+    // exception log print count
+    private static final LogCounter exceptLogCounter = new LogCounter(10, 50000, 20 * 1000);
     private final BaseSource source;
 
     /**
@@ -234,8 +239,18 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        source.fileMetricIncSumStats(StatConstants.EVENT_VISIT_EXCEPTION);
-        if (logCounter.shouldPrint()) {
+        if (cause instanceof ReadTimeoutException) {
+            source.fileMetricIncSumStats(StatConstants.EVENT_HTTP_LINK_READ_TIMEOUT);
+        } else if (cause instanceof TooLongFrameException) {
+            source.fileMetricIncSumStats(StatConstants.EVENT_HTTP_LINK_FRAME_OVERMAX);
+        } else if (cause instanceof CorruptedFrameException) {
+            source.fileMetricIncSumStats(StatConstants.EVENT_HTTP_LINK_FRAME_CORRPUTED);
+        } else if (cause instanceof IOException) {
+            source.fileMetricIncSumStats(StatConstants.EVENT_HTTP_LINK_IO_EXCEPTION);
+        } else {
+            source.fileMetricIncSumStats(StatConstants.EVENT_HTTP_LINK_UNKNOWN_EXCEPTION);
+        }
+        if (exceptLogCounter.shouldPrint()) {
             logger.warn("{} received an exception from channel {}",
                     source.getCachedSrcName(), ctx.channel(), cause);
         }
@@ -492,7 +507,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
         if (!ctx.channel().isWritable()) {
-            source.fileMetricIncSumStats(StatConstants.EVENT_REMOTE_UNWRITABLE);
+            source.fileMetricIncSumStats(StatConstants.EVENT_HTTP_LINK_UNWRITABLE);
             if (logCounter.shouldPrint()) {
                 logger.warn("Send msg but channel full, channel={}", ctx.channel());
             }
