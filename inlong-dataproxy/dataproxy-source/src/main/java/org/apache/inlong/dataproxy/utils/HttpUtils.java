@@ -73,7 +73,7 @@ public class HttpUtils {
 
     }
 
-    public static HttpGet getTDBankHttPost(String url) {
+    public static HttpGet getTDBankHttpGet(String url) {
         HttpGet httpGet = new HttpGet(url);
         httpGet.addHeader(HttpHeaders.CONNECTION, "close");
         httpGet.addHeader(HttpHeaders.AUTHORIZATION,

@@ -68,13 +68,16 @@ public abstract class AbsV0MsgCodec {
     protected String msgProcType = "b2b";
     protected boolean needResp = true;
     protected long msgPkgTime;
+    // whether enable tdbank logic
+    protected boolean enableTDBankLogic;
 
     public AbsV0MsgCodec(int totalDataLen, int msgTypeValue,
-            long msgRcvTime, String strRemoteIP) {
+            long msgRcvTime, String strRemoteIP, boolean enableTDBankLogic) {
         this.totalDataLen = totalDataLen;
         this.msgType = (byte) (msgTypeValue & 0xFF);
         this.msgRcvTime = msgRcvTime;
         this.strRemoteIP = strRemoteIP;
+        this.enableTDBankLogic = enableTDBankLogic;
     }
 
     public abstract boolean descMsg(BaseSource source, ByteBuf cb) throws Exception;

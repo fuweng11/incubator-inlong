@@ -29,6 +29,12 @@ public interface AttributeConstants {
     String GROUP_ID = "groupId";
 
     /**
+     *  business id
+     *  unique string id for each business or product
+     */
+    public static final String BUSINESS_ID = "bid";
+
+    /**
      * stream id
      * unique string id for each interface of business
      * An steam stand for a kind of data

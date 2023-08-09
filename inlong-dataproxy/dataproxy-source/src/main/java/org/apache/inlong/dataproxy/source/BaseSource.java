@@ -128,10 +128,13 @@ public abstract class BaseSource
     private MonitorStats monitorStats = null;
     // metric set
     private DataProxyMetricItemSet metricItemSet;
+    // whether enable tdbank logic
+    protected boolean enableTDBankLogic;
 
     public BaseSource() {
         super();
         allChannels = new DefaultChannelGroup("DefaultChannelGroup", GlobalEventExecutor.INSTANCE);
+        this.enableTDBankLogic = CommonConfigHolder.getInstance().isEnableTDBankLogic();
     }
 
     @Override

@@ -126,6 +126,11 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
             // read type
             int msgTypeValue = cb.readByte();
             if (msgTypeValue == 0x0) {
+                if (source.enableTDBankLogic) {
+                    // unknown message type
+                    source.fileMetricIncSumStats(StatConstants.EVENT_MSG_MSGTYPE_TDBANK_INVALID);
+                    throw new PkgParseException("Unknown V1 message version, version = " + msgTypeValue);
+                }
                 // process v1 messsages
                 msgTypeValue = cb.readByte();
                 if (msgTypeValue == INLONG_MSG_V1) {
@@ -171,7 +176,8 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                         }
                         throw new PkgParseException(errMsg);
                     }
-                    msgCodec = new CodecBinMsg(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP);
+                    msgCodec = new CodecBinMsg(totalDataLen,
+                            msgTypeValue, msgRcvTime, strRemoteIP, source.enableTDBankLogic);
                 } else {
                     if (totalDataLen < TXT_MSG_FIXED_CONTENT_SIZE) {
                         source.fileMetricIncSumStats(StatConstants.EVENT_MSG_TXT_TOTALLEN_BELOWMIN);
@@ -182,7 +188,8 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                         }
                         throw new PkgParseException(errMsg);
                     }
-                    msgCodec = new CodecTextMsg(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP);
+                    msgCodec = new CodecTextMsg(totalDataLen,
+                            msgTypeValue, msgRcvTime, strRemoteIP, source.enableTDBankLogic);
                 }
                 // process request
                 processV0Msg(channel, cb, msgCodec);
@@ -290,30 +297,48 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
         }
         // build InLong event.
         Event event = msgCodec.encEventPackage(source, channel);
-        try {
-            source.getCachedChProcessor().processEvent(event);
-            source.fileMetricAddSuccStats(strBuff, msgCodec.getGroupId(), msgCodec.getStreamId(),
-                    msgCodec.getTopicName(), msgCodec.getStrRemoteIP(), msgCodec.getMsgProcType(),
-                    msgCodec.getDataTimeMs(), msgCodec.getMsgPkgTime(), msgCodec.getMsgCount(), 1,
-                    event.getBody().length);
-            source.addMetric(true, event.getBody().length, event);
-            if (msgCodec.isNeedResp() && !msgCodec.isOrderOrProxy()) {
+        // send event to channel
+        if (msgCodec.isIndexMsg()) {
+            try {
+                source.getCachedChProcessor().processEvent(event);
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_INDEX_POST_SUCCESS);
                 msgCodec.setSuccessInfo();
                 responseV0Msg(channel, msgCodec, strBuff);
-            }
-        } catch (Throwable ex) {
-            source.fileMetricAddFailStats(strBuff, msgCodec.getGroupId(), msgCodec.getStreamId(),
-                    msgCodec.getTopicName(), msgCodec.getStrRemoteIP(), msgCodec.getMsgProcType(),
-                    msgCodec.getDataTimeMs(), msgCodec.getMsgPkgTime(), 1);
-            source.addMetric(false, event.getBody().length, event);
-            if (msgCodec.isNeedResp()) {
+            } catch (Throwable ex) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_INDEX_POST_FAILURE);
                 msgCodec.setFailureInfo(DataProxyErrCode.PUT_EVENT_TO_CHANNEL_FAILURE,
                         strBuff.append("Put event to channel failure: ").append(ex.getMessage()).toString());
-                strBuff.delete(0, strBuff.length());
                 responseV0Msg(channel, msgCodec, strBuff);
+                if (logCounter.shouldPrint()) {
+                    logger.error("Error writing index to controller,data will discard.", ex);
+                }
             }
-            if (logCounter.shouldPrint()) {
-                logger.error("Error writing event to channel failure.", ex);
+        } else {
+            try {
+                source.getCachedChProcessor().processEvent(event);
+                source.fileMetricAddSuccStats(strBuff, msgCodec.getGroupId(), msgCodec.getStreamId(),
+                        msgCodec.getTopicName(), msgCodec.getStrRemoteIP(), msgCodec.getMsgProcType(),
+                        msgCodec.getDataTimeMs(), msgCodec.getMsgPkgTime(), msgCodec.getMsgCount(), 1,
+                        event.getBody().length);
+                source.addMetric(true, event.getBody().length, event);
+                if (msgCodec.isNeedResp() && !msgCodec.isOrderOrProxy()) {
+                    msgCodec.setSuccessInfo();
+                    responseV0Msg(channel, msgCodec, strBuff);
+                }
+            } catch (Throwable ex) {
+                source.fileMetricAddFailStats(strBuff, msgCodec.getGroupId(), msgCodec.getStreamId(),
+                        msgCodec.getTopicName(), msgCodec.getStrRemoteIP(), msgCodec.getMsgProcType(),
+                        msgCodec.getDataTimeMs(), msgCodec.getMsgPkgTime(), 1);
+                source.addMetric(false, event.getBody().length, event);
+                if (msgCodec.isNeedResp()) {
+                    msgCodec.setFailureInfo(DataProxyErrCode.PUT_EVENT_TO_CHANNEL_FAILURE,
+                            strBuff.append("Put event to channel failure: ").append(ex.getMessage()).toString());
+                    strBuff.delete(0, strBuff.length());
+                    responseV0Msg(channel, msgCodec, strBuff);
+                }
+                if (logCounter.shouldPrint()) {
+                    logger.error("Error writing event to channel failure.", ex);
+                }
             }
         }
     }

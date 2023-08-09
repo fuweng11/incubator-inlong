@@ -53,6 +53,7 @@ public class StatConstants {
     public static final java.lang.String EVENT_MSG_READABLE_UNFILLED = "msg.readable.unfilled";
     public static final java.lang.String EVENT_MSG_MSGTYPE_V0_INVALID = "msg.msgtype.v0.invalid";
     public static final java.lang.String EVENT_MSG_MSGTYPE_V1_INVALID = "msg.msgtype.v1.invalid";
+    public static final java.lang.String EVENT_MSG_MSGTYPE_TDBANK_INVALID = "msg.msgtype.tdbank.invalid";
     public static final java.lang.String EVENT_MSG_BIN_TOTALLEN_BELOWMIN = "msg.bin.totallen.belowmin";
     public static final java.lang.String EVENT_MSG_TXT_TOTALLEN_BELOWMIN = "msg.txt.totallen.belowmin";
     public static final java.lang.String EVENT_MSG_DECODE_FAIL = "msg.decode.failure";
@@ -80,6 +81,7 @@ public class StatConstants {
     public static final java.lang.String EVENT_MSG_ORDER_ACK_INVALID = "msg.attr.order.noack";
     public static final java.lang.String EVENT_MSG_PROXY_ACK_INVALID = "msg.attr.proxy.noack";
     public static final java.lang.String EVENT_MSG_INDEXMSG_ILLEGAL = "msg.index.illegal";
+    public static final java.lang.String EVENT_MSG_PKGTIME_ILLEGAL = "msg.pkg.time.illegal";
     public static final java.lang.String EVENT_MSG_GROUPIDNUM_ZERO = "msg.groupidnum.zero";
     public static final java.lang.String EVENT_MSG_STREAMIDNUM_ZERO = "msg.streamidnum.zero";
     public static final java.lang.String EVENT_MSG_HB_SUCCESS = "msg.hb.success";
@@ -87,6 +89,8 @@ public class StatConstants {
     public static final java.lang.String EVENT_MSG_V0_POST_FAILURE = "msg.post.v0.failure";
     public static final java.lang.String EVENT_MSG_V1_POST_SUCCESS = "msg.post.v1.success";
     public static final java.lang.String EVENT_MSG_V1_POST_DROPPED = "msg.post.v1.dropped";
+    public static final java.lang.String EVENT_MSG_INDEX_POST_SUCCESS = "msg.index.post.success";
+    public static final java.lang.String EVENT_MSG_INDEX_POST_FAILURE = "msg.index.post.failure";
     // sink
     public static final java.lang.String EVENT_SINK_EVENT_V1_MALFORMED = "sink.event.v1.malformed";
     public static final java.lang.String EVENT_SINK_EVENT_TAKE_SUCCESS = "sink.event.take.success";

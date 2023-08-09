@@ -23,8 +23,10 @@ import org.apache.inlong.common.msg.InLongMsg;
 import org.apache.inlong.common.msg.MsgType;
 import org.apache.inlong.dataproxy.base.SinkRspEvent;
 import org.apache.inlong.dataproxy.config.ConfigManager;
+import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
 import org.apache.inlong.dataproxy.source.BaseSource;
+import org.apache.inlong.dataproxy.utils.DateTimeUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -34,6 +36,7 @@ import org.apache.flume.event.EventBuilder;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.inlong.dataproxy.source.v0msg.MsgFieldConsts.BIN_MSG_ATTRLEN_SIZE;
@@ -63,8 +66,8 @@ public class CodecBinMsg extends AbsV0MsgCodec {
     private boolean needTraceMsg = false;
 
     public CodecBinMsg(int totalDataLen, int msgTypeValue,
-            long msgRcvTime, String strRemoteIP) {
-        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP);
+            long msgRcvTime, String strRemoteIP, boolean enableTDBankLogic) {
+        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP, enableTDBankLogic);
     }
 
     public boolean descMsg(BaseSource source, ByteBuf cb) throws Exception {
@@ -136,7 +139,7 @@ public class CodecBinMsg extends AbsV0MsgCodec {
 
     public boolean validAndFillFields(BaseSource source, StringBuilder strBuff) {
         // reject unsupported index messages
-        if (indexMsg) {
+        if (indexMsg && !enableTDBankLogic) {
             source.fileMetricIncSumStats(StatConstants.EVENT_MSG_INDEXMSG_ILLEGAL);
             this.errCode = DataProxyErrCode.UNSUPPORTED_EXTEND_FIELD_VALUE;
             return false;
@@ -146,16 +149,38 @@ public class CodecBinMsg extends AbsV0MsgCodec {
             return false;
         }
         // build message seqId
+        String pkgTimeStr;
+        if (enableTDBankLogic) {
+            pkgTimeStr = attrMap.get(ConfigConstants.PKG_TIME_KEY);
+            if (pkgTimeStr == null) {
+                pkgTimeStr = String.valueOf(dataTimeMs);
+            } else {
+                pkgTimeStr = attrMap.get(ConfigConstants.PKG_TIME_KEY);
+            }
+        } else {
+            pkgTimeStr = String.valueOf(dataTimeMs);
+        }
         this.msgSeqId = strBuff.append(this.groupId)
                 .append(AttributeConstants.SEPARATOR).append(this.streamId)
                 .append(AttributeConstants.SEPARATOR).append(strRemoteIP)
-                .append("#").append(dataTimeMs).append("#").append(uniq).toString();
+                .append("#").append(pkgTimeStr).append("#").append(uniq).toString();
         strBuff.delete(0, strBuff.length());
         // check required rtms attrs
         if (StringUtils.isBlank(attrMap.get(AttributeConstants.MSG_RPT_TIME))) {
             strBuff.append(AttributeConstants.MSG_RPT_TIME)
                     .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
             attrMap.put(AttributeConstants.MSG_RPT_TIME, String.valueOf(msgRcvTime));
+        }
+        if (enableTDBankLogic && !indexMsg) {
+            // add extra attributes
+            String mValues = ConfigManager.getInstance().getMxProperties(groupId);
+            if (StringUtils.isEmpty(mValues)) {
+                mValues = source.getDefAttr();
+            }
+            if (strBuff.length() > 0) {
+                strBuff.append(AttributeConstants.SEPARATOR);
+            }
+            strBuff.append(mValues);
         }
         // get trace requirement
         if (this.needTraceMsg) {
@@ -175,19 +200,36 @@ public class CodecBinMsg extends AbsV0MsgCodec {
             if (strBuff.length() > 0) {
                 strBuff.append(AttributeConstants.SEPARATOR);
             }
-            strBuff.append(AttributeConstants.GROUP_ID)
-                    .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(groupId)
-                    .append(AttributeConstants.SEPARATOR)
-                    .append(AttributeConstants.STREAM_ID)
-                    .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(streamId);
-            for (Map.Entry<String, String> entry : attrMap.entrySet()) {
-                if (AttributeConstants.GROUP_ID.equalsIgnoreCase(entry.getKey())
-                        || AttributeConstants.STREAM_ID.equalsIgnoreCase(entry.getKey())) {
-                    continue;
+            if (enableTDBankLogic) {
+                strBuff.append(AttributeConstants.BUSINESS_ID)
+                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(groupId)
+                        .append(AttributeConstants.SEPARATOR)
+                        .append(AttributeConstants.TID)
+                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(streamId);
+                for (Map.Entry<String, String> entry : attrMap.entrySet()) {
+                    if (AttributeConstants.BUSINESS_ID.equalsIgnoreCase(entry.getKey())
+                            || AttributeConstants.TID.equalsIgnoreCase(entry.getKey())) {
+                        continue;
+                    }
+                    strBuff.append(AttributeConstants.SEPARATOR)
+                            .append(entry.getKey())
+                            .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(entry.getValue());
                 }
-                strBuff.append(AttributeConstants.SEPARATOR)
-                        .append(entry.getKey())
-                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(entry.getValue());
+            } else {
+                strBuff.append(AttributeConstants.GROUP_ID)
+                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(groupId)
+                        .append(AttributeConstants.SEPARATOR)
+                        .append(AttributeConstants.STREAM_ID)
+                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(streamId);
+                for (Map.Entry<String, String> entry : attrMap.entrySet()) {
+                    if (AttributeConstants.GROUP_ID.equalsIgnoreCase(entry.getKey())
+                            || AttributeConstants.STREAM_ID.equalsIgnoreCase(entry.getKey())) {
+                        continue;
+                    }
+                    strBuff.append(AttributeConstants.SEPARATOR)
+                            .append(entry.getKey())
+                            .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(entry.getValue());
+                }
             }
             this.groupIdNum = 0;
             this.streamIdNum = 0;
@@ -208,6 +250,18 @@ public class CodecBinMsg extends AbsV0MsgCodec {
     }
 
     public Event encEventPackage(BaseSource source, Channel channel) {
+        if (indexMsg) {
+            // encode index message event
+            Map<String, String> headers = new HashMap<>();
+            if (fileCheckMsg) {
+                headers.put("msgtype", "filestatus");
+                headers.put(ConfigConstants.FILE_CHECK_DATA, "true");
+            } else {
+                headers.put("msgtype", "measure");
+                headers.put(ConfigConstants.FILE_CHECK_DATA, "true");
+            }
+            return EventBuilder.withBody(bodyData, headers);
+        }
         // fill bin msg package
         int totalPkgLength = totalDataLen + BIN_MSG_TOTALLEN_SIZE;
         ByteBuffer dataBuf = ByteBuffer.allocate(totalPkgLength);
@@ -234,7 +288,21 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         InLongMsg inLongMsg = InLongMsg.newInLongMsg(source.isCompressed(), 4);
         inLongMsg.addMsg(dataBuf.array());
         byte[] inlongMsgData = inLongMsg.buildArray();
-        msgPkgTime = inLongMsg.getCreatetime();
+        if (enableTDBankLogic) {
+            String pkgTimeStr = this.attrMap.get(ConfigConstants.PKG_TIME_KEY);
+            if (pkgTimeStr == null) {
+                msgPkgTime = inLongMsg.getCreatetime();
+            } else {
+                try {
+                    msgPkgTime = DateTimeUtils.yyyyMMddHHmm2ms(pkgTimeStr);
+                } catch (Throwable e) {
+                    msgPkgTime = inLongMsg.getCreatetime();
+                    source.fileMetricIncSumStats(StatConstants.EVENT_MSG_PKGTIME_ILLEGAL);
+                }
+            }
+        } else {
+            msgPkgTime = inLongMsg.getCreatetime();
+        }
         Event event = EventBuilder.withBody(inlongMsgData, buildEventHeaders(source));
         if (isOrderOrProxy) {
             event = new SinkRspEvent(event, MsgType.MSG_BIN_MULTI_BODY, channel);
@@ -246,8 +314,13 @@ public class CodecBinMsg extends AbsV0MsgCodec {
     private boolean validAndFillTopic(BaseSource source) {
         // valid groupId, streamId
         ConfigManager configManager = ConfigManager.getInstance();
-        this.groupId = this.attrMap.get(AttributeConstants.GROUP_ID);
-        this.streamId = this.attrMap.get(AttributeConstants.STREAM_ID);
+        if (enableTDBankLogic) {
+            this.groupId = this.attrMap.get(AttributeConstants.BUSINESS_ID);
+            this.streamId = this.attrMap.get(AttributeConstants.TID);
+        } else {
+            this.groupId = this.attrMap.get(AttributeConstants.GROUP_ID);
+            this.streamId = this.attrMap.get(AttributeConstants.STREAM_ID);
+        }
         if (num2name) {
             if (this.groupIdNum == 0) {
                 source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPIDNUM_ZERO);
@@ -326,16 +399,22 @@ public class CodecBinMsg extends AbsV0MsgCodec {
             }
         }
         // get and check topic configure
-        this.topicName = configManager.getTopicName(this.groupId, this.streamId);
-        if (StringUtils.isBlank(this.topicName)) {
-            source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
-            this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
-            this.errMsg = String.format("Topic not configured for groupId=(%s), streamId=(%s)",
-                    this.groupId, this.streamId);
-            return false;
-        }
-        if (StringUtils.isBlank(this.streamId)) {
-            this.streamId = "";
+        if (!indexMsg) {
+            if (enableTDBankLogic) {
+                this.topicName = configManager.getTDBankTopicName(this.groupId);
+            } else {
+                this.topicName = configManager.getTopicName(this.groupId, this.streamId);
+            }
+            if (StringUtils.isBlank(this.topicName)) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
+                this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
+                this.errMsg = String.format("Topic not configured for groupId=(%s), streamId=(%s)",
+                        this.groupId, this.streamId);
+                return false;
+            }
+            if (StringUtils.isBlank(this.streamId)) {
+                this.streamId = "";
+            }
         }
         return true;
     }

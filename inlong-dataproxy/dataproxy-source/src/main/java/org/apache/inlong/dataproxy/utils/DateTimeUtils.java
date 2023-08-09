@@ -40,6 +40,17 @@ public class DateTimeUtils {
     }
 
     /**
+     * Converts the time string in yyyyMMddHHmm format to timestamp value
+     * under the current system default time zone
+     *
+     * @param yyyyMMddHHmm the time string in yyyyMMddHHmm format
+     * @return the timestamp value
+     */
+    public static long yyyyMMddHHmm2ms(String yyyyMMddHHmm) {
+        return yyyyMMddHHmm2ms(yyyyMMddHHmm, defZoneId);
+    }
+
+    /**
      * convert ms value to ten minute level 'yyyyMMddHHmm' string
      *
      * @param timestamp The millisecond value of the specified time
@@ -52,4 +63,17 @@ public class DateTimeUtils {
         return DATE_FORMATTER.format(localDateTime);
     }
 
+    /**
+     * Converts the time string in yyyyMMddHHmm format to timestamp value
+     * under the specified time zone
+     *
+     * @param yyyyMMddHHmm the time string in yyyyMMddHHmm format
+     * @param zoneId the specified time zone
+     * @return the timestamp value
+     */
+    public static long yyyyMMddHHmm2ms(String yyyyMMddHHmm, ZoneId zoneId) {
+        LocalDateTime localDateTime =
+                LocalDateTime.parse(yyyyMMddHHmm, DATE_FORMATTER);
+        return LocalDateTime.from(localDateTime).atZone(zoneId).toInstant().toEpochMilli();
+    }
 }

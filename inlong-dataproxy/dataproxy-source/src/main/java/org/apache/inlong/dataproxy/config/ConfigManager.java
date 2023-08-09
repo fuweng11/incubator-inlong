@@ -251,6 +251,7 @@ public class ConfigManager {
         private final ConfigManager configManager;
         private final CloseableHttpClient httpClient;
         private final Gson gson = new Gson();
+        private final boolean enableTDBankLogic;
         private boolean isRunning = true;
         private final AtomicInteger managerIpListIndex = new AtomicInteger(0);
 
@@ -259,6 +260,7 @@ public class ConfigManager {
             this.httpClient = constructHttpClient();
             SecureRandom random = new SecureRandom(String.valueOf(System.currentTimeMillis()).getBytes());
             managerIpListIndex.set(random.nextInt());
+            this.enableTDBankLogic = CommonConfigHolder.getInstance().isEnableTDBankLogic();
         }
 
         public static ReloadConfigWorker create(ConfigManager managerInstance) {
@@ -285,7 +287,7 @@ public class ConfigManager {
                     // connect to manager
                     if (fisrtCheck) {
                         fisrtCheck = false;
-                        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+                        if (this.enableTDBankLogic) {
                             checkTDBankRemoteConfig();
                         } else {
                             checkRemoteConfig();
@@ -294,7 +296,7 @@ public class ConfigManager {
                     } else {
                         // wait for 3 * check-time to update remote config
                         if (count % 3 == 0) {
-                            if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+                            if (this.enableTDBankLogic) {
                                 checkTDBankRemoteConfig();
                             } else {
                                 checkRemoteConfig();
@@ -459,7 +461,7 @@ public class ConfigManager {
             HttpGet httpGet = null;
             try {
                 url = "http://" + host + "/business?opType=queryBusConfig&cluster_ids=" + clusterId;
-                httpGet = HttpUtils.getTDBankHttPost(url);
+                httpGet = HttpUtils.getTDBankHttpGet(url);
                 // request with post
                 LOG.info("Start to request {} to get config info, with headers: {}",
                         url, httpGet.getAllHeaders());

@@ -78,6 +78,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
     // exception log print count
     private static final LogCounter exceptLogCounter = new LogCounter(10, 50000, 20 * 1000);
     private final BaseSource source;
+    private final boolean enableTDBankLogic;
 
     /**
      * Constructor
@@ -86,6 +87,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
      */
     public HttpMessageHandler(BaseSource source) {
         this.source = source;
+        this.enableTDBankLogic = CommonConfigHolder.getInstance().isEnableTDBankLogic();
     }
 
     @Override
@@ -129,7 +131,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
         QueryStringDecoder uriDecoder =
                 new QueryStringDecoder(req.uri(), Charsets.toCharset(CharEncoding.UTF_8));
         // check requested service url
-        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+        if (this.enableTDBankLogic) {
             if (!HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())
                     && !HttpAttrConst.TDBANK_KEY_SRV_URL_REPORT_MSG.equals(uriDecoder.path())) {
                 if (!HttpAttrConst.KEY_URL_FAVICON_ICON.equals(uriDecoder.path())) {
@@ -286,7 +288,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
         String topicName;
         StringBuilder strBuff = new StringBuilder(512);
         String callback = reqAttrs.get(HttpAttrConst.KEY_CALLBACK);
-        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+        if (this.enableTDBankLogic) {
             groupId = reqAttrs.get(HttpAttrConst.TDBANK_KEY_BUSINESS_ID);
             if (StringUtils.isBlank(groupId)) {
                 source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPID_MISSING);
@@ -393,7 +395,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
         String strMsgCount = String.valueOf(intMsgCnt);
         // build message attributes
         InLongMsg inLongMsg = InLongMsg.newInLongMsg(source.isCompressed());
-        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+        if (this.enableTDBankLogic) {
             String mxValue = ConfigManager.getInstance().getMxProperties(groupId);
             if (StringUtils.isBlank(mxValue)) {
                 mxValue = "m=0";
