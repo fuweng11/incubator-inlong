@@ -18,6 +18,7 @@
 package org.apache.inlong.dataproxy.channel;
 
 import org.apache.inlong.common.msg.AttributeConstants;
+import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.utils.MessageUtils;
 
@@ -41,28 +42,38 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
 
     private static final String SELECTOR_PROPS = "selector.";
     private static final String MASTER_CHANNEL = "master";
-    private static final String TRANSFER_CHANNEL = "transfer";
-    private static final String FILE_METRIC_CHANNEL = "fileMetric";
+    private static final String FILE_METRIC_MASTER_CHANNEL = "fileMetricMaster";
+    private static final String FILE_METRIC_SLAVE_CHANNEL = "fileMetricSlave";
     private static final String SLA_METRIC_CHANNEL = "slaMetric";
     private static final String ORDER_CHANNEL = "order";
+    private static final String PULSAR_XFE_MASTER_CHANNEL = "pulsarXfeMaster";
+    private static final String PULSAR_XFE_SLAVE_CHANNEL = "pulsarXfeSlave";
+    // message channels
+    private int msgMasterIndex = 0;
+    private int msgSlaveIndex = 0;
+    private final List<Channel> msgMasterChannels = new ArrayList<>();
+    private final List<Channel> msgSlaveChannels = new ArrayList<>();
+    // pulsar transfer channels
+    private int pulsarXfeMasterIndex = 0;
+    private int pulsarXfeSlaveIndex = 0;
+    private List<Channel> pulsarXfeMasterChannels = new ArrayList<>();
+    private List<Channel> pulsarXfeSlaveChannels = new ArrayList<>();
+    private boolean ignorePulsarXfeError = true;
+    // agent metric channels
+    private int agentMetricMasterIndex = 0;
+    private int agentMetricSlaveIndex = 0;
+    private final List<Channel> agentMetricMasterChannels = new ArrayList<>();
+    private final List<Channel> agentMetricSlaveChannels = new ArrayList<>();
 
-    private int masterIndex = 0;
-    private int slaveIndex = 0;
-
-    private final List<Channel> masterChannels = new ArrayList<Channel>();
-    private final List<Channel> orderChannels = new ArrayList<Channel>();
-    private final List<Channel> slaveChannels = new ArrayList<Channel>();
-    private final List<Channel> transferChannels = new ArrayList<Channel>();
-    private final List<Channel> agentFileMetricChannels = new ArrayList<Channel>();
-    private final List<Channel> slaMetricChannels = new ArrayList<Channel>();
+    private final List<Channel> orderChannels = new ArrayList<>();
+    private final List<Channel> slaMetricChannels = new ArrayList<>();
 
     @Override
     public List<Channel> getRequiredChannels(Event event) {
-        List<Channel> retChannels = new ArrayList<Channel>();
-        if (event.getHeaders().containsKey(ConfigConstants.TRANSFER_KEY)) {
-            retChannels.add(transferChannels.get(0));
-        } else if (event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
-            retChannels.add(agentFileMetricChannels.get(0));
+        List<Channel> retChannels = new ArrayList<>();
+        if (event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
+            retChannels.add(agentMetricMasterChannels.get(agentMetricMasterIndex));
+            agentMetricMasterIndex = (agentMetricMasterIndex + 1) % agentMetricMasterChannels.size();
         } else if (event.getHeaders().containsKey(ConfigConstants.SLA_METRIC_DATA)) {
             retChannels.add(slaMetricChannels.get(0));
         } else if (MessageUtils.isSyncSendForOrder(event)) {
@@ -73,26 +84,59 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
             int channelIndex = Math.abs(partitionKey.hashCode()) % orderChannels.size();
             retChannels.add(orderChannels.get(channelIndex));
         } else {
-            retChannels.add(masterChannels.get(masterIndex));
-            masterIndex = (masterIndex + 1) % masterChannels.size();
+            retChannels.add(msgMasterChannels.get(msgMasterIndex));
+            msgMasterIndex = (msgMasterIndex + 1) % msgMasterChannels.size();
+        }
+        return retChannels;
+    }
+
+    public List<Channel> getRequiredPulsarXfeChannels(Event event) {
+        List<Channel> retChannels = new ArrayList<>();
+        if (pulsarXfeMasterChannels.isEmpty()
+                || event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
+            return retChannels;
+        }
+        if (ConfigManager.getInstance().isRequirePulsarTransfer(
+                event.getHeaders().get(AttributeConstants.GROUP_ID),
+                event.getHeaders().get(AttributeConstants.STREAM_ID))) {
+            retChannels.add(pulsarXfeMasterChannels.get(pulsarXfeMasterIndex));
+            pulsarXfeMasterIndex = (pulsarXfeMasterIndex + 1) % pulsarXfeMasterChannels.size();
         }
         return retChannels;
     }
 
     @Override
     public List<Channel> getOptionalChannels(Event event) {
-        List<Channel> retChannels = new ArrayList<Channel>();
-        if (event.getHeaders().containsKey(ConfigConstants.TRANSFER_KEY)) {
-            retChannels.add(transferChannels.get(0));
-        } else if (event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
-            retChannels.add(agentFileMetricChannels.get(0));
+        List<Channel> retChannels = new ArrayList<>();
+        if (event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
+            retChannels.add(agentMetricSlaveChannels.get(agentMetricSlaveIndex));
+            agentMetricSlaveIndex = (agentMetricSlaveIndex + 1) % agentMetricSlaveChannels.size();
         } else if (event.getHeaders().containsKey(ConfigConstants.SLA_METRIC_DATA)) {
             retChannels.add(slaMetricChannels.get(1));
         } else {
-            retChannels.add(slaveChannels.get(slaveIndex));
-            slaveIndex = (slaveIndex + 1) % slaveChannels.size();
+            retChannels.add(msgSlaveChannels.get(msgSlaveIndex));
+            msgSlaveIndex = (msgSlaveIndex + 1) % msgSlaveChannels.size();
         }
         return retChannels;
+    }
+
+    public List<Channel> getOptionalPulsarXfeChannels(Event event) {
+        List<Channel> retChannels = new ArrayList<>();
+        if (pulsarXfeSlaveChannels.isEmpty()
+                || event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
+            return retChannels;
+        }
+        if (ConfigManager.getInstance().isRequirePulsarTransfer(
+                event.getHeaders().get(AttributeConstants.GROUP_ID),
+                event.getHeaders().get(AttributeConstants.STREAM_ID))) {
+            retChannels.add(pulsarXfeSlaveChannels.get(pulsarXfeSlaveIndex));
+            pulsarXfeSlaveIndex = (pulsarXfeSlaveIndex + 1) % pulsarXfeSlaveChannels.size();
+        }
+        return retChannels;
+    }
+
+    public boolean isIgnoreXfeError() {
+        return ignorePulsarXfeError;
     }
 
     /**
@@ -113,39 +157,49 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
     public void configure(Context context) {
         // LOG.info(context.toString());
         String masters = context.getString(MASTER_CHANNEL);
-        String transfer = context.getString(TRANSFER_CHANNEL);
-        String fileMertic = context.getString(FILE_METRIC_CHANNEL);
+        String fileMerticMaster = context.getString(FILE_METRIC_MASTER_CHANNEL);
+        String fileMerticSlave = context.getString(FILE_METRIC_SLAVE_CHANNEL);
+        String pulsarXfeMaster = context.getString(PULSAR_XFE_MASTER_CHANNEL);
+        String pulsarXfeSlave = context.getString(PULSAR_XFE_SLAVE_CHANNEL);
         String slaMetric = context.getString(SLA_METRIC_CHANNEL);
         String orderMetric = context.getString(ORDER_CHANNEL);
         if (StringUtils.isEmpty(masters)) {
             throw new FlumeException("master channel is null!");
         }
         List<String> masterList = splitChannelName(masters);
-        List<String> transferList = splitChannelName(transfer);
-        List<String> fileMetricList = splitChannelName(fileMertic);
+        List<String> fileMetricMasterList = splitChannelName(fileMerticMaster);
+        List<String> fileMetricSlaveList = splitChannelName(fileMerticSlave);
+        List<String> pulsarXfeMasterList = splitChannelName(pulsarXfeMaster);
+        List<String> pulsarXfeSlaveList = splitChannelName(pulsarXfeSlave);
         List<String> slaMetricList = splitChannelName(slaMetric);
         List<String> orderMetricList = splitChannelName(orderMetric);
-
+        // classify channels
         for (Map.Entry<String, Channel> entry : getChannelNameMap().entrySet()) {
             String channelName = entry.getKey();
             Channel channel = entry.getValue();
             if (masterList.contains(channelName)) {
-                this.masterChannels.add(channel);
-            } else if (transferList.contains(channelName)) {
-                this.transferChannels.add(channel);
-            } else if (fileMetricList.contains(channelName)) {
-                this.agentFileMetricChannels.add(channel);
+                this.msgMasterChannels.add(channel);
+            } else if (fileMetricMasterList.contains(channelName)) {
+                this.agentMetricMasterChannels.add(channel);
+            } else if (fileMetricSlaveList.contains(channelName)) {
+                this.agentMetricSlaveChannels.add(channel);
+            } else if (pulsarXfeMasterList.contains(channelName)) {
+                this.pulsarXfeMasterChannels.add(channel);
+            } else if (pulsarXfeSlaveList.contains(channelName)) {
+                this.pulsarXfeSlaveChannels.add(channel);
             } else if (slaMetricList.contains(channelName)) {
                 this.slaMetricChannels.add(channel);
             } else if (orderMetricList.contains(channelName)) {
                 this.orderChannels.add(channel);
             } else {
-                this.slaveChannels.add(channel);
+                this.msgSlaveChannels.add(channel);
             }
         }
         LOG.info(
-                "Configure channels, masters={}, orders={}, slaves={}, transfers={}, agentFileMetrics={}, slaMetrics={}",
-                this.masterChannels, this.orderChannels, this.slaveChannels,
-                this.transferChannels, this.agentFileMetricChannels, this.slaMetricChannels);
+                "Configure channels, msgMasters={}, msgSlaves={}, agentMetricMaster={}, agentMetricSlave={}, pulsarXfeMaster={}, pulsarXfeSlave={}, orders={}, slaMetrics={}",
+                this.msgMasterChannels, this.msgSlaveChannels,
+                this.agentMetricMasterChannels, this.agentMetricSlaveChannels,
+                this.pulsarXfeMasterChannels, this.pulsarXfeSlaveChannels,
+                this.orderChannels, this.slaMetricChannels);
     }
 }

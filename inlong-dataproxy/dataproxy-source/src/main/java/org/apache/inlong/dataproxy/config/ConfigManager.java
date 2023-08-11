@@ -24,6 +24,7 @@ import org.apache.inlong.dataproxy.config.holder.BlackListConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.ConfigUpdateCallback;
 import org.apache.inlong.dataproxy.config.holder.GroupIdNumConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.MetaConfigHolder;
+import org.apache.inlong.dataproxy.config.holder.PulsarXfeConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.SourceReportConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.SourceReportInfo;
 import org.apache.inlong.dataproxy.config.holder.TDBankMetaConfigHolder;
@@ -50,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -80,6 +82,8 @@ public class ConfigManager {
     private final MetaConfigHolder metaConfigHolder = new MetaConfigHolder();
     // tdbank topic configure holder
     private final TDBankMetaConfigHolder tdbankMetaHolder = new TDBankMetaConfigHolder();
+    // tdbank pulsar transfer configure holder
+    private final PulsarXfeConfigHolder pulsarTransferHolder = new PulsarXfeConfigHolder();
     // source report configure holder
     private final SourceReportConfigHolder sourceReportConfigHolder = new SourceReportConfigHolder();
     // mq clusters ready
@@ -225,6 +229,19 @@ public class ConfigManager {
         return strRemoteIP == null
                 || blacklistConfigHolder.isIllegalIP(strRemoteIP)
                 || whitelistConfigHolder.isIllegalIP(strRemoteIP);
+    }
+
+    // register pulsar transfer configure change callback
+    public void regPulsarXfeConfigChgCallback(ConfigUpdateCallback callback) {
+        pulsarTransferHolder.addUpdateCallback(callback);
+    }
+
+    public boolean isRequirePulsarTransfer(String groupId, String streamId) {
+        return pulsarTransferHolder.isRequirePulsarTransfer(groupId, streamId);
+    }
+
+    public Map<String, String> getPulsarTransferConfigMap() {
+        return pulsarTransferHolder.getPulsarTransferConfigMap();
     }
 
     public void addSourceReportInfo(String sourceIp, String sourcePort, String protocolType) {

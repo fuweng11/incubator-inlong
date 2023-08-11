@@ -32,7 +32,7 @@ error() {
   fi
 }
 
-for i in {metadata.json,weight.properties,common.properties,blacklist.properties,whitelist.properties,groupid_mapping.properties}
+for i in {metadata.json,weight.properties,common.properties,blacklist.properties,whitelist.properties,groupid_mapping.properties,pulsar_transfer.properties}
 do
   if [ ! -f "$i" ]; then
     touch "$i"

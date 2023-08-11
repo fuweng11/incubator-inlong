@@ -91,6 +91,8 @@ public class StatConstants {
     public static final java.lang.String EVENT_MSG_V1_POST_DROPPED = "msg.post.v1.dropped";
     public static final java.lang.String EVENT_MSG_INDEX_POST_SUCCESS = "msg.index.post.success";
     public static final java.lang.String EVENT_MSG_INDEX_POST_FAILURE = "msg.index.post.failure";
+    public static final java.lang.String EVENT_MSG_XFE_PULSAR_SUCCESS = "msg.post.pulsar.xfe.success";
+    public static final java.lang.String EVENT_MSG_XFE_PULSAR_DROPPED = "msg.post.pulsar.xfe.dropped";
     // sink
     public static final java.lang.String EVENT_SINK_EVENT_V1_MALFORMED = "sink.event.v1.malformed";
     public static final java.lang.String EVENT_SINK_EVENT_TAKE_SUCCESS = "sink.event.take.success";

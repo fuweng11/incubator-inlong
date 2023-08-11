@@ -18,8 +18,13 @@
 package org.apache.inlong.dataproxy.channel;
 
 import org.apache.inlong.common.monitor.LogCounter;
+import org.apache.inlong.common.msg.AttributeConstants;
+import org.apache.inlong.dataproxy.config.CommonConfigHolder;
+import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
+import org.apache.inlong.dataproxy.consts.StatConstants;
 import org.apache.inlong.dataproxy.exception.MainChannelFullException;
+import org.apache.inlong.dataproxy.source.BaseSource;
 import org.apache.inlong.dataproxy.utils.MessageUtils;
 import org.apache.inlong.sdk.commons.protocol.ProxyPackEvent;
 
@@ -49,14 +54,18 @@ public class FailoverChannelProcessor
             ChannelProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(FailoverChannelProcessor.class);
-    private static final LogCounter logPrinter = new LogCounter(10, 10000, 60 * 1000);
+    private static final LogCounter logPrinter = new LogCounter(10, 10000, 40 * 1000);
 
+    private final BaseSource baseSource;
+    private final boolean enablePulsarXfe;
     private final ChannelSelector selector;
     private final InterceptorChain interceptorChain;
 
-    public FailoverChannelProcessor(ChannelSelector selector) {
+    public FailoverChannelProcessor(BaseSource baseSource, ChannelSelector selector) {
         super(selector);
         this.selector = selector;
+        this.baseSource = baseSource;
+        this.enablePulsarXfe = CommonConfigHolder.getInstance().isEnablePulsarTransfer();
         this.interceptorChain = new InterceptorChain();
     }
 
@@ -238,15 +247,34 @@ public class FailoverChannelProcessor
      * @param event The event to put into the configured channels.
      * @throws ChannelException when a write to a required channel fails.
      */
-
     public void processEvent(Event event) {
         event = interceptorChain.intercept(event);
         if (event == null) {
             return;
         }
+        // main (e.g. tube sink)
+        List<Channel> mainRequiredChannels = selector.getRequiredChannels(event);
+        List<Channel> mainOptionalChannels = selector.getOptionalChannels(event);
+        process(event, mainRequiredChannels, mainOptionalChannels, false, false);
+        // transfer to pulsar (pulsar sink)
+        if (!enablePulsarXfe || !(selector instanceof FailoverChannelSelector)
+                || event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)
+                || !ConfigManager.getInstance().isRequirePulsarTransfer(
+                        event.getHeaders().get(AttributeConstants.GROUP_ID),
+                        event.getHeaders().get(AttributeConstants.STREAM_ID))) {
+            return;
+        }
+        FailoverChannelSelector selector2 = ((FailoverChannelSelector) selector);
+        List<Channel> branchRequiredChannels = selector2.getRequiredPulsarXfeChannels(event);
+        List<Channel> branchOptionalChannels = selector2.getOptionalPulsarXfeChannels(event);
+        process(event, branchRequiredChannels, branchOptionalChannels, true, selector2.isIgnoreXfeError());
+    }
+
+    private void process(Event event, List<Channel> requiredChannels, List<Channel> optionalChannels,
+            boolean isPulsarXfe, boolean ignoreError) {
         String errMsg = "";
         boolean success = true;
-        List<Channel> requiredChannels = selector.getRequiredChannels(event);
+        // Process required channels
         for (Channel reqChannel : requiredChannels) {
             Transaction tx = reqChannel.getTransaction();
             Preconditions.checkNotNull(tx, "Transaction object must not be null");
@@ -257,14 +285,15 @@ public class FailoverChannelProcessor
 
                 tx.commit();
 
-            } catch (Throwable t) {
-                errMsg = "Unable to put event on channel " + reqChannel.getName()
-                        + ", error message is " + t.getMessage();
-                if (logPrinter.shouldPrint()) {
-                    LOG.error("FailoverChannelProcessor Unable to put event on required channel: "
-                            + reqChannel.getName(), t);
+                if (isPulsarXfe) {
+                    baseSource.fileMetricIncSumStats(StatConstants.EVENT_MSG_XFE_PULSAR_SUCCESS);
                 }
+            } catch (Throwable t) {
                 success = false;
+                errMsg = "Unable to put event on required channel, error message is " + t.getMessage();
+                if (logPrinter.shouldPrint()) {
+                    LOG.error("FailoverChannelProcessor Unable to put event on required channel", t);
+                }
                 try {
                     tx.rollback();
                 } catch (Throwable e) {
@@ -278,11 +307,16 @@ public class FailoverChannelProcessor
             }
         }
         if (!success) {
-            if (MessageUtils.isSyncSendForOrder(event)
-                    || event instanceof ProxyPackEvent) {
-                throw new MainChannelFullException(errMsg);
+            // Process optional channels
+            if (MessageUtils.isSyncSendForOrder(event) || event instanceof ProxyPackEvent) {
+                if (isPulsarXfe) {
+                    baseSource.fileMetricIncSumStats(StatConstants.EVENT_MSG_XFE_PULSAR_DROPPED);
+                    return;
+                } else {
+                    throw new MainChannelFullException(errMsg);
+                }
             }
-            List<Channel> optionalChannels = selector.getOptionalChannels(event);
+            // only send to optional channel from the first broken site
             for (Channel optChannel : optionalChannels) {
                 Transaction tx = null;
                 try {
@@ -292,33 +326,41 @@ public class FailoverChannelProcessor
                     optChannel.put(event);
 
                     tx.commit();
+
+                    if (isPulsarXfe) {
+                        baseSource.fileMetricIncSumStats(StatConstants.EVENT_MSG_XFE_PULSAR_SUCCESS);
+                    }
                 } catch (Throwable t) {
                     if (logPrinter.shouldPrint()) {
-                        LOG.error(
-                                "FailoverChannelProcessor Unable to put event on optionalChannel:",
-                                t);
+                        LOG.error("FailoverChannelProcessor Unable to put event on optionalChannel:", t);
                     }
                     if (tx != null) {
                         try {
                             tx.rollback();
                         } catch (Throwable e) {
                             if (logPrinter.shouldPrint()) {
-                                LOG.error("FailoverChannelProcessor Transaction rollback exception",
-                                        e);
+                                LOG.error("FailoverChannelProcessor Transaction rollback exception", e);
                             }
                         }
                     }
-                    if (t instanceof Error) {
-                        if (logPrinter.shouldPrint()) {
-                            LOG.error("FailoverChannelProcessor Error while writing event to "
-                                    + "optionalChannels: " + optChannel, t);
+                    if (ignoreError) {
+                        if (isPulsarXfe) {
+                            baseSource.fileMetricIncSumStats(StatConstants.EVENT_MSG_XFE_PULSAR_DROPPED);
                         }
-                        throw (Error) t;
                     } else {
-                        throw new ChannelException(
-                                "FailoverChannelProcessor Unable to put event on "
-                                        + "optionalChannels: " + optChannel,
-                                t);
+                        if (t instanceof Error) {
+                            if (logPrinter.shouldPrint()) {
+                                LOG.error(
+                                        "FailoverChannelProcessor Error while writing event to optionalChannels: "
+                                                + optChannel,
+                                        t);
+                            }
+                            throw (Error) t;
+                        } else {
+                            throw new ChannelException(
+                                    "FailoverChannelProcessor Unable to put event on optionalChannels: " + optChannel,
+                                    t);
+                        }
                     }
                 } finally {
                     if (tx != null) {

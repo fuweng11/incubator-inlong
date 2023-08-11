@@ -247,7 +247,7 @@ public abstract class BaseSource
     public synchronized void start() {
         if (customProcessor) {
             ChannelSelector selector = getChannelProcessor().getSelector();
-            FailoverChannelProcessor newProcessor = new FailoverChannelProcessor(selector);
+            FailoverChannelProcessor newProcessor = new FailoverChannelProcessor(this, selector);
             newProcessor.configure(this.context);
             setChannelProcessor(newProcessor);
             FailoverChannelProcessorHolder.setChannelProcessor(newProcessor);
