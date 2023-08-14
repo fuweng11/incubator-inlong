@@ -17,34 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent.hive;
 
-import org.apache.inlong.common.constant.ClusterSwitch;
-import org.apache.inlong.common.constant.MQType;
-import org.apache.inlong.manager.common.consts.InlongConstants;
-import org.apache.inlong.manager.common.consts.TencentConstants;
-import org.apache.inlong.manager.common.enums.ClusterType;
-import org.apache.inlong.manager.common.exceptions.BusinessException;
-import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
-import org.apache.inlong.manager.common.util.Preconditions;
-import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
-import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
-import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
-import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
-import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
-import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
-import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
-import org.apache.inlong.manager.pojo.cluster.kafka.KafkaClusterDTO;
-import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
-import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
-import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
-import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
-import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
-import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
-import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
-import org.apache.inlong.manager.service.resource.sink.tencent.us.UPSOperator;
-import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
-import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
-import org.apache.inlong.manager.service.sink.tencent.sort.SortExtConfig;
-
 import com.tencent.flink.formats.common.FormatInfo;
 import com.tencent.flink.formats.common.StringFormatInfo;
 import com.tencent.flink.formats.common.TimestampFormatInfo;
@@ -75,6 +47,33 @@ import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.inlong.common.constant.ClusterSwitch;
+import org.apache.inlong.common.constant.MQType;
+import org.apache.inlong.manager.common.consts.InlongConstants;
+import org.apache.inlong.manager.common.consts.TencentConstants;
+import org.apache.inlong.manager.common.enums.ClusterType;
+import org.apache.inlong.manager.common.exceptions.BusinessException;
+import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
+import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
+import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
+import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
+import org.apache.inlong.manager.pojo.cluster.kafka.KafkaClusterDTO;
+import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterDTO;
+import org.apache.inlong.manager.pojo.cluster.tencent.sort.BaseSortClusterDTO;
+import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
+import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
+import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
+import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
+import org.apache.inlong.manager.service.resource.sink.tencent.us.UPSOperator;
+import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
+import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
+import org.apache.inlong.manager.service.sink.tencent.sort.SortExtConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -538,7 +537,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             Preconditions.expectNotNull(masterAddress, "tube cluster [" + tubeId + "] not contains masterAddress");
 
             String topic = groupInfo.getMqResource();
-            String consumerGroup = getConsumerGroup(groupInfo, topic, sortClusterName, hiveFullInfo.getSinkId());
+            String consumerGroup = getConsumerGroup(groupInfo, streamId, topic, sortClusterName,
+                    hiveFullInfo.getSinkId());
             sourceInfo = new TubeSourceInfo(topic, masterAddress, consumerGroup,
                     deserializationInfo, sourceFields.toArray(new FieldInfo[0]), hiveFullInfo.getSourceEncoding());
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
@@ -578,7 +578,8 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
             try {
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupInfo, topic, sortClusterName, hiveFullInfo.getSinkId());
+                String subscription = getConsumerGroup(groupInfo, streamId, topic, sortClusterName,
+                        hiveFullInfo.getSinkId());
                 sourceInfo = new PulsarSourceInfo(null, null, fullTopic, subscription,
                         deserializationInfo, sourceFields.toArray(new FieldInfo[0]),
                         pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null, hiveFullInfo.getSourceEncoding());

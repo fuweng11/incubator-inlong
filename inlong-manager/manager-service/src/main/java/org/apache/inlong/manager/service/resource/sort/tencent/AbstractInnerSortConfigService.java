@@ -17,6 +17,26 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent;
 
+import com.tencent.flink.formats.common.FormatInfo;
+import com.tencent.oceanus.etl.ZkTools;
+import com.tencent.oceanus.etl.configuration.Constants;
+import com.tencent.oceanus.etl.protocol.FieldInfo;
+import com.tencent.oceanus.etl.protocol.KafkaClusterInfo;
+import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgBinlogDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgPbV1DeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgSeaCubeDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.source.KafkaSourceInfo;
+import com.tencent.oceanus.etl.protocol.source.PulsarSourceInfo;
+import com.tencent.oceanus.etl.protocol.source.SourceInfo;
+import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
@@ -46,27 +66,6 @@ import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.service.cluster.InlongClusterOperatorFactory;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
-
-import com.tencent.flink.formats.common.FormatInfo;
-import com.tencent.oceanus.etl.ZkTools;
-import com.tencent.oceanus.etl.configuration.Constants;
-import com.tencent.oceanus.etl.protocol.FieldInfo;
-import com.tencent.oceanus.etl.protocol.KafkaClusterInfo;
-import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgBinlogDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgPbV1DeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgSeaCubeDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.source.KafkaSourceInfo;
-import com.tencent.oceanus.etl.protocol.source.PulsarSourceInfo;
-import com.tencent.oceanus.etl.protocol.source.SourceInfo;
-import com.tencent.oceanus.etl.protocol.source.TubeSourceInfo;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,20 +144,21 @@ public class AbstractInnerSortConfigService {
         return zkRoot;
     }
 
-    public String getConsumerGroup(InlongGroupInfo groupInfo, String topic, String taskName, Integer sinkId) {
+    public String getConsumerGroup(InlongGroupInfo groupInfo, String streamId, String topic, String taskName,
+            Integer sinkId) {
         String groupId = groupInfo.getInlongGroupId();
         String mqType = groupInfo.getMqType();
 
         String consumerGroup;
         if (MQType.TUBEMQ.equals(mqType)) {
-            consumerGroup = String.format(TencentConstants.OLD_SORT_TUBE_GROUP, groupInfo.getInlongClusterTag(), topic);
+            consumerGroup = String.format(TencentConstants.OLD_SORT_TUBE_GROUP, taskName, groupId);
             InlongConsumeEntity exists = inlongConsumeMapper.selectExists(consumerGroup, topic, groupId);
             if (exists == null) {
                 consumerGroup = String.format(TencentConstants.SORT_TUBE_GROUP, taskName,
                         groupInfo.getInlongClusterTag(), topic);
             }
         } else {
-            consumerGroup = String.format(TencentConstants.OLD_SORT_PULSAR_GROUP, taskName, sinkId);
+            consumerGroup = getOldConsumption(taskName, groupId, streamId, topic);
             InlongConsumeEntity exists = inlongConsumeMapper.selectExists(consumerGroup, topic, groupId);
             if (exists == null) {
                 consumerGroup = String.format(TencentConstants.SORT_PULSAR_GROUP, taskName, groupInfo.getMqResource(),
@@ -345,7 +345,7 @@ public class AbstractInnerSortConfigService {
                     "tube cluster [" + tubeCluster.getId() + "] not contains masterAddress");
             DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
             String topic = groupInfo.getMqResource();
-            String consumerGroup = getConsumerGroup(groupInfo, topic, sortClusterName, sinkInfo.getId());
+            String consumerGroup = getConsumerGroup(groupInfo, streamId, topic, sortClusterName, sinkInfo.getId());
             return new TubeSourceInfo(
                     groupInfo.getMqResource(),
                     masterAddress,
@@ -403,7 +403,7 @@ public class AbstractInnerSortConfigService {
                 DeserializationInfo deserializationInfo = getDeserializationInfo(stream);
                 // Ensure compatibility of old data: if the old subscription exists, use the old one;
                 // otherwise, create the subscription according to the new rule
-                String subscription = getConsumerGroup(groupInfo, topic, sortClusterName, sinkInfo.getId());
+                String subscription = getConsumerGroup(groupInfo, streamId, topic, sortClusterName, sinkInfo.getId());
                 sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
                         deserializationInfo, fieldList.stream().map(f -> {
                             FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
@@ -451,6 +451,15 @@ public class AbstractInnerSortConfigService {
             }
         }
         return sourceInfo;
+    }
+
+    public String getOldConsumption(String taskName, String groupId, String streamId, String topic) {
+        String consumerGroup = String.format(TencentConstants.OLD_SORT_PULSAR_GROUP, taskName, streamId);
+        InlongConsumeEntity exists = inlongConsumeMapper.selectExists(consumerGroup, topic, groupId);
+        if (exists == null) {
+            consumerGroup = String.format(TencentConstants.V1_SORT_PULSAR_GROUP, taskName, groupId, streamId);
+        }
+        return consumerGroup;
     }
 
 }

@@ -17,14 +17,20 @@
 
 package org.apache.inlong.manager.service.resource.queue.tubemq;
 
+import com.google.common.base.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.SinkType;
+import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.GroupStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.entity.InlongConsumeEntity;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
+import org.apache.inlong.manager.dao.mapper.InlongConsumeEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.tubemq.TubeClusterInfo;
 import org.apache.inlong.manager.pojo.consume.BriefMQMessage;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
@@ -35,10 +41,6 @@ import org.apache.inlong.manager.service.consume.InlongConsumeService;
 import org.apache.inlong.manager.service.resource.queue.QueueResourceOperator;
 import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
-
-import com.google.common.base.Objects;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -65,6 +67,8 @@ public class TubeMQQueueResourceOperator implements QueueResourceOperator {
     private InlongClusterEntityMapper clusterMapper;
     @Autowired
     private SortHiveConfigService sortConfigService;
+    @Autowired
+    private InlongConsumeEntityMapper consumeEntityMapper;
 
     @Override
     public boolean accept(String mqType) {
@@ -171,6 +175,13 @@ public class TubeMQQueueResourceOperator implements QueueResourceOperator {
         // get sort task name for sink
         String sortClusterName = sortConfigService.getSortTaskName(groupInfo.getInlongGroupId(),
                 groupInfo.getInlongClusterTag(), sink.getId(), sortTaskType);
+        String oldConsumption = String.format(TencentConstants.OLD_SORT_TUBE_GROUP, sortClusterName,
+                groupInfo.getInlongGroupId());
+        InlongConsumeEntity exist = consumeEntityMapper.selectExists(oldConsumption, topicName,
+                groupInfo.getInlongGroupId());
+        if (exist != null) {
+            return oldConsumption;
+        }
         return String.format(TUBE_CONSUME_GROUP, sortClusterName, clusterTag, topicName);
     }
 }

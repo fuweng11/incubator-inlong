@@ -92,4 +92,6 @@ public class TencentConstants {
      */
     public static final String OLD_SORT_PULSAR_GROUP = "%s_%s_consumer_group";
 
+    public static final String V1_SORT_PULSAR_GROUP = "%s_%s_%s_consumer_group";
+
 }
