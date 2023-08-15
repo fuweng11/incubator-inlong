@@ -27,6 +27,7 @@ import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
 import org.apache.inlong.dataproxy.exception.ChannelUnWritableException;
 import org.apache.inlong.dataproxy.exception.PkgParseException;
+import org.apache.inlong.dataproxy.exception.TDBankException;
 import org.apache.inlong.dataproxy.source.v0msg.AbsV0MsgCodec;
 import org.apache.inlong.dataproxy.source.v0msg.CodecBinMsg;
 import org.apache.inlong.dataproxy.source.v0msg.CodecTextMsg;
@@ -79,7 +80,8 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
     private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
     // except log print count
     private static final LogCounter exceptLogCounter = new LogCounter(10, 50000, 20 * 1000);
-
+    // tdbank except log print count
+    private static final LogCounter tdbankLogCounter = new LogCounter(10, 50000, 20 * 1000);
     private static final int INLONG_MSG_V1 = 1;
 
     private static final ConfigManager configManager = ConfigManager.getInstance();
@@ -241,20 +243,27 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         if (!(cause instanceof PkgParseException || cause instanceof ChannelUnWritableException)) {
-            if (cause instanceof ReadTimeoutException) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_READ_TIMEOUT);
-            } else if (cause instanceof TooLongFrameException) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_FRAME_OVERMAX);
-            } else if (cause instanceof CorruptedFrameException) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_FRAME_CORRPUTED);
-            } else if (cause instanceof IOException) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_IO_EXCEPTION);
+            if (cause instanceof TDBankException) {
+                if (tdbankLogCounter.shouldPrint()) {
+                    logger.warn("{} received an exception from channel {}",
+                            source.getCachedSrcName(), ctx.channel(), cause);
+                }
             } else {
-                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_UNKNOWN_EXCEPTION);
-            }
-            if (exceptLogCounter.shouldPrint()) {
-                logger.warn("{} received an exception from channel {}",
-                        source.getCachedSrcName(), ctx.channel(), cause);
+                if (cause instanceof ReadTimeoutException) {
+                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_READ_TIMEOUT);
+                } else if (cause instanceof TooLongFrameException) {
+                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_FRAME_OVERMAX);
+                } else if (cause instanceof CorruptedFrameException) {
+                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_FRAME_CORRPUTED);
+                } else if (cause instanceof IOException) {
+                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_IO_EXCEPTION);
+                } else {
+                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_UNKNOWN_EXCEPTION);
+                }
+                if (exceptLogCounter.shouldPrint()) {
+                    logger.warn("{} received an exception from channel {}",
+                            source.getCachedSrcName(), ctx.channel(), cause);
+                }
             }
         }
         if (ctx.channel() != null) {
@@ -497,11 +506,19 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
         strBuff.append(ConfigConstants.DATAPROXY_IP_KEY)
                 .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(source.getSrcHost());
         if (msgObj.getErrCode() != DataProxyErrCode.SUCCESS) {
-            strBuff.append(AttributeConstants.SEPARATOR).append(AttributeConstants.MESSAGE_PROCESS_ERRCODE)
-                    .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgObj.getErrCode().getErrCodeStr());
-            if (StringUtils.isNotEmpty(msgObj.getErrMsg())) {
-                strBuff.append(AttributeConstants.SEPARATOR).append(AttributeConstants.MESSAGE_PROCESS_ERRMSG)
-                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgObj.getErrMsg());
+            if (source.enableTDBankLogic) {
+                if (StringUtils.isEmpty(msgObj.getErrMsg())) {
+                    throw new TDBankException(msgObj.getErrCode().getErrMsg());
+                } else {
+                    throw new TDBankException(msgObj.getErrMsg());
+                }
+            } else {
+                strBuff.append(AttributeConstants.SEPARATOR).append(AttributeConstants.MESSAGE_PROCESS_ERRCODE)
+                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgObj.getErrCode().getErrCodeStr());
+                if (StringUtils.isNotEmpty(msgObj.getErrMsg())) {
+                    strBuff.append(AttributeConstants.SEPARATOR).append(AttributeConstants.MESSAGE_PROCESS_ERRMSG)
+                            .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgObj.getErrMsg());
+                }
             }
         }
         if (StringUtils.isNotEmpty(msgObj.getAttr())) {

@@ -54,14 +54,20 @@ public class ConfigConstants {
 
     public static final String TRAFFIC_CLASS = "trafficClass";
 
+    public static final String MAX_INFLIGHT_BUFFER_QUEUE_SIZE_KB = "max-inflight-buffer-size-KB";
+
     public static final String MAX_THREADS = "max-threads";
-
-    public static final String ENABLE_BUSY_WAIT = "enableBusyWait";
-
     public static final String STAT_INTERVAL_SEC = "stat-interval-sec";
-
     public static final String MAX_MONITOR_CNT = "max-monitor-cnt";
     public static final int DEF_MONITOR_STAT_CNT = 300000;
+    public static String ENABLE_MSG_CACHE_DEDUP = "enableMsgCacheDedup";
+    public static final boolean DEF_ENABLE_MSG_CACHE_DEDUP = true;
+    public static String MAX_CACHE_CONCURRENT_ACCESS = "max-cache-concurrent-access";
+    public static final int DEF_MAX_CACHE_CONCURRENT_ACCESS = 32;
+    public static String MAX_CACHE_SURVIVED_TIME_SEC = "max-cache-survived-time";
+    public static final long DEF_MAX_CACHE_SURVIVED_TIME_SEC = 30;
+    public static String MAX_CACHE_SURVIVED_SIZE = "max-cache-survived-size";
+    public static final int DEF_MAX_CACHE_SURVIVED_SIZE = 5000000;
 
     public static final String HEART_INTERVAL_SEC = "heart-interval-sec";
 
