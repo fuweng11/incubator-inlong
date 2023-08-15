@@ -121,6 +121,10 @@ public class EventProfile {
         return msgSize;
     }
 
+    public Event getEvent() {
+        return event;
+    }
+
     /**
      * get event headers
      *
@@ -133,6 +137,7 @@ public class EventProfile {
     public byte[] getEventBody() {
         return event.getBody();
     }
+
     /**
      * ack
      */
