@@ -17,7 +17,7 @@
 # under the License.
 #
 FROM konajdk/konajdk:8-tlinux
-RUN yum -y update \
+RUN rpm --rebuilddb && yum -y update \
     && yum install -y net-tools vim default-mysql-client wget mysql procps iputils
 EXPOSE 8083
 # profile and env virables

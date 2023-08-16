@@ -17,7 +17,7 @@
 # under the License.
 #
 FROM konajdk/konajdk:8-tlinux
-RUN yum -y update \
+RUN rpm --rebuilddb && yum -y update \
     && yum install -y net-tools vim wget procps iputils
 # add tarball from target output
 ARG DATAPROXY_TARBALL
