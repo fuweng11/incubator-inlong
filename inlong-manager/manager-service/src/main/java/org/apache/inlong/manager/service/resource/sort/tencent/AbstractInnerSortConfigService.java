@@ -183,7 +183,10 @@ public class AbstractInnerSortConfigService {
         }
 
         String streamId = streamInfo.getInlongStreamId();
-        char separator = (char) Integer.parseInt(streamInfo.getDataSeparator());
+        char separator = 0;
+        if(StringUtils.isNotBlank(streamInfo.getDataSeparator())){
+            separator = (char) Integer.parseInt(streamInfo.getDataSeparator());
+        }
         switch (dataType) {
             case TencentConstants.DATA_TYPE_BINLOG:
                 deserializationInfo = new InlongMsgBinlogDeserializationInfo(streamId);
