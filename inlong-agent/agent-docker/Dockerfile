@@ -17,8 +17,7 @@
 # under the License.
 #
 FROM konajdk/konajdk:8-tlinux
-RUN yum -y update \
-    && yum install -y libsnappy-java net-tools vim wget procps iputils
+RUN rpm --rebuilddb && yum install -y libsnappy-java net-tools vim wget procps iputils
 WORKDIR /opt/inlong-agent
 # add tarball from target output
 ARG AGENT_TARBALL

@@ -18,8 +18,7 @@
 #
 FROM konajdk/konajdk:8-tlinux
 # add tarball from target output
-RUN rpm --rebuilddb && yum -y update \
-    && yum install -y net-tools vim default-mysql-client wget mysql procps iputils
+RUN rpm --rebuilddb && yum install -y net-tools vim default-mysql-client wget mysql procps iputils
 ARG AUDIT_TARBALL
 ADD ${AUDIT_TARBALL} /opt/inlong-audit
 EXPOSE 10081

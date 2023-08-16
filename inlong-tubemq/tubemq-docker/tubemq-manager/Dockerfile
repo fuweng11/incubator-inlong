@@ -17,8 +17,7 @@
 # under the License.
 #
 FROM konajdk/konajdk:8-tlinux
-RUN rpm --rebuilddb && yum -y update \
-    && yum install -y net-tools vim wget
+RUN rpm --rebuilddb && yum install -y net-tools vim wget
 # add tarball from target output
 ARG TUBEMQ_MANAGER_TARBALL
 ADD ${TUBEMQ_MANAGER_TARBALL} /opt/tubemq-manager
