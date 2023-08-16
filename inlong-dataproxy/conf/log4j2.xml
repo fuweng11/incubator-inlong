@@ -38,9 +38,15 @@
         <property name="error_filePattern">${basePath}/error-%d{yyyy-MM-dd}-%i.log.gz</property>
         <property name="error_max">10</property>
         <property name="console_print_level">DEBUG</property>
-        <property name="index_max">10</property>
-        <property name="index_fileName">${basePath}/index.log</property>
-        <property name="index_filePattern">${basePath}/index-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="index_detail_max">10</property>
+        <property name="index_detail_fileName">${basePath}/index_detail.log</property>
+        <property name="index_detail_filePattern">${basePath}/index_detail-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="index_sum_max">10</property>
+        <property name="index_sum_fileName">${basePath}/index_sum.log</property>
+        <property name="index_sum_filePattern">${basePath}/index_sum-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="index_pcg_max">10</property>
+        <property name="index_pcg_fileName">${basePath}/agent_pcg_measure.log</property>
+        <property name="index_pcg_filePattern">${basePath}/agent_pcg_measure-%d{yyyy-MM-dd}-%i.log.gz</property>
         <property name="monitors_max">10</property>
         <property name="monitors_fileName">${basePath}/monitors.log</property>
         <property name="monitors_filePattern">${basePath}/monitors-%d{yyyy-MM-dd}-%i.log.gz</property>
@@ -85,15 +91,51 @@
             </Filters>
         </RollingFile>
 
-        <RollingFile name="IndexFile" fileName="${index_fileName}" filePattern="${index_filePattern}">
+        <RollingFile name="DetailIndexFile" fileName="${index_detail_fileName}" filePattern="${index_detail_filePattern}">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="${every_file_date}"/>
                 <SizeBasedTriggeringPolicy size="${every_file_size}"/>]
             </Policies>
-            <DefaultRolloverStrategy max="${index_max}">
+            <DefaultRolloverStrategy max="${index_detail_max}">
                 <Delete basePath="${basePath}" maxDepth="1">
-                    <IfFileName glob="index*.log.gz"/>
+                    <IfFileName glob="index_detail*.log.gz"/>
+                    <IfLastModified age="${last_modify_time}"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+            <Filters>
+                <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <RollingFile name="SumIndexFile" fileName="${index_sum_fileName}" filePattern="${index_sum_filePattern}">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="${every_file_date}"/>
+                <SizeBasedTriggeringPolicy size="${every_file_size}"/>]
+            </Policies>
+            <DefaultRolloverStrategy max="${index_sum_max}">
+                <Delete basePath="${basePath}" maxDepth="1">
+                    <IfFileName glob="index_sum*.log.gz"/>
+                    <IfLastModified age="${last_modify_time}"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+            <Filters>
+                <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <RollingFile name="PcgIndexFile" fileName="${index_pcg_fileName}" filePattern="${index_pcg_filePattern}">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="${every_file_date}"/>
+                <SizeBasedTriggeringPolicy size="${every_file_size}"/>]
+            </Policies>
+            <DefaultRolloverStrategy max="${index_pcg_max}">
+                <Delete basePath="${basePath}" maxDepth="1">
+                    <IfFileName glob="agent_pcg_measure*.log.gz"/>
                     <IfLastModified age="${last_modify_time}"/>
                 </Delete>
             </DefaultRolloverStrategy>
@@ -163,7 +205,13 @@
             <appender-ref ref="MonitorFile"/>
         </logger>
         <logger name="org.apache.inlong.dataproxy.metrics.stats.MonitorIndex" level="info" additivity="false">
-            <appender-ref ref="IndexFile"/>
+            <appender-ref ref="DetailIndexFile"/>
+        </logger>
+        <logger name="org.apache.inlong.dataproxy.metrics.stats.MonitorSumIndex" level="info" additivity="false">
+            <appender-ref ref="SumIndexFile"/>
+        </logger>
+        <logger name="org.apache.inlong.dataproxy.metrics.stats.PcgMinMetricsCollector" level="info" additivity="false">
+            <appender-ref ref="PcgIndexFile"/>
         </logger>
         <logger name="org.apache.pulsar" level="info" additivity="false">
             <appender-ref ref="InfoFile"/>

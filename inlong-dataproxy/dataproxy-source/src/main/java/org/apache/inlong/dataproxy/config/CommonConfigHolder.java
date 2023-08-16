@@ -96,6 +96,10 @@ public class CommonConfigHolder {
     public static final String KEY_FILE_METRIC_STAT_INTERVAL_SEC = "file.metric.stat.interval.sec";
     public static final int VAL_DEF_FILE_METRIC_STAT_INVL_SEC = 60;
     public static final int VAL_MIN_FILE_METRIC_STAT_INVL_SEC = 0;
+    // PCG file metric statistic interval (second)
+    public static final String KEY_PCG_FILE_METRIC_STAT_INTERVAL_SEC = "pcg.file.metric.stat.interval.sec";
+    public static final int VAL_DEF_PCG_FILE_METRIC_STAT_INVL_SEC = 60;
+    public static final int VAL_MIN_PCG_FILE_METRIC_STAT_INVL_SEC = 0;
     // file metric max statistic key count
     public static final String KEY_FILE_METRIC_MAX_CACHE_CNT = "file.metric.max.cache.cnt";
     public static final int VAL_DEF_FILE_METRIC_MAX_CACHE_CNT = 1000000;
@@ -196,6 +200,7 @@ public class CommonConfigHolder {
     private int prometheusHttpPort = VAL_DEF_PROMETHEUS_HTTP_PORT;
     private boolean enableFileMetric = VAL_DEF_ENABLE_FILE_METRIC;
     private int fileMetricStatInvlSec = VAL_DEF_FILE_METRIC_STAT_INVL_SEC;
+    private int pcgFileMetricStatInvlSec = VAL_DEF_PCG_FILE_METRIC_STAT_INVL_SEC;
     private int fileMetricStatCacheCnt = VAL_DEF_FILE_METRIC_MAX_CACHE_CNT;
     private String fileMetricSourceOutName = VAL_DEF_FILE_METRIC_SOURCE_OUTPUT_NAME;
     private String fileMetricSinkOutName = VAL_DEF_FILE_METRIC_SINK_OUTPUT_NAME;
@@ -332,6 +337,10 @@ public class CommonConfigHolder {
 
     public int getFileMetricStatInvlSec() {
         return fileMetricStatInvlSec;
+    }
+
+    public int getPcgFileMetricStatInvlSec() {
+        return pcgFileMetricStatInvlSec;
     }
 
     public int getFileMetricStatCacheCnt() {
@@ -496,15 +505,23 @@ public class CommonConfigHolder {
         tmpValue = this.props.get(KEY_FILE_METRIC_STAT_INTERVAL_SEC);
         if (StringUtils.isNotEmpty(tmpValue)) {
             int statInvl = NumberUtils.toInt(tmpValue.trim(), VAL_DEF_FILE_METRIC_STAT_INVL_SEC);
-            if (statInvl >= VAL_MIN_FILE_METRIC_MAX_CACHE_CNT) {
+            if (statInvl >= VAL_MIN_FILE_METRIC_STAT_INVL_SEC) {
                 this.fileMetricStatInvlSec = statInvl;
+            }
+        }
+        // read pcg file metric statistic interval
+        tmpValue = this.props.get(KEY_PCG_FILE_METRIC_STAT_INTERVAL_SEC);
+        if (StringUtils.isNotEmpty(tmpValue)) {
+            int statInvl = NumberUtils.toInt(tmpValue.trim(), VAL_DEF_PCG_FILE_METRIC_STAT_INVL_SEC);
+            if (statInvl >= VAL_MIN_PCG_FILE_METRIC_STAT_INVL_SEC) {
+                this.pcgFileMetricStatInvlSec = statInvl;
             }
         }
         // read file metric statistic max cache count
         tmpValue = this.props.get(KEY_FILE_METRIC_MAX_CACHE_CNT);
         if (StringUtils.isNotEmpty(tmpValue)) {
             int maxCacheCnt = NumberUtils.toInt(tmpValue.trim(), VAL_DEF_FILE_METRIC_MAX_CACHE_CNT);
-            if (maxCacheCnt >= VAL_MIN_FILE_METRIC_STAT_INVL_SEC) {
+            if (maxCacheCnt >= VAL_MIN_FILE_METRIC_MAX_CACHE_CNT) {
                 this.fileMetricStatCacheCnt = maxCacheCnt;
             }
         }

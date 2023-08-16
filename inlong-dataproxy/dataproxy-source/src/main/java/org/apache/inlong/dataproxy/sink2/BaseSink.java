@@ -27,6 +27,7 @@ import org.apache.inlong.dataproxy.consts.StatConstants;
 import org.apache.inlong.dataproxy.metrics.audit.AuditUtils;
 import org.apache.inlong.dataproxy.metrics.stats.MonitorIndex;
 import org.apache.inlong.dataproxy.metrics.stats.MonitorStats;
+import org.apache.inlong.dataproxy.metrics.stats.MonitorSumIndex;
 import org.apache.inlong.dataproxy.utils.BufferQueue;
 import org.apache.inlong.dataproxy.utils.DateTimeUtils;
 
@@ -72,7 +73,8 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     protected BufferQueue<EventProfile> dispatchQueue;
     // file metric statistic
     protected boolean enableFileMetric;
-    protected MonitorIndex monitorIndex = null;
+    protected MonitorIndex detailIndex = null;
+    protected MonitorSumIndex sumIndex = null;
     protected MonitorStats monitorStats = null;
     private int maxMonitorCnt;
     // whether to resend the message after sending failure
@@ -146,6 +148,23 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
                 visitConcurLevel, initCacheCapacity, expiredDurSec);
         // message dispatch queue
         this.dispatchQueue = new BufferQueue<>(maxInflightBufferSIzeInKB);
+        // init monitor logic
+        if (enableFileMetric) {
+            this.detailIndex = new MonitorIndex(CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
+                    CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
+                    CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
+            this.detailIndex.start();
+            this.sumIndex = new MonitorSumIndex(CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
+                    CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
+                    CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
+            this.sumIndex.start();
+            this.monitorStats = new MonitorStats(
+                    CommonConfigHolder.getInstance().getFileMetricEventOutName()
+                            + AttrConstants.SEP_HASHTAG + this.cachedSinkName,
+                    CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
+                    CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
+            this.monitorStats.start();
+        }
         // sink worker thread pool
         this.sinkThreadPool = new Thread[maxThreads];
         // start configure change listener thread
@@ -245,8 +264,11 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
         }
         // stop file statistic index
         if (enableFileMetric) {
-            if (monitorIndex != null) {
-                monitorIndex.stop();
+            if (detailIndex != null) {
+                detailIndex.stop();
+            }
+            if (sumIndex != null) {
+                sumIndex.stop();
             }
             if (monitorStats != null) {
                 monitorStats.stop();
@@ -347,22 +369,30 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     private void fileMetricIncStats(EventProfile profile, boolean isSucc,
             String topic, String brokerIP, String eventKey, String detailInfoKey) {
         long pkgTimeL = Long.parseLong(profile.getProperties().get(ConfigConstants.PKG_TIME_KEY));
+        String tenMinsDt = DateTimeUtils.ms2yyyyMMddHHmmTenMins(profile.getDt());
+        String tenMinsPkgTime = DateTimeUtils.ms2yyyyMMddHHmmTenMins(pkgTimeL);
         StringBuilder statsKey = new StringBuilder(512)
-                .append(cachedSinkName).append(AttrConstants.SEP_HASHTAG)
-                .append(profile.getGroupId()).append(AttrConstants.SEP_HASHTAG)
-                .append(profile.getStreamId()).append(AttrConstants.SEP_HASHTAG)
-                .append(topic).append(AttrConstants.SEP_HASHTAG)
-                .append(profile.getProperties().get(ConfigConstants.DATAPROXY_IP_KEY)).append(AttrConstants.SEP_HASHTAG)
-                .append(brokerIP).append(AttrConstants.SEP_HASHTAG)
-                .append(DateTimeUtils.ms2yyyyMMddHHmmTenMins(profile.getDt())).append(AttrConstants.SEP_HASHTAG)
-                .append(DateTimeUtils.ms2yyyyMMddHHmm(pkgTimeL));
+                .append(cachedSinkName)
+                .append(AttrConstants.SEP_HASHTAG).append(profile.getGroupId())
+                .append(AttrConstants.SEP_HASHTAG).append(profile.getStreamId())
+                .append(AttrConstants.SEP_HASHTAG).append(topic)
+                .append(AttrConstants.SEP_HASHTAG)
+                .append(profile.getProperties().get(ConfigConstants.DATAPROXY_IP_KEY));
+        String sumKey = statsKey.toString()
+                + AttrConstants.SEP_HASHTAG + tenMinsDt
+                + AttrConstants.SEP_HASHTAG + tenMinsPkgTime;
+        statsKey.append(AttrConstants.SEP_HASHTAG).append(brokerIP)
+                .append(AttrConstants.SEP_HASHTAG).append(tenMinsDt)
+                .append(AttrConstants.SEP_HASHTAG).append(DateTimeUtils.ms2yyyyMMddHHmm(pkgTimeL));
         if (isSucc) {
-            monitorIndex.addSuccStats(statsKey.toString(), NumberUtils.toInt(
-                    profile.getProperties().get(ConfigConstants.MSG_COUNTER_KEY), 1),
-                    1, profile.getMsgSize());
+            int msgCnt = NumberUtils.toInt(
+                    profile.getProperties().get(ConfigConstants.MSG_COUNTER_KEY), 1);
+            detailIndex.addSuccStats(statsKey.toString(), msgCnt, 1, profile.getMsgSize());
+            sumIndex.addSuccStats(sumKey, msgCnt, 1, profile.getMsgSize());
             monitorStats.incSumStats(eventKey);
         } else {
-            monitorIndex.addFailStats(statsKey.toString(), 1);
+            detailIndex.addFailStats(statsKey.toString(), 1);
+            sumIndex.addFailStats(sumKey, 1);
             monitorStats.incSumStats(eventKey);
             monitorStats.incDetailStats(eventKey + "#" + detailInfoKey);
         }

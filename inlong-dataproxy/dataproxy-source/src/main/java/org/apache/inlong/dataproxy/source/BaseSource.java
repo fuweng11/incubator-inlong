@@ -30,6 +30,8 @@ import org.apache.inlong.dataproxy.metrics.DataProxyMetricItemSet;
 import org.apache.inlong.dataproxy.metrics.audit.AuditUtils;
 import org.apache.inlong.dataproxy.metrics.stats.MonitorIndex;
 import org.apache.inlong.dataproxy.metrics.stats.MonitorStats;
+import org.apache.inlong.dataproxy.metrics.stats.MonitorSumIndex;
+import org.apache.inlong.dataproxy.metrics.stats.PcgMinMetricsCollector;
 import org.apache.inlong.dataproxy.source.httpMsg.HttpMessageHandler;
 import org.apache.inlong.dataproxy.utils.AddressUtils;
 import org.apache.inlong.dataproxy.utils.ConfStringUtils;
@@ -124,20 +126,24 @@ public abstract class BaseSource
     // send buffer size
     protected int maxSendBufferSize;
     // file metric statistic
-    private MonitorIndex monitorIndex = null;
+    private MonitorIndex detailIndex = null;
+    private MonitorSumIndex sumIndex = null;
     private MonitorStats monitorStats = null;
+    private PcgMinMetricsCollector pcgMetricsCollector = null;
     // metric set
     private DataProxyMetricItemSet metricItemSet;
     // whether enable file metric
     protected boolean enableFileMetric;
     // whether enable tdbank logic
     protected boolean enableTDBankLogic;
+    protected boolean enablePCGFileMetric;
 
     public BaseSource() {
         super();
         allChannels = new DefaultChannelGroup("DefaultChannelGroup", GlobalEventExecutor.INSTANCE);
         this.enableFileMetric = CommonConfigHolder.getInstance().isEnableFileMetric();
         this.enableTDBankLogic = CommonConfigHolder.getInstance().isEnableTDBankLogic();
+        this.enablePCGFileMetric = CommonConfigHolder.getInstance().isEnablePCGLogOutput();
     }
 
     @Override
@@ -263,16 +269,26 @@ public abstract class BaseSource
         MetricRegister.register(metricItemSet);
         // init monitor logic
         if (enableFileMetric) {
-            this.monitorIndex = new MonitorIndex(CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
+            this.detailIndex = new MonitorIndex(CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
-            this.monitorIndex.start();
+            this.detailIndex.start();
+            this.sumIndex = new MonitorSumIndex(CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
+                    CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
+                    CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
+            this.sumIndex.start();
             this.monitorStats = new MonitorStats(
                     CommonConfigHolder.getInstance().getFileMetricEventOutName()
                             + AttrConstants.SEP_HASHTAG + this.cachedSrcName,
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.monitorStats.start();
+            if (enablePCGFileMetric) {
+                this.pcgMetricsCollector = new PcgMinMetricsCollector(
+                        CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
+                        CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
+                this.pcgMetricsCollector.start();
+            }
         }
         startSource();
         // register
@@ -311,11 +327,19 @@ public abstract class BaseSource
         }
         // stop file statistic index
         if (enableFileMetric) {
-            if (monitorIndex != null) {
-                monitorIndex.stop();
+            if (detailIndex != null) {
+                detailIndex.stop();
+            }
+            if (sumIndex != null) {
+                sumIndex.stop();
             }
             if (monitorStats != null) {
                 monitorStats.stop();
+            }
+            if (enablePCGFileMetric) {
+                if (pcgMetricsCollector != null) {
+                    pcgMetricsCollector.stop();
+                }
             }
         }
         logger.info("[STOP {} SOURCE]{} stopped", this.getProtocolName(), this.cachedSrcName);
@@ -446,20 +470,34 @@ public abstract class BaseSource
             return;
         }
         String tenMinsDt = DateTimeUtils.ms2yyyyMMddHHmmTenMins(dt);
-        strBuff.append(this.cachedSrcName).append(AttrConstants.SEP_HASHTAG)
-                .append(groupId).append(AttrConstants.SEP_HASHTAG)
-                .append(streamId).append(AttrConstants.SEP_HASHTAG)
-                .append(topicName).append(AttrConstants.SEP_HASHTAG)
-                .append(msgProcType).append(AttrConstants.SEP_HASHTAG)
-                .append(srcHost).append(AttrConstants.SEP_HASHTAG)
-                .append(clientIP).append(AttrConstants.SEP_HASHTAG)
-                .append(tenMinsDt).append(AttrConstants.SEP_HASHTAG)
-                .append(DateTimeUtils.ms2yyyyMMddHHmm(pkgTime));
+        String tenMinsPkgTime = DateTimeUtils.ms2yyyyMMddHHmmTenMins(pkgTime);
+        strBuff.append(this.cachedSrcName)
+                .append(AttrConstants.SEP_HASHTAG).append(groupId)
+                .append(AttrConstants.SEP_HASHTAG).append(streamId)
+                .append(AttrConstants.SEP_HASHTAG).append(topicName)
+                .append(AttrConstants.SEP_HASHTAG).append(msgProcType)
+                .append(AttrConstants.SEP_HASHTAG).append(srcHost);
+        String sumKey = strBuff.toString()
+                + AttrConstants.SEP_HASHTAG + tenMinsDt
+                + AttrConstants.SEP_HASHTAG + tenMinsPkgTime;
+        strBuff.append(AttrConstants.SEP_HASHTAG).append(clientIP)
+                .append(AttrConstants.SEP_HASHTAG).append(tenMinsDt)
+                .append(AttrConstants.SEP_HASHTAG).append(DateTimeUtils.ms2yyyyMMddHHmm(pkgTime));
         if (isSucc) {
+            detailIndex.addSuccStats(strBuff.toString(), cnt, packCnt, packSize);
+            sumIndex.addSuccStats(sumKey, cnt, packCnt, packSize);
             monitorStats.incSumStats(StatConstants.EVENT_MSG_V0_POST_SUCCESS);
-            monitorIndex.addSuccStats(strBuff.toString(), cnt, packCnt, packSize);
+            if (enablePCGFileMetric) {
+                strBuff.delete(0, strBuff.length());
+                strBuff.append(groupId)
+                        .append(AttrConstants.SEP_HASHTAG).append(streamId)
+                        .append(AttrConstants.SEP_HASHTAG).append(srcHost)
+                        .append(AttrConstants.SEP_HASHTAG).append(DateTimeUtils.ms2PCGyyyyMMddHHmm(dt));
+                pcgMetricsCollector.addSuccStats(strBuff.toString(), cnt, packCnt);
+            }
         } else {
-            monitorIndex.addFailStats(strBuff.toString(), failCnt);
+            detailIndex.addFailStats(strBuff.toString(), failCnt);
+            sumIndex.addFailStats(sumKey, failCnt);
             monitorStats.incSumStats(StatConstants.EVENT_MSG_V0_POST_FAILURE);
         }
         strBuff.delete(0, strBuff.length());

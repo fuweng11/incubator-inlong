@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 public class DateTimeUtils {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+    private static final DateTimeFormatter PCG_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd HH:mm:00");
     private static final ZoneId defZoneId = ZoneId.systemDefault();
 
     /**
@@ -75,5 +76,17 @@ public class DateTimeUtils {
         LocalDateTime localDateTime =
                 LocalDateTime.parse(yyyyMMddHHmm, DATE_FORMATTER);
         return LocalDateTime.from(localDateTime).atZone(zoneId).toInstant().toEpochMilli();
+    }
+
+    /**
+     * convert ms value to PCG 'yyyyMMdd HH:mm:00' string
+     *
+     * @param timestamp The millisecond value of the specified time
+     * @return the time string in yyyyMMdd HH:mm:00 format
+     */
+    public static String ms2PCGyyyyMMddHHmm(long timestamp) {
+        LocalDateTime localDateTime =
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), defZoneId);
+        return PCG_FORMATTER.format(localDateTime);
     }
 }
