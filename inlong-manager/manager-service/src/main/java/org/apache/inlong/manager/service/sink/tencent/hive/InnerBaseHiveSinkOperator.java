@@ -20,6 +20,7 @@ package org.apache.inlong.manager.service.sink.tencent.hive;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
+import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
@@ -124,6 +125,52 @@ public class InnerBaseHiveSinkOperator extends AbstractSinkOperator {
         if (sinkRequest.getDataSeparator() == null) {
             sinkRequest.setDataSeparator(inlongStream.getDataSeparator());
         }
+    }
+
+    @Override
+    public void updateOpt(SinkRequest request, SinkStatus nextStatus, String operator) {
+        StreamSinkEntity entity = sinkMapper.selectByPrimaryKey(request.getId());
+        if (entity == null) {
+            throw new BusinessException(ErrorCodeEnum.SINK_INFO_NOT_FOUND);
+        }
+        if (!Objects.equals(entity.getVersion(), request.getVersion())) {
+            throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED,
+                    String.format("sink has already updated with groupId=%s, streamId=%s, name=%s, curVersion=%s",
+                            request.getInlongGroupId(), request.getInlongStreamId(), request.getSinkName(),
+                            request.getVersion()));
+        }
+        String oldClusterName = entity.getInlongClusterName();
+        String newClusterName = request.getInlongClusterName();
+        if (StringUtils.isNotBlank(oldClusterName) && StringUtils.isNotBlank(newClusterName) && !Objects.equals(
+                oldClusterName, newClusterName)) {
+            try {
+                sortHiveConfigService.deleteSortConfig(entity);
+            } catch (Exception e) {
+                String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
+                        entity.getSinkName());
+                LOGGER.error(errMsg, e);
+                throw new BusinessException(errMsg);
+            }
+        }
+        CommonBeanUtils.copyProperties(request, entity, true);
+        setTargetEntity(request, entity);
+        entity.setPreviousStatus(entity.getStatus());
+        if (nextStatus != null) {
+            entity.setStatus(nextStatus.getCode());
+        }
+        entity.setModifier(operator);
+        int rowCount = sinkMapper.updateByIdSelective(entity);
+        if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
+            throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED,
+                    String.format("sink has already updated with groupId=%s, streamId=%s, name=%s, curVersion=%s",
+                            request.getInlongGroupId(), request.getInlongStreamId(), request.getSinkName(),
+                            request.getVersion()));
+        }
+
+        boolean onlyAdd = SinkStatus.CONFIG_SUCCESSFUL.getCode().equals(entity.getPreviousStatus());
+        this.updateFieldOpt(onlyAdd, request);
+
+        LOGGER.info("success to update sink of type={}", request.getSinkType());
     }
 
     @Override
