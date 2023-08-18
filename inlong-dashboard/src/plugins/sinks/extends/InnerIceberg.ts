@@ -132,6 +132,48 @@ export default class InnerIcebergSink
   tableName: string;
 
   @FieldDecorator({
+    type: 'input',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
+  })
+  @ColumnDecorator()
+  @I18n('meta.Sinks.InnerIceberg.ClusterTag')
+  clusterTag: string;
+
+  @FieldDecorator({
+    type: 'select',
+    rules: [{ required: true }],
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      options: [
+        {
+          label: 'APPEND',
+          value: 'APPEND',
+        },
+        {
+          label: 'UPSERT',
+          value: 'UPSERT',
+        },
+      ],
+    }),
+  })
+  @I18n('meta.Sinks.InnerIceberg.AppendMode')
+  @ColumnDecorator()
+  appendMode: string;
+
+  @FieldDecorator({
+    type: 'input',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+    }),
+  })
+  @ColumnDecorator()
+  @I18n('meta.Sinks.InnerIceberg.PrimaryKey')
+  primaryKey: string;
+
+  @FieldDecorator({
     type: EditableTable,
     initialValue: [],
     props: values => ({
