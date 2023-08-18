@@ -32,7 +32,7 @@ error() {
   fi
 }
 
-for i in {metadata.json,weight.properties,common.properties,blacklist.properties,whitelist.properties,groupid_mapping.properties,pulsar_transfer.properties}
+for i in {metadata.json,weight.properties,common.properties,blacklist.properties,whitelist.properties,groupid_mapping.properties,pulsar_transfer.properties,tdbank_metadata.json}
 do
   if [ ! -f "$i" ]; then
     touch "$i"
@@ -59,5 +59,4 @@ if [ -f "$CONFIG_FILE_WITH_PATH" ]; then
 else
    error "${CONFIG_FILE_WITH_PATH} is not exist! start failed!" 1
 fi
-
 

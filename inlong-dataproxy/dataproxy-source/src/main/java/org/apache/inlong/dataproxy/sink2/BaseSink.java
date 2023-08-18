@@ -20,6 +20,7 @@ package org.apache.inlong.dataproxy.sink2;
 import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.dataproxy.base.SinkRspEvent;
 import org.apache.inlong.dataproxy.config.CommonConfigHolder;
+import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.config.holder.ConfigUpdateCallback;
 import org.apache.inlong.dataproxy.consts.AttrConstants;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
@@ -110,6 +111,8 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
         this.maxMonitorCnt = context.getInteger(
                 ConfigConstants.MAX_MONITOR_CNT, ConfigConstants.DEF_MONITOR_STAT_CNT);
         this.maxThreads = context.getInteger(ConfigConstants.MAX_THREADS, 10);
+        // sink worker thread pool
+        this.sinkThreadPool = new Thread[maxThreads];
         this.statIntvlMillS = context.getLong(ConfigConstants.STAT_INTERVAL_SEC, 60000L);
         Preconditions.checkArgument(statIntvlMillS >= 0, "statIntvlMillS must be >= 0");
         this.enableDeDupCheck = context.getBoolean(ConfigConstants.ENABLE_MSG_CACHE_DEDUP,
@@ -143,6 +146,8 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
             logger.error("{}'s channel is null", this.cachedSinkName);
         }
         cachedMsgChannel = getChannel();
+        // register sink to config-manager
+        ConfigManager.getInstance().regMetaConfigChgCallback(this);
         // initial message duplicate cache
         this.msgIdCache = new MsgIdCache(enableDeDupCheck,
                 visitConcurLevel, initCacheCapacity, expiredDurSec);
@@ -165,14 +170,12 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.monitorStats.start();
         }
-        // sink worker thread pool
-        this.sinkThreadPool = new Thread[maxThreads];
+        // start sub-class sink process
+        startSinkProcess();
         // start configure change listener thread
         this.configListener = new Thread(new ConfigChangeProcessor());
         this.configListener.setName(this.cachedSinkName + "-configure-listener");
         this.configListener.start();
-        // start sub-class sink process
-        startSinkProcess();
         super.start();
         logger.info("{} sink is started", this.cachedSinkName);
     }

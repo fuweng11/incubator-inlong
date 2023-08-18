@@ -160,7 +160,7 @@ public class CodecTextMsg extends AbsV0MsgCodec {
         // get and check topic configure
         String tmpTopicName;
         if (enableTDBankLogic) {
-            tmpTopicName = ConfigManager.getInstance().getTDBankTopicName(tmpGroupId);
+            tmpTopicName = ConfigManager.getInstance().getTDBankSrcTopicName(tmpGroupId);
         } else {
             tmpTopicName = ConfigManager.getInstance().getTopicName(tmpGroupId, tmpStreamId);
         }

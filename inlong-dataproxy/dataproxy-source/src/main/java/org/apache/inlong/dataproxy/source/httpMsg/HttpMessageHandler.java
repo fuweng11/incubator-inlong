@@ -309,7 +309,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 return;
             }
             // get and check topicName
-            topicName = ConfigManager.getInstance().getTDBankTopicName(groupId);
+            topicName = ConfigManager.getInstance().getTDBankSrcTopicName(groupId);
             if (StringUtils.isBlank(topicName)) {
                 source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
                 sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),

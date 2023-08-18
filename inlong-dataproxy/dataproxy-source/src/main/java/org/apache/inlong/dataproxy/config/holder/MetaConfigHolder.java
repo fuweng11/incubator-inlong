@@ -224,9 +224,6 @@ public class MetaConfigHolder extends ConfigHolder {
     @Override
     protected boolean loadFromFileToHolder() {
         String jsonString = "";
-        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
-            return true;
-        }
         readWriteLock.readLock().lock();
         try {
             jsonString = loadConfigFromFile();

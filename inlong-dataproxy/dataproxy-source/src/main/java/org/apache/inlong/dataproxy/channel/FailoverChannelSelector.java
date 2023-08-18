@@ -56,8 +56,8 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
     // pulsar transfer channels
     private int pulsarXfeMasterIndex = 0;
     private int pulsarXfeSlaveIndex = 0;
-    private List<Channel> pulsarXfeMasterChannels = new ArrayList<>();
-    private List<Channel> pulsarXfeSlaveChannels = new ArrayList<>();
+    private final List<Channel> pulsarXfeMasterChannels = new ArrayList<>();
+    private final List<Channel> pulsarXfeSlaveChannels = new ArrayList<>();
     private boolean ignorePulsarXfeError = true;
     // agent metric channels
     private int agentMetricMasterIndex = 0;

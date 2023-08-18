@@ -167,7 +167,7 @@ public class TubeMQSink extends BaseSink {
 
     @Override
     public void reloadMetaConfig() {
-        Set<String> curTopicSet = ConfigManager.getInstance().getAllTopicNames();
+        Set<String> curTopicSet = ConfigManager.getInstance().getAllSinkTDBankTopicNames();
         if (curTopicSet.isEmpty() || lastRefreshTopics.equals(curTopicSet)) {
             return;
         }
@@ -277,7 +277,7 @@ public class TubeMQSink extends BaseSink {
 
         private boolean sendMessage(EventProfile profile) {
             // get topic name
-            String topic = ConfigManager.getInstance().getTDBankTopicName(profile.getGroupId());
+            String topic = ConfigManager.getInstance().getTDBankSinkTopicName(profile.getGroupId());
             if (topic == null) {
                 if (!CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
                     fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,

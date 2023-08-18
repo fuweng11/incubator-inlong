@@ -139,6 +139,10 @@ public class ConfigManager {
         return metaConfigHolder.getSrcBaseTopicName(groupId, streamId);
     }
 
+    public IdTopicConfig getSrcIdTopicConfig(String groupId, String streamId) {
+        return metaConfigHolder.getSrcIdTopicConfig(groupId, streamId);
+    }
+
     /**
      * get sink topic configure by groupId and streamId
      */
@@ -167,16 +171,20 @@ public class ConfigManager {
         return metaConfigHolder.getAllTopicName();
     }
 
-    public String getTDBankTopicName(String groupId) {
-        return tdbankMetaHolder.getTopicName(groupId);
+    public String getTDBankSrcTopicName(String groupId) {
+        return tdbankMetaHolder.getSrcTopicName(groupId);
+    }
+
+    public String getTDBankSinkTopicName(String groupId) {
+        return tdbankMetaHolder.getSinkTopicName(groupId);
     }
 
     public boolean updateTDBankMetaConfigInfo(String inDataJsonStr) {
         return tdbankMetaHolder.updateConfigMap(inDataJsonStr);
     }
 
-    public Set<String> getAllTDBankTopicNames() {
-        return tdbankMetaHolder.getAllTopicName();
+    public Set<String> getAllSinkTDBankTopicNames() {
+        return tdbankMetaHolder.getAllSinkTopicName();
     }
 
     public String getMxProperties(String groupId) {
@@ -271,7 +279,6 @@ public class ConfigManager {
         private final ConfigManager configManager;
         private final CloseableHttpClient httpClient;
         private final Gson gson = new Gson();
-        private final boolean enableTDBankLogic;
         private boolean isRunning = true;
         private final AtomicInteger managerIpListIndex = new AtomicInteger(0);
 
@@ -280,7 +287,6 @@ public class ConfigManager {
             this.httpClient = constructHttpClient();
             SecureRandom random = new SecureRandom(String.valueOf(System.currentTimeMillis()).getBytes());
             managerIpListIndex.set(random.nextInt());
-            this.enableTDBankLogic = CommonConfigHolder.getInstance().isEnableTDBankLogic();
         }
 
         public static ReloadConfigWorker create(ConfigManager managerInstance) {
@@ -307,7 +313,7 @@ public class ConfigManager {
                     // connect to manager
                     if (fisrtCheck) {
                         fisrtCheck = false;
-                        if (this.enableTDBankLogic) {
+                        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
                             checkTDBankRemoteConfig();
                         } else {
                             checkRemoteConfig();
@@ -316,7 +322,7 @@ public class ConfigManager {
                     } else {
                         // wait for 3 * check-time to update remote config
                         if (count % 3 == 0) {
-                            if (this.enableTDBankLogic) {
+                            if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
                                 checkTDBankRemoteConfig();
                             } else {
                                 checkRemoteConfig();
@@ -497,16 +503,28 @@ public class ConfigManager {
                 url = "http://" + host + "/business?opType=queryBusConfig&cluster_ids=" + clusterId;
                 httpGet = HttpUtils.getTDBankHttpGet(url);
                 // request with post
-                LOG.info("Start to request {} to get config info, with headers: {}",
-                        url, httpGet.getAllHeaders());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Start to request {} to get config info, with headers: {}",
+                            url, httpGet.getAllHeaders());
+                }
+                long startTime = System.currentTimeMillis();
                 CloseableHttpResponse response = httpClient.execute(httpGet);
                 String returnStr = EntityUtils.toString(response.getEntity());
+                long dltTime = System.currentTimeMillis() - startTime;
+                if (dltTime >= CommonConfigHolder.getInstance().getMetaConfigWastAlarmMs()) {
+                    LOG.warn("End to request {} to get config info:{}, WAIST {} ms",
+                            url, returnStr, dltTime);
+                } else {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("End to request {} to get config info:{}, WAIST {} ms",
+                                url, returnStr, dltTime);
+                    }
+                }
                 if (response.getStatusLine().getStatusCode() != 200) {
                     LOG.warn("Failed to request {}, with headers: {}, the response is {}",
                             url, httpGet.getAllHeaders(), returnStr);
                     return false;
                 }
-                LOG.info("End to request {} to get config info:{}", url, returnStr);
                 // get bid <-> topic and m value.
                 TDBankMetaConfig metaConfig =
                         gson.fromJson(returnStr, TDBankMetaConfig.class);
@@ -523,8 +541,10 @@ public class ConfigManager {
                 }
                 // update meta configure
                 if (configManager.updateTDBankMetaConfigInfo(returnStr)) {
-                    ConfigManager.handshakeManagerOk.set(true);
-                    LOG.info("Get config success from manager and updated, set handshake status is ok!");
+                    if (!ConfigManager.handshakeManagerOk.get()) {
+                        ConfigManager.handshakeManagerOk.set(true);
+                        LOG.info("Get config success from manager and updated, set handshake status is ok!");
+                    }
                 }
                 return true;
             } catch (Throwable ex) {

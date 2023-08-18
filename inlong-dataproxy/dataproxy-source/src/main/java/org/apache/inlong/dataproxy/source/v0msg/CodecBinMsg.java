@@ -401,7 +401,7 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         // get and check topic configure
         if (!indexMsg) {
             if (enableTDBankLogic) {
-                this.topicName = configManager.getTDBankTopicName(this.groupId);
+                this.topicName = configManager.getTDBankSrcTopicName(this.groupId);
             } else {
                 this.topicName = configManager.getTopicName(this.groupId, this.streamId);
             }
