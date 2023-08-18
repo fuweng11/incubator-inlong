@@ -155,11 +155,11 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
         this.dispatchQueue = new BufferQueue<>(maxInflightBufferSIzeInKB);
         // init monitor logic
         if (enableFileMetric) {
-            this.detailIndex = new MonitorIndex(CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
+            this.detailIndex = new MonitorIndex(CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.detailIndex.start();
-            this.sumIndex = new MonitorSumIndex(CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
+            this.sumIndex = new MonitorSumIndex(CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.sumIndex.start();
@@ -379,7 +379,7 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
                 .append(AttrConstants.SEP_HASHTAG).append(profile.getGroupId())
                 .append(AttrConstants.SEP_HASHTAG).append(profile.getStreamId())
                 .append(AttrConstants.SEP_HASHTAG).append(topic)
-                .append(AttrConstants.SEP_HASHTAG)
+                .append(AttrConstants.SEP_HASHTAG).append(AttrConstants.SEP_HASHTAG)
                 .append(profile.getProperties().get(ConfigConstants.DATAPROXY_IP_KEY));
         String sumKey = statsKey.toString()
                 + AttrConstants.SEP_HASHTAG + tenMinsDt

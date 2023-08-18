@@ -165,6 +165,7 @@ public class SinkContext {
                 .append(profile.getInlongGroupId()).append(AttrConstants.SEP_HASHTAG)
                 .append(profile.getInlongStreamId()).append(AttrConstants.SEP_HASHTAG)
                 .append(topic).append(AttrConstants.SEP_HASHTAG)
+                .append(AttrConstants.SEP_HASHTAG)
                 .append(profile.getProperties().get(ConfigConstants.DATAPROXY_IP_KEY)).append(AttrConstants.SEP_HASHTAG)
                 .append(brokerIP).append(AttrConstants.SEP_HASHTAG)
                 .append(DateTimeUtils.ms2yyyyMMddHHmmTenMins(dtL)).append(AttrConstants.SEP_HASHTAG)
