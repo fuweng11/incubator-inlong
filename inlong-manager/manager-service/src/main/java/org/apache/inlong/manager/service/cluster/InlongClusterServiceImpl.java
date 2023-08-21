@@ -78,7 +78,6 @@ import org.apache.inlong.manager.service.repository.DataProxyConfigRepositoryV2;
 import org.apache.inlong.manager.service.tenant.InlongTenantService;
 import org.apache.inlong.manager.service.user.InlongRoleService;
 import org.apache.inlong.manager.service.user.TenantRoleService;
-import org.apache.inlong.manager.service.user.UserService;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -116,8 +115,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
     private static final Logger LOGGER = LoggerFactory.getLogger(InlongClusterServiceImpl.class);
     private static final Gson GSON = new Gson();
 
-    @Autowired
-    private UserService userService;
     @Autowired
     private InlongGroupEntityMapper groupMapper;
     @Autowired
@@ -207,8 +204,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             LOGGER.error("inlong cluster tag not found by id={}", id);
             throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND);
         }
-        userService.checkUser(entity.getInCharges(), currentUser,
-                "Current user does not have permission to get cluster tag");
 
         ClusterTagResponse response = CommonBeanUtils.copyProperties(entity, ClusterTagResponse::new);
 
@@ -229,9 +224,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND,
                     String.format("inlong cluster tag not found by id=%s", id));
         }
-        // only the person in charges can query
-        userService.checkUser(entity.getInCharges(), opInfo.getName(),
-                "Current user does not have permission to get cluster tag");
         return CommonBeanUtils.copyProperties(entity, ClusterTagResponse::new);
     }
 
@@ -291,8 +283,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             LOGGER.error(errMsg);
             throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
         }
-        userService.checkUser(exist.getInCharges(), operator,
-                "Current user does not have permission to update cluster tag");
         // if the cluster tag was changed, need to check whether the new tag already exists
         String oldClusterTag = exist.getClusterTag();
         if (!newClusterTag.equals(oldClusterTag)) {
@@ -376,9 +366,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             throw new BusinessException(ErrorCodeEnum.RECORD_NOT_FOUND,
                     String.format("inlong cluster tag was not exist for id=%s", request.getId()));
         }
-        // only the person in charges can query
-        userService.checkUser(exist.getInCharges(), opInfo.getName(),
-                "Current user does not have permission to update cluster tag");
         // check record version
         Preconditions.expectEquals(exist.getVersion(), request.getVersion(),
                 ErrorCodeEnum.CONFIG_EXPIRED,
@@ -435,8 +422,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             LOGGER.error("inlong cluster tag not found by id={}", id);
             return false;
         }
-        userService.checkUser(exist.getInCharges(), operator,
-                "Current user does not have permission to delete cluster tag");
 
         // check if there are some InlongGroups that uses this tag
         String clusterTag = exist.getClusterTag();
@@ -477,9 +462,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         if (exist == null || exist.getIsDeleted() > InlongConstants.UN_DELETED) {
             return true;
         }
-        // only the person in charges can query
-        userService.checkUser(exist.getInCharges(), opInfo.getName(),
-                "Current user does not have permission to delete cluster tag");
         // check if there are some InlongGroups that uses this tag
         String clusterTag = exist.getClusterTag();
         // check if there are some InlongGroups that uses this tag
@@ -577,8 +559,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             LOGGER.error("inlong cluster not found by id={}", id);
             throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND);
         }
-        String message = "Current user does not have permission to get cluster info";
-        userService.checkUser(entity.getInCharges(), currentUser, message);
 
         InlongClusterOperator instance = clusterOperatorFactory.getInstance(entity.getType());
         ClusterInfo clusterInfo = instance.getFromEntity(entity);
@@ -593,9 +573,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND,
                     String.format("inlong cluster not found by id=%s", id));
         }
-        // only the person in charges can query
-        userService.checkUser(entity.getInCharges(), opInfo.getName(),
-                "Current user does not have permission to query cluster info");
 
         InlongClusterOperator instance = clusterOperatorFactory.getInstance(entity.getType());
         return instance.getFromEntity(entity);
@@ -697,8 +674,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             LOGGER.error(errMsg);
             throw new BusinessException(errMsg);
         }
-        String message = "Current user does not have permission to update cluster info";
-        userService.checkUser(entity.getInCharges(), operator, message);
 
         InlongClusterOperator instance = clusterOperatorFactory.getInstance(request.getType());
         instance.updateOpt(request, operator);
@@ -713,9 +688,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND,
                     String.format("inlong cluster not found by id=%s", request.getId()));
         }
-        // only the person in charges can query
-        userService.checkUser(entity.getInCharges(), opInfo.getName(),
-                "Current user does not have permission to update cluster info");
         // check parameters
         chkUnmodifiableParams(entity, request);
         // check whether the cluster already exists
@@ -746,9 +718,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         request.setId(entity.getId());
         // check unmodifiable parameters
         chkUnmodifiableParams(entity, request);
-        // check permission
-        String message = "Current user does not have permission to update cluster info";
-        userService.checkUser(entity.getInCharges(), operator, message);
         // update record
         InlongClusterOperator instance = clusterOperatorFactory.getInstance(request.getType());
         instance.updateOpt(request, operator);
@@ -763,13 +732,9 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         String clusterTag = request.getClusterTag();
         Preconditions.expectNotBlank(clusterTag, ErrorCodeEnum.INVALID_PARAMETER, "cluster tag cannot be empty");
         InlongClusterTagEntity exist = clusterTagMapper.selectByTag(clusterTag);
-        userService.checkUser(exist.getInCharges(), operator,
-                "Current user does not have permission to bind or unbind cluster tag");
         if (CollectionUtils.isNotEmpty(request.getBindClusters())) {
             request.getBindClusters().forEach(id -> {
                 InlongClusterEntity entity = clusterMapper.selectById(id);
-                userService.checkUser(entity.getInCharges(), operator,
-                        "Current user does not have permission to bind or unbind cluster tag");
                 Set<String> tagSet = Sets.newHashSet(entity.getClusterTags().split(InlongConstants.COMMA));
                 tagSet.add(clusterTag);
                 String updateTags = Joiner.on(",").join(tagSet);
@@ -787,10 +752,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         if (CollectionUtils.isNotEmpty(request.getUnbindClusters())) {
             request.getUnbindClusters().forEach(id -> {
                 InlongClusterEntity entity = clusterMapper.selectById(id);
-                String errMsg = String.format(
-                        "Current user does not have permission to bind or unbind cluster tag for cluster by id=%s, name=%s",
-                        entity.getId(), entity.getName());
-                userService.checkUser(entity.getInCharges(), operator, errMsg);
                 this.removeClusterTag(entity, clusterTag, operator);
             });
         }
@@ -800,17 +761,9 @@ public class InlongClusterServiceImpl implements InlongClusterService {
 
     @Override
     public Boolean bindTag(BindTagRequest request, UserInfo opInfo) {
-        InlongClusterTagEntity exist = clusterTagMapper.selectByTag(request.getClusterTag());
-        // only the person in charges can bing tag
-        userService.checkUser(exist.getInCharges(), opInfo.getName(),
-                "Current user does not have permission to bind or unbind cluster tag");
         if (CollectionUtils.isNotEmpty(request.getBindClusters())) {
             request.getBindClusters().forEach(id -> {
                 InlongClusterEntity entity = clusterMapper.selectById(id);
-                String errMsg = String.format(
-                        "Current user does not have permission to bind or unbind cluster tag for cluster by id=%s, name=%s",
-                        entity.getId(), entity.getName());
-                userService.checkUser(entity.getInCharges(), opInfo.getName(), errMsg);
                 Set<String> tagSet = Sets.newHashSet(entity.getClusterTags().split(InlongConstants.COMMA));
                 tagSet.add(request.getClusterTag());
                 String updateTags = Joiner.on(",").join(tagSet);
@@ -827,10 +780,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         if (CollectionUtils.isNotEmpty(request.getUnbindClusters())) {
             request.getUnbindClusters().forEach(id -> {
                 InlongClusterEntity entity = clusterMapper.selectById(id);
-                String errMsg = String.format(
-                        "Current user does not have permission to bind or unbind cluster tag for cluster by id=%s, name=%s",
-                        entity.getId(), entity.getName());
-                userService.checkUser(entity.getInCharges(), opInfo.getName(), errMsg);
                 Set<String> tagSet = Sets.newHashSet(entity.getClusterTags().split(InlongConstants.COMMA));
                 tagSet.remove(request.getClusterTag());
                 String updateTags = Joiner.on(",").join(tagSet);
@@ -856,8 +805,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
                     name, type);
             return false;
         }
-        userService.checkUser(entity.getInCharges(), operator,
-                "Current user does not have permission to delete cluster info");
 
         List<InlongClusterNodeEntity> nodeEntities = clusterNodeMapper.selectByParentId(entity.getId(), null);
         if (CollectionUtils.isNotEmpty(nodeEntities)) {
@@ -884,8 +831,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         InlongClusterEntity entity = clusterMapper.selectById(id);
         Preconditions.expectNotNull(entity, ErrorCodeEnum.CLUSTER_NOT_FOUND,
                 ErrorCodeEnum.CLUSTER_NOT_FOUND.getMessage());
-        String message = "Current user does not have permission to delete cluster info";
-        userService.checkUser(entity.getInCharges(), operator, message);
 
         List<InlongClusterNodeEntity> nodeEntities = clusterNodeMapper.selectByParentId(id, null);
         if (CollectionUtils.isNotEmpty(nodeEntities)) {
@@ -911,9 +856,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         Preconditions.expectNotNull(entity, ErrorCodeEnum.CLUSTER_NOT_FOUND,
                 ErrorCodeEnum.CONSUME_NOT_FOUND.getMessage());
 
-        // only the person in charges can delete
-        userService.checkUser(entity.getInCharges(), opInfo.getName(),
-                "Current user does not have permission to delete cluster info");
         List<InlongClusterNodeEntity> nodeEntities = clusterNodeMapper.selectByParentId(id, null);
         if (CollectionUtils.isNotEmpty(nodeEntities)) {
             throw new BusinessException(ErrorCodeEnum.RECORD_IN_USED,
@@ -953,9 +895,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         InlongClusterEntity entity = clusterMapper.selectById(request.getParentId());
         Preconditions.expectNotNull(entity, ErrorCodeEnum.CLUSTER_NOT_FOUND,
                 String.format("inlong cluster not found by id=%s, or was already deleted", request.getParentId()));
-        // only the person in charges can query
-        userService.checkUser(entity.getInCharges(), opInfo.getName(),
-                String.format("No permission to add cluster node in cluster=%s", request.getParentId()));
         // check cluster node if exist
         InlongClusterNodeEntity exist = clusterNodeMapper.selectByUniqueKey(request);
         if (exist != null) {
@@ -976,9 +915,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             LOGGER.error("inlong cluster node not found by id={}", id);
             throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND);
         }
-        InlongClusterEntity cluster = clusterMapper.selectById(entity.getParentId());
-        String message = "Current user does not have permission to get cluster node";
-        userService.checkUser(cluster.getInCharges(), currentUser, message);
         InlongClusterNodeOperator instance = clusterNodeOperatorFactory.getInstance(entity.getType());
         return instance.getFromEntity(entity);
     }
@@ -990,9 +926,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             throw new BusinessException(ErrorCodeEnum.CLUSTER_NOT_FOUND);
         }
         InlongClusterEntity cluster = clusterMapper.selectById(entity.getParentId());
-        // only the person in charges can query
-        userService.checkUser(cluster.getInCharges(), opInfo.getName(),
-                "Current user does not have permission to delete cluster info");
         return CommonBeanUtils.copyProperties(entity, ClusterNodeResponse::new);
     }
 
@@ -1005,9 +938,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         }
         Integer parentId = request.getParentId();
         Preconditions.expectNotNull(parentId, "Cluster id cannot be empty");
-        InlongClusterEntity cluster = clusterMapper.selectById(parentId);
-        String message = "Current user does not have permission to get cluster node list";
-        userService.checkUser(cluster.getInCharges(), currentUser, message);
         PageHelper.startPage(request.getPageNum(), request.getPageSize());
         Page<InlongClusterNodeEntity> entityPage =
                 (Page<InlongClusterNodeEntity>) clusterNodeMapper.selectByCondition(request);
@@ -1027,10 +957,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
                 throw new BusinessException(ErrorCodeEnum.ID_IS_EMPTY,
                         "Cluster id cannot be empty");
             }
-            InlongClusterEntity cluster = clusterMapper.selectById(request.getParentId());
-            // only the person in charges can query
-            userService.checkUser(cluster.getInCharges(), opInfo.getName(),
-                    "Current user does not have permission to get cluster node list");
             return CommonBeanUtils.copyListProperties(
                     clusterNodeMapper.selectByCondition(request), ClusterNodeResponse::new);
         } else {
@@ -1079,9 +1005,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND,
                     String.format("inlong group not exists for groupId=%s", groupId));
         }
-        // only the person in charges can query
-        userService.checkUser(groupEntity.getInCharges(), opInfo.getName(),
-                String.format("Current user does not have permission to query for groupId=%s", groupId));
         String clusterTag = groupEntity.getInlongClusterTag();
         if (StringUtils.isBlank(clusterTag)) {
             throw new BusinessException(ErrorCodeEnum.CLUSTER_TAG_NOT_FOUND,
@@ -1161,10 +1084,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
             LOGGER.error(errMsg);
             throw new BusinessException(errMsg);
         }
-        // check user's permission
-        InlongClusterEntity cluster = clusterMapper.selectById(entity.getParentId());
-        String message = "Current user does not have permission to update cluster node";
-        userService.checkUser(cluster.getInCharges(), operator, message);
         // update record
         InlongClusterNodeOperator instance = clusterNodeOperatorFactory.getInstance(request.getType());
         instance.updateOpt(request, operator);
@@ -1204,9 +1123,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
                     String.format("The cluster to which the node belongs not found by clusterId=%s",
                             request.getParentId()));
         }
-        // only the person in charges can query
-        userService.checkUser(cluster.getInCharges(), opInfo.getName(),
-                String.format("No permission to update cluster node for clusterId=%s", entity.getParentId()));
         // update record
         InlongClusterNodeOperator instance = clusterNodeOperatorFactory.getInstance(request.getType());
         instance.updateOpt(request, opInfo.getName());
@@ -1218,10 +1134,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
         Preconditions.expectNotNull(id, "cluster node id cannot be empty");
         InlongClusterNodeEntity entity = clusterNodeMapper.selectById(id);
         Preconditions.expectNotNull(entity, ErrorCodeEnum.CLUSTER_NOT_FOUND);
-
-        InlongClusterEntity cluster = clusterMapper.selectById(entity.getParentId());
-        String message = "Current user does not have permission to delete cluster node";
-        userService.checkUser(cluster.getInCharges(), operator, message);
 
         entity.setIsDeleted(entity.getId());
         entity.setModifier(operator);
@@ -1238,10 +1150,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
     public Boolean deleteNode(Integer id, UserInfo opInfo) {
         InlongClusterNodeEntity entity = clusterNodeMapper.selectById(id);
         Preconditions.expectNotNull(entity, ErrorCodeEnum.CLUSTER_NOT_FOUND);
-        InlongClusterEntity cluster = clusterMapper.selectById(entity.getParentId());
-        // only the person in charges can delete
-        userService.checkUser(cluster.getInCharges(), opInfo.getName(),
-                String.format("No permission to delete cluster node for clusterId=%s", entity.getParentId()));
         // delete record
         entity.setIsDeleted(entity.getId());
         entity.setModifier(opInfo.getName());
@@ -1519,7 +1427,6 @@ public class InlongClusterServiceImpl implements InlongClusterService {
     @Override
     public Boolean testConnection(ClusterRequest request) {
         LOGGER.info("begin test connection for: {}", request);
-        String type = request.getType();
 
         // according to the data node type, test connection
         InlongClusterOperator clusterOperator = clusterOperatorFactory.getInstance(request.getType());

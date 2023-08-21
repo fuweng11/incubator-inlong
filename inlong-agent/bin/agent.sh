@@ -50,7 +50,7 @@ function start_agent() {
     echo "agent is running."
     exit 1
   fi
-  nohup ${JAVA} ${AGENT_ARGS} ${arg_uniq} org.apache.inlong.agent.core.AgentMain > /dev/null 2>&1 &
+  nohup ${JAVA} ${AGENT_ARGS} ${arg_uniq} -javaagent:${OTEL_AGENT} org.apache.inlong.agent.core.AgentMain > /dev/null 2>&1 &
 }
 
 # stop agent

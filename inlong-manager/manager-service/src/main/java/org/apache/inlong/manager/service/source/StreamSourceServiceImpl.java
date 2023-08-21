@@ -44,7 +44,6 @@ import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.pojo.stream.StreamField;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.group.GroupCheckService;
-import org.apache.inlong.manager.service.user.UserService;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -102,8 +101,6 @@ public class StreamSourceServiceImpl implements StreamSourceService {
         // Check if it can be added
         String groupId = request.getInlongGroupId();
         InlongGroupEntity groupEntity = groupCheckService.checkGroupStatus(groupId, operator);
-        // only the person in charges can query
-        userService.checkUser(groupEntity.getInCharges(), operator, ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         String streamId = request.getInlongStreamId();
         String sourceName = request.getSourceName();
         List<StreamSourceEntity> existList = sourceMapper.selectByRelatedId(groupId, streamId, sourceName);
@@ -134,9 +131,6 @@ public class StreamSourceServiceImpl implements StreamSourceService {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND,
                     String.format("InlongGroup does not exist with InlongGroupId=%s", request.getInlongGroupId()));
         }
-        // only the person in charges can query
-        userService.checkUser(groupEntity.getInCharges(), opInfo.getName(),
-                ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         // get stream information
         InlongStreamEntity streamEntity = streamMapper.selectByIdentifier(
                 request.getInlongGroupId(), request.getInlongStreamId());
@@ -338,8 +332,6 @@ public class StreamSourceServiceImpl implements StreamSourceService {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND,
                     String.format("InlongGroup does not exist with InlongGroupId=%s", groupEntity.getInlongGroupId()));
         }
-        // only the person in charges can query
-        userService.checkUser(groupEntity.getInCharges(), operator, ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         StreamSourceOperator sourceOperator = operatorFactory.getInstance(request.getSourceType());
         // Remove id in sourceField when save
         List<StreamField> streamFields = request.getFieldList();
@@ -363,9 +355,6 @@ public class StreamSourceServiceImpl implements StreamSourceService {
             throw new BusinessException(ErrorCodeEnum.ILLEGAL_RECORD_FIELD_VALUE,
                     String.format("InlongGroup does not exist with InlongGroupId=%s", request.getInlongGroupId()));
         }
-        // only the person in charges can query
-        userService.checkUser(groupEntity.getInCharges(), opInfo.getName(),
-                ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         // check inlong group status
         GroupStatus status = GroupStatus.forCode(groupEntity.getStatus());
         if (GroupStatus.notAllowedUpdate(status)) {
@@ -418,9 +407,6 @@ public class StreamSourceServiceImpl implements StreamSourceService {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND,
                     String.format("InlongGroup does not exist with InlongGroupId=%s", entity.getInlongGroupId()));
         }
-        // only the person in charges can query
-        userService.checkUser(groupEntity.getInCharges(), opInfo.getName(),
-                ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         // check record status
         boolean isTemplateSource = CollectionUtils.isNotEmpty(sourceMapper.selectByTemplateId(id));
         SourceStatus curStatus = SourceStatus.forCode(entity.getStatus());
@@ -478,8 +464,6 @@ public class StreamSourceServiceImpl implements StreamSourceService {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND,
                     String.format("InlongGroup does not exist with InlongGroupId=%s", entity.getInlongGroupId()));
         }
-        // only the person in charges can query
-        userService.checkUser(groupEntity.getInCharges(), operator, ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
 
         StreamSourceOperator sourceOperator = operatorFactory.getInstance(entity.getSourceType());
         SourceRequest sourceRequest = new SourceRequest();
@@ -501,8 +485,6 @@ public class StreamSourceServiceImpl implements StreamSourceService {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND,
                     String.format("InlongGroup does not exist with InlongGroupId=%s", entity.getInlongGroupId()));
         }
-        // only the person in charges can query
-        userService.checkUser(groupEntity.getInCharges(), operator, ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
 
         StreamSourceOperator sourceOperator = operatorFactory.getInstance(entity.getSourceType());
         SourceRequest sourceRequest = new SourceRequest();
