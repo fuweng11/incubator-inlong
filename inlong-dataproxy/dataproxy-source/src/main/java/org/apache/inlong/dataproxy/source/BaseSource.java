@@ -269,22 +269,24 @@ public abstract class BaseSource
         MetricRegister.register(metricItemSet);
         // init monitor logic
         if (enableFileMetric) {
-            this.detailIndex = new MonitorIndex(CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
+            this.detailIndex = new MonitorIndex(this.cachedSrcName + "_detail_index",
+                    CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.detailIndex.start();
-            this.sumIndex = new MonitorSumIndex(CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
+            this.sumIndex = new MonitorSumIndex(this.cachedSrcName + "_sum_index",
+                    CommonConfigHolder.getInstance().getFileMetricSourceOutName(),
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.sumIndex.start();
-            this.monitorStats = new MonitorStats(
+            this.monitorStats = new MonitorStats(this.cachedSrcName + "_stats",
                     CommonConfigHolder.getInstance().getFileMetricEventOutName()
                             + AttrConstants.SEP_HASHTAG + this.cachedSrcName,
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.monitorStats.start();
             if (enablePCGFileMetric) {
-                this.pcgMetricsCollector = new PcgMinMetricsCollector(
+                this.pcgMetricsCollector = new PcgMinMetricsCollector(this.cachedSrcName + "_pcg_collector",
                         CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                         CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
                 this.pcgMetricsCollector.start();

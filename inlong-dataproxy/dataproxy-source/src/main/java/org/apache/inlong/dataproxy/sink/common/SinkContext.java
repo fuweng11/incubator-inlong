@@ -91,10 +91,11 @@ public class SinkContext {
     public void start() {
         // init monitor logic
         if (enableFileMetric) {
-            this.monitorIndex = new MonitorIndex(CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
+            this.monitorIndex = new MonitorIndex(this.sinkName + "_detail_index",
+                    CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
-            this.monitorStats = new MonitorStats(
+            this.monitorStats = new MonitorStats(this.sinkName + "_stats",
                     CommonConfigHolder.getInstance().getFileMetricEventOutName()
                             + AttrConstants.SEP_HASHTAG + this.getSinkName(),
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,

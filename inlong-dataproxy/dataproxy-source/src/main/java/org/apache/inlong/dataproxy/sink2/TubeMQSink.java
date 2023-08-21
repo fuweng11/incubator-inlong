@@ -172,6 +172,23 @@ public class TubeMQSink extends BaseSink {
             return;
         }
         boolean added = false;
+        // for first reload, delay 3 seconds
+        if (isFirstReload) {
+            synchronized (lastRefreshTopics) {
+                if (isFirstReload) {
+                    if (System.currentTimeMillis() - startTime > 3000) {
+                        isFirstReload = false;
+                    } else {
+                        try {
+                            Thread.sleep(3000);
+                        } catch (Throwable e) {
+                            //
+                        }
+                        isFirstReload = false;
+                    }
+                }
+            }
+        }
         List<String> addedTopics = new ArrayList<>();
         for (String topic : curTopicSet) {
             if (topic == null) {
@@ -223,7 +240,7 @@ public class TubeMQSink extends BaseSink {
                 remainder = maxAllowedPublishTopicNum - latestPublishTopicNum.get();
             }
             startIndex = publishedCnt;
-            endIndex = Math.max(publishedCnt + remainder, addedTopics.size());
+            endIndex = Math.min(publishedCnt + remainder, addedTopics.size());
             subSet.addAll(addedTopics.subList(startIndex, endIndex));
             try {
                 latestProducer.publish(subSet);

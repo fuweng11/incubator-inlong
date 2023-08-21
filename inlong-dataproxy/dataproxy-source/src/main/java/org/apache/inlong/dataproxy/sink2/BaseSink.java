@@ -77,13 +77,10 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     protected MonitorIndex detailIndex = null;
     protected MonitorSumIndex sumIndex = null;
     protected MonitorStats monitorStats = null;
-    private int maxMonitorCnt;
     // whether to resend the message after sending failure
     protected boolean enableRetryAfterFailure;
     // Maximum number of retries to send
     protected int maxRetries;
-    // Sink sending status statistics
-    private long statIntvlMillS = 60000L;
     // meta configure change lister thread
     private Thread configListener;
     // configure change notify
@@ -96,6 +93,8 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     private int initCacheCapacity = 5000000;
     private long expiredDurSec = 30;
     protected MsgIdCache msgIdCache;
+    protected long startTime;
+    protected volatile boolean isFirstReload = true;
 
     public BaseSink() {
 
@@ -103,51 +102,53 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
 
     @Override
     public void configure(Context context) {
-        logger.info("{} start to configure, context:{}.", getName(), context.toString());
         this.cachedSinkName = getName();
+        logger.info("{} start to configure, context:{}.", this.cachedSinkName, context.toString());
         this.enableFileMetric = CommonConfigHolder.getInstance().isEnableFileMetric();
         this.enableRetryAfterFailure = CommonConfigHolder.getInstance().isEnableSendRetryAfterFailure();
         this.maxRetries = CommonConfigHolder.getInstance().getMaxRetriesAfterFailure();
-        this.maxMonitorCnt = context.getInteger(
-                ConfigConstants.MAX_MONITOR_CNT, ConfigConstants.DEF_MONITOR_STAT_CNT);
-        this.maxThreads = context.getInteger(ConfigConstants.MAX_THREADS, 10);
-        // sink worker thread pool
+        // get the number of sink worker thread
+        this.maxThreads = context.getInteger(ConfigConstants.MAX_THREADS, ConfigConstants.VAL_DEF_SINK_THREADS);
+        Preconditions.checkArgument((this.maxThreads >= ConfigConstants.VAL_MIN_SINK_THREADS),
+                ConfigConstants.MAX_THREADS + " must be >= " + ConfigConstants.VAL_MIN_SINK_THREADS);
+        // initial sink worker thread pool
         this.sinkThreadPool = new Thread[maxThreads];
-        this.statIntvlMillS = context.getLong(ConfigConstants.STAT_INTERVAL_SEC, 60000L);
-        Preconditions.checkArgument(statIntvlMillS >= 0, "statIntvlMillS must be >= 0");
+        // get message deduplicate setting
         this.enableDeDupCheck = context.getBoolean(ConfigConstants.ENABLE_MSG_CACHE_DEDUP,
-                ConfigConstants.DEF_ENABLE_MSG_CACHE_DEDUP);
+                ConfigConstants.VAL_DEF_ENABLE_MSG_CACHE_DEDUP);
         this.visitConcurLevel = context.getInteger(ConfigConstants.MAX_CACHE_CONCURRENT_ACCESS,
-                ConfigConstants.DEF_MAX_CACHE_CONCURRENT_ACCESS);
+                ConfigConstants.VAL_DEF_CACHE_CONCURRENT_ACCESS);
+        Preconditions.checkArgument((this.visitConcurLevel >= ConfigConstants.VAL_MIN_CACHE_CONCURRENT_ACCESS),
+                ConfigConstants.MAX_CACHE_CONCURRENT_ACCESS + " must be >= "
+                        + ConfigConstants.VAL_MIN_CACHE_CONCURRENT_ACCESS);
         this.expiredDurSec = context.getLong(ConfigConstants.MAX_CACHE_SURVIVED_TIME_SEC,
-                ConfigConstants.DEF_MAX_CACHE_SURVIVED_TIME_SEC);
+                ConfigConstants.VAL_DEF_CACHE_SURVIVED_TIME_SEC);
+        Preconditions.checkArgument((this.expiredDurSec >= ConfigConstants.VAL_MIN_CACHE_SURVIVED_TIME_SEC),
+                ConfigConstants.MAX_CACHE_SURVIVED_TIME_SEC + " must be >= "
+                        + ConfigConstants.VAL_MIN_CACHE_SURVIVED_TIME_SEC);
         this.initCacheCapacity = context.getInteger(ConfigConstants.MAX_CACHE_SURVIVED_SIZE,
-                ConfigConstants.DEF_MAX_CACHE_SURVIVED_SIZE);
-        this.initCacheCapacity = context.getInteger(ConfigConstants.MAX_CACHE_SURVIVED_SIZE,
-                ConfigConstants.DEF_MAX_CACHE_SURVIVED_SIZE);
+                ConfigConstants.VAL_DEF_CACHE_SURVIVED_SIZE);
+        Preconditions.checkArgument((this.initCacheCapacity >= ConfigConstants.VAL_MIN_CACHE_SURVIVED_SIZE),
+                ConfigConstants.MAX_CACHE_SURVIVED_SIZE + " must be >= "
+                        + ConfigConstants.VAL_MIN_CACHE_SURVIVED_SIZE);
         this.maxInflightBufferSIzeInKB = context.getInteger(ConfigConstants.MAX_INFLIGHT_BUFFER_QUEUE_SIZE_KB,
                 CommonConfigHolder.getInstance().getMaxBufferQueueSizeKb());
-        // linkMaxAllowedDelayedMsgCount = context.getLong(ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT,80000L);
-        // //单连接最大
-        // sessionWarnDelayedMsgCount = context.getLong(ConfigConstants.SESSION_WARN_DELAYED_MSG_COUNT,2000000L);
-        // //原先为100万，当超过这个值的时候启动负载均衡，即排序，选top20%最高的broker不发送
-        // sessionMaxAllowedDelayedMsgCount =
-        // context.getLong(ConfigConstants.SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT,4000000L);//总会话最大消息，超过这个值会被forbidden
-        // nettyWriteBufferHighWaterMark =
-        // context.getLong(ConfigConstants.NETTY_WRITE_BUFFER_HIGH_WATER_MARK,15*1024*1024L);//原先为10m，tube netty缓冲区最大值
-        // recoverthreadcount
-        // =context.getInteger(ConfigConstants.RECOVER_THREAD_COUNT,Runtime.getRuntime().availableProcessors()+1);
+        Preconditions.checkArgument(
+                (this.maxInflightBufferSIzeInKB >= ConfigConstants.VAL_MIN_INFLIGHT_BUFFER_QUEUE_SIZE_KB),
+                ConfigConstants.MAX_INFLIGHT_BUFFER_QUEUE_SIZE_KB + " must be >= "
+                        + ConfigConstants.VAL_MIN_INFLIGHT_BUFFER_QUEUE_SIZE_KB);
     }
 
     @Override
     public void start() {
+        startTime = System.currentTimeMillis();
         logger.info("{} sink is starting...", this.cachedSinkName);
         if (getChannel() == null) {
             logger.error("{}'s channel is null", this.cachedSinkName);
         }
         cachedMsgChannel = getChannel();
-        // register sink to config-manager
-        ConfigManager.getInstance().regMetaConfigChgCallback(this);
+        // register meta-configure listener to config-manager
+        ConfigManager.getInstance().regTDBankMetaChgCallback(this);
         // initial message duplicate cache
         this.msgIdCache = new MsgIdCache(enableDeDupCheck,
                 visitConcurLevel, initCacheCapacity, expiredDurSec);
@@ -155,15 +156,17 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
         this.dispatchQueue = new BufferQueue<>(maxInflightBufferSIzeInKB);
         // init monitor logic
         if (enableFileMetric) {
-            this.detailIndex = new MonitorIndex(CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
+            this.detailIndex = new MonitorIndex(this.cachedSinkName + "_detail_index",
+                    CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.detailIndex.start();
-            this.sumIndex = new MonitorSumIndex(CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
+            this.sumIndex = new MonitorSumIndex(this.cachedSinkName + "_sum_index",
+                    CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.sumIndex.start();
-            this.monitorStats = new MonitorStats(
+            this.monitorStats = new MonitorStats(this.cachedSinkName + "_stats",
                     CommonConfigHolder.getInstance().getFileMetricEventOutName()
                             + AttrConstants.SEP_HASHTAG + this.cachedSinkName,
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
@@ -177,6 +180,7 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
         this.configListener.setName(this.cachedSinkName + "-configure-listener");
         this.configListener.start();
         super.start();
+        this.reloadMetaConfig();
         logger.info("{} sink is started", this.cachedSinkName);
     }
 
@@ -303,7 +307,10 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     }
 
     public void setMQClusterStarted() {
-        this.mqClusterStarted = true;
+        if (!this.mqClusterStarted) {
+            this.mqClusterStarted = true;
+            ConfigManager.getInstance().setMqClusterReady();
+        }
     }
 
     public void acquireAndOfferDispatchedRecord(EventProfile record) {

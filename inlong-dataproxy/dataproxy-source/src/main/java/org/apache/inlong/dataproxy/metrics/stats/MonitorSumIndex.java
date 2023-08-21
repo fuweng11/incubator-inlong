@@ -39,10 +39,10 @@ public class MonitorSumIndex extends AbsStatsDaemon {
     private static final AtomicLong RECODE_ID = new AtomicLong(0);
     private final StatsUnit[] statsUnits = new StatsUnit[2];
 
-    public MonitorSumIndex(String name, long intervalMill, int maxCnt) {
-        super(name, intervalMill, maxCnt);
-        this.statsUnits[0] = new StatsUnit(name);
-        this.statsUnits[1] = new StatsUnit(name);
+    public MonitorSumIndex(String compName, String statsName, long intervalMill, int maxCnt) {
+        super(compName, intervalMill, maxCnt);
+        this.statsUnits[0] = new StatsUnit(statsName);
+        this.statsUnits[1] = new StatsUnit(statsName);
     }
 
     /**

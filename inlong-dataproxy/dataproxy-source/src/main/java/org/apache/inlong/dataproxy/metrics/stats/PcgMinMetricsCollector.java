@@ -37,8 +37,8 @@ public class PcgMinMetricsCollector extends AbsStatsDaemon {
     private static final Logger LOGGER = LoggerFactory.getLogger(PcgMinMetricsCollector.class);
     private static final AtomicLong RECODE_ID = new AtomicLong(0);
     private final StatsUnit[] statsUnits = new StatsUnit[2];
-    public PcgMinMetricsCollector(long intervalMill, int maxCnt) {
-        super(RECORD_PREFIX, intervalMill, maxCnt);
+    public PcgMinMetricsCollector(String compName, long intervalMill, int maxCnt) {
+        super(compName, intervalMill, maxCnt);
         this.statsUnits[0] = new StatsUnit(RECORD_PREFIX);
         this.statsUnits[1] = new StatsUnit(RECORD_PREFIX);
     }
