@@ -243,21 +243,8 @@ public class InlongClusterServiceImpl implements InlongClusterService {
 
     @Override
     public List<ClusterTagResponse> listTag(ClusterTagPageRequest request, UserInfo opInfo) {
-        List<InlongClusterTagEntity> filterResult = new ArrayList<>();
         List<InlongClusterTagEntity> clusterTagEntities = clusterTagMapper.selectByCondition(request);
-        if (CollectionUtils.isNotEmpty(clusterTagEntities)) {
-            for (InlongClusterTagEntity tagEntity : clusterTagEntities) {
-                // only the person in charges can query
-                if (!opInfo.getAccountType().equals(TenantUserTypeEnum.TENANT_ADMIN.getCode())) {
-                    List<String> inCharges = Arrays.asList(tagEntity.getInCharges().split(InlongConstants.COMMA));
-                    if (!inCharges.contains(opInfo.getName())) {
-                        continue;
-                    }
-                }
-                filterResult.add(tagEntity);
-            }
-        }
-        return CommonBeanUtils.copyListProperties(filterResult, ClusterTagResponse::new);
+        return CommonBeanUtils.copyListProperties(clusterTagEntities, ClusterTagResponse::new);
     }
 
     @Override

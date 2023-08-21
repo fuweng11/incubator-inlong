@@ -26,8 +26,8 @@ import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
-import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
+import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
@@ -80,8 +80,6 @@ public class DataNodeServiceImpl implements DataNodeService {
     private StreamSourceEntityMapper sourceEntityMapper;
     @Autowired
     private DbSyncHeartbeatEntityMapper dbSyncHeartbeatMapper;
-    @Autowired
-    private UserService userService;
 
     @Override
     public Integer save(DataNodeRequest request, String operator) {

@@ -83,8 +83,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.apache.inlong.manager.pojo.user.UserRoleCode.INLONG_ADMIN;
-
 /**
  * User service layer implementation
  */

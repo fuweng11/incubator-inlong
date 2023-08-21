@@ -74,8 +74,6 @@ public class InlongConsumeServiceImpl implements InlongConsumeService {
     @Autowired
     private InlongConsumeOperatorFactory consumeOperatorFactory;
     @Autowired
-    private UserService userService;
-    @Autowired
     private InlongGroupEntityMapper groupEntityMapper;
     @Autowired
     private ConsumptionAlertConfigEntityMapper consumptionAlertMapper;

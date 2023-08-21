@@ -184,7 +184,7 @@ public class AbstractInnerSortConfigService {
 
         String streamId = streamInfo.getInlongStreamId();
         char separator = 0;
-        if(StringUtils.isNotBlank(streamInfo.getDataSeparator())){
+        if (StringUtils.isNotBlank(streamInfo.getDataSeparator())) {
             separator = (char) Integer.parseInt(streamInfo.getDataSeparator());
         }
         switch (dataType) {

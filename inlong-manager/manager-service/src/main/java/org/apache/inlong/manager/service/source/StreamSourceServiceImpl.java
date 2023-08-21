@@ -89,8 +89,6 @@ public class StreamSourceServiceImpl implements StreamSourceService {
     private StreamSourceFieldEntityMapper sourceFieldMapper;
     @Autowired
     private GroupCheckService groupCheckService;
-    @Autowired
-    private UserService userService;
 
     @Override
     @Transactional(rollbackFor = Throwable.class, propagation = Propagation.REQUIRES_NEW)
@@ -190,9 +188,6 @@ public class StreamSourceServiceImpl implements StreamSourceService {
         if (groupEntity == null) {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND);
         }
-        // only the person in charges can query
-        userService.checkUser(groupEntity.getInCharges(), opInfo.getName(),
-                ErrorCodeEnum.GROUP_PERMISSION_DENIED.getMessage());
         StreamSourceOperator sourceOperator = operatorFactory.getInstance(entity.getSourceType());
         return sourceOperator.getFromEntity(entity);
     }

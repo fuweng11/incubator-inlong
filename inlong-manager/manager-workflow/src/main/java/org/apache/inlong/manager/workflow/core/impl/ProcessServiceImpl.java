@@ -17,14 +17,10 @@
 
 package org.apache.inlong.manager.workflow.core.impl;
 
-import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.ProcessStatus;
 import org.apache.inlong.manager.common.enums.TaskStatus;
-import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
 import org.apache.inlong.manager.common.util.Preconditions;
-import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
-import org.apache.inlong.manager.dao.entity.UserEntity;
 import org.apache.inlong.manager.dao.entity.WorkflowProcessEntity;
 import org.apache.inlong.manager.dao.entity.WorkflowTaskEntity;
 import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
@@ -71,7 +67,6 @@ public class ProcessServiceImpl implements ProcessService {
 
         // build context
         WorkflowContext context = workflowContextBuilder.buildContextForProcess(name, applicant, form);
-        checkUser(context, applicant, "Current user does not have permission to start workflow");
         this.processorExecutor.executeStart(context.getProcess().getStartEvent(), context);
         return context;
     }
@@ -81,7 +76,6 @@ public class ProcessServiceImpl implements ProcessService {
         Preconditions.expectNotBlank(operator, ErrorCodeEnum.INVALID_PARAMETER, "operator cannot be null");
         Preconditions.expectNotNull(processId, "processId cannot be null");
         WorkflowContext context = workflowContextBuilder.buildContextForProcess(processId);
-        checkUser(context, operator, "Current user does not have permission to operate workflow");
         WorkflowProcessEntity processEntity = context.getProcessEntity();
         ProcessStatus processStatus = ProcessStatus.valueOf(processEntity.getStatus());
         Preconditions.expectTrue(processStatus == ProcessStatus.PROCESSING,
@@ -109,7 +103,6 @@ public class ProcessServiceImpl implements ProcessService {
         Preconditions.expectNotNull(processId, "processId cannot be null");
 
         WorkflowContext context = workflowContextBuilder.buildContextForProcess(processId);
-        checkUser(context, operator, "Current user does not have permission to cancel workflow");
         List<WorkflowTaskEntity> pendingTasks = taskEntityMapper.selectByProcess(processId, TaskStatus.PENDING);
         for (WorkflowTaskEntity taskEntity : pendingTasks) {
             WorkflowTask task = context.getProcess().getTaskByName(taskEntity.getName());
@@ -123,18 +116,6 @@ public class ProcessServiceImpl implements ProcessService {
         }
 
         return context;
-    }
-
-    public void checkUser(WorkflowContext context, String user, String errMsg) {
-        String groupId = context.getProcessForm().getInlongGroupId();
-        Preconditions.expectNotBlank(groupId, ErrorCodeEnum.GROUP_ID_IS_EMPTY,
-                ErrorCodeEnum.GROUP_ID_IS_EMPTY.getMessage());
-        InlongGroupEntity groupEntity = groupMapper.selectByGroupId(groupId);
-        UserEntity userEntity = userMapper.selectByName(user);
-        boolean isInCharge = Preconditions.inSeparatedString(user, groupEntity.getInCharges(), InlongConstants.COMMA);
-        Preconditions.expectTrue(
-                isInCharge || TenantUserTypeEnum.TENANT_ADMIN.getCode().equals(userEntity.getAccountType()),
-                errMsg);
     }
 
 }
