@@ -29,6 +29,7 @@ public class DbSyncAddFieldRequest {
 
     private Integer id;
     private List<FieldObject> fields;
+    private String rawSql;
 
     @Data
     @AllArgsConstructor

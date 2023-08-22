@@ -26,6 +26,11 @@ import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncAddFieldRequest.FieldObject;
 import org.apache.inlong.sdk.dataproxy.utils.ConcurrentHashSet;
 
+import com.alibaba.druid.sql.ast.SQLStatement;
+import com.alibaba.druid.sql.ast.statement.SQLAlterTableAddColumn;
+import com.alibaba.druid.sql.ast.statement.SQLAlterTableItem;
+import com.alibaba.druid.sql.ast.statement.SQLAlterTableStatement;
+import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -208,7 +213,8 @@ public class DbColumnChangeManager {
         }
 
         private boolean reportFiledChanged(FieldChangedEntry entry) {
-            DbSyncAddFieldRequest request = new DbSyncAddFieldRequest(entry.getTaskId(), entry.getFieldChangedList());
+            DbSyncAddFieldRequest request = new DbSyncAddFieldRequest(entry.getTaskId(), entry.getFieldChangedList(),
+                    entry.getAlterQueryString());
             String jobConfigString = httpManager.doSentPost(columnFieldChangeReportUrl, request);
             CommonResponse<Boolean> commonResponse = CommonResponse.fromJson(jobConfigString, Boolean.class);
             if (commonResponse != null) {
@@ -224,46 +230,20 @@ public class DbColumnChangeManager {
      * @return JSONArray
      */
     public List<FieldObject> parseQueryString(FieldChangedEntry fieldChangedEntry) {
-        String parseStr = fieldChangedEntry.getAlterQueryString();
+        logger.info("parseQueryString {}", fieldChangedEntry.getAlterQueryString());
+        String sql = fieldChangedEntry.getAlterQueryString();
+        MySqlStatementParser parser = new MySqlStatementParser(sql);
+        SQLStatement statement = parser.parseStatement();
+        SQLAlterTableStatement alter = (SQLAlterTableStatement) statement;
         List<FieldObject> resultArray = new ArrayList<>();;
-        String[] ddlStrArray = parseStr.split(";");
-        for (int i = 0; i < ddlStrArray.length; i++) {
-            if (StringUtils.isNotEmpty(ddlStrArray[i])) {
-                String tmp = ddlStrArray[i].replaceAll("`|'", "");
-                tmp = tmp.replaceAll("\\n", " ");
-                String[] multiAlterArr = tmp.split(" ");
-                parseQuerySingleAlterString(multiAlterArr, resultArray);
-            }
-        }
-        return resultArray;
-    }
-
-    private List<FieldObject> parseQuerySingleAlterString(String[] multiAlterArr, List<FieldObject> resultArray) {
-        FieldObject fieldObject;
-        if (multiAlterArr != null && multiAlterArr.length > 0) {
-            int index = 0;
-            while (index < (multiAlterArr.length - 2)) {
-                if (multiAlterArr[index].equalsIgnoreCase("add")) {
-                    fieldObject = new FieldObject();
-                    String name;
-                    String type;
-                    if ("column".equalsIgnoreCase(multiAlterArr[index + 1])
-                            && (index + 3) < multiAlterArr.length) {
-                        name = multiAlterArr[index + 2];
-                        type = multiAlterArr[index + 3];
-                    } else {
-                        name = multiAlterArr[index + 1];
-                        type = multiAlterArr[index + 2];
-                    }
-                    if (isFieldType(type.toLowerCase())) {
-                        fieldObject.setFieldName(name);
-                        fieldObject.setFieldType(type);
-                    }
-                    resultArray.add(fieldObject);
-                    break;
-
-                }
-                index++;
+        for (SQLAlterTableItem item : alter.getItems()) {
+            if (item instanceof SQLAlterTableAddColumn) {
+                SQLAlterTableAddColumn addColumn = (SQLAlterTableAddColumn) item;
+                FieldObject fieldObject = new FieldObject();
+                fieldObject.setFieldName(addColumn.getColumns().get(0).getColumnName());
+                fieldObject.setFieldType(addColumn.getColumns().get(0).getDataType().toString());
+                logger.info("SQLAlterTableItem {}", fieldObject.toString());
+                resultArray.add(fieldObject);
             }
         }
         return resultArray;
