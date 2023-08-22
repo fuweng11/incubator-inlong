@@ -54,13 +54,26 @@ public class TubeMQSink extends BaseSink {
     private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
     private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 30 * 1000);
 
-    private static final String TUBE_REQUEST_TIMEOUT_MS = "tube-request-timeout-ms";
-    private static final String MASTER_HOST_PORT_LIST = "master-host-port-list";
-    private static final String LOG_EVERY_N_EVENTS = "log-every-n-events";
+    private static final String LINK_MAX_ALLOWED_DELAYED_MSG_COUNT = "link-max-allowed-delayed-msg-count";
+    private static final long VAL_DEF_ALLOWED_DELAYED_MSG_COUNT = 80000L;
+    private static final long VAL_MIN_ALLOWED_DELAYED_MSG_COUNT = 0L;
+
+    private static final String SESSION_WARN_DELAYED_MSG_COUNT = "session-warn-delayed-msg-count";
+    private static final long VAL_DEF_SESSION_WARN_DELAYED_MSG_COUNT = 2000000L;
+    private static final long VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT = 0L;
+
+    private static final String SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT = "session-max-allowed-delayed-msg-count";
+    private static final long VAL_DEF_SESSION_DELAYED_MSG_COUNT = 4000000L;
+    private static final long VAL_MIN_SESSION_DELAYED_MSG_COUNT = 0L;
+    private static final String NETTY_WRITE_BUFFER_HIGH_WATER_MARK = "netty-write-buffer-high-water-mark";
+    private static final long VAL_DEF_NETTY_WRITE_HIGH_WATER_MARK = 15 * 1024 * 1024L;
+    private static final long VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK = 0L;
+
     private static final String MAX_TOPICS_EACH_PRODUCER_HOLD_NAME = "max-topic-each-producer-hold";
-    private static final String MAX_SEND_FAILURE_WAIT_DUR_MS = "max-send-failure-wait-dur-ms";
-    private long requestTimeoutMs;
-    private String masterHostAndPortList;
+    private static final int VAL_DEF_TOPICS_EACH_PRODUCER_HOLD_NAME = 200;
+    private static final int VAL_MIN_TOPICS_EACH_PRODUCER_HOLD_NAME = 1;
+
+    private static final String LOG_EVERY_N_EVENTS = "log-every-n-events";
     private long linkMaxAllowedDelayedMsgCount;
     private long sessionWarnDelayedMsgCount;
     private long sessionMaxAllowedDelayedMsgCount;
@@ -69,42 +82,51 @@ public class TubeMQSink extends BaseSink {
     // last refresh topics
     private final Set<String> lastRefreshTopics = new HashSet<>();
     // session factory
-    public TubeMultiSessionFactory sessionFactory;
+    private TubeMultiSessionFactory sessionFactory;
     // topic-producer map
-    public static final ConcurrentHashMap<String, MessageProducer> producerMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, MessageProducer> producerMap = new ConcurrentHashMap<>();
     // latest producer
-    public MessageProducer latestProducer;
+    private MessageProducer latestProducer;
     private int maxAllowedPublishTopicNum;
-    public AtomicInteger latestPublishTopicNum = new AtomicInteger(0);
-    private long maxSendFailureWaitDurMs;
-    private boolean enableRetryAfterFailure;
-    private int maxMsgRetries;
+    private final AtomicInteger latestPublishTopicNum = new AtomicInteger(0);
     // whether to send message
     private volatile boolean canSend = true;
 
     @Override
     public void configure(Context context) {
         super.configure(context);
-        this.masterHostAndPortList = context.getString(MASTER_HOST_PORT_LIST);
-        Preconditions.checkState(masterHostAndPortList != null, "No master and port list specified");
-        this.linkMaxAllowedDelayedMsgCount = context.getLong(ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT,
-                80000L);
-        this.sessionWarnDelayedMsgCount = context.getLong(ConfigConstants.SESSION_WARN_DELAYED_MSG_COUNT,
-                2000000L);
-        this.sessionMaxAllowedDelayedMsgCount = context.getLong(ConfigConstants.SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT,
-                4000000L);
-        this.nettyWriteBufferHighWaterMark = context.getLong(ConfigConstants.NETTY_WRITE_BUFFER_HIGH_WATER_MARK,
-                15 * 1024 * 1024L);
-        this.requestTimeoutMs = context.getLong(TUBE_REQUEST_TIMEOUT_MS, 20000L);
-        this.maxAllowedPublishTopicNum = context.getInteger(MAX_TOPICS_EACH_PRODUCER_HOLD_NAME, 200);
-        this.maxSendFailureWaitDurMs = context.getInteger(MAX_SEND_FAILURE_WAIT_DUR_MS, 100);
-        this.enableRetryAfterFailure = CommonConfigHolder.getInstance().isEnableSendRetryAfterFailure();
-        this.maxMsgRetries = CommonConfigHolder.getInstance().getMaxRetriesAfterFailure();
+
+        this.linkMaxAllowedDelayedMsgCount = context.getLong(
+                LINK_MAX_ALLOWED_DELAYED_MSG_COUNT, VAL_DEF_ALLOWED_DELAYED_MSG_COUNT);
+        Preconditions.checkArgument((this.linkMaxAllowedDelayedMsgCount >= VAL_MIN_ALLOWED_DELAYED_MSG_COUNT),
+                LINK_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= " + VAL_MIN_ALLOWED_DELAYED_MSG_COUNT);
+
+        this.sessionWarnDelayedMsgCount = context.getLong(
+                SESSION_WARN_DELAYED_MSG_COUNT, VAL_DEF_SESSION_WARN_DELAYED_MSG_COUNT);
+        Preconditions.checkArgument((this.sessionWarnDelayedMsgCount >= VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT),
+                SESSION_WARN_DELAYED_MSG_COUNT + " must be >= " + VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT);
+
+        this.sessionMaxAllowedDelayedMsgCount = context.getLong(
+                SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT, VAL_DEF_SESSION_DELAYED_MSG_COUNT);
+        Preconditions.checkArgument((this.sessionMaxAllowedDelayedMsgCount >= VAL_MIN_SESSION_DELAYED_MSG_COUNT),
+                SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= " + VAL_MIN_SESSION_DELAYED_MSG_COUNT);
+
+        this.nettyWriteBufferHighWaterMark = context.getLong(
+                NETTY_WRITE_BUFFER_HIGH_WATER_MARK, VAL_DEF_NETTY_WRITE_HIGH_WATER_MARK);
+        Preconditions.checkArgument((this.nettyWriteBufferHighWaterMark >= VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK),
+                NETTY_WRITE_BUFFER_HIGH_WATER_MARK + " must be >= " + VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK);
+
+        this.maxAllowedPublishTopicNum = context.getInteger(
+                MAX_TOPICS_EACH_PRODUCER_HOLD_NAME, VAL_DEF_TOPICS_EACH_PRODUCER_HOLD_NAME);
+        Preconditions.checkArgument((this.maxAllowedPublishTopicNum >= VAL_MIN_TOPICS_EACH_PRODUCER_HOLD_NAME),
+                MAX_TOPICS_EACH_PRODUCER_HOLD_NAME + " must be >= " + VAL_MIN_TOPICS_EACH_PRODUCER_HOLD_NAME);
     }
 
     @Override
     public void startSinkProcess() {
         logger.info("{} sink logic starting...", cachedSinkName);
+        // register meta-configure listener to config-manager
+        ConfigManager.getInstance().regTDBankMetaChgCallback(this);
         try {
             TubeClientConfig conf = initTubeConfig();
             sessionFactory = new TubeMultiSessionFactory(conf);
@@ -176,40 +198,41 @@ public class TubeMQSink extends BaseSink {
         if (isFirstReload) {
             synchronized (lastRefreshTopics) {
                 if (isFirstReload) {
-                    if (System.currentTimeMillis() - startTime > 3000) {
-                        isFirstReload = false;
-                    } else {
+                    isFirstReload = false;
+                    long dltTime = System.currentTimeMillis() - startTime;
+                    if (dltTime > 0 && dltTime < 3000) {
                         try {
-                            Thread.sleep(3000);
+                            Thread.sleep(dltTime);
                         } catch (Throwable e) {
                             //
                         }
-                        isFirstReload = false;
                     }
                 }
             }
         }
         List<String> addedTopics = new ArrayList<>();
-        for (String topic : curTopicSet) {
-            if (topic == null) {
-                continue;
+        synchronized (producerMap) {
+            for (String topic : curTopicSet) {
+                if (topic == null) {
+                    continue;
+                }
+                if (!lastRefreshTopics.contains(topic)) {
+                    addedTopics.add(topic);
+                    added = true;
+                }
             }
-            if (!lastRefreshTopics.contains(topic)) {
-                addedTopics.add(topic);
-                added = true;
+            // update cached topics
+            lastRefreshTopics.addAll(curTopicSet);
+            if (!added) {
+                logger.info("{} topics changed, no added topics, reload topics are {}, cached topics are {}",
+                        cachedSinkName, curTopicSet, lastRefreshTopics);
+                return;
             }
+            // publish need added topics
+            publishTopics(addedTopics);
+            logger.info("{} topics changed, added topics {}, reload topics are {}, cached topics are {}",
+                    cachedSinkName, addedTopics, curTopicSet, lastRefreshTopics);
         }
-        // update cached topics
-        lastRefreshTopics.addAll(curTopicSet);
-        if (!added) {
-            logger.info("{} topics changed, no added topics, reload topics are {}, cached topics are {}",
-                    cachedSinkName, curTopicSet, lastRefreshTopics);
-            return;
-        }
-        // publish need added topics
-        publishTopics(addedTopics);
-        logger.info("{} topics changed, added topics {}, reload topics are {}, cached topics are {}",
-                cachedSinkName, addedTopics, curTopicSet, lastRefreshTopics);
     }
 
     private void publishTopics(List<String> addedTopics) {
@@ -409,7 +432,7 @@ public class TubeMQSink extends BaseSink {
      */
     private TubeClientConfig initTubeConfig() {
         // config
-        final TubeClientConfig tubeClientConfig = new TubeClientConfig(this.masterHostAndPortList);
+        final TubeClientConfig tubeClientConfig = new TubeClientConfig(this.clusterMAddrList);
         tubeClientConfig.setLinkMaxAllowedDelayedMsgCount(linkMaxAllowedDelayedMsgCount);
         tubeClientConfig.setSessionWarnDelayedMsgCount(sessionWarnDelayedMsgCount);
         tubeClientConfig.setSessionMaxAllowedDelayedMsgCount(sessionMaxAllowedDelayedMsgCount);

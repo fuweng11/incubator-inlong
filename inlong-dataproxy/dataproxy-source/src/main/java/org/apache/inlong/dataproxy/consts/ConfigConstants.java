@@ -54,6 +54,22 @@ public class ConfigConstants {
 
     public static final String TRAFFIC_CLASS = "trafficClass";
 
+    public static final String MASTER_SERVER_URL_LIST = "master-server-url-list";
+    public static final String CLIENT_STATS_OUTPUT_INTVL_SEC = "client-stats-output-intvl-sec";
+    public static final long VAL_DEF_CLIENT_STATS_OUTPUT_INTVL_SEC = 300L;
+    public static final long VAL_MIN_CLIENT_STATS_OUTPUT_INTVL_SEC = 0L;
+
+    public static final String CLIENT_CONNECT_TIMEOUT_MS = "client-connect-timeout-ms";
+    public static final int VAL_DEF_CONNECT_TIMEOUT_MS = 30000;
+    public static final int VAL_MIN_CONNECT_TIMEOUT_MS = 1;
+    public static final String CLIENT_REQUEST_TIMEOUT_MS = "client-request-timeout-ms";
+    public static final int VAL_DEF_REQUEST_TIMEOUT_MS = 20000;
+    public static final int VAL_MIN_REQUEST_TIMEOUT_MS = 1;
+
+    public static final String MAX_SEND_FAILURE_WAIT_DUR_MS = "max-send-failure-wait-dur-ms";
+    public static final long VAL_DEF_SEND_FAILURE_WAIT_DUR_MS = 100L;
+    public static final long VAL_MIN_SEND_FAILURE_WAIT_DUR_MS = 0L;
+
     public static final String MAX_INFLIGHT_BUFFER_QUEUE_SIZE_KB = "max-inflight-buffer-size-KB";
     public static final int VAL_MIN_INFLIGHT_BUFFER_QUEUE_SIZE_KB = 1;
 
@@ -127,10 +143,7 @@ public class ConfigConstants {
 
     public static final String TOTAL_LEN = "totalLen";
 
-    public static final String LINK_MAX_ALLOWED_DELAYED_MSG_COUNT = "link_max_allowed_delayed_msg_count";
-    public static final String SESSION_WARN_DELAYED_MSG_COUNT = "session_warn_delayed_msg_count";
-    public static final String SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT = "session_max_allowed_delayed_msg_count";
-    public static final String NETTY_WRITE_BUFFER_HIGH_WATER_MARK = "netty_write_buffer_high_water_mark";
+
     public static final String RECOVER_THREAD_COUNT = "recover_thread_count";
 
     public static final String MANAGER_PATH = "/inlong/manager/openapi";

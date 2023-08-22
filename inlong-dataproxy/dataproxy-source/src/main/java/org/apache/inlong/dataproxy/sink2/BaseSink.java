@@ -60,6 +60,8 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     protected Channel cachedMsgChannel;
     // whether the sink has closed
     protected volatile boolean isShutdown = false;
+    // clusterMasterAddress
+    protected String clusterMAddrList;
     // whether mq cluster connected
     protected volatile boolean mqClusterStarted = false;
     // mq cluster status wait duration
@@ -77,8 +79,16 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     protected MonitorIndex detailIndex = null;
     protected MonitorSumIndex sumIndex = null;
     protected MonitorStats monitorStats = null;
+    // rpc request timeout ms
+    protected int connectTimeoutMs;
+    // rpc request timeout ms
+    protected int requestTimeoutMs;
+    // max wait time if send failure
+    protected long maxSendFailureWaitDurMs;
     // whether to resend the message after sending failure
     protected boolean enableRetryAfterFailure;
+    // max retry times if send failure
+    protected int maxMsgRetries;
     // Maximum number of retries to send
     protected int maxRetries;
     // meta configure change lister thread
@@ -107,6 +117,10 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
         this.enableFileMetric = CommonConfigHolder.getInstance().isEnableFileMetric();
         this.enableRetryAfterFailure = CommonConfigHolder.getInstance().isEnableSendRetryAfterFailure();
         this.maxRetries = CommonConfigHolder.getInstance().getMaxRetriesAfterFailure();
+        // get sink master address
+        this.clusterMAddrList = context.getString(ConfigConstants.MASTER_SERVER_URL_LIST);
+        Preconditions.checkState(clusterMAddrList != null,
+                ConfigConstants.MASTER_SERVER_URL_LIST + " parameter not specified");
         // get the number of sink worker thread
         this.maxThreads = context.getInteger(ConfigConstants.MAX_THREADS, ConfigConstants.VAL_DEF_SINK_THREADS);
         Preconditions.checkArgument((this.maxThreads >= ConfigConstants.VAL_MIN_SINK_THREADS),
@@ -137,6 +151,26 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
                 (this.maxInflightBufferSIzeInKB >= ConfigConstants.VAL_MIN_INFLIGHT_BUFFER_QUEUE_SIZE_KB),
                 ConfigConstants.MAX_INFLIGHT_BUFFER_QUEUE_SIZE_KB + " must be >= "
                         + ConfigConstants.VAL_MIN_INFLIGHT_BUFFER_QUEUE_SIZE_KB);
+        // get rpc connect timeout ms
+        this.connectTimeoutMs = context.getInteger(ConfigConstants.CLIENT_CONNECT_TIMEOUT_MS,
+                ConfigConstants.VAL_DEF_CONNECT_TIMEOUT_MS);
+        Preconditions.checkArgument((this.connectTimeoutMs >= ConfigConstants.VAL_MIN_CONNECT_TIMEOUT_MS),
+                ConfigConstants.CLIENT_CONNECT_TIMEOUT_MS + " must be >= "
+                        + ConfigConstants.VAL_MIN_CONNECT_TIMEOUT_MS);
+        // get rpc request timeout ms
+        this.requestTimeoutMs = context.getInteger(ConfigConstants.CLIENT_REQUEST_TIMEOUT_MS,
+                ConfigConstants.VAL_DEF_REQUEST_TIMEOUT_MS);
+        Preconditions.checkArgument((this.requestTimeoutMs >= ConfigConstants.VAL_MIN_REQUEST_TIMEOUT_MS),
+                ConfigConstants.CLIENT_REQUEST_TIMEOUT_MS + " must be >= "
+                        + ConfigConstants.VAL_MIN_REQUEST_TIMEOUT_MS);
+        this.maxSendFailureWaitDurMs = context.getLong(ConfigConstants.MAX_SEND_FAILURE_WAIT_DUR_MS,
+                ConfigConstants.VAL_DEF_SEND_FAILURE_WAIT_DUR_MS);
+        Preconditions.checkArgument(
+                (this.maxSendFailureWaitDurMs >= ConfigConstants.VAL_MIN_SEND_FAILURE_WAIT_DUR_MS),
+                ConfigConstants.MAX_SEND_FAILURE_WAIT_DUR_MS + " must be >= "
+                        + ConfigConstants.VAL_MIN_SEND_FAILURE_WAIT_DUR_MS);
+        this.enableRetryAfterFailure = CommonConfigHolder.getInstance().isEnableSendRetryAfterFailure();
+        this.maxMsgRetries = CommonConfigHolder.getInstance().getMaxRetriesAfterFailure();
     }
 
     @Override
@@ -147,8 +181,6 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
             logger.error("{}'s channel is null", this.cachedSinkName);
         }
         cachedMsgChannel = getChannel();
-        // register meta-configure listener to config-manager
-        ConfigManager.getInstance().regTDBankMetaChgCallback(this);
         // initial message duplicate cache
         this.msgIdCache = new MsgIdCache(enableDeDupCheck,
                 visitConcurLevel, initCacheCapacity, expiredDurSec);

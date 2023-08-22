@@ -17,12 +17,17 @@
 
 package org.apache.inlong.dataproxy.config.holder;
 
+import org.apache.inlong.dataproxy.config.CommonConfigHolder;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Save Pulsar transfer configure info
@@ -32,6 +37,7 @@ public class PulsarXfeConfigHolder extends PropertiesHolder {
     // each line is {groupId}/{streamId} = {pulsar topic}
     private static final String pulsarTransferFileName = "pulsar_transfer.properties";
     private static final Logger LOG = LoggerFactory.getLogger(PulsarXfeConfigHolder.class);
+    protected final ConcurrentHashMap<String, String> sinkTopicMap = new ConcurrentHashMap<>();
 
     public PulsarXfeConfigHolder() {
         super(pulsarTransferFileName);
@@ -45,7 +51,7 @@ public class PulsarXfeConfigHolder extends PropertiesHolder {
         return StringUtils.isNotEmpty(confHolder.get(key));
     }
 
-    public Map<String, String> getPulsarTransferConfigMap() {
+    public Map<String, String> getPulsarSrcXfeConfigMap() {
         Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, String> entry : confHolder.entrySet()) {
             if (entry == null
@@ -54,6 +60,30 @@ public class PulsarXfeConfigHolder extends PropertiesHolder {
                 continue;
             }
             result.put(entry.getKey(), entry.getValue());
+        }
+        return result;
+    }
+
+    public String getPulsarXfeSinkTopic(String groupId, String streamId) {
+        if (StringUtils.isEmpty(groupId) || StringUtils.isEmpty(streamId)) {
+            return null;
+        }
+        String key = groupId + "/" + streamId;
+        return sinkTopicMap.get(key);
+    }
+
+    public Set<String> getAllPulsarXfeTopics() {
+        Set<String> result = new HashSet<>();
+        // add default topics first
+        if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
+            result.addAll(CommonConfigHolder.getInstance().getDefTopics());
+        }
+        // add configured topics
+        for (String topicName : sinkTopicMap.values()) {
+            if (StringUtils.isBlank(topicName)) {
+                continue;
+            }
+            result.add(topicName);
         }
         return result;
     }
@@ -74,6 +104,15 @@ public class PulsarXfeConfigHolder extends PropertiesHolder {
 
     @Override
     protected boolean updateCacheData() {
+        for (Map.Entry<String, String> entry : confHolder.entrySet()) {
+            if (entry == null || entry.getKey() == null || entry.getValue() == null) {
+                continue;
+            }
+            if (entry.getValue().equals(sinkTopicMap.get(entry.getKey()))) {
+                continue;
+            }
+            sinkTopicMap.put(entry.getKey(), entry.getValue());
+        }
         return true;
     }
 }

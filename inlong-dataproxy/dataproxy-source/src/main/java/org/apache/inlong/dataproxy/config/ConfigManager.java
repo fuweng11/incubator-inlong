@@ -251,8 +251,16 @@ public class ConfigManager {
         return pulsarTransferHolder.isRequirePulsarTransfer(groupId, streamId);
     }
 
+    public String getPulsarXfeSinkTopic(String groupId, String streamId) {
+        return pulsarTransferHolder.getPulsarXfeSinkTopic(groupId, streamId);
+    }
+
     public Map<String, String> getPulsarTransferConfigMap() {
-        return pulsarTransferHolder.getPulsarTransferConfigMap();
+        return pulsarTransferHolder.getPulsarSrcXfeConfigMap();
+    }
+
+    public Set<String> getAllSinkPulsarXfeTopics() {
+        return pulsarTransferHolder.getAllPulsarXfeTopics();
     }
 
     public void addSourceReportInfo(String sourceIp, String sourcePort, String protocolType) {
