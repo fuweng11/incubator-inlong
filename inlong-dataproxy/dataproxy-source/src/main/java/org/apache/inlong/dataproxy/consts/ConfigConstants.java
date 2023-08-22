@@ -143,6 +143,20 @@ public class ConfigConstants {
 
     public static final String TOTAL_LEN = "totalLen";
 
+    public static final String LINK_MAX_ALLOWED_DELAYED_MSG_COUNT = "link-max-allowed-delayed-msg-count";
+    public static final long VAL_DEF_ALLOWED_DELAYED_MSG_COUNT = 80000L;
+    public static final long VAL_MIN_ALLOWED_DELAYED_MSG_COUNT = 0L;
+
+    public static final String SESSION_WARN_DELAYED_MSG_COUNT = "session-warn-delayed-msg-count";
+    public static final long VAL_DEF_SESSION_WARN_DELAYED_MSG_COUNT = 2000000L;
+    public static final long VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT = 0L;
+
+    public static final String SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT = "session-max-allowed-delayed-msg-count";
+    public static final long VAL_DEF_SESSION_DELAYED_MSG_COUNT = 4000000L;
+    public static final long VAL_MIN_SESSION_DELAYED_MSG_COUNT = 0L;
+    public static final String NETTY_WRITE_BUFFER_HIGH_WATER_MARK = "netty-write-buffer-high-water-mark";
+    public static final long VAL_DEF_NETTY_WRITE_HIGH_WATER_MARK = 15 * 1024 * 1024L;
+    public static final long VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK = 0L;
 
     public static final String RECOVER_THREAD_COUNT = "recover_thread_count";
 

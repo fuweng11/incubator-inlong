@@ -41,6 +41,7 @@ import org.apache.inlong.tubemq.client.producer.MessageSentCallback;
 import org.apache.inlong.tubemq.client.producer.MessageSentResult;
 import org.apache.inlong.tubemq.corebase.Message;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Context;
 import org.slf4j.Logger;
@@ -71,6 +72,8 @@ public class TubeHandler implements MessageQueueHandler {
     private long sessionWarnDelayedMsgCount;
     private long sessionMaxAllowedDelayedMsgCount;
     private long nettyWriteBufferHighWaterMark;
+    // rpc request timeout ms
+    private int requestTimeoutMs;
     // tube producer
     private TubeMultiSessionFactory sessionFactory;
     private MessageProducer producer;
@@ -135,15 +138,43 @@ public class TubeHandler implements MessageQueueHandler {
         Context configContext = new Context(context.getParameters());
         configContext.putAll(this.config.getParams());
         masterHostAndPortList = configContext.getString(MASTER_HOST_PORT_LIST);
-        linkMaxAllowedDelayedMsgCount = configContext.getLong(ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT,
-                80000L);
-        sessionWarnDelayedMsgCount = configContext.getLong(ConfigConstants.SESSION_WARN_DELAYED_MSG_COUNT,
-                2000000L);
-        sessionMaxAllowedDelayedMsgCount = configContext.getLong(
+
+        this.linkMaxAllowedDelayedMsgCount = context.getLong(
+                ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT, ConfigConstants.VAL_DEF_ALLOWED_DELAYED_MSG_COUNT);
+        Preconditions.checkArgument(
+                (this.linkMaxAllowedDelayedMsgCount >= ConfigConstants.VAL_MIN_ALLOWED_DELAYED_MSG_COUNT),
+                ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= "
+                        + ConfigConstants.VAL_MIN_ALLOWED_DELAYED_MSG_COUNT);
+
+        this.sessionWarnDelayedMsgCount = context.getLong(
+                ConfigConstants.SESSION_WARN_DELAYED_MSG_COUNT, ConfigConstants.VAL_DEF_SESSION_WARN_DELAYED_MSG_COUNT);
+        Preconditions.checkArgument(
+                (this.sessionWarnDelayedMsgCount >= ConfigConstants.VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT),
+                ConfigConstants.SESSION_WARN_DELAYED_MSG_COUNT + " must be >= "
+                        + ConfigConstants.VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT);
+
+        this.sessionMaxAllowedDelayedMsgCount = context.getLong(
                 ConfigConstants.SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT,
-                4000000L);
-        nettyWriteBufferHighWaterMark = configContext.getLong(ConfigConstants.NETTY_WRITE_BUFFER_HIGH_WATER_MARK,
-                15 * 1024 * 1024L);
+                ConfigConstants.VAL_DEF_SESSION_DELAYED_MSG_COUNT);
+        Preconditions.checkArgument(
+                (this.sessionMaxAllowedDelayedMsgCount >= ConfigConstants.VAL_MIN_SESSION_DELAYED_MSG_COUNT),
+                ConfigConstants.SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= "
+                        + ConfigConstants.VAL_MIN_SESSION_DELAYED_MSG_COUNT);
+
+        this.nettyWriteBufferHighWaterMark = context.getLong(
+                ConfigConstants.NETTY_WRITE_BUFFER_HIGH_WATER_MARK,
+                ConfigConstants.VAL_DEF_NETTY_WRITE_HIGH_WATER_MARK);
+        Preconditions.checkArgument(
+                (this.nettyWriteBufferHighWaterMark >= ConfigConstants.VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK),
+                ConfigConstants.NETTY_WRITE_BUFFER_HIGH_WATER_MARK + " must be >= "
+                        + ConfigConstants.VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK);
+
+        // get rpc request timeout ms
+        this.requestTimeoutMs = context.getInteger(
+                ConfigConstants.CLIENT_REQUEST_TIMEOUT_MS, ConfigConstants.VAL_DEF_REQUEST_TIMEOUT_MS);
+        Preconditions.checkArgument((this.requestTimeoutMs >= ConfigConstants.VAL_MIN_REQUEST_TIMEOUT_MS),
+                ConfigConstants.CLIENT_REQUEST_TIMEOUT_MS + " must be >= "
+                        + ConfigConstants.VAL_MIN_REQUEST_TIMEOUT_MS);
         // config
         final TubeClientConfig tubeClientConfig = new TubeClientConfig(this.masterHostAndPortList);
         tubeClientConfig.setLinkMaxAllowedDelayedMsgCount(linkMaxAllowedDelayedMsgCount);
@@ -151,7 +182,7 @@ public class TubeHandler implements MessageQueueHandler {
         tubeClientConfig.setSessionMaxAllowedDelayedMsgCount(sessionMaxAllowedDelayedMsgCount);
         tubeClientConfig.setNettyWriteBufferHighWaterMark(nettyWriteBufferHighWaterMark);
         tubeClientConfig.setHeartbeatPeriodMs(15000L);
-        tubeClientConfig.setRpcTimeoutMs(20000L);
+        tubeClientConfig.setRpcTimeoutMs(this.requestTimeoutMs);
 
         return tubeClientConfig;
     }

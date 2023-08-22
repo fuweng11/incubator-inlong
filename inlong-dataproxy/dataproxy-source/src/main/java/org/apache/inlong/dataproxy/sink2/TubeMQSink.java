@@ -54,21 +54,6 @@ public class TubeMQSink extends BaseSink {
     private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
     private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 30 * 1000);
 
-    private static final String LINK_MAX_ALLOWED_DELAYED_MSG_COUNT = "link-max-allowed-delayed-msg-count";
-    private static final long VAL_DEF_ALLOWED_DELAYED_MSG_COUNT = 80000L;
-    private static final long VAL_MIN_ALLOWED_DELAYED_MSG_COUNT = 0L;
-
-    private static final String SESSION_WARN_DELAYED_MSG_COUNT = "session-warn-delayed-msg-count";
-    private static final long VAL_DEF_SESSION_WARN_DELAYED_MSG_COUNT = 2000000L;
-    private static final long VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT = 0L;
-
-    private static final String SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT = "session-max-allowed-delayed-msg-count";
-    private static final long VAL_DEF_SESSION_DELAYED_MSG_COUNT = 4000000L;
-    private static final long VAL_MIN_SESSION_DELAYED_MSG_COUNT = 0L;
-    private static final String NETTY_WRITE_BUFFER_HIGH_WATER_MARK = "netty-write-buffer-high-water-mark";
-    private static final long VAL_DEF_NETTY_WRITE_HIGH_WATER_MARK = 15 * 1024 * 1024L;
-    private static final long VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK = 0L;
-
     private static final String MAX_TOPICS_EACH_PRODUCER_HOLD_NAME = "max-topic-each-producer-hold";
     private static final int VAL_DEF_TOPICS_EACH_PRODUCER_HOLD_NAME = 200;
     private static final int VAL_MIN_TOPICS_EACH_PRODUCER_HOLD_NAME = 1;
@@ -97,24 +82,34 @@ public class TubeMQSink extends BaseSink {
         super.configure(context);
 
         this.linkMaxAllowedDelayedMsgCount = context.getLong(
-                LINK_MAX_ALLOWED_DELAYED_MSG_COUNT, VAL_DEF_ALLOWED_DELAYED_MSG_COUNT);
-        Preconditions.checkArgument((this.linkMaxAllowedDelayedMsgCount >= VAL_MIN_ALLOWED_DELAYED_MSG_COUNT),
-                LINK_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= " + VAL_MIN_ALLOWED_DELAYED_MSG_COUNT);
+                ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT, ConfigConstants.VAL_DEF_ALLOWED_DELAYED_MSG_COUNT);
+        Preconditions.checkArgument(
+                (this.linkMaxAllowedDelayedMsgCount >= ConfigConstants.VAL_MIN_ALLOWED_DELAYED_MSG_COUNT),
+                ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= "
+                        + ConfigConstants.VAL_MIN_ALLOWED_DELAYED_MSG_COUNT);
 
         this.sessionWarnDelayedMsgCount = context.getLong(
-                SESSION_WARN_DELAYED_MSG_COUNT, VAL_DEF_SESSION_WARN_DELAYED_MSG_COUNT);
-        Preconditions.checkArgument((this.sessionWarnDelayedMsgCount >= VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT),
-                SESSION_WARN_DELAYED_MSG_COUNT + " must be >= " + VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT);
+                ConfigConstants.SESSION_WARN_DELAYED_MSG_COUNT, ConfigConstants.VAL_DEF_SESSION_WARN_DELAYED_MSG_COUNT);
+        Preconditions.checkArgument(
+                (this.sessionWarnDelayedMsgCount >= ConfigConstants.VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT),
+                ConfigConstants.SESSION_WARN_DELAYED_MSG_COUNT + " must be >= "
+                        + ConfigConstants.VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT);
 
         this.sessionMaxAllowedDelayedMsgCount = context.getLong(
-                SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT, VAL_DEF_SESSION_DELAYED_MSG_COUNT);
-        Preconditions.checkArgument((this.sessionMaxAllowedDelayedMsgCount >= VAL_MIN_SESSION_DELAYED_MSG_COUNT),
-                SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= " + VAL_MIN_SESSION_DELAYED_MSG_COUNT);
+                ConfigConstants.SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT,
+                ConfigConstants.VAL_DEF_SESSION_DELAYED_MSG_COUNT);
+        Preconditions.checkArgument(
+                (this.sessionMaxAllowedDelayedMsgCount >= ConfigConstants.VAL_MIN_SESSION_DELAYED_MSG_COUNT),
+                ConfigConstants.SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= "
+                        + ConfigConstants.VAL_MIN_SESSION_DELAYED_MSG_COUNT);
 
         this.nettyWriteBufferHighWaterMark = context.getLong(
-                NETTY_WRITE_BUFFER_HIGH_WATER_MARK, VAL_DEF_NETTY_WRITE_HIGH_WATER_MARK);
-        Preconditions.checkArgument((this.nettyWriteBufferHighWaterMark >= VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK),
-                NETTY_WRITE_BUFFER_HIGH_WATER_MARK + " must be >= " + VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK);
+                ConfigConstants.NETTY_WRITE_BUFFER_HIGH_WATER_MARK,
+                ConfigConstants.VAL_DEF_NETTY_WRITE_HIGH_WATER_MARK);
+        Preconditions.checkArgument(
+                (this.nettyWriteBufferHighWaterMark >= ConfigConstants.VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK),
+                ConfigConstants.NETTY_WRITE_BUFFER_HIGH_WATER_MARK + " must be >= "
+                        + ConfigConstants.VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK);
 
         this.maxAllowedPublishTopicNum = context.getInteger(
                 MAX_TOPICS_EACH_PRODUCER_HOLD_NAME, VAL_DEF_TOPICS_EACH_PRODUCER_HOLD_NAME);
