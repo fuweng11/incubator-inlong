@@ -47,6 +47,9 @@
         <property name="index_pcg_max">10</property>
         <property name="index_pcg_fileName">${basePath}/agent_pcg_measure.log</property>
         <property name="index_pcg_filePattern">${basePath}/agent_pcg_measure-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="agent_measure_max">10</property>
+        <property name="agent_measure_fileName">${basePath}/agent_measure.log</property>
+        <property name="agent_measure_filePattern">${basePath}/agent_measure-%d{yyyy-MM-dd}-%i.log.gz</property>
         <property name="monitors_max">10</property>
         <property name="monitors_fileName">${basePath}/monitors.log</property>
         <property name="monitors_filePattern">${basePath}/monitors-%d{yyyy-MM-dd}-%i.log.gz</property>
@@ -145,6 +148,24 @@
             </Filters>
         </RollingFile>
 
+        <RollingFile name="AgentMeasureFile" fileName="${agent_measure_fileName}" filePattern="${agent_measure_filePattern}">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="${every_file_date}"/>
+                <SizeBasedTriggeringPolicy size="${every_file_size}"/>]
+            </Policies>
+            <DefaultRolloverStrategy max="${agent_measure_max}">
+                <Delete basePath="${basePath}" maxDepth="1">
+                    <IfFileName glob="agent_measure*.log.gz"/>
+                    <IfLastModified age="${last_modify_time}"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+            <Filters>
+                <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
         <RollingFile name="MonitorFile" fileName="${monitors_fileName}" filePattern="${monitors_filePattern}">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %m%n"/>
             <Policies>
@@ -212,6 +233,9 @@
         </logger>
         <logger name="org.apache.inlong.dataproxy.metrics.stats.PcgMinMetricsCollector" level="info" additivity="false">
             <appender-ref ref="PcgIndexFile"/>
+        </logger>
+        <logger name="org.apache.inlong.dataproxy.sink2.AgentMeasureLogger" level="info" additivity="false">
+            <appender-ref ref="AgentMeasureFile"/>
         </logger>
         <logger name="org.apache.pulsar" level="info" additivity="false">
             <appender-ref ref="InfoFile"/>
