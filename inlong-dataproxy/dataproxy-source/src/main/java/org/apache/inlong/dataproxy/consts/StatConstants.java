@@ -107,6 +107,13 @@ public class StatConstants {
     public static final java.lang.String EVENT_SINK_CLUSTER_UNMATCHED = "sink.cluster.unmatched";
     public static final java.lang.String EVENT_SINK_CPRODUCER_NULL = "sink.cluster.producer.null";
     public static final java.lang.String EVENT_SINK_MESSAGE_DUPLICATE = "sink.msg.dup.dropped";
+    public static final java.lang.String EVENT_SINK_INDEX_NON_INDEX = "sink.msg.index.nonindex.dropped";
+    public static final java.lang.String EVENT_SINK_INDEX_RETRY_OVER = "sink.msg.index.retry.over.dropped";
+    public static final java.lang.String EVENT_SINK_INDEX_SEND_EXCEPTION = "sink.msg.index.send.exception";
+    public static final java.lang.String EVENT_SINK_INDEX_SEND_SUCCESS = "sink.msg.index.send.success";
+    public static final java.lang.String EVENT_SINK_INDEX_REMOTE_SUCCESS = "sink.msg.index.remote.success";
+    public static final java.lang.String EVENT_SINK_INDEX_REMOTE_FAILURE = "sink.msg.index.remote.failure";
+    public static final java.lang.String EVENT_SINK_INDEX_REMOTE_EXCEPTION = "sink.msg.index.remote.exception";
     public static final java.lang.String EVENT_SINK_SEND_EXCEPTION = "sink.send.exception";
 
     public static final java.lang.String EVENT_SINK_FAILRETRY = "sink.retry";

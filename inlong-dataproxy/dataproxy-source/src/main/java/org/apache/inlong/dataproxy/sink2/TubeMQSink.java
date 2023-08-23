@@ -58,7 +58,6 @@ public class TubeMQSink extends BaseSink {
     private static final int VAL_DEF_TOPICS_EACH_PRODUCER_HOLD_NAME = 200;
     private static final int VAL_MIN_TOPICS_EACH_PRODUCER_HOLD_NAME = 1;
 
-    private static final String LOG_EVERY_N_EVENTS = "log-every-n-events";
     private long linkMaxAllowedDelayedMsgCount;
     private long sessionWarnDelayedMsgCount;
     private long sessionMaxAllowedDelayedMsgCount;
@@ -80,6 +79,10 @@ public class TubeMQSink extends BaseSink {
     @Override
     public void configure(Context context) {
         super.configure(context);
+
+        this.clusterAddrList = context.getString(ConfigConstants.MASTER_SERVER_URL_LIST);
+        Preconditions.checkState(clusterAddrList != null,
+                ConfigConstants.MASTER_SERVER_URL_LIST + " parameter not specified");
 
         this.linkMaxAllowedDelayedMsgCount = context.getLong(
                 ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT, ConfigConstants.VAL_DEF_ALLOWED_DELAYED_MSG_COUNT);
@@ -427,7 +430,7 @@ public class TubeMQSink extends BaseSink {
      */
     private TubeClientConfig initTubeConfig() {
         // config
-        final TubeClientConfig tubeClientConfig = new TubeClientConfig(this.clusterMAddrList);
+        final TubeClientConfig tubeClientConfig = new TubeClientConfig(this.clusterAddrList);
         tubeClientConfig.setLinkMaxAllowedDelayedMsgCount(linkMaxAllowedDelayedMsgCount);
         tubeClientConfig.setSessionWarnDelayedMsgCount(sessionWarnDelayedMsgCount);
         tubeClientConfig.setSessionMaxAllowedDelayedMsgCount(sessionMaxAllowedDelayedMsgCount);

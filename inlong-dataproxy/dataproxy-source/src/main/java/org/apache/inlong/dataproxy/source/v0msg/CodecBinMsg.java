@@ -254,10 +254,10 @@ public class CodecBinMsg extends AbsV0MsgCodec {
             // encode index message event
             Map<String, String> headers = new HashMap<>();
             if (fileCheckMsg) {
-                headers.put("msgtype", "filestatus");
+                headers.put(ConfigConstants.INDEX_MSG_TYPE, ConfigConstants.INDEX_TYPE_FILE_STATUS);
                 headers.put(ConfigConstants.FILE_CHECK_DATA, "true");
             } else {
-                headers.put("msgtype", "measure");
+                headers.put(ConfigConstants.INDEX_MSG_TYPE, ConfigConstants.INDEX_TYPE_MEASURE);
                 headers.put(ConfigConstants.FILE_CHECK_DATA, "true");
             }
             return EventBuilder.withBody(bodyData, headers);

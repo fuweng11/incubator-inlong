@@ -90,6 +90,10 @@ public class PulsarSink extends BaseSink {
     public void configure(Context context) {
         super.configure(context);
         // get master address list
+        this.clusterAddrList = context.getString(ConfigConstants.MASTER_SERVER_URL_LIST);
+        Preconditions.checkState(clusterAddrList != null,
+                ConfigConstants.MASTER_SERVER_URL_LIST + " parameter not specified");
+
         // get client statistic print interval in second
         this.clientStatsPrintIntvlSec = context.getLong(ConfigConstants.CLIENT_STATS_OUTPUT_INTVL_SEC,
                 ConfigConstants.VAL_DEF_CLIENT_STATS_OUTPUT_INTVL_SEC);
@@ -127,7 +131,7 @@ public class PulsarSink extends BaseSink {
         ConfigManager.getInstance().regPulsarXfeConfigChgCallback(this);
         try {
             this.pulsarClient = PulsarClient.builder()
-                    .serviceUrl(this.clusterMAddrList)
+                    .serviceUrl(this.clusterAddrList)
                     .ioThreads(this.pulsarIOThreads)
                     .statsInterval(this.clientStatsPrintIntvlSec, TimeUnit.SECONDS)
                     .connectionTimeout(this.connectTimeoutMs, TimeUnit.MILLISECONDS)

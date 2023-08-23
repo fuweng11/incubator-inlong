@@ -88,6 +88,10 @@ public class ConfigConstants {
     public static final int VAL_DEF_CACHE_SURVIVED_SIZE = 5000000;
     public static final int VAL_MIN_CACHE_SURVIVED_SIZE = 1;
 
+    public static String INDEX_MSG_TYPE = "index_msg_type";
+    public static String INDEX_TYPE_FILE_STATUS = "filestatus";
+    public static String INDEX_TYPE_MEASURE = "measure";
+
     public static final String HEART_INTERVAL_SEC = "heart-interval-sec";
 
     public static final String PACKAGE_TIMEOUT_SEC = "package-timeout-sec";

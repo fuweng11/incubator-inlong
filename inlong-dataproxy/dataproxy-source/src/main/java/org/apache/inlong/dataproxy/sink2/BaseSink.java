@@ -61,7 +61,7 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     // whether the sink has closed
     protected volatile boolean isShutdown = false;
     // clusterMasterAddress
-    protected String clusterMAddrList;
+    protected String clusterAddrList;
     // whether mq cluster connected
     protected volatile boolean mqClusterStarted = false;
     // mq cluster status wait duration
@@ -117,10 +117,6 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
         this.enableFileMetric = CommonConfigHolder.getInstance().isEnableFileMetric();
         this.enableRetryAfterFailure = CommonConfigHolder.getInstance().isEnableSendRetryAfterFailure();
         this.maxRetries = CommonConfigHolder.getInstance().getMaxRetriesAfterFailure();
-        // get sink master address
-        this.clusterMAddrList = context.getString(ConfigConstants.MASTER_SERVER_URL_LIST);
-        Preconditions.checkState(clusterMAddrList != null,
-                ConfigConstants.MASTER_SERVER_URL_LIST + " parameter not specified");
         // get the number of sink worker thread
         this.maxThreads = context.getInteger(ConfigConstants.MAX_THREADS, ConfigConstants.VAL_DEF_SINK_THREADS);
         Preconditions.checkArgument((this.maxThreads >= ConfigConstants.VAL_MIN_SINK_THREADS),
@@ -169,8 +165,6 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
                 (this.maxSendFailureWaitDurMs >= ConfigConstants.VAL_MIN_SEND_FAILURE_WAIT_DUR_MS),
                 ConfigConstants.MAX_SEND_FAILURE_WAIT_DUR_MS + " must be >= "
                         + ConfigConstants.VAL_MIN_SEND_FAILURE_WAIT_DUR_MS);
-        this.enableRetryAfterFailure = CommonConfigHolder.getInstance().isEnableSendRetryAfterFailure();
-        this.maxMsgRetries = CommonConfigHolder.getInstance().getMaxRetriesAfterFailure();
     }
 
     @Override

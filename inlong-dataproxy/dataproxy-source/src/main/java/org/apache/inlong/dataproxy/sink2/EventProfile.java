@@ -21,7 +21,6 @@ import org.apache.inlong.common.enums.DataProxyErrCode;
 import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.MsgType;
-import org.apache.inlong.common.util.NetworkUtils;
 import org.apache.inlong.dataproxy.base.SinkRspEvent;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.sink.mq.SimplePackProfile;
@@ -181,7 +180,7 @@ public class EventProfile {
         result.put(ConfigConstants.MSG_ENCODE_VER, event.getHeaders().get(ConfigConstants.MSG_ENCODE_VER));
         result.put(EventConstants.HEADER_KEY_VERSION, event.getHeaders().get(EventConstants.HEADER_KEY_VERSION));
         result.put(ConfigConstants.REMOTE_IP_KEY, event.getHeaders().get(ConfigConstants.REMOTE_IP_KEY));
-        result.put(ConfigConstants.DATAPROXY_IP_KEY, NetworkUtils.getLocalIp());
+        result.put(ConfigConstants.DATAPROXY_IP_KEY, event.getHeaders().get(ConfigConstants.DATAPROXY_IP_KEY));
         return result;
     }
 
