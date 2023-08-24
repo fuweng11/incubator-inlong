@@ -85,10 +85,13 @@ public class PulsarSink extends BaseSink {
     private final Set<String> lastRefreshTopics = new HashSet<>();
     // whether to send message
     private volatile boolean canSend = true;
+    private boolean enablePulsarXfe;
+
 
     @Override
     public void configure(Context context) {
         super.configure(context);
+        this.enablePulsarXfe = CommonConfigHolder.getInstance().isEnablePulsarTransfer();
         // get master address list
         this.clusterAddrList = context.getString(ConfigConstants.MASTER_SERVER_URL_LIST);
         Preconditions.checkState(clusterAddrList != null,
@@ -128,7 +131,11 @@ public class PulsarSink extends BaseSink {
     public void startSinkProcess() {
         logger.info("{} sink logic starting...", cachedSinkName);
         // register meta-configure listener to config-manager
-        ConfigManager.getInstance().regPulsarXfeConfigChgCallback(this);
+        if (enablePulsarXfe) {
+            ConfigManager.getInstance().regPulsarXfeConfigChgCallback(this);
+        } else {
+            ConfigManager.getInstance().regTDBankMetaChgCallback(this);
+        }
         try {
             this.pulsarClient = PulsarClient.builder()
                     .serviceUrl(this.clusterAddrList)
@@ -138,6 +145,7 @@ public class PulsarSink extends BaseSink {
                     .socketAddressQuarantineTimeSeconds(this.abnQuarantineSec)
                     .build();
         } catch (Throwable e) {
+            fileMetricIncSumStats(StatConstants.EVENT_SINK_PULSAR_CLIENT_INITIAL_FAILURE);
             stop();
             logger.error("{} create pulsar client failure, please re-check. ex2 {}",
                     cachedSinkName, e.getMessage());
@@ -188,7 +196,12 @@ public class PulsarSink extends BaseSink {
 
     @Override
     public void reloadMetaConfig() {
-        Set<String> curTopicSet = ConfigManager.getInstance().getAllSinkPulsarXfeTopics();
+        Set<String> curTopicSet;
+        if (enablePulsarXfe) {
+            curTopicSet = ConfigManager.getInstance().getAllSinkPulsarXfeTopics();
+        } else {
+            curTopicSet = ConfigManager.getInstance().getAllSinkTDBankTopicNames();
+        }
         if (curTopicSet.isEmpty() || lastRefreshTopics.equals(curTopicSet)) {
             return;
         }
@@ -267,6 +280,8 @@ public class PulsarSink extends BaseSink {
                 lastRefreshTopics.add(topic);
             } catch (Throwable e) {
                 createFailCnt++;
+                fileMetricIncWithDetailStats(
+                        StatConstants.EVENT_SINK_PULSAR_PRODUCER_BUILD_FAILURE, topic);
                 logger.error("Create topic {}'s producer failed!", topic, e);
             }
         }
@@ -311,12 +326,22 @@ public class PulsarSink extends BaseSink {
 
         private boolean sendMessage(EventProfile profile) {
             // get topic name
-            String topic = ConfigManager.getInstance().getPulsarXfeSinkTopic(
-                    profile.getGroupId(), profile.getStreamId());
+            String topic;
+            if (enablePulsarXfe) {
+                topic = ConfigManager.getInstance().getPulsarXfeSinkTopic(
+                        profile.getGroupId(), profile.getStreamId());
+            } else {
+                topic = ConfigManager.getInstance().getTDBankSinkTopicName(profile.getGroupId());
+            }
             if (topic == null) {
                 if (!CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
-                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
-                            getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
+                    if (enablePulsarXfe) {
+                        fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
+                                getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
+                    } else {
+                        fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
+                                profile.getGroupId());
+                    }
                     profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
                     return false;
                 }

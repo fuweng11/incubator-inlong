@@ -115,6 +115,8 @@ public class StatConstants {
     public static final java.lang.String EVENT_SINK_INDEX_REMOTE_FAILURE = "sink.msg.index.remote.failure";
     public static final java.lang.String EVENT_SINK_INDEX_REMOTE_EXCEPTION = "sink.msg.index.remote.exception";
     public static final java.lang.String EVENT_SINK_SEND_EXCEPTION = "sink.send.exception";
+    public static final java.lang.String EVENT_SINK_PULSAR_CLIENT_INITIAL_FAILURE = "sink.pulsar.client.initial.failure";
+    public static final java.lang.String EVENT_SINK_PULSAR_PRODUCER_BUILD_FAILURE = "sink.pulsar.producer.build.failure";
 
     public static final java.lang.String EVENT_SINK_FAILRETRY = "sink.retry";
     public static final java.lang.String EVENT_SINK_FAILDROPPED = "sink.dropped";
