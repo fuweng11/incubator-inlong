@@ -240,7 +240,6 @@ public class TubeMQSink extends BaseSink {
         int remainder;
         int startIndex;
         int endIndex = 0;
-        int publishedCnt = 0;
         Set<String> subSet = new HashSet<>();
         long startTime = System.currentTimeMillis();
         Collections.sort(addedTopics);
@@ -260,8 +259,8 @@ public class TubeMQSink extends BaseSink {
                 latestPublishTopicNum.set(0);
                 remainder = maxAllowedPublishTopicNum - latestPublishTopicNum.get();
             }
-            startIndex = publishedCnt;
-            endIndex = Math.min(publishedCnt + remainder, addedTopics.size());
+            startIndex = endIndex;
+            endIndex = Math.min(startIndex + remainder, addedTopics.size());
             subSet.addAll(addedTopics.subList(startIndex, endIndex));
             try {
                 latestProducer.publish(subSet);
@@ -272,8 +271,8 @@ public class TubeMQSink extends BaseSink {
             }
             for (String topic : subSet) {
                 producerMap.put(topic, latestProducer);
-                latestPublishTopicNum.incrementAndGet();
             }
+            latestPublishTopicNum.addAndGet(subSet.size());
         } while (endIndex < addedTopics.size());
 
         logger.info("{} publishTopics {},  cost: {} ms",
