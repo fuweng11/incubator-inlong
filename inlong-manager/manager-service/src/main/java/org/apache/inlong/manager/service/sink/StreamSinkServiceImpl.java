@@ -710,6 +710,41 @@ public class StreamSinkServiceImpl implements StreamSinkService {
     }
 
     @Override
+    public boolean addFields(StreamSinkEntity sinkEntity, List<SinkField> sinkFieldList) {
+        Set<String> existFields = sinkFieldMapper.selectBySinkId(sinkEntity.getId()).stream()
+                .map(StreamSinkFieldEntity::getFieldName).collect(Collectors.toSet());
+
+        LOGGER.debug("begin to save sink fields={}", sinkFieldList);
+        if (CollectionUtils.isEmpty(sinkFieldList)) {
+            return true;
+        }
+        List<StreamSinkFieldEntity> needAddFieldList = new ArrayList<>();
+        for (SinkField fieldInfo : sinkFieldList) {
+            if (existFields.contains(fieldInfo.getFieldName())) {
+                LOGGER.debug("current sink field={} is exist for groupId={}, streamId={}", fieldInfo.getFieldName(),
+                        sinkEntity.getInlongGroupId(), sinkEntity.getInlongStreamId());
+                continue;
+            }
+            StreamSinkFieldEntity fieldEntity = CommonBeanUtils.copyProperties(fieldInfo,
+                    StreamSinkFieldEntity::new);
+            if (StringUtils.isEmpty(fieldEntity.getFieldComment())) {
+                fieldEntity.setFieldComment(fieldEntity.getFieldName());
+            }
+            fieldEntity.setInlongGroupId(sinkEntity.getInlongGroupId());
+            fieldEntity.setInlongStreamId(sinkEntity.getInlongStreamId());
+            fieldEntity.setSinkType(sinkEntity.getSinkType());
+            fieldEntity.setSinkId(sinkEntity.getId());
+            fieldEntity.setIsDeleted(InlongConstants.UN_DELETED);
+            needAddFieldList.add(fieldEntity);
+        }
+        if (CollectionUtils.isNotEmpty(needAddFieldList)) {
+            sinkFieldMapper.insertAll(needAddFieldList);
+        }
+        LOGGER.debug("success to save sink fields={}", needAddFieldList);
+        return true;
+    }
+
+    @Override
     public List<SinkField> parseFields(ParseFieldRequest parseFieldRequest) {
         try {
             String method = parseFieldRequest.getMethod();
