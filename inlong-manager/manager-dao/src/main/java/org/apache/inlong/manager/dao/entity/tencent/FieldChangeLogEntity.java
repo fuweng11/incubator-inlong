@@ -15,35 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.source.dbsync;
+package org.apache.inlong.manager.dao.entity.tencent;
 
-import org.apache.inlong.manager.pojo.stream.StreamField;
-
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotEmpty;
+import java.util.Date;
 
-import java.util.List;
-
-/**
- * Request of add fields
- */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class AddFieldsRequest {
+public class FieldChangeLogEntity {
 
-    @ApiModelProperty("Task ID, same as the ID of stream_source")
+    private static final long serialVersionUID = 1L;
     private Integer id;
-
-    @ApiModelProperty("Fields need to be added")
-    @NotEmpty(message = "fields cannot be null")
-    private List<StreamField> fields;
-
-    @ApiModelProperty("Raw sql")
+    private String inlongGroupId;
+    private String inlongStreamId;
+    private Integer sourceId;
     private String rawSql;
+    private String errMsg;
+    private Integer isSuccess;
+    private Integer isDeleted;
+    private Date createTime;
+    private Date modifyTime;
 
 }

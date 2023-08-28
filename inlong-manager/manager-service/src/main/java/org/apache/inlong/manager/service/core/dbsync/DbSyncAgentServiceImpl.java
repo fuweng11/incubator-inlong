@@ -39,6 +39,7 @@ import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.SourceStatus;
+import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.JsonUtils;
@@ -49,12 +50,14 @@ import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
 import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
 import org.apache.inlong.manager.dao.entity.tencent.DbSyncHeartbeatEntity;
+import org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity;
 import org.apache.inlong.manager.dao.mapper.InlongClusterEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongClusterNodeEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSourceEntityMapper;
 import org.apache.inlong.manager.dao.mapper.tencent.DbSyncHeartbeatEntityMapper;
+import org.apache.inlong.manager.dao.mapper.tencent.FieldChangeLogEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.cluster.ClusterPageRequest;
 import org.apache.inlong.manager.pojo.cluster.agent.AgentClusterInfo;
@@ -69,6 +72,8 @@ import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
 import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSource;
 import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSourceDTO;
+import org.apache.inlong.manager.pojo.user.LoginUserUtils;
+import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
 import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
@@ -84,6 +89,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -108,6 +114,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.apache.inlong.manager.pojo.user.UserRoleCode.INLONG_SERVICE;
 
 /**
  * DbSync service interface implementation
@@ -163,6 +171,9 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     // Cached task list
     private final Map<String, LinkedBlockingQueue<DbSyncTaskInfo>> ipTaskCacheMap = new ConcurrentHashMap<>(128);
 
+    @Value("${internal.component.username:fit_inlong_dbsync}")
+    private String componentUsername;
+
     @Autowired
     private DataNodeService dataNodeService;
     @Autowired
@@ -185,6 +196,8 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
     private DbSyncHeartbeatEntityMapper dbSyncHeartbeatMapper;
     @Autowired
     private SourceOperatorFactory operatorFactory;
+    @Autowired
+    private FieldChangeLogEntityMapper fieldChangeLogEntityMapper;
 
     /**
      * Start the heartbeat task
@@ -931,6 +944,19 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             if (addFieldQueue.isEmpty()) {
                 return;
             }
+            LoginUserUtils.getLoginUser();
+            if (LoginUserUtils.getLoginUser() == null) {
+                UserInfo userInfo = new UserInfo();
+                String userName = componentUsername;
+                userInfo.setName(userName);
+                List<String> roles = new ArrayList<>();
+                roles.add(INLONG_SERVICE);
+                userInfo.setRoles(new HashSet<>(roles));
+                // add account type info
+                userInfo.setAccountType(TenantUserTypeEnum.TENANT_ADMIN.getCode());
+                LoginUserUtils.setUserLoginInfo(userInfo);
+            }
+
             AddFieldsRequest fieldsRequest = addFieldQueue.poll();
             Preconditions.expectNotNull(fieldsRequest, "add fields request is null from the queue");
             Integer id = fieldsRequest.getId();
@@ -944,13 +970,23 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             Preconditions.expectNotNull(groupEntity, "not found group info by groupId " + groupId);
             InlongStreamEntity streamEntity = streamMapper.selectByIdentifier(groupId, streamId);
 
+            FieldChangeLogEntity fieldChangeLogEntity = new FieldChangeLogEntity();
+            fieldChangeLogEntity.setSourceId(fieldsRequest.getId());
+            fieldChangeLogEntity.setInlongGroupId(streamEntity.getInlongGroupId());
+            fieldChangeLogEntity.setInlongStreamId(streamEntity.getInlongStreamId());
+            fieldChangeLogEntity.setRawSql(fieldsRequest.getRawSql());
             try {
                 streamService.addFieldForStream(fieldsRequest, groupEntity, streamEntity);
                 sinkService.addFieldForSink(fieldsRequest, groupEntity, streamEntity);
                 LOGGER.info("success to add fields for dbsync, groupId={} streamId={}", groupId, streamId);
+                fieldChangeLogEntity.setIsSuccess(1);
+                fieldChangeLogEntityMapper.insert(fieldChangeLogEntity);
             } catch (Exception e) {
                 String errMsg = String.format("failed to add fields for dbsync, groupId=%s streamId=%s ",
                         groupId, streamId);
+                fieldChangeLogEntity.setErrMsg(errMsg);
+                fieldChangeLogEntity.setIsSuccess(0);
+                fieldChangeLogEntityMapper.insert(fieldChangeLogEntity);
                 LOGGER.error(errMsg, e);
                 throw new BusinessException(errMsg + e.getMessage());
             }

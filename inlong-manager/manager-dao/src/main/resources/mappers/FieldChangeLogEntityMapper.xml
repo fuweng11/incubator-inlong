@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.apache.inlong.manager.dao.mapper.tencent.FieldChangeLogEntityMapper">
+    <resultMap id="BaseResultMap" type="org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="inlong_group_id" jdbcType="VARCHAR" property="inlongGroupId"/>
+        <result column="inlong_stream_id" jdbcType="VARCHAR" property="inlongStreamId"/>
+        <result column="source_id" jdbcType="INTEGER" property="sourceId"/>
+        <result column="raw_sql" jdbcType="LONGVARCHAR" property="rawSql"/>
+        <result column="err_msg" jdbcType="LONGVARCHAR" property="errMsg"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
+        <result column="is_success" jdbcType="INTEGER" property="isSuccess"/>
+        <result column="is_deleted" jdbcType="INTEGER" property="isDeleted"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, inlong_group_id, inlong_stream_id, raw_sql, err_msg, create_time, modify_time, is_success, is_deleted
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id"
+            parameterType="org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity">
+        insert into field_change_log (id, inlong_group_id, inlong_stream_id, source_id, raw_sql, err_msg, is_success)
+        values (#{id,jdbcType=INTEGER}, #{inlongGroupId,jdbcType=VARCHAR}, #{inlongStreamId,jdbcType=VARCHAR},
+                #{sourceId,jdbcType=INTEGER}, #{rawSql,jdbcType=LONGNVARCHAR}, #{errMsg,jdbcType=LONGNVARCHAR}, #{isSuccess,jdbcType=INTEGER})
+    </insert>
+    <insert id="insertSelective" useGeneratedKeys="true" keyProperty="id"
+            parameterType="org.apache.inlong.manager.dao.entity.InlongStreamEntity">
+        insert into field_change_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="inlongGroupId != null">
+                inlong_group_id,
+            </if>
+            <if test="inlongStreamId != null">
+                inlong_stream_id,
+            </if>
+            <if test="sourceId != null">
+                source_id,
+            </if>
+            <if test="rawSql != null">
+                raw_sql,
+            </if>
+            <if test="errMsg != null">
+                err_msg,
+            </if>
+            <if test="description != null">
+                description,
+            </if>
+            <if test="isSuccess != null">
+                is_success,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="inlongGroupId != null">
+                #{inlongGroupId,jdbcType=VARCHAR},
+            </if>
+            <if test="inlongStreamId != null">
+                #{inlongStreamId,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceId != null">
+                #{sourceId,jdbcType=INTEGER},
+            </if>
+            <if test="rawSql != null">
+                #{rawSql,jdbcType=LONGNVARCHAR},
+            </if>
+            <if test="errMsg != null">
+                #{errMsg,jdbcType=LONGNVARCHAR},
+            </if>
+            <if test="isSuccess != null">
+                #{isSuccess,jdbcType=INTEGER},
+            </if>
+        </trim>
+    </insert>
+    <select id="selectByKey" resultType="org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from field_change_log
+        <where>
+            is_deleted = 0
+            <if test="groupId != null and groupId != ''">
+                and inlong_group_id = #{groupId, jdbcType=VARCHAR}
+            </if>
+            <if test="streamId != null and streamId != ''">
+                and inlong_stream_id = #{streamId, jdbcType=VARCHAR}
+            </if>
+            <if test="sourceId != null">
+                and source_id = #{sourceId, jdbcType=INTERGER}
+            </if>
+        </where>
+        order by modify_time desc
+    </select>
+</mapper>

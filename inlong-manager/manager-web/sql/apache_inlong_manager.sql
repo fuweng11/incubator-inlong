@@ -1028,5 +1028,24 @@ CREATE TABLE IF NOT EXISTS `tenant_cluster_tag`
   DEFAULT CHARSET = utf8mb4 COMMENT ='Tenant cluster tag table';
 
 -- ----------------------------
+-- ----------------------------
+-- Table structure for field_change_log
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `field_change_log`
+(
+    `id`                int(11)      NOT NULL AUTO_INCREMENT COMMENT 'Incremental primary key',
+    `inlong_group_id`   varchar(256) NOT NULL COMMENT 'Owning inlong group id',
+    `inlong_stream_id`  varchar(256) NOT NULL COMMENT 'Inlong stream id, non-deleted globally unique',
+    `source_id`         int(11)      NOT NULL COMMENT 'Source id',
+    `raw_sql`           text         DEFAULT NULL COMMENT 'The value of the configuration item',
+    `err_msg`           text         DEFAULT NULL COMMENT 'The error message',
+    `create_time`       timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    `is_success`        int(11)      DEFAULT '0' COMMENT 'Whether to success, 0: failed, > 0: success',
+    `is_deleted`        int(11)      DEFAULT '0' COMMENT 'Whether to delete, 0: not deleted, > 0: deleted',
+    `modify_time`       timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Modify time',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_field_change_log` (`inlong_group_id`, `inlong_stream_id`, `source_id`, `is_deleted`)
+    ) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='Field change log table';
 
 SET FOREIGN_KEY_CHECKS = 1;
