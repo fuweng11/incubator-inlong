@@ -110,14 +110,14 @@ const UserSelect: React.FC<UserSelectProps> = ({
       {...rest}
       options={{
         ...rest.options,
-          requestTrigger: ['onSearch'],
-          requestService: name => ({
-              url: '/sc/staff/list',
-              method: 'GET',
-              params: {
-                  name,
-              },
-          }),
+        requestTrigger: ['onSearch'],
+        requestService: name => ({
+          url: '/sc/staff/list',
+          method: 'GET',
+          params: {
+            name,
+          },
+        }),
         requestParams: {
           initialData: getCache(),
           formatResult: result =>
