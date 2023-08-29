@@ -85,13 +85,10 @@ public class PulsarSink extends BaseSink {
     private final Set<String> lastRefreshTopics = new HashSet<>();
     // whether to send message
     private volatile boolean canSend = true;
-    private boolean enablePulsarXfe;
-
 
     @Override
     public void configure(Context context) {
         super.configure(context);
-        this.enablePulsarXfe = CommonConfigHolder.getInstance().isEnablePulsarTransfer();
         // get master address list
         this.clusterAddrList = context.getString(ConfigConstants.MASTER_SERVER_URL_LIST);
         Preconditions.checkState(clusterAddrList != null,
@@ -131,11 +128,7 @@ public class PulsarSink extends BaseSink {
     public void startSinkProcess() {
         logger.info("{} sink logic starting...", cachedSinkName);
         // register meta-configure listener to config-manager
-        if (enablePulsarXfe) {
-            ConfigManager.getInstance().regPulsarXfeConfigChgCallback(this);
-        } else {
-            ConfigManager.getInstance().regTDBankMetaChgCallback(this);
-        }
+        ConfigManager.getInstance().regPulsarXfeConfigChgCallback(this);
         try {
             this.pulsarClient = PulsarClient.builder()
                     .serviceUrl(this.clusterAddrList)
@@ -196,32 +189,11 @@ public class PulsarSink extends BaseSink {
 
     @Override
     public void reloadMetaConfig() {
-        Set<String> curTopicSet;
-        if (enablePulsarXfe) {
-            curTopicSet = ConfigManager.getInstance().getAllSinkPulsarXfeTopics();
-        } else {
-            curTopicSet = ConfigManager.getInstance().getAllSinkTDBankTopicNames();
-        }
+        Set<String> curTopicSet = ConfigManager.getInstance().getAllSinkPulsarXfeTopics();
         if (curTopicSet.isEmpty() || lastRefreshTopics.equals(curTopicSet)) {
             return;
         }
         boolean added = false;
-        // for first reload, delay 3 seconds
-        if (isFirstReload) {
-            synchronized (lastRefreshTopics) {
-                if (isFirstReload) {
-                    isFirstReload = false;
-                    long dltTime = System.currentTimeMillis() - startTime;
-                    if (dltTime > 0 && dltTime < 3000) {
-                        try {
-                            Thread.sleep(dltTime);
-                        } catch (Throwable e) {
-                            //
-                        }
-                    }
-                }
-            }
-        }
         List<String> addedTopics = new ArrayList<>();
         synchronized (producerMap) {
             for (String topic : curTopicSet) {
@@ -326,22 +298,12 @@ public class PulsarSink extends BaseSink {
 
         private boolean sendMessage(EventProfile profile) {
             // get topic name
-            String topic;
-            if (enablePulsarXfe) {
-                topic = ConfigManager.getInstance().getPulsarXfeSinkTopic(
-                        profile.getGroupId(), profile.getStreamId());
-            } else {
-                topic = ConfigManager.getInstance().getTDBankSinkTopicName(profile.getGroupId());
-            }
+            String topic = ConfigManager.getInstance().getPulsarXfeSinkTopic(
+                    profile.getGroupId(), profile.getStreamId());
             if (topic == null) {
                 if (!CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
-                    if (enablePulsarXfe) {
-                        fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
-                                getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
-                    } else {
-                        fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
-                                profile.getGroupId());
-                    }
+                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
+                            getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
                     profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
                     return false;
                 }
@@ -416,7 +378,7 @@ public class PulsarSink extends BaseSink {
      */
     public void processSendFail(EventProfile profile, DataProxyErrCode errCode, String errMsg) {
         msgIdCache.invalidCache(profile.getProperties().get(ConfigConstants.SEQUENCE_ID));
-        if (profile.isResend(enableRetryAfterFailure, maxMsgRetries)) {
+        if (profile.isResend(enableRetryAfterFailure, maxRetries)) {
             offerDispatchRecord(profile);
             fileMetricIncSumStats(StatConstants.EVENT_SINK_FAILRETRY);
         } else {

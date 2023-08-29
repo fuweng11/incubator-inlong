@@ -321,7 +321,7 @@ public class ConfigManager {
                     // connect to manager
                     if (fisrtCheck) {
                         fisrtCheck = false;
-                        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+                        if (CommonConfigHolder.getInstance().isGetMetaInfoFromTDM()) {
                             checkTDBankRemoteConfig();
                         } else {
                             checkRemoteConfig();
@@ -330,7 +330,7 @@ public class ConfigManager {
                     } else {
                         // wait for 3 * check-time to update remote config
                         if (count % 3 == 0) {
-                            if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+                            if (CommonConfigHolder.getInstance().isGetMetaInfoFromTDM()) {
                                 checkTDBankRemoteConfig();
                             } else {
                                 checkRemoteConfig();

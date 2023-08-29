@@ -136,6 +136,8 @@ public abstract class BaseSource
     protected boolean enableFileMetric;
     // whether enable tdbank logic
     protected boolean enableTDBankLogic;
+    // whether enable inlong meta with tdbank logic
+    protected boolean enableInLongMetaWithTDBankLogic;
     protected boolean enablePCGFileMetric;
 
     public BaseSource() {
@@ -143,7 +145,10 @@ public abstract class BaseSource
         allChannels = new DefaultChannelGroup("DefaultChannelGroup", GlobalEventExecutor.INSTANCE);
         this.enableFileMetric = CommonConfigHolder.getInstance().isEnableFileMetric();
         this.enableTDBankLogic = CommonConfigHolder.getInstance().isEnableTDBankLogic();
+        this.enableInLongMetaWithTDBankLogic =
+                CommonConfigHolder.getInstance().isEnableInLongMetaWithTDBankLogic();
         this.enablePCGFileMetric = CommonConfigHolder.getInstance().isEnablePCGLogOutput();
+
     }
 
     @Override

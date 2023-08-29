@@ -167,6 +167,10 @@ public class CommonConfigHolder {
     // cluster id
     public static final String KEY_PROXY_CLUSTER_ID = "proxy.cluster.id";
     public static final int VAL_DEF_CLUSTER_ID = -1;
+    // whether enable brain logic
+    // use tdbank source and sink, with inlong manager meta
+    public static final String KEY_ENABLE_INLONG_META_TDBANK_LOGIC = "proxy.enable.inlong.meta.with.tdbank.logic";
+    public static final boolean VAL_DEF_INLONG_META_TDBANK_LOGIC = false;
 
     // **** allowed keys and default value, end
 
@@ -212,6 +216,7 @@ public class CommonConfigHolder {
     private boolean enableSendRetryAfterFailure = VAL_DEF_ENABLE_SEND_RETRY_AFTER_FAILURE;
     private int maxRetriesAfterFailure = VAL_DEF_MAX_RETRIES_AFTER_FAILURE;
     private boolean enableTDBankLogic = VAL_DEF_ENABLE_TDBANK_LOGIC;
+    private boolean enableInLongMetaWithTDBankLogic = VAL_DEF_INLONG_META_TDBANK_LOGIC;
     private boolean enablePCGLogOutput = VAL_DEF_ENABLE_PCG_LOG_OUTPUT;
     private boolean enablePulsarTransfer = VAL_DEF_ENABLE_PULSAR_TRANSFER;
     private int clusterId = VAL_DEF_CLUSTER_ID;
@@ -260,7 +265,7 @@ public class CommonConfigHolder {
     }
 
     public boolean isEnableTDBankLogic() {
-        return enableTDBankLogic;
+        return enableTDBankLogic || enableInLongMetaWithTDBankLogic;
     }
 
     public boolean isEnablePCGLogOutput() {
@@ -269,6 +274,14 @@ public class CommonConfigHolder {
 
     public boolean isEnablePulsarTransfer() {
         return enableTDBankLogic && enablePulsarTransfer;
+    }
+
+    public boolean isEnableInLongMetaWithTDBankLogic() {
+        return enableInLongMetaWithTDBankLogic;
+    }
+
+    public boolean isGetMetaInfoFromTDM() {
+        return enableTDBankLogic;
     }
 
     public int getClusterId() {
@@ -641,6 +654,11 @@ public class CommonConfigHolder {
         tmpValue = this.props.get(KEY_ENABLE_TDBANK_LOGIC);
         if (StringUtils.isNotBlank(tmpValue)) {
             this.enableTDBankLogic = "TRUE".equalsIgnoreCase(tmpValue.trim());
+        }
+        // read whether use inlong meta with tdbank process logic
+        tmpValue = this.props.get(KEY_ENABLE_INLONG_META_TDBANK_LOGIC);
+        if (StringUtils.isNotBlank(tmpValue)) {
+            this.enableInLongMetaWithTDBankLogic = "TRUE".equalsIgnoreCase(tmpValue.trim());
         }
         // read tdbank's parameters
         if (this.enableTDBankLogic) {

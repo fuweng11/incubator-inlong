@@ -40,19 +40,19 @@
         <property name="console_print_level">DEBUG</property>
         <property name="index_detail_max">10</property>
         <property name="index_detail_fileName">${basePath}/index_detail.log</property>
-        <property name="index_detail_filePattern">${basePath}/index_detail-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="index_detail_filePattern">${basePath}/index_detail-%d{yyyy-MM-dd}-%i.log</property>
         <property name="index_sum_max">10</property>
         <property name="index_sum_fileName">${basePath}/index_sum.log</property>
-        <property name="index_sum_filePattern">${basePath}/index_sum-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="index_sum_filePattern">${basePath}/index_sum-%d{yyyy-MM-dd}-%i.log</property>
         <property name="index_pcg_max">10</property>
         <property name="index_pcg_fileName">${basePath}/agent_pcg_measure.log</property>
-        <property name="index_pcg_filePattern">${basePath}/agent_pcg_measure-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="index_pcg_filePattern">${basePath}/agent_pcg_measure-%d{yyyy-MM-dd}-%i.log</property>
         <property name="agent_measure_max">10</property>
         <property name="agent_measure_fileName">${basePath}/agent_measure.log</property>
-        <property name="agent_measure_filePattern">${basePath}/agent_measure-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="agent_measure_filePattern">${basePath}/agent_measure-%d{yyyy-MM-dd}-%i.log</property>
         <property name="monitors_max">10</property>
         <property name="monitors_fileName">${basePath}/monitors.log</property>
-        <property name="monitors_filePattern">${basePath}/monitors-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="monitors_filePattern">${basePath}/monitors-%d{yyyy-MM-dd}-%i.log</property>
         <property name="last_modify_time">15d</property>
     </Properties>
 
@@ -100,9 +100,9 @@
                 <TimeBasedTriggeringPolicy interval="${every_file_date}"/>
                 <SizeBasedTriggeringPolicy size="${every_file_size}"/>]
             </Policies>
-            <DefaultRolloverStrategy max="${index_detail_max}">
+            <DefaultRolloverStrategy max="${index_detail_max}" compressionLevel="0">
                 <Delete basePath="${basePath}" maxDepth="1">
-                    <IfFileName glob="index_detail*.log.gz"/>
+                    <IfFileName glob="index_detail*.log"/>
                     <IfLastModified age="${last_modify_time}"/>
                 </Delete>
             </DefaultRolloverStrategy>
@@ -118,9 +118,9 @@
                 <TimeBasedTriggeringPolicy interval="${every_file_date}"/>
                 <SizeBasedTriggeringPolicy size="${every_file_size}"/>]
             </Policies>
-            <DefaultRolloverStrategy max="${index_sum_max}">
+            <DefaultRolloverStrategy max="${index_sum_max}" compressionLevel="0">
                 <Delete basePath="${basePath}" maxDepth="1">
-                    <IfFileName glob="index_sum*.log.gz"/>
+                    <IfFileName glob="index_sum*.log"/>
                     <IfLastModified age="${last_modify_time}"/>
                 </Delete>
             </DefaultRolloverStrategy>
@@ -136,9 +136,9 @@
                 <TimeBasedTriggeringPolicy interval="${every_file_date}"/>
                 <SizeBasedTriggeringPolicy size="${every_file_size}"/>]
             </Policies>
-            <DefaultRolloverStrategy max="${index_pcg_max}">
+            <DefaultRolloverStrategy max="${index_pcg_max}"  compressionLevel="0">
                 <Delete basePath="${basePath}" maxDepth="1">
-                    <IfFileName glob="agent_pcg_measure*.log.gz"/>
+                    <IfFileName glob="agent_pcg_measure*.log"/>
                     <IfLastModified age="${last_modify_time}"/>
                 </Delete>
             </DefaultRolloverStrategy>
@@ -154,9 +154,9 @@
                 <TimeBasedTriggeringPolicy interval="${every_file_date}"/>
                 <SizeBasedTriggeringPolicy size="${every_file_size}"/>]
             </Policies>
-            <DefaultRolloverStrategy max="${agent_measure_max}">
+            <DefaultRolloverStrategy max="${agent_measure_max}" compressionLevel="0">
                 <Delete basePath="${basePath}" maxDepth="1">
-                    <IfFileName glob="agent_measure*.log.gz"/>
+                    <IfFileName glob="agent_measure*.log"/>
                     <IfLastModified age="${last_modify_time}"/>
                 </Delete>
             </DefaultRolloverStrategy>
@@ -172,9 +172,9 @@
                 <TimeBasedTriggeringPolicy interval="${every_file_date}"/>
                 <SizeBasedTriggeringPolicy size="${every_file_size}"/>]
             </Policies>
-            <DefaultRolloverStrategy max="${monitors_max}">
+            <DefaultRolloverStrategy max="${monitors_max}" compressionLevel="0">
                 <Delete basePath="${basePath}" maxDepth="1">
-                    <IfFileName glob="monitors*.log.gz"/>
+                    <IfFileName glob="monitors*.log"/>
                     <IfLastModified age="${last_modify_time}"/>
                 </Delete>
             </DefaultRolloverStrategy>

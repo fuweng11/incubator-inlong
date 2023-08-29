@@ -192,22 +192,6 @@ public class TubeMQSink extends BaseSink {
             return;
         }
         boolean added = false;
-        // for first reload, delay 3 seconds
-        if (isFirstReload) {
-            synchronized (lastRefreshTopics) {
-                if (isFirstReload) {
-                    isFirstReload = false;
-                    long dltTime = System.currentTimeMillis() - startTime;
-                    if (dltTime > 0 && dltTime < 3000) {
-                        try {
-                            Thread.sleep(dltTime);
-                        } catch (Throwable e) {
-                            //
-                        }
-                    }
-                }
-            }
-        }
         List<String> addedTopics = new ArrayList<>();
         synchronized (producerMap) {
             for (String topic : curTopicSet) {
@@ -412,7 +396,7 @@ public class TubeMQSink extends BaseSink {
      */
     public void processSendFail(EventProfile profile, DataProxyErrCode errCode, String errMsg) {
         msgIdCache.invalidCache(profile.getProperties().get(ConfigConstants.SEQUENCE_ID));
-        if (profile.isResend(enableRetryAfterFailure, maxMsgRetries)) {
+        if (profile.isResend(enableRetryAfterFailure, maxRetries)) {
             offerDispatchRecord(profile);
             fileMetricIncSumStats(StatConstants.EVENT_SINK_FAILRETRY);
         } else {

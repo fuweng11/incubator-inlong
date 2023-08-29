@@ -42,9 +42,10 @@ import static org.apache.inlong.dataproxy.source.v0msg.MsgFieldConsts.TXT_MSG_TO
 
 public class CodecTextMsg extends AbsV0MsgCodec {
 
-    public CodecTextMsg(int totalDataLen, int msgTypeValue,
-            long msgRcvTime, String strRemoteIP, boolean enableTDBankLogic) {
-        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP, enableTDBankLogic);
+    public CodecTextMsg(int totalDataLen, int msgTypeValue, long msgRcvTime,
+            String strRemoteIP, boolean enableTDBankLogic, boolean enableInLongMetaWithTDBankLogic) {
+        super(totalDataLen, msgTypeValue, msgRcvTime,
+                strRemoteIP, enableTDBankLogic, enableInLongMetaWithTDBankLogic);
     }
 
     public boolean descMsg(BaseSource source, ByteBuf cb) throws Exception {
@@ -160,7 +161,11 @@ public class CodecTextMsg extends AbsV0MsgCodec {
         // get and check topic configure
         String tmpTopicName;
         if (enableTDBankLogic) {
-            tmpTopicName = ConfigManager.getInstance().getTDBankSrcTopicName(tmpGroupId);
+            if (enableInLongMetaWithTDBankLogic) {
+                tmpTopicName = ConfigManager.getInstance().getTopicName(tmpGroupId, tmpStreamId);
+            } else {
+                tmpTopicName = ConfigManager.getInstance().getTDBankSrcTopicName(tmpGroupId);
+            }
         } else {
             tmpTopicName = ConfigManager.getInstance().getTopicName(tmpGroupId, tmpStreamId);
         }
@@ -225,14 +230,16 @@ public class CodecTextMsg extends AbsV0MsgCodec {
         }
         if (enableTDBankLogic) {
             // add extra attributes
-            String mValues = ConfigManager.getInstance().getMxProperties(groupId);
-            if (StringUtils.isEmpty(mValues)) {
-                mValues = source.getDefAttr();
+            if (!enableInLongMetaWithTDBankLogic) {
+                String mValues = ConfigManager.getInstance().getMxProperties(groupId);
+                if (StringUtils.isEmpty(mValues)) {
+                    mValues = source.getDefAttr();
+                }
+                if (strBuff.length() > 0) {
+                    strBuff.append(AttributeConstants.SEPARATOR);
+                }
+                strBuff.append(mValues);
             }
-            if (strBuff.length() > 0) {
-                strBuff.append(AttributeConstants.SEPARATOR);
-            }
-            strBuff.append(mValues);
         }
         // rebuild attribute string
         if (strBuff.length() > 0) {

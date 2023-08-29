@@ -79,6 +79,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
     private static final LogCounter exceptLogCounter = new LogCounter(10, 50000, 20 * 1000);
     private final BaseSource source;
     private final boolean enableTDBankLogic;
+    private final boolean enableInLongMetaWithTDBankLogic;
 
     /**
      * Constructor
@@ -88,6 +89,8 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
     public HttpMessageHandler(BaseSource source) {
         this.source = source;
         this.enableTDBankLogic = CommonConfigHolder.getInstance().isEnableTDBankLogic();
+        this.enableInLongMetaWithTDBankLogic =
+                CommonConfigHolder.getInstance().isEnableInLongMetaWithTDBankLogic();
     }
 
     @Override
@@ -309,7 +312,11 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 return;
             }
             // get and check topicName
-            topicName = ConfigManager.getInstance().getTDBankSrcTopicName(groupId);
+            if (this.enableInLongMetaWithTDBankLogic) {
+                topicName = ConfigManager.getInstance().getTopicName(groupId, streamId);
+            } else {
+                topicName = ConfigManager.getInstance().getTDBankSrcTopicName(groupId);
+            }
             if (StringUtils.isBlank(topicName)) {
                 source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
                 sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
@@ -396,19 +403,30 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
         // build message attributes
         InLongMsg inLongMsg = InLongMsg.newInLongMsg(source.isCompressed());
         if (this.enableTDBankLogic) {
-            String mxValue = ConfigManager.getInstance().getMxProperties(groupId);
-            if (StringUtils.isBlank(mxValue)) {
-                mxValue = "m=0";
+            if (this.enableInLongMetaWithTDBankLogic) {
+                strBuff.append("bid=").append(groupId)
+                        .append("&tid=").append(streamId)
+                        .append("&dt=").append(dataTime)
+                        .append("&NodeIP=").append(clientIp)
+                        .append("&cnt=").append(strMsgCount)
+                        .append("&rt=").append(msgRcvTime)
+                        .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
+                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
+            } else {
+                String mxValue = ConfigManager.getInstance().getMxProperties(groupId);
+                if (StringUtils.isBlank(mxValue)) {
+                    mxValue = "m=0";
+                }
+                strBuff.append(mxValue)
+                        .append("&bid=").append(groupId)
+                        .append("&tid=").append(streamId)
+                        .append("&dt=").append(dataTime)
+                        .append("&NodeIP=").append(clientIp)
+                        .append("&cnt=").append(strMsgCount)
+                        .append("&rt=").append(msgRcvTime)
+                        .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
+                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
             }
-            strBuff.append(mxValue)
-                    .append("&bid=").append(groupId)
-                    .append("&tid=").append(streamId)
-                    .append("&dt=").append(dataTime)
-                    .append("&NodeIP=").append(clientIp)
-                    .append("&cnt=").append(strMsgCount)
-                    .append("&rt=").append(msgRcvTime)
-                    .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
-                    .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
         } else {
             strBuff.append("groupId=").append(groupId)
                     .append("&streamId=").append(streamId)

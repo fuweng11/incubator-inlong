@@ -65,9 +65,10 @@ public class CodecBinMsg extends AbsV0MsgCodec {
     private boolean transNum2Name = false;
     private boolean needTraceMsg = false;
 
-    public CodecBinMsg(int totalDataLen, int msgTypeValue,
-            long msgRcvTime, String strRemoteIP, boolean enableTDBankLogic) {
-        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP, enableTDBankLogic);
+    public CodecBinMsg(int totalDataLen, int msgTypeValue, long msgRcvTime,
+            String strRemoteIP, boolean enableTDBankLogic, boolean enableInLongMetaWithTDBankLogic) {
+        super(totalDataLen, msgTypeValue, msgRcvTime,
+                strRemoteIP, enableTDBankLogic, enableInLongMetaWithTDBankLogic);
     }
 
     public boolean descMsg(BaseSource source, ByteBuf cb) throws Exception {
@@ -173,14 +174,16 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         }
         if (enableTDBankLogic && !indexMsg) {
             // add extra attributes
-            String mValues = ConfigManager.getInstance().getMxProperties(groupId);
-            if (StringUtils.isEmpty(mValues)) {
-                mValues = source.getDefAttr();
+            if (!enableInLongMetaWithTDBankLogic) {
+                String mValues = ConfigManager.getInstance().getMxProperties(groupId);
+                if (StringUtils.isEmpty(mValues)) {
+                    mValues = source.getDefAttr();
+                }
+                if (strBuff.length() > 0) {
+                    strBuff.append(AttributeConstants.SEPARATOR);
+                }
+                strBuff.append(mValues);
             }
-            if (strBuff.length() > 0) {
-                strBuff.append(AttributeConstants.SEPARATOR);
-            }
-            strBuff.append(mValues);
         }
         // get trace requirement
         if (this.needTraceMsg) {
@@ -401,7 +404,11 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         // get and check topic configure
         if (!indexMsg) {
             if (enableTDBankLogic) {
-                this.topicName = configManager.getTDBankSrcTopicName(this.groupId);
+                if (enableInLongMetaWithTDBankLogic) {
+                    this.topicName = configManager.getTopicName(this.groupId, this.streamId);
+                } else {
+                    this.topicName = configManager.getTDBankSrcTopicName(this.groupId);
+                }
             } else {
                 this.topicName = configManager.getTopicName(this.groupId, this.streamId);
             }

@@ -87,8 +87,6 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     protected long maxSendFailureWaitDurMs;
     // whether to resend the message after sending failure
     protected boolean enableRetryAfterFailure;
-    // max retry times if send failure
-    protected int maxMsgRetries;
     // Maximum number of retries to send
     protected int maxRetries;
     // meta configure change lister thread
@@ -104,7 +102,6 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
     private long expiredDurSec = 30;
     protected MsgIdCache msgIdCache;
     protected long startTime;
-    protected volatile boolean isFirstReload = true;
 
     public BaseSink() {
 
