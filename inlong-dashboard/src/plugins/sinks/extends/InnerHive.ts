@@ -109,6 +109,27 @@ export default class InnerHiveSink
   tableName: string;
 
   @FieldDecorator({
+    type: 'radio',
+    rules: [{ required: true }],
+    initialValue: 'LIST',
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      options: [
+        {
+          label: 'LIST',
+          value: 'LIST',
+        },
+        {
+          label: 'RANGE',
+          value: 'RANGE',
+        },
+      ],
+    }),
+  })
+  @I18n('meta.Sinks.InnerHive.PartitionType')
+  partitionType: string;
+
+  @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
     props: values => ({
@@ -134,8 +155,8 @@ export default class InnerHiveSink
       }),
     },
   })
-  @I18n('meta.Sinks.InnerHive.PartitionType')
-  partitionType: string;
+  @I18n('meta.Sinks.InnerHive.PartitionInterval')
+  partitionInterval: string;
 
   @FieldDecorator({
     type: 'input',

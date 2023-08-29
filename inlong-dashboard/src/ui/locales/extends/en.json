@@ -40,6 +40,7 @@
   "meta.Sinks.InnerHive.DataSeparator": "Data Separator",
   "meta.Sinks.InnerHive.DataConsistency": "Data Consistency",
   "meta.Sinks.InnerHive.PartitionType": "Partition Type",
+  "meta.Sinks.InnerHive.PartitionInterval": "Partition Interval",
   "meta.Sinks.InnerHive.PrimaryPartition": "Primary Partition",
   "meta.Sinks.InnerHive.PartitionCreationStrategy": "Partition Creation Strategy",
   "meta.Sinks.InnerHive.FieldName": "FieldName",

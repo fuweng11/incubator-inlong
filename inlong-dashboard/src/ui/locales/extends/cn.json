@@ -40,6 +40,7 @@
   "meta.Sinks.InnerHive.DataSeparator": "目标字段分隔符",
   "meta.Sinks.InnerHive.DataConsistency": "数据一致性",
   "meta.Sinks.InnerHive.PartitionType": "分区类型",
+  "meta.Sinks.InnerHive.PartitionInterval": "分区策略",
   "meta.Sinks.InnerHive.PrimaryPartition": "一级分区",
   "meta.Sinks.InnerHive.PartitionCreationStrategy": "分区创建策略",
   "meta.Sinks.InnerHive.FieldName": "字段名",
