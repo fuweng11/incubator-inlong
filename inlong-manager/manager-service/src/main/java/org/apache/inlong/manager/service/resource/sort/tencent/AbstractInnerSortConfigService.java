@@ -45,6 +45,7 @@ import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.dao.entity.InlongConsumeEntity;
@@ -64,6 +65,7 @@ import org.apache.inlong.manager.pojo.cluster.tencent.zk.ZkClusterDTO;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
+import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.cluster.InlongClusterOperatorFactory;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.slf4j.Logger;
@@ -75,6 +77,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.apache.inlong.manager.pojo.stream.InlongStreamExtParam.unpackExtParams;
 
 /**
  * Default operation of inner sort config.
@@ -174,7 +178,11 @@ public class AbstractInnerSortConfigService {
     /**
      * Get deserialization info object information
      */
-    public DeserializationInfo getDeserializationInfo(InlongStreamEntity streamInfo) {
+    public DeserializationInfo getDeserializationInfo(InlongStreamEntity streamEntity) {
+        InlongStreamInfo streamInfo = CommonBeanUtils.copyProperties(streamEntity, InlongStreamInfo::new);
+        // Processing extParams
+        unpackExtParams(streamEntity.getExtParams(), streamInfo);
+
         String dataType = streamInfo.getDataType();
         Character escape = null;
         DeserializationInfo deserializationInfo;
@@ -202,8 +210,14 @@ public class AbstractInnerSortConfigService {
                 // KV pair separator, which must be the field separator in the data flow
                 // TODO should get from the user defined
                 char kvSeparator = '&';
+                if (StringUtils.isNotBlank(streamInfo.getKvSeparator())) {
+                    kvSeparator = (char) Integer.parseInt(streamInfo.getKvSeparator());
+                }
                 // row separator, which must be a field separator in the data flow
                 Character lineSeparator = null;
+                if (StringUtils.isNotBlank(streamInfo.getLineSeparator())) {
+                    lineSeparator = (char) Integer.parseInt(streamInfo.getLineSeparator());
+                }
                 // TODO The Sort module need to support
                 deserializationInfo = new TDMsgKvDeserializationInfo(streamId, separator, kvSeparator,
                         escape, lineSeparator);

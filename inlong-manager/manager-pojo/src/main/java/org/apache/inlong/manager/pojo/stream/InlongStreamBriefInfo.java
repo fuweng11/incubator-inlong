@@ -32,7 +32,7 @@ import java.util.List;
  */
 @Data
 @ApiModel("Inlong stream brief info")
-public class InlongStreamBriefInfo {
+public class InlongStreamBriefInfo extends BaseInlongStream {
 
     @ApiModelProperty(value = "Primary key")
     private Integer id;

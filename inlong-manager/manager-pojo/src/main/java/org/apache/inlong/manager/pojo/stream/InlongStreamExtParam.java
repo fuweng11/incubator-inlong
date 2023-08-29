@@ -48,6 +48,13 @@ public class InlongStreamExtParam implements Serializable {
     @ApiModelProperty(value = "Whether the message body wrapped with InlongMsg")
     private boolean wrapWithInlongMsg;
 
+    // you can add extend parameters in this class
+    @ApiModelProperty(value = "Kv separator")
+    private String kvSeparator;
+
+    @ApiModelProperty(value = "Line separator")
+    private String lineSeparator;
+
     /**
      * Pack extended attributes into ExtParams
      *
