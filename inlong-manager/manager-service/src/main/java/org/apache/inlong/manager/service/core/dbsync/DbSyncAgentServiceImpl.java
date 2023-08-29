@@ -954,6 +954,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 userInfo.setRoles(new HashSet<>(roles));
                 // add account type info
                 userInfo.setAccountType(TenantUserTypeEnum.TENANT_ADMIN.getCode());
+                userInfo.setTenant(InlongConstants.DEFAULT_PULSAR_TENANT);
                 LoginUserUtils.setUserLoginInfo(userInfo);
             }
 

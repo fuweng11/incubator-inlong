@@ -1044,7 +1044,6 @@ CREATE TABLE IF NOT EXISTS `field_change_log`
     `is_deleted`        int(11)      DEFAULT '0' COMMENT 'Whether to delete, 0: not deleted, > 0: deleted',
     `modify_time`       timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Modify time',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `unique_field_change_log` (`inlong_group_id`, `inlong_stream_id`, `source_id`, `is_deleted`)
     ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='Field change log table';
 
