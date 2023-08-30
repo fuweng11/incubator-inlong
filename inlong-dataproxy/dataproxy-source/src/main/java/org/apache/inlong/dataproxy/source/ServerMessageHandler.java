@@ -77,7 +77,9 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerMessageHandler.class);
     // log print count
-    private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
+    private static final LogCounter channelLogCounter = new LogCounter(20, 100000, 30 * 1000);
+    // log print count
+    private static final LogCounter unWritableFullLogCounter = new LogCounter(10, 100000, 30 * 1000);
     // except log print count
     private static final LogCounter exceptLogCounter = new LogCounter(10, 50000, 20 * 1000);
     // tdbank except log print count
@@ -242,28 +244,23 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        if (!(cause instanceof PkgParseException || cause instanceof ChannelUnWritableException)) {
-            if (cause instanceof TDBankException) {
-                if (tdbankLogCounter.shouldPrint()) {
-                    logger.warn("{} received an exception from channel {}",
-                            source.getCachedSrcName(), ctx.channel(), cause);
-                }
+        if (!(cause instanceof PkgParseException
+                || cause instanceof ChannelUnWritableException
+                || cause instanceof TDBankException)) {
+            if (cause instanceof ReadTimeoutException) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_READ_TIMEOUT);
+            } else if (cause instanceof TooLongFrameException) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_FRAME_OVERMAX);
+            } else if (cause instanceof CorruptedFrameException) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_FRAME_CORRPUTED);
+            } else if (cause instanceof IOException) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_IO_EXCEPTION);
             } else {
-                if (cause instanceof ReadTimeoutException) {
-                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_READ_TIMEOUT);
-                } else if (cause instanceof TooLongFrameException) {
-                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_FRAME_OVERMAX);
-                } else if (cause instanceof CorruptedFrameException) {
-                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_FRAME_CORRPUTED);
-                } else if (cause instanceof IOException) {
-                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_IO_EXCEPTION);
-                } else {
-                    source.fileMetricIncSumStats(StatConstants.EVENT_LINK_UNKNOWN_EXCEPTION);
-                }
-                if (exceptLogCounter.shouldPrint()) {
-                    logger.warn("{} received an exception from channel {}",
-                            source.getCachedSrcName(), ctx.channel(), cause);
-                }
+                source.fileMetricIncSumStats(StatConstants.EVENT_LINK_UNKNOWN_EXCEPTION);
+            }
+            if (exceptLogCounter.shouldPrint()) {
+                logger.warn("{} received an exception from channel {}",
+                        source.getCachedSrcName(), ctx.channel(), cause);
             }
         }
         if (ctx.channel() != null) {
@@ -316,11 +313,8 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
             } catch (Throwable ex) {
                 source.fileMetricIncSumStats(StatConstants.EVENT_MSG_INDEX_POST_FAILURE);
                 msgCodec.setFailureInfo(DataProxyErrCode.PUT_EVENT_TO_CHANNEL_FAILURE,
-                        strBuff.append("Put event to channel failure: ").append(ex.getMessage()).toString());
+                        strBuff.append("Put index event to channel failure: ").append(ex.getMessage()).toString());
                 responseV0Msg(channel, msgCodec, strBuff);
-                if (logCounter.shouldPrint()) {
-                    logger.error("Error writing index to controller,data will discard.", ex);
-                }
             }
         } else {
             try {
@@ -341,12 +335,13 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                 source.addMetric(false, event.getBody().length, event);
                 if (msgCodec.isNeedResp()) {
                     msgCodec.setFailureInfo(DataProxyErrCode.PUT_EVENT_TO_CHANNEL_FAILURE,
-                            strBuff.append("Put event to channel failure: ").append(ex.getMessage()).toString());
+                            strBuff.append("Put msg event to channel failure: ").append(ex.getMessage()).toString());
                     strBuff.delete(0, strBuff.length());
                     responseV0Msg(channel, msgCodec, strBuff);
                 }
-                if (logCounter.shouldPrint()) {
-                    logger.error("Error writing event to channel failure.", ex);
+                if (channelLogCounter.shouldPrint()) {
+                    logger.error("Error writing msg event to channel failure, attrs={}",
+                            msgCodec.getAttr(), ex);
                 }
             }
         }
@@ -492,7 +487,7 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
         // check channel status
         if (channel == null || !channel.isWritable()) {
             source.fileMetricIncSumStats(StatConstants.EVENT_LINK_UNWRITABLE);
-            if (logCounter.shouldPrint()) {
+            if (unWritableFullLogCounter.shouldPrint()) {
                 logger.warn("Prepare send msg but channel full, msgType={}, attr={}, channel={}",
                         msgObj.getMsgType(), msgObj.getAttr(), channel);
             }
@@ -507,11 +502,18 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                 .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(source.getSrcHost());
         if (msgObj.getErrCode() != DataProxyErrCode.SUCCESS) {
             if (source.enableTDBankLogic) {
-                if (StringUtils.isEmpty(msgObj.getErrMsg())) {
-                    throw new TDBankException(msgObj.getErrCode().getErrMsg());
-                } else {
-                    throw new TDBankException(msgObj.getErrMsg());
+                String errMsg =
+                        StringUtils.isEmpty(msgObj.getErrMsg()) ? msgObj.getErrCode().getErrMsg() : msgObj.getErrMsg();
+                if (tdbankLogCounter.shouldPrint()) {
+                    if (msgObj.isIndexMsg()) {
+                        logger.error("Error process index event, attrs={}, errMsg= {}",
+                                msgObj.getAttr(), errMsg);
+                    } else {
+                        logger.error("Error process msg event, attrs={}, errMsg= {}",
+                                msgObj.getAttr(), errMsg);
+                    }
                 }
+                throw new TDBankException(errMsg);
             } else {
                 strBuff.append(AttributeConstants.SEPARATOR).append(AttributeConstants.MESSAGE_PROCESS_ERRCODE)
                         .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgObj.getErrCode().getErrCodeStr());
@@ -741,7 +743,7 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
             // release allocated ByteBuf
             binBuffer.release();
             source.fileMetricIncSumStats(StatConstants.EVENT_LINK_UNWRITABLE);
-            if (logCounter.shouldPrint()) {
+            if (unWritableFullLogCounter.shouldPrint()) {
                 logger.warn("Send msg but channel full, attr={}, channel={}", orgAttr, channel);
             }
             throw new ChannelUnWritableException("Send response but channel full");

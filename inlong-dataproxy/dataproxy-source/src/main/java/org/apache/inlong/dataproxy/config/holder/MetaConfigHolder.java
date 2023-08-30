@@ -223,6 +223,10 @@ public class MetaConfigHolder extends ConfigHolder {
 
     @Override
     protected boolean loadFromFileToHolder() {
+        if (CommonConfigHolder.getInstance().isGetMetaInfoFromTDM()) {
+            LOG.warn("Get meta from TDM, not reload configure json from {}", getFileName());
+            return true;
+        }
         // check meta update setting
         if (!CommonConfigHolder.getInstance().isEnableStartupUsingLocalMetaFile()
                 && !ConfigManager.handshakeManagerOk.get()) {

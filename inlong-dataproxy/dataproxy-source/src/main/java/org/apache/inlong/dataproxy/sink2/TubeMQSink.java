@@ -206,14 +206,11 @@ public class TubeMQSink extends BaseSink {
             // update cached topics
             lastRefreshTopics.addAll(curTopicSet);
             if (!added) {
-                logger.info("{} topics changed, no added topics, reload topics are {}, cached topics are {}",
-                        cachedSinkName, curTopicSet, lastRefreshTopics);
+                logger.info("{} topics changed, but no added topics", cachedSinkName);
                 return;
             }
             // publish need added topics
             publishTopics(addedTopics);
-            logger.info("{} topics changed, added topics {}, reload topics are {}, cached topics are {}",
-                    cachedSinkName, addedTopics, curTopicSet, lastRefreshTopics);
         }
     }
 
@@ -258,8 +255,7 @@ public class TubeMQSink extends BaseSink {
             }
             latestPublishTopicNum.addAndGet(subSet.size());
         } while (endIndex < addedTopics.size());
-
-        logger.info("{} publishTopics {},  cost: {} ms",
+        logger.info("{} publish topics, added topics {}, cost: {} ms",
                 cachedSinkName, addedTopics, (System.currentTimeMillis() - startTime));
     }
 

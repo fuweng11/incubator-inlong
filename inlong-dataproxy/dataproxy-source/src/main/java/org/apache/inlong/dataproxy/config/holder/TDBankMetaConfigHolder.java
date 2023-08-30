@@ -190,57 +190,70 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
 
     @Override
     protected boolean loadFromFileToHolder() {
+        if (!CommonConfigHolder.getInstance().isGetMetaInfoFromTDM()) {
+            LOG.warn("Get meta from Manager, not reload configure json from {}", getFileName());
+            return true;
+        }
+        // check meta update setting
+        if (!CommonConfigHolder.getInstance().isEnableStartupUsingLocalMetaFile()
+                && !ConfigManager.handshakeManagerOk.get()) {
+            LOG.warn("Failed to load json config from {}, don't obtain metadata from the Manager,"
+                    + " and the startup via the cache file is false", getFileName());
+            return false;
+        }
         String jsonString = "";
         readWriteLock.readLock().lock();
         try {
             jsonString = loadConfigFromFile();
             if (StringUtils.isBlank(jsonString)) {
-                LOG.info("Load changed json {}, but no records configured", getFileName());
-                return false;
+                LOG.warn("Load changed json {}, but no records configured", getFileName());
+                return true;
             }
             TDBankMetaConfig metaConfig =
                     GSON.fromJson(jsonString, TDBankMetaConfig.class);
             if (!metaConfig.isResult() || metaConfig.getErrCode() != 0) {
                 LOG.warn("Load failed json config from {}, result is {}, error code is {}",
                         getFileName(), metaConfig.isResult(), metaConfig.getErrCode());
-                return false;
+                return true;
             }
             List<TDBankMetaConfig.ConfigItem> bidConfigs = metaConfig.getData();
             if (bidConfigs == null) {
                 LOG.warn("Load failed json config from {}, malformed content, data is null", getFileName());
-                return false;
+                return true;
             }
             if (bidConfigs.isEmpty()) {
                 LOG.warn("Load failed json config from {}, malformed content, data is empty!", getFileName());
-                return false;
+                return true;
             }
-            if (!CommonConfigHolder.getInstance().isEnableStartupUsingLocalMetaFile()
-                    && !ConfigManager.handshakeManagerOk.get()) {
-                LOG.info("Failed to load json config from {}, don't obtain metadata from the Manager,"
-                        + " and the startup via the cache file is false", getFileName());
-                return false;
+            List<String> newDataList = getMetaStrList(bidConfigs);
+            if (newDataList.isEmpty()) {
+                LOG.warn("Load json config from {} failed, no valid topic record!", getFileName());
+                return true;
             }
             // update cache data
-            if (updateCacheData(metaConfig)) {
-                // update cache string
-                synchronized (this.lastUpdVersion) {
+            boolean updated;
+            synchronized (this.lastUpdVersion) {
+                if (jsonString.equals(this.dataStr) || newDataList.equals(this.metaList)) {
+                    LOG.warn("Load json config from {}, no new records found!", getFileName());
+                    return true;
+                }
+                updated = updateCacheData(metaConfig);
+                if (updated) {
                     if (this.lastSyncVersion.get() == 0) {
                         this.lastUpdVersion.set(System.currentTimeMillis());
                         this.lastSyncVersion.compareAndSet(0, this.lastUpdVersion.get());
                     } else {
                         this.lastUpdVersion.set(this.lastSyncVersion.get());
                     }
-                    this.metaList = getMetaStrList(bidConfigs);
+                    this.metaList = newDataList;
                     this.dataStr = jsonString;
                 }
-                LOG.info(
-                        "Load changed {}, content = {}, updated bid2SrcTopicMap = {}, bid2SrcMValueMap = {}, bid2SinkTopicMap = {}",
-                        getFileName(), dataStr, bid2SrcTopicMap, bid2SrcMValueMap, bid2SinkTopicMap);
-                return true;
             }
-            return false;
+            if (updated) {
+                LOG.info("Load changed {} file success!", getFileName());
+            }
+            return true;
         } catch (Throwable e) {
-            //
             LOG.warn("Process json {} changed data {} failure", getFileName(), jsonString, e);
             return false;
         } finally {
@@ -308,8 +321,6 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         }
         // add new mq cluster config
         bid2SrcMValueMap.putAll(tmpBidMValueMap);
-        // callback meta configure updated
-        executeCallbacks();
         return true;
     }
 
