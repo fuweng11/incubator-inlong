@@ -135,7 +135,7 @@ public class MonitorSumIndex extends AbsStatsDaemon {
                 if (entry == null || entry.getKey() == null || entry.getValue() == null) {
                     continue;
                 }
-                LOGGER.info("{}#{}#{}_{}#{}={}", this.statsName, INDEX_RECORD_VER, printTime,
+                LOGGER.info("{}_s_{}#{}_{}#{}={}", this.statsName, INDEX_RECORD_VER, printTime,
                         RECODE_ID.incrementAndGet(), entry.getKey(), entry.getValue().toString());
                 printCnt++;
             }

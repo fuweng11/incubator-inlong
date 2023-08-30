@@ -451,9 +451,10 @@ public abstract class BaseSource
         }
     }
 
-    public void fileMetricIncDetailStats(String eventKey) {
+    public void fileMetricIncWithDetailStats(String eventKey, String detailInfoKey) {
         if (enableFileMetric) {
-            monitorStats.incDetailStats(eventKey);
+            monitorStats.incSumStats(eventKey);
+            monitorStats.incDetailStats(eventKey + "#" + detailInfoKey);
         }
     }
 

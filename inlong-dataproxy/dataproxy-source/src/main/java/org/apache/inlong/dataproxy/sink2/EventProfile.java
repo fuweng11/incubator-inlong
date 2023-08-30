@@ -48,7 +48,7 @@ public class EventProfile {
     private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
 
     private final Event event;
-    private int retries = 0;
+    private int retries;
     // cache information
     private final String groupId;
     private final String streamId;
