@@ -217,6 +217,75 @@ export class StreamDefaultInfo implements DataWithBackend, RenderRow, RenderList
   dataSeparator: string;
 
   @FieldDecorator({
+    type: 'select',
+    initialValue: '61',
+    tooltip: i18n.t('meta.Stream.KvSeparatorHelp'),
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      dropdownMatchSelectWidth: false,
+      options: [
+        {
+          label: i18n.t('meta.Stream.KvSeparator.EqualSign'),
+          value: '61',
+        },
+        {
+          label: i18n.t('meta.Stream.KvSeparator.Ampersand'),
+          value: '38',
+        },
+      ],
+      useInput: true,
+      useInputProps: {
+        placeholder: 'ASCII',
+      },
+      style: { width: 100 },
+    }),
+    visible: values => values.dataType === 'KV',
+    rules: [
+      {
+        required: true,
+        type: 'number',
+        transform: val => +val,
+        min: 0,
+        max: 127,
+      },
+    ],
+  })
+  @I18n('meta.Stream.KvSeparator')
+  kvSeparator: string;
+
+  @FieldDecorator({
+    type: 'select',
+    initialValue: '10',
+    tooltip: i18n.t('meta.Stream.LineSeparatorHelp'),
+    props: values => ({
+      disabled: [110, 130].includes(values?.status),
+      dropdownMatchSelectWidth: false,
+      options: [
+        {
+          label: i18n.t('meta.Stream.LineSeparator.LineBreak'),
+          value: '10',
+        },
+      ],
+      useInput: true,
+      useInputProps: {
+        placeholder: 'ASCII',
+      },
+      style: { width: 100 },
+    }),
+    visible: values => values.dataType === 'KV',
+    rules: [
+      {
+        type: 'number',
+        transform: val => +val,
+        min: 0,
+        max: 127,
+      },
+    ],
+  })
+  @I18n('meta.Stream.LineSeparator')
+  lineSeparator: string;
+
+  @FieldDecorator({
     type: EditableTable,
     props: values => ({
       size: 'small',

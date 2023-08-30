@@ -34,6 +34,10 @@ export class StreamInfo extends StreamDefaultInfo {
           value: 'CSV',
         },
         {
+          label: 'Key-Value',
+          value: 'KV',
+        },
+        {
           label: 'BinLog',
           value: 'BINLOG',
         },
