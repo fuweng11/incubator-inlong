@@ -246,9 +246,10 @@ public class AbstractInnerSortConfigService {
                 break;
             case TencentConstants.DATA_TYPE_CSV:
                 // need to delete the first separator? default is false
-                deserializationInfo = streamInfo.getWrapWithInlongMsg()
-                        ? new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false)
-                        : new CsvDeserializationInfo(separator, escape);
+                deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
+                break;
+            case TencentConstants.DATA_TYPE_TDMSG_CSV:
+                deserializationInfo = new TDMsgCsvDeserializationInfo(streamId, separator, escape, false);
                 break;
             case TencentConstants.DATA_TYPE_RAW_CSV:
                 deserializationInfo = streamInfo.getWrapWithInlongMsg()
@@ -366,20 +367,6 @@ public class AbstractInnerSortConfigService {
                         sinkEntity.getVersion());
                 throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
             }
-        } else {
-            // check if the cluster belongs to this tag
-            Set<String> sortTaskNames = sortClusters.stream()
-                    .filter(entity -> StringUtils.isNotBlank(entity.getExtParams())).map(entity -> {
-                        BaseSortClusterDTO dto = BaseSortClusterDTO.getFromJson(entity.getExtParams());
-                        return dto.getApplicationName();
-                    }).collect(Collectors.toSet());
-            if (!sortTaskNames.contains(sortClusterName)) {
-                String errMsg = String.format("not fond cluster=[%s] in the cluster tag=[%s]",
-                        sortClusterName, clusterTag);
-                LOGGER.error(errMsg);
-                throw new BusinessException(errMsg);
-            }
-
         }
         return sortClusterName;
     }
