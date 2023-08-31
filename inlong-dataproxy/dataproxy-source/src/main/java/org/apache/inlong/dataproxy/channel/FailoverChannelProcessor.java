@@ -30,6 +30,7 @@ import org.apache.inlong.sdk.commons.protocol.ProxyPackEvent;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
@@ -273,7 +274,7 @@ public class FailoverChannelProcessor
     private void process(Event event, List<Channel> requiredChannels, List<Channel> optionalChannels,
             boolean isPulsarXfe, boolean ignoreError) {
         String errMsg = "";
-        boolean success = true;
+        boolean success = false;
         // Process required channels
         for (Channel reqChannel : requiredChannels) {
             Transaction tx = reqChannel.getTransaction();
@@ -284,12 +285,11 @@ public class FailoverChannelProcessor
                 reqChannel.put(event);
 
                 tx.commit();
-
                 if (isPulsarXfe) {
                     baseSource.fileMetricIncSumStats(StatConstants.EVENT_MSG_XFE_PULSAR_SUCCESS);
                 }
+                success = true;
             } catch (Throwable t) {
-                success = false;
                 errMsg = "Unable to put event on required channel, error message is " + t.getMessage();
                 if (logPrinter.shouldPrint()) {
                     LOG.error("FailoverChannelProcessor Unable to put event on required channel", t);
@@ -313,7 +313,26 @@ public class FailoverChannelProcessor
                     baseSource.fileMetricIncSumStats(StatConstants.EVENT_MSG_XFE_PULSAR_DROPPED);
                     return;
                 } else {
-                    throw new MainChannelFullException(errMsg);
+                    if (StringUtils.isEmpty(errMsg)) {
+                        throw new MainChannelFullException("Required channels is empty!");
+                    } else {
+                        throw new MainChannelFullException(errMsg);
+                    }
+                }
+            }
+            // check whether configured optional channels
+            if (optionalChannels.isEmpty()) {
+                if (ignoreError) {
+                    if (isPulsarXfe) {
+                        baseSource.fileMetricIncSumStats(StatConstants.EVENT_MSG_XFE_PULSAR_DROPPED);
+                    }
+                    return;
+                } else {
+                    if (StringUtils.isEmpty(errMsg)) {
+                        throw new ChannelException("Required and optional channels are not configured");
+                    } else {
+                        throw new ChannelException(errMsg);
+                    }
                 }
             }
             // only send to optional channel from the first broken site

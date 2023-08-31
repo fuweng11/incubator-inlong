@@ -57,7 +57,7 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
-public abstract class ControllerSink extends AbstractSink implements Configurable {
+public class ControllerSink extends AbstractSink implements Configurable {
 
     private static final Logger logger = LoggerFactory.getLogger(ControllerSink.class);
     // log print count
@@ -280,16 +280,16 @@ public abstract class ControllerSink extends AbstractSink implements Configurabl
             if (event instanceof SimpleEvent
                     || event instanceof SinkRspEvent) {
                 // memory event
-                fileMetricIncSumStats(StatConstants.EVENT_SINK_EVENT_TAKE_SUCCESS);
+                fileMetricIncSumStats(StatConstants.SINK_INDEX_EVENT_TAKE_SUCCESS);
             } else {
                 // file event
-                fileMetricIncSumStats(StatConstants.EVENT_SINK_EVENT_V0_FILE);
+                fileMetricIncSumStats(StatConstants.SINK_INDEX_FILE_TAKE_SUCCESS);
             }
             processEvent(event);
             tx.commit();
             return Status.READY;
         } catch (Throwable t) {
-            fileMetricIncSumStats(StatConstants.EVENT_SINK_EVENT_TAKE_FAILURE);
+            fileMetricIncSumStats(StatConstants.SINK_INDEX_EVENT_TAKE_FAILURE);
             if (logCounter.shouldPrint()) {
                 logger.error("{} process event failed!", this.cachedSinkName, t);
             }
@@ -341,12 +341,12 @@ public abstract class ControllerSink extends AbstractSink implements Configurabl
         String msgType = event.getHeaders().get(ConfigConstants.INDEX_MSG_TYPE);
         if (msgType == null || !(msgType.equals(ConfigConstants.INDEX_TYPE_FILE_STATUS)
                 || msgType.equals(ConfigConstants.INDEX_TYPE_MEASURE))) {
-            fileMetricIncSumStats(StatConstants.EVENT_SINK_INDEX_NON_INDEX);
+            fileMetricIncSumStats(StatConstants.SINK_INDEX_ILLEGAL_DROPPED);
             return;
         }
         String msgSeqId = event.getHeaders().get(ConfigConstants.SEQUENCE_ID);
         if (msgIdCache.cacheIfAbsent(msgSeqId)) {
-            fileMetricIncSumStats(StatConstants.EVENT_SINK_MESSAGE_DUPLICATE);
+            fileMetricIncSumStats(StatConstants.SINK_INDEX_DUPLICATE_DROOPED);
             if (logDupMsgPrinter.shouldPrint()) {
                 logger.info("{} package {} existed,just discard.", cachedSinkName, msgSeqId);
             }
@@ -366,21 +366,22 @@ public abstract class ControllerSink extends AbstractSink implements Configurabl
                         if (i == maxMsgRetries) {
                             logger.warn(
                                     "ControllerSink filestatus: '{}' is skipped because of exceeded maxRetryCnt {}, ex {}",
-                                    new Object[]{fsStr, maxMsgRetries, ex});
-                            fileMetricIncSumStats(StatConstants.EVENT_SINK_INDEX_RETRY_OVER);
+                                    fsStr, maxMsgRetries, ex);
+                            fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_OVERMAX_DROOPED);
                             return;
                         }
                     }
                 }
-                fileMetricIncSumStats(StatConstants.EVENT_SINK_INDEX_SEND_SUCCESS);
+                fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_SUCCESS);
             } catch (Throwable e) {
-                fileMetricIncSumStats(StatConstants.EVENT_SINK_INDEX_SEND_EXCEPTION);
+                fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION);
                 String s = (event.getBody() != null ? new String(event.getBody()) : "");
                 logger.error("bad event header is " + event.getHeaders() + ", body is " + s);
             }
         } else {
             // agent-measure
             AgentMeasureLogger.logMeasureInfo(event.getBody());
+            fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_OUTPUT_SUCCESS);
             if (sendRemote) {
                 String attr = "bid=" + agentLogBid
                         + "&tid=" + agentLogTid
@@ -393,7 +394,7 @@ public abstract class ControllerSink extends AbstractSink implements Configurabl
                 try {
                     messageProducer.sendMessage(message, new MessageCallback());
                 } catch (Throwable e) {
-                    fileMetricIncSumStats(StatConstants.EVENT_SINK_INDEX_REMOTE_EXCEPTION);
+                    fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_SEND_EXCEPTION);
                     if (logCounter.shouldPrint()) {
                         logger.error("{} send remote message throw exception!", cachedSinkName, e);
                     }
@@ -410,21 +411,20 @@ public abstract class ControllerSink extends AbstractSink implements Configurabl
         @Override
         public void onMessageSent(MessageSentResult result) {
             if (result.isSuccess()) {
-                fileMetricIncSumStats(StatConstants.EVENT_SINK_INDEX_REMOTE_SUCCESS);
+                fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_REMOTE_SUCCESS);
 
             } else {
                 logger.warn("{} remote message send failed: {}", cachedSinkName, result.getErrMsg());
-                fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_INDEX_REMOTE_FAILURE,
+                fileMetricIncWithDetailStats(StatConstants.SINK_MEASURE_INDEX_REMOTE_FAILURE,
                         agentLogTopic + "." + result.getErrCode());
             }
         }
 
         @Override
         public void onException(Throwable e) {
-            fileMetricIncSumStats(StatConstants.EVENT_SINK_INDEX_REMOTE_EXCEPTION);
+            fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_REMOTE_EXCEPTION);
             logger.error("{} remote message send failed!", cachedSinkName, e);
         }
-
     }
 
     private void fileMetricIncSumStats(String eventKey) {

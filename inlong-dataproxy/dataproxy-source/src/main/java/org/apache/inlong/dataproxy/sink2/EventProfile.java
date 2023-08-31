@@ -54,7 +54,7 @@ public class EventProfile {
     private final String streamId;
     private final String uniqId;
     private final long dt;
-    private long msgSize = 0;
+    private long msgSize;
     private boolean needRspEvent = false;
     private Channel channel;
     private MsgType msgType;

@@ -72,20 +72,28 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
     public List<Channel> getRequiredChannels(Event event) {
         List<Channel> retChannels = new ArrayList<>();
         if (event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
-            retChannels.add(agentMetricMasterChannels.get(agentMetricMasterIndex));
-            agentMetricMasterIndex = (agentMetricMasterIndex + 1) % agentMetricMasterChannels.size();
-        } else if (event.getHeaders().containsKey(ConfigConstants.SLA_METRIC_DATA)) {
-            retChannels.add(slaMetricChannels.get(0));
-        } else if (MessageUtils.isSyncSendForOrder(event)) {
-            String partitionKey = event.getHeaders().get(AttributeConstants.MESSAGE_PARTITION_KEY);
-            if (partitionKey == null) {
-                partitionKey = "";
+            if (agentMetricMasterChannels.size() > 0) {
+                retChannels.add(agentMetricMasterChannels.get(agentMetricMasterIndex));
+                agentMetricMasterIndex = (agentMetricMasterIndex + 1) % agentMetricMasterChannels.size();
             }
-            int channelIndex = Math.abs(partitionKey.hashCode()) % orderChannels.size();
-            retChannels.add(orderChannels.get(channelIndex));
+        } else if (event.getHeaders().containsKey(ConfigConstants.SLA_METRIC_DATA)) {
+            if (slaMetricChannels.size() > 0) {
+                retChannels.add(slaMetricChannels.get(0));
+            }
+        } else if (MessageUtils.isSyncSendForOrder(event)) {
+            if (orderChannels.size() > 0) {
+                String partitionKey = event.getHeaders().get(AttributeConstants.MESSAGE_PARTITION_KEY);
+                if (partitionKey == null) {
+                    partitionKey = "";
+                }
+                int channelIndex = Math.abs(partitionKey.hashCode()) % orderChannels.size();
+                retChannels.add(orderChannels.get(channelIndex));
+            }
         } else {
-            retChannels.add(msgMasterChannels.get(msgMasterIndex));
-            msgMasterIndex = (msgMasterIndex + 1) % msgMasterChannels.size();
+            if (msgMasterChannels.size() > 0) {
+                retChannels.add(msgMasterChannels.get(msgMasterIndex));
+                msgMasterIndex = (msgMasterIndex + 1) % msgMasterChannels.size();
+            }
         }
         return retChannels;
     }
@@ -94,6 +102,9 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
         List<Channel> retChannels = new ArrayList<>();
         if (pulsarXfeMasterChannels.isEmpty()
                 || event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
+            return retChannels;
+        }
+        if (pulsarXfeMasterChannels.size() > 0) {
             return retChannels;
         }
         if (ConfigManager.getInstance().isRequirePulsarTransfer(
@@ -109,13 +120,19 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
     public List<Channel> getOptionalChannels(Event event) {
         List<Channel> retChannels = new ArrayList<>();
         if (event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
-            retChannels.add(agentMetricSlaveChannels.get(agentMetricSlaveIndex));
-            agentMetricSlaveIndex = (agentMetricSlaveIndex + 1) % agentMetricSlaveChannels.size();
+            if (agentMetricSlaveChannels.size() > 0) {
+                retChannels.add(agentMetricSlaveChannels.get(agentMetricSlaveIndex));
+                agentMetricSlaveIndex = (agentMetricSlaveIndex + 1) % agentMetricSlaveChannels.size();
+            }
         } else if (event.getHeaders().containsKey(ConfigConstants.SLA_METRIC_DATA)) {
-            retChannels.add(slaMetricChannels.get(1));
+            if (slaMetricChannels.size() > 1) {
+                retChannels.add(slaMetricChannels.get(1));
+            }
         } else {
-            retChannels.add(msgSlaveChannels.get(msgSlaveIndex));
-            msgSlaveIndex = (msgSlaveIndex + 1) % msgSlaveChannels.size();
+            if (msgSlaveChannels.size() > 0) {
+                retChannels.add(msgSlaveChannels.get(msgSlaveIndex));
+                msgSlaveIndex = (msgSlaveIndex + 1) % msgSlaveChannels.size();
+            }
         }
         return retChannels;
     }
@@ -124,6 +141,9 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
         List<Channel> retChannels = new ArrayList<>();
         if (pulsarXfeSlaveChannels.isEmpty()
                 || event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
+            return retChannels;
+        }
+        if (pulsarXfeSlaveChannels.size() == 0) {
             return retChannels;
         }
         if (ConfigManager.getInstance().isRequirePulsarTransfer(

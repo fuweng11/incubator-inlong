@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class MsgIdCache {
 
-    private boolean enableDupCheck = true;
+    private boolean enableDupCheck;
     private final LoadingCache<String, Long> msgIdCache;
 
     public MsgIdCache(boolean enableDupCheck,

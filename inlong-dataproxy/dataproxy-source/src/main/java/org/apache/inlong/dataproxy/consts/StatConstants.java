@@ -97,8 +97,8 @@ public class StatConstants {
     public static final java.lang.String EVENT_SINK_EVENT_V1_MALFORMED = "sink.event.v1.malformed";
     public static final java.lang.String EVENT_SINK_EVENT_TAKE_SUCCESS = "sink.event.take.success";
     public static final java.lang.String EVENT_SINK_EVENT_TAKE_FAILURE = "sink.event.take.failure";
-    public static final java.lang.String EVENT_SINK_EVENT_V1_FILE = "sink.event.v1.file";
-    public static final java.lang.String EVENT_SINK_EVENT_V0_FILE = "sink.event.v1.file";
+    public static final java.lang.String EVENT_SINK_EVENT_V1_FILE_TAKE_SUCCESS = "sink.event.v1.file.take.success";
+    public static final java.lang.String EVENT_SINK_EVENT_V0_FILE_TAKE_SUCCESS = "sink.event.v0.file.take.success";
     public static final java.lang.String EVENT_SINK_CONFIG_TOPIC_MISSING = "sink.topic.missing";
     public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_MISSING = "default.topic.empty";
     public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_USED = "default.topic.used";
@@ -107,13 +107,24 @@ public class StatConstants {
     public static final java.lang.String EVENT_SINK_CLUSTER_UNMATCHED = "sink.cluster.unmatched";
     public static final java.lang.String EVENT_SINK_CPRODUCER_NULL = "sink.cluster.producer.null";
     public static final java.lang.String EVENT_SINK_MESSAGE_DUPLICATE = "sink.msg.dup.dropped";
-    public static final java.lang.String EVENT_SINK_INDEX_NON_INDEX = "sink.msg.index.nonindex.dropped";
-    public static final java.lang.String EVENT_SINK_INDEX_RETRY_OVER = "sink.msg.index.retry.over.dropped";
-    public static final java.lang.String EVENT_SINK_INDEX_SEND_EXCEPTION = "sink.msg.index.send.exception";
-    public static final java.lang.String EVENT_SINK_INDEX_SEND_SUCCESS = "sink.msg.index.send.success";
-    public static final java.lang.String EVENT_SINK_INDEX_REMOTE_SUCCESS = "sink.msg.index.remote.success";
-    public static final java.lang.String EVENT_SINK_INDEX_REMOTE_FAILURE = "sink.msg.index.remote.failure";
-    public static final java.lang.String EVENT_SINK_INDEX_REMOTE_EXCEPTION = "sink.msg.index.remote.exception";
+
+    // controller sink process
+    public static final java.lang.String SINK_INDEX_EVENT_TAKE_SUCCESS = "sink.index.event.take.success";
+    public static final java.lang.String SINK_INDEX_EVENT_TAKE_FAILURE = "sink.index.event.take.failure";
+    public static final java.lang.String SINK_INDEX_FILE_TAKE_SUCCESS = "sink.index.file.take.success";
+    public static final java.lang.String SINK_INDEX_ILLEGAL_DROPPED = "sink.index.illegal.dropped";
+    public static final java.lang.String SINK_INDEX_DUPLICATE_DROOPED = "sink.index.duplicate.dropped";
+    public static final java.lang.String SINK_STATUS_INDEX_OVERMAX_DROOPED = "sink.status.index.overmax.dropped";
+    public static final java.lang.String SINK_STATUS_INDEX_SEND_SUCCESS = "sink.status.index.send.success";
+    public static final java.lang.String SINK_STATUS_INDEX_SEND_EXCEPTION = "sink.status.index.send.exception";
+
+
+    public static final java.lang.String SINK_MEASURE_INDEX_OUTPUT_SUCCESS = "sink.measure.index.output.success";
+    public static final java.lang.String SINK_MEASURE_INDEX_SEND_EXCEPTION = "sink.measure.index.send.exception";
+    public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_SUCCESS = "sink.measure.index.remote.success";
+    public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_FAILURE = "sink.measure.index.remote.failure";
+    public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_EXCEPTION = "sink.measure.index.remote.exception";
+
     public static final java.lang.String EVENT_SINK_SEND_EXCEPTION = "sink.send.exception";
     public static final java.lang.String EVENT_SINK_PULSAR_CLIENT_INITIAL_FAILURE =
             "sink.pulsar.client.initial.failure";
