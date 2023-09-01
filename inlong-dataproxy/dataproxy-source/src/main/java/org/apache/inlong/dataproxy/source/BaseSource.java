@@ -24,6 +24,7 @@ import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.config.holder.ConfigUpdateCallback;
 import org.apache.inlong.dataproxy.consts.AttrConstants;
+import org.apache.inlong.dataproxy.consts.HttpAttrConst;
 import org.apache.inlong.dataproxy.consts.StatConstants;
 import org.apache.inlong.dataproxy.metrics.DataProxyMetricItem;
 import org.apache.inlong.dataproxy.metrics.DataProxyMetricItemSet;
@@ -132,12 +133,15 @@ public abstract class BaseSource
     private PcgMinMetricsCollector pcgMetricsCollector = null;
     // metric set
     private DataProxyMetricItemSet metricItemSet;
+    // group id key name
+    private final String attrKeyGroupId;
+    // stream id key name
+    private final String attrKeyStreamId;
     // whether enable file metric
     protected boolean enableFileMetric;
     // whether enable tdbank logic
     protected boolean enableTDBankLogic;
-    // whether enable inlong meta with tdbank logic
-    protected boolean enableInLongMetaWithTDBankLogic;
+    // whether enable PCG format index output
     protected boolean enablePCGFileMetric;
 
     public BaseSource() {
@@ -145,9 +149,14 @@ public abstract class BaseSource
         allChannels = new DefaultChannelGroup("DefaultChannelGroup", GlobalEventExecutor.INSTANCE);
         this.enableFileMetric = CommonConfigHolder.getInstance().isEnableFileMetric();
         this.enableTDBankLogic = CommonConfigHolder.getInstance().isEnableTDBankLogic();
-        this.enableInLongMetaWithTDBankLogic =
-                CommonConfigHolder.getInstance().isEnableInLongMetaWithTDBankLogic();
         this.enablePCGFileMetric = CommonConfigHolder.getInstance().isEnablePCGLogOutput();
+        if (this.enableTDBankLogic) {
+            this.attrKeyGroupId = HttpAttrConst.TDBANK_KEY_BUSINESS_ID;
+            this.attrKeyStreamId = HttpAttrConst.TDBANK_KEY_INTERFACE_ID;
+        } else {
+            this.attrKeyGroupId = HttpAttrConst.KEY_GROUP_ID;
+            this.attrKeyStreamId = HttpAttrConst.KEY_STREAM_ID;
+        }
 
     }
 
@@ -407,6 +416,14 @@ public abstract class BaseSource
 
     public String getDefAttr() {
         return defAttr;
+    }
+
+    public String getAttrKeyGroupId() {
+        return attrKeyGroupId;
+    }
+
+    public String getAttrKeyStreamId() {
+        return attrKeyStreamId;
     }
 
     public int getMaxMsgLength() {

@@ -66,9 +66,8 @@ public class CodecBinMsg extends AbsV0MsgCodec {
     private boolean needTraceMsg = false;
 
     public CodecBinMsg(int totalDataLen, int msgTypeValue, long msgRcvTime,
-            String strRemoteIP, boolean enableTDBankLogic, boolean enableInLongMetaWithTDBankLogic) {
-        super(totalDataLen, msgTypeValue, msgRcvTime,
-                strRemoteIP, enableTDBankLogic, enableInLongMetaWithTDBankLogic);
+            String strRemoteIP, boolean enableTDBankLogic) {
+        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP, enableTDBankLogic);
     }
 
     public boolean descMsg(BaseSource source, ByteBuf cb) throws Exception {
@@ -155,8 +154,6 @@ public class CodecBinMsg extends AbsV0MsgCodec {
             pkgTimeStr = attrMap.get(ConfigConstants.PKG_TIME_KEY);
             if (pkgTimeStr == null) {
                 pkgTimeStr = String.valueOf(dataTimeMs);
-            } else {
-                pkgTimeStr = attrMap.get(ConfigConstants.PKG_TIME_KEY);
             }
         } else {
             pkgTimeStr = String.valueOf(dataTimeMs);
@@ -172,13 +169,13 @@ public class CodecBinMsg extends AbsV0MsgCodec {
                     .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
             attrMap.put(AttributeConstants.MSG_RPT_TIME, String.valueOf(msgRcvTime));
         }
-        if (enableTDBankLogic && !indexMsg) {
+        if (!indexMsg) {
             // add extra attributes
-            if (!enableInLongMetaWithTDBankLogic) {
-                String mValues = ConfigManager.getInstance().getMxProperties(groupId);
-                if (StringUtils.isEmpty(mValues)) {
-                    mValues = source.getDefAttr();
-                }
+            String mValues = ConfigManager.getInstance().getMxProperties(groupId, streamId);
+            if (StringUtils.isEmpty(mValues)) {
+                mValues = source.getDefAttr();
+            }
+            if (StringUtils.isNotEmpty(mValues)) {
                 if (strBuff.length() > 0) {
                     strBuff.append(AttributeConstants.SEPARATOR);
                 }
@@ -203,36 +200,19 @@ public class CodecBinMsg extends AbsV0MsgCodec {
             if (strBuff.length() > 0) {
                 strBuff.append(AttributeConstants.SEPARATOR);
             }
-            if (enableTDBankLogic) {
-                strBuff.append(AttributeConstants.BUSINESS_ID)
-                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(groupId)
-                        .append(AttributeConstants.SEPARATOR)
-                        .append(AttributeConstants.TID)
-                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(streamId);
-                for (Map.Entry<String, String> entry : attrMap.entrySet()) {
-                    if (AttributeConstants.BUSINESS_ID.equalsIgnoreCase(entry.getKey())
-                            || AttributeConstants.TID.equalsIgnoreCase(entry.getKey())) {
-                        continue;
-                    }
-                    strBuff.append(AttributeConstants.SEPARATOR)
-                            .append(entry.getKey())
-                            .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(entry.getValue());
+            strBuff.append(source.getAttrKeyGroupId())
+                    .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(groupId)
+                    .append(AttributeConstants.SEPARATOR)
+                    .append(source.getAttrKeyStreamId())
+                    .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(streamId);
+            for (Map.Entry<String, String> entry : attrMap.entrySet()) {
+                if (source.getAttrKeyGroupId().equalsIgnoreCase(entry.getKey())
+                        || source.getAttrKeyStreamId().equalsIgnoreCase(entry.getKey())) {
+                    continue;
                 }
-            } else {
-                strBuff.append(AttributeConstants.GROUP_ID)
-                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(groupId)
-                        .append(AttributeConstants.SEPARATOR)
-                        .append(AttributeConstants.STREAM_ID)
-                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(streamId);
-                for (Map.Entry<String, String> entry : attrMap.entrySet()) {
-                    if (AttributeConstants.GROUP_ID.equalsIgnoreCase(entry.getKey())
-                            || AttributeConstants.STREAM_ID.equalsIgnoreCase(entry.getKey())) {
-                        continue;
-                    }
-                    strBuff.append(AttributeConstants.SEPARATOR)
-                            .append(entry.getKey())
-                            .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(entry.getValue());
-                }
+                strBuff.append(AttributeConstants.SEPARATOR)
+                        .append(entry.getKey())
+                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(entry.getValue());
             }
             this.groupIdNum = 0;
             this.streamIdNum = 0;
@@ -263,6 +243,8 @@ public class CodecBinMsg extends AbsV0MsgCodec {
                 headers.put(ConfigConstants.INDEX_MSG_TYPE, ConfigConstants.INDEX_TYPE_MEASURE);
                 headers.put(ConfigConstants.FILE_CHECK_DATA, "true");
             }
+            headers.put(ConfigConstants.REMOTE_IP_KEY, strRemoteIP);
+            headers.put(ConfigConstants.DATAPROXY_IP_KEY, source.getSrcHost());
             return EventBuilder.withBody(bodyData, headers);
         }
         // fill bin msg package
@@ -316,14 +298,8 @@ public class CodecBinMsg extends AbsV0MsgCodec {
 
     private boolean validAndFillTopic(BaseSource source) {
         // valid groupId, streamId
-        ConfigManager configManager = ConfigManager.getInstance();
-        if (enableTDBankLogic) {
-            this.groupId = this.attrMap.get(AttributeConstants.BUSINESS_ID);
-            this.streamId = this.attrMap.get(AttributeConstants.TID);
-        } else {
-            this.groupId = this.attrMap.get(AttributeConstants.GROUP_ID);
-            this.streamId = this.attrMap.get(AttributeConstants.STREAM_ID);
-        }
+        this.groupId = this.attrMap.get(source.getAttrKeyGroupId());
+        this.streamId = this.attrMap.get(source.getAttrKeyStreamId());
         if (num2name) {
             if (this.groupIdNum == 0) {
                 source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPIDNUM_ZERO);
@@ -334,9 +310,9 @@ public class CodecBinMsg extends AbsV0MsgCodec {
             String confGroupId;
             String confStreamId;
             String strGroupIdNum = String.valueOf(this.groupIdNum);
-            confGroupId = configManager.getGroupIdNameByNum(strGroupIdNum);
+            confGroupId = ConfigManager.getInstance().getGroupIdNameByNum(strGroupIdNum);
             if (StringUtils.isBlank(confGroupId)) {
-                if (configManager.isGroupIdNumConfigEmpty()) {
+                if (ConfigManager.getInstance().isGroupIdNumConfigEmpty()) {
                     source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_IDNUM_EMPTY);
                     this.errCode = DataProxyErrCode.CONF_SERVICE_UNREADY;
                     this.errMsg = "GroupId-Mapping configuration is null";
@@ -366,9 +342,10 @@ public class CodecBinMsg extends AbsV0MsgCodec {
                 }
             } else {
                 String strStreamIdNum = String.valueOf(this.streamIdNum);
-                confStreamId = configManager.getStreamIdNameByIdNum(strGroupIdNum, strStreamIdNum);
+                confStreamId = ConfigManager.getInstance().getStreamIdNameByIdNum(
+                        strGroupIdNum, strStreamIdNum);
                 if (StringUtils.isBlank(confStreamId)) {
-                    if (configManager.isStreamIdNumConfigEmpty()) {
+                    if (ConfigManager.getInstance().isStreamIdNumConfigEmpty()) {
                         source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_IDNUM_EMPTY);
                         this.errCode = DataProxyErrCode.CONF_SERVICE_UNREADY;
                         this.errMsg = "StreamId-Mapping configuration is null";
@@ -391,7 +368,7 @@ public class CodecBinMsg extends AbsV0MsgCodec {
                 this.streamId = confStreamId;
             }
             // check whether enable num 2 name translate
-            if (configManager.isEnableNum2NameTrans(strGroupIdNum) && this.num2name) {
+            if (ConfigManager.getInstance().isEnableNum2NameTrans(strGroupIdNum) && this.num2name) {
                 this.transNum2Name = true;
             }
         } else {
@@ -403,20 +380,13 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         }
         // get and check topic configure
         if (!indexMsg) {
-            if (enableTDBankLogic) {
-                if (enableInLongMetaWithTDBankLogic) {
-                    this.topicName = configManager.getTopicName(this.groupId, this.streamId);
-                } else {
-                    this.topicName = configManager.getTDBankSrcTopicName(this.groupId);
-                }
-            } else {
-                this.topicName = configManager.getTopicName(this.groupId, this.streamId);
-            }
+            this.topicName = ConfigManager.getInstance().getTopicName(this.groupId, this.streamId);
             if (StringUtils.isBlank(this.topicName)) {
                 source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
                 this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
-                this.errMsg = String.format("Topic not configured for groupId=(%s), streamId=(%s)",
-                        this.groupId, this.streamId);
+                this.errMsg = String.format("Topic not configured for (%s)=(%s), (%s)=(%s)",
+                        source.getAttrKeyGroupId(), this.groupId,
+                        source.getAttrKeyStreamId(), this.streamId);
                 return false;
             }
             if (StringUtils.isBlank(this.streamId)) {
@@ -425,5 +395,4 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         }
         return true;
     }
-
 }

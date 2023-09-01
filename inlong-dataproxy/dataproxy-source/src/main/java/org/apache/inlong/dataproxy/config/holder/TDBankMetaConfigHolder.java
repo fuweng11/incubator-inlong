@@ -190,7 +190,7 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
 
     @Override
     protected boolean loadFromFileToHolder() {
-        if (!CommonConfigHolder.getInstance().isGetMetaInfoFromTDM()) {
+        if (!CommonConfigHolder.getInstance().isMetaInfoGetFromTDBank()) {
             LOG.warn("Get meta from Manager, not reload configure json from {}", getFileName());
             return true;
         }

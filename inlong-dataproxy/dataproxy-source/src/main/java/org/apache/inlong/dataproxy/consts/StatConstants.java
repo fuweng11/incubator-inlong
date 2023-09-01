@@ -114,11 +114,11 @@ public class StatConstants {
     public static final java.lang.String SINK_INDEX_FILE_TAKE_SUCCESS = "sink.index.file.take.success";
     public static final java.lang.String SINK_INDEX_ILLEGAL_DROPPED = "sink.index.illegal.dropped";
     public static final java.lang.String SINK_INDEX_DUPLICATE_DROOPED = "sink.index.duplicate.dropped";
+    // status index message
     public static final java.lang.String SINK_STATUS_INDEX_OVERMAX_DROOPED = "sink.status.index.overmax.dropped";
     public static final java.lang.String SINK_STATUS_INDEX_SEND_SUCCESS = "sink.status.index.send.success";
     public static final java.lang.String SINK_STATUS_INDEX_SEND_EXCEPTION = "sink.status.index.send.exception";
-
-
+    // measure index message
     public static final java.lang.String SINK_MEASURE_INDEX_OUTPUT_SUCCESS = "sink.measure.index.output.success";
     public static final java.lang.String SINK_MEASURE_INDEX_SEND_EXCEPTION = "sink.measure.index.send.exception";
     public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_SUCCESS = "sink.measure.index.remote.success";

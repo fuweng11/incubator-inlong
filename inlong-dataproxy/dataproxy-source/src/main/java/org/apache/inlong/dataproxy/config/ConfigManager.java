@@ -136,7 +136,11 @@ public class ConfigManager {
      * get source topic by groupId and streamId
      */
     public String getTopicName(String groupId, String streamId) {
-        return metaConfigHolder.getSrcBaseTopicName(groupId, streamId);
+        if (CommonConfigHolder.getInstance().isMetaInfoGetFromTDBank()) {
+            return tdbankMetaHolder.getSrcTopicName(groupId);
+        } else {
+            return metaConfigHolder.getSrcBaseTopicName(groupId, streamId);
+        }
     }
 
     public IdTopicConfig getSrcIdTopicConfig(String groupId, String streamId) {
@@ -171,10 +175,6 @@ public class ConfigManager {
         return metaConfigHolder.getAllTopicName();
     }
 
-    public String getTDBankSrcTopicName(String groupId) {
-        return tdbankMetaHolder.getSrcTopicName(groupId);
-    }
-
     public String getTDBankSinkTopicName(String groupId) {
         return tdbankMetaHolder.getSinkTopicName(groupId);
     }
@@ -187,8 +187,12 @@ public class ConfigManager {
         return tdbankMetaHolder.getAllSinkTopicName();
     }
 
-    public String getMxProperties(String groupId) {
-        return tdbankMetaHolder.getMxProperties(groupId);
+    public String getMxProperties(String groupId, String streamId) {
+        if (CommonConfigHolder.getInstance().isMetaInfoGetFromTDBank()) {
+            return tdbankMetaHolder.getMxProperties(groupId);
+        } else {
+            return null;
+        }
     }
 
     // register meta-config callback
@@ -321,7 +325,7 @@ public class ConfigManager {
                     // connect to manager
                     if (fisrtCheck) {
                         fisrtCheck = false;
-                        if (CommonConfigHolder.getInstance().isGetMetaInfoFromTDM()) {
+                        if (CommonConfigHolder.getInstance().isMetaInfoGetFromTDBank()) {
                             checkTDBankRemoteConfig();
                         } else {
                             checkRemoteConfig();
@@ -330,7 +334,7 @@ public class ConfigManager {
                     } else {
                         // wait for 3 * check-time to update remote config
                         if (count % 3 == 0) {
-                            if (CommonConfigHolder.getInstance().isGetMetaInfoFromTDM()) {
+                            if (CommonConfigHolder.getInstance().isMetaInfoGetFromTDBank()) {
                                 checkTDBankRemoteConfig();
                             } else {
                                 checkRemoteConfig();

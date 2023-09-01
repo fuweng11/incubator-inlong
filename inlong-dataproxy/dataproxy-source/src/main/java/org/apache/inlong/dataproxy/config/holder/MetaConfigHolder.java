@@ -110,10 +110,6 @@ public class MetaConfigHolder extends ConfigHolder {
                 idTopicConfig = id2TopicSrcMap.get(groupId);
             }
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Get Topic Config by groupId = {}, streamId = {}, IdTopicConfig = {}",
-                    groupId, streamId, idTopicConfig);
-        }
         return idTopicConfig;
     }
 
@@ -130,10 +126,6 @@ public class MetaConfigHolder extends ConfigHolder {
             if (idTopicConfig != null) {
                 topic = idTopicConfig.getTopicName();
             }
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Get topic by groupId = {}, streamId = {}, topic = {}",
-                    groupId, streamId, topic);
         }
         return topic;
     }
@@ -223,7 +215,7 @@ public class MetaConfigHolder extends ConfigHolder {
 
     @Override
     protected boolean loadFromFileToHolder() {
-        if (CommonConfigHolder.getInstance().isGetMetaInfoFromTDM()) {
+        if (CommonConfigHolder.getInstance().isMetaInfoGetFromTDBank()) {
             LOG.warn("Get meta from TDM, not reload configure json from {}", getFileName());
             return true;
         }

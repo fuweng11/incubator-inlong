@@ -78,8 +78,9 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
     // exception log print count
     private static final LogCounter exceptLogCounter = new LogCounter(10, 50000, 20 * 1000);
     private final BaseSource source;
-    private final boolean enableTDBankLogic;
-    private final boolean enableInLongMetaWithTDBankLogic;
+    private final String srvPathHeartBeat;
+    private final String srvPathReportMsg;
+    private final String keyNameClientIP;
 
     /**
      * Constructor
@@ -88,9 +89,15 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
      */
     public HttpMessageHandler(BaseSource source) {
         this.source = source;
-        this.enableTDBankLogic = CommonConfigHolder.getInstance().isEnableTDBankLogic();
-        this.enableInLongMetaWithTDBankLogic =
-                CommonConfigHolder.getInstance().isEnableInLongMetaWithTDBankLogic();
+        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+            this.keyNameClientIP = AttributeConstants.NODE_IP;
+            this.srvPathHeartBeat = HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT;
+            this.srvPathReportMsg = HttpAttrConst.TDBANK_KEY_SRV_URL_REPORT_MSG;
+        } else {
+            this.keyNameClientIP = "clientIp";
+            this.srvPathHeartBeat = HttpAttrConst.KEY_SRV_URL_HEARTBEAT;
+            this.srvPathReportMsg = HttpAttrConst.KEY_SRV_URL_REPORT_MSG;
+        }
     }
 
     @Override
@@ -134,40 +141,21 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
         QueryStringDecoder uriDecoder =
                 new QueryStringDecoder(req.uri(), Charsets.toCharset(CharEncoding.UTF_8));
         // check requested service url
-        if (this.enableTDBankLogic) {
-            if (!HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())
-                    && !HttpAttrConst.TDBANK_KEY_SRV_URL_REPORT_MSG.equals(uriDecoder.path())) {
-                if (!HttpAttrConst.KEY_URL_FAVICON_ICON.equals(uriDecoder.path())) {
-                    source.fileMetricIncSumStats(StatConstants.EVENT_MSG_PATH_INVALID);
-                    sendErrorMsg(ctx, DataProxyErrCode.HTTP_UNSUPPORTED_SERVICE_URI,
-                            "Only support [" + HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT + ", "
-                                    + HttpAttrConst.TDBANK_KEY_SRV_URL_REPORT_MSG + "] paths!");
-                }
-                return;
+        if (!this.srvPathHeartBeat.equals(uriDecoder.path())
+                && !this.srvPathReportMsg.equals(uriDecoder.path())) {
+            if (!HttpAttrConst.KEY_URL_FAVICON_ICON.equals(uriDecoder.path())) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_PATH_INVALID);
+                sendErrorMsg(ctx, DataProxyErrCode.HTTP_UNSUPPORTED_SERVICE_URI,
+                        "Only support [" + this.srvPathHeartBeat + ", "
+                                + this.srvPathReportMsg + "] paths!");
             }
-            // process hb service
-            if (HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_HB_SUCCESS);
-                sendSuccessResponse(ctx, closeConnection, null);
-                return;
-            }
-        } else {
-            if (!HttpAttrConst.KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())
-                    && !HttpAttrConst.KEY_SRV_URL_REPORT_MSG.equals(uriDecoder.path())) {
-                if (!HttpAttrConst.KEY_URL_FAVICON_ICON.equals(uriDecoder.path())) {
-                    source.fileMetricIncSumStats(StatConstants.EVENT_MSG_PATH_INVALID);
-                    sendErrorMsg(ctx, DataProxyErrCode.HTTP_UNSUPPORTED_SERVICE_URI,
-                            "Only support [" + HttpAttrConst.KEY_SRV_URL_HEARTBEAT + ", "
-                                    + HttpAttrConst.KEY_SRV_URL_REPORT_MSG + "] paths!");
-                }
-                return;
-            }
-            // process hb service
-            if (HttpAttrConst.KEY_SRV_URL_HEARTBEAT.equals(uriDecoder.path())) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_HB_SUCCESS);
-                sendSuccessResponse(ctx, closeConnection, null);
-                return;
-            }
+            return;
+        }
+        // process hb service
+        if (this.srvPathHeartBeat.equals(uriDecoder.path())) {
+            source.fileMetricIncSumStats(StatConstants.EVENT_MSG_HB_SUCCESS);
+            sendSuccessResponse(ctx, closeConnection, null);
+            return;
         }
         // get request attributes
         final Map<String, String> reqAttrs = new HashMap<>();
@@ -286,78 +274,39 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
      */
     private void processMessage(ChannelHandlerContext ctx, Map<String, String> reqAttrs,
             long msgRcvTime, String clientIp, boolean isCloseCon) throws Exception {
-        String groupId;
-        String streamId;
-        String topicName;
         StringBuilder strBuff = new StringBuilder(512);
         String callback = reqAttrs.get(HttpAttrConst.KEY_CALLBACK);
-        if (this.enableTDBankLogic) {
-            groupId = reqAttrs.get(HttpAttrConst.TDBANK_KEY_BUSINESS_ID);
-            if (StringUtils.isBlank(groupId)) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPID_MISSING);
-                sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_GROUPID_ARGUMENT.getErrCode(),
-                        strBuff.append("Field ").append(HttpAttrConst.TDBANK_KEY_BUSINESS_ID)
-                                .append(" must exist and not blank!").toString(),
-                        isCloseCon, callback);
-                return;
-            }
-            // get and check streamId
-            streamId = reqAttrs.get(HttpAttrConst.TDBANK_KEY_INTERFACE_ID);
-            if (StringUtils.isBlank(streamId)) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_STREAMID_MISSING);
-                sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_STREAMID_ARGUMENT.getErrCode(),
-                        strBuff.append("Field ").append(HttpAttrConst.TDBANK_KEY_INTERFACE_ID)
-                                .append(" must exist and not blank!").toString(),
-                        isCloseCon, callback);
-                return;
-            }
-            // get and check topicName
-            if (this.enableInLongMetaWithTDBankLogic) {
-                topicName = ConfigManager.getInstance().getTopicName(groupId, streamId);
-            } else {
-                topicName = ConfigManager.getInstance().getTDBankSrcTopicName(groupId);
-            }
-            if (StringUtils.isBlank(topicName)) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
-                sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
-                        strBuff.append("Topic not configured for ")
-                                .append(HttpAttrConst.TDBANK_KEY_BUSINESS_ID)
-                                .append("(").append(groupId).append(")").toString(),
-                        isCloseCon, callback);
-                return;
-            }
-        } else {
-            groupId = reqAttrs.get(HttpAttrConst.KEY_GROUP_ID);
-            if (StringUtils.isBlank(groupId)) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPID_MISSING);
-                sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_GROUPID_ARGUMENT.getErrCode(),
-                        strBuff.append("Field ").append(HttpAttrConst.KEY_GROUP_ID)
-                                .append(" must exist and not blank!").toString(),
-                        isCloseCon, callback);
-                return;
-            }
-            // get and check streamId
-            streamId = reqAttrs.get(HttpAttrConst.KEY_STREAM_ID);
-            if (StringUtils.isBlank(streamId)) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_STREAMID_MISSING);
-                sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_STREAMID_ARGUMENT.getErrCode(),
-                        strBuff.append("Field ").append(HttpAttrConst.KEY_STREAM_ID)
-                                .append(" must exist and not blank!").toString(),
-                        isCloseCon, callback);
-                return;
-            }
-            // get and check topicName
-            topicName = ConfigManager.getInstance().getTopicName(groupId, streamId);
-            if (StringUtils.isBlank(topicName)) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
-                sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
-                        strBuff.append("Topic not configured for ").append(HttpAttrConst.KEY_GROUP_ID)
-                                .append("(").append(groupId).append("),")
-                                .append(HttpAttrConst.KEY_STREAM_ID)
-                                .append("(,").append(streamId).append(")").toString(),
-                        isCloseCon, callback);
-                return;
-            }
+        // get group id
+        String groupId = reqAttrs.get(source.getAttrKeyGroupId());
+        if (StringUtils.isBlank(groupId)) {
+            source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPID_MISSING);
+            sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_GROUPID_ARGUMENT.getErrCode(),
+                    strBuff.append("Field ").append(source.getAttrKeyGroupId())
+                            .append(" must exist and not blank!").toString(),
+                    isCloseCon, callback);
+            return;
+        }
+        // get and check streamId
+        String streamId = reqAttrs.get(source.getAttrKeyStreamId());
+        if (StringUtils.isBlank(streamId)) {
+            source.fileMetricIncSumStats(StatConstants.EVENT_MSG_STREAMID_MISSING);
+            sendResponse(ctx, DataProxyErrCode.MISS_REQUIRED_STREAMID_ARGUMENT.getErrCode(),
+                    strBuff.append("Field ").append(source.getAttrKeyStreamId())
+                            .append(" must exist and not blank!").toString(),
+                    isCloseCon, callback);
+            return;
+        }
+        // get and check topicName
+        String topicName = ConfigManager.getInstance().getTopicName(groupId, streamId);
+        if (StringUtils.isBlank(topicName)) {
+            source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
+            sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
+                    strBuff.append("Topic not configured for ").append(source.getAttrKeyGroupId())
+                            .append("(").append(groupId).append("),")
+                            .append(source.getAttrKeyStreamId())
+                            .append("(,").append(streamId).append(")").toString(),
+                    isCloseCon, callback);
+            return;
         }
         // get and check dt
         long dataTime = msgRcvTime;
@@ -402,40 +351,23 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
         String strMsgCount = String.valueOf(intMsgCnt);
         // build message attributes
         InLongMsg inLongMsg = InLongMsg.newInLongMsg(source.isCompressed());
-        if (this.enableTDBankLogic) {
-            if (this.enableInLongMetaWithTDBankLogic) {
-                strBuff.append("bid=").append(groupId)
-                        .append("&tid=").append(streamId)
-                        .append("&dt=").append(dataTime)
-                        .append("&NodeIP=").append(clientIp)
-                        .append("&cnt=").append(strMsgCount)
-                        .append("&rt=").append(msgRcvTime)
-                        .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
-                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
-            } else {
-                String mxValue = ConfigManager.getInstance().getMxProperties(groupId);
-                if (StringUtils.isBlank(mxValue)) {
-                    mxValue = "m=0";
-                }
-                strBuff.append(mxValue)
-                        .append("&bid=").append(groupId)
-                        .append("&tid=").append(streamId)
-                        .append("&dt=").append(dataTime)
-                        .append("&NodeIP=").append(clientIp)
-                        .append("&cnt=").append(strMsgCount)
-                        .append("&rt=").append(msgRcvTime)
-                        .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
-                        .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
-            }
-        } else {
-            strBuff.append("groupId=").append(groupId)
-                    .append("&streamId=").append(streamId)
-                    .append("&dt=").append(dataTime)
-                    .append("&clientIp=").append(clientIp)
-                    .append("&cnt=").append(strMsgCount)
-                    .append("&rt=").append(msgRcvTime)
-                    .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
-                    .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
+        strBuff.append(source.getAttrKeyGroupId())
+                .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(groupId)
+                .append(AttributeConstants.SEPARATOR).append(source.getAttrKeyStreamId())
+                .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(streamId)
+                .append(AttributeConstants.SEPARATOR).append(keyNameClientIP)
+                .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(clientIp)
+                .append(AttributeConstants.SEPARATOR).append(AttributeConstants.DATA_TIME)
+                .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(dataTime)
+                .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MESSAGE_COUNT)
+                .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(strMsgCount)
+                .append(AttributeConstants.SEPARATOR).append(AttributeConstants.RCV_TIME)
+                .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime)
+                .append(AttributeConstants.SEPARATOR).append(AttributeConstants.MSG_RPT_TIME)
+                .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
+        String mxValue = ConfigManager.getInstance().getMxProperties(groupId, streamId);
+        if (StringUtils.isNotEmpty(mxValue)) {
+            strBuff.append(AttributeConstants.SEPARATOR).append(mxValue);
         }
         inLongMsg.addMsg(strBuff.toString(), body.getBytes(HttpAttrConst.VAL_DEF_CHARSET));
         byte[] inlongMsgData = inLongMsg.buildArray();

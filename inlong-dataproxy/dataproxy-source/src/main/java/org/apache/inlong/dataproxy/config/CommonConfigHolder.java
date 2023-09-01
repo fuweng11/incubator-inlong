@@ -17,6 +17,7 @@
 
 package org.apache.inlong.dataproxy.config;
 
+import org.apache.inlong.dataproxy.config.pojo.NodeLogicType;
 import org.apache.inlong.dataproxy.sink.common.DefaultEventHandler;
 import org.apache.inlong.dataproxy.sink.mq.AllCacheClusterSelector;
 import org.apache.inlong.sdk.commons.protocol.ProxySdk;
@@ -48,6 +49,9 @@ public class CommonConfigHolder {
     // configure file name
     public static final String COMMON_CONFIG_FILE_NAME = "common.properties";
     // **** allowed keys and default value, begin
+    // node running logic type
+    public static final String KEY_PROXY_RUNNING_LOGIC_TYPE_ID = "proxy.running.logic.type.id";
+    public static final NodeLogicType VAL_DEF_RUNNING_LOGIC_TYPE = NodeLogicType.INLONG_LOGIC;
     // cluster tag
     public static final String KEY_PROXY_CLUSTER_TAG = "proxy.cluster.tag";
     public static final String VAL_DEF_CLUSTER_TAG = "default_cluster";
@@ -155,9 +159,6 @@ public class CommonConfigHolder {
     // prometheus http port
     public static final String KEY_PROMETHEUS_HTTP_PORT = "prometheusHttpPort";
     public static final int VAL_DEF_PROMETHEUS_HTTP_PORT = 8080;
-    // whether enable tdbank logic
-    public static final String KEY_ENABLE_TDBANK_LOGIC = "proxy.enable.tdbank.logic";
-    public static final boolean VAL_DEF_ENABLE_TDBANK_LOGIC = false;
     // whether enable tdbank pcg log output
     public static final String KEY_ENABLE_PCG_LOG_OUTPUT = "proxy.enable.pcg.log.output";
     public static final boolean VAL_DEF_ENABLE_PCG_LOG_OUTPUT = false;
@@ -167,10 +168,6 @@ public class CommonConfigHolder {
     // cluster id
     public static final String KEY_PROXY_CLUSTER_ID = "proxy.cluster.id";
     public static final int VAL_DEF_CLUSTER_ID = -1;
-    // whether enable brain logic
-    // use tdbank source and sink, with inlong manager meta
-    public static final String KEY_ENABLE_INLONG_META_TDBANK_LOGIC = "proxy.enable.inlong.meta.with.tdbank.logic";
-    public static final boolean VAL_DEF_INLONG_META_TDBANK_LOGIC = false;
 
     // **** allowed keys and default value, end
 
@@ -179,6 +176,7 @@ public class CommonConfigHolder {
     private static volatile boolean isInit = false;
     private Map<String, String> props;
     // pre-read field values
+    private NodeLogicType nodeLogicType = VAL_DEF_RUNNING_LOGIC_TYPE;
     private String clusterTag = VAL_DEF_CLUSTER_TAG;
     private String clusterName = VAL_DEF_CLUSTER_NAME;
     private String clusterIncharges = VAL_DEF_CLUSTER_INCHARGES;
@@ -215,8 +213,6 @@ public class CommonConfigHolder {
     private String fileMetricEventOutName = VAL_DEF_FILE_METRIC_EVENT_OUTPUT_NAME;
     private boolean enableSendRetryAfterFailure = VAL_DEF_ENABLE_SEND_RETRY_AFTER_FAILURE;
     private int maxRetriesAfterFailure = VAL_DEF_MAX_RETRIES_AFTER_FAILURE;
-    private boolean enableTDBankLogic = VAL_DEF_ENABLE_TDBANK_LOGIC;
-    private boolean enableInLongMetaWithTDBankLogic = VAL_DEF_INLONG_META_TDBANK_LOGIC;
     private boolean enablePCGLogOutput = VAL_DEF_ENABLE_PCG_LOG_OUTPUT;
     private boolean enablePulsarTransfer = VAL_DEF_ENABLE_PULSAR_TRANSFER;
     private int clusterId = VAL_DEF_CLUSTER_ID;
@@ -265,23 +261,19 @@ public class CommonConfigHolder {
     }
 
     public boolean isEnableTDBankLogic() {
-        return enableTDBankLogic || enableInLongMetaWithTDBankLogic;
+        return NodeLogicType.enableTDBankLogic(nodeLogicType);
     }
 
     public boolean isEnablePCGLogOutput() {
-        return enableTDBankLogic && enablePCGLogOutput;
+        return enablePCGLogOutput;
     }
 
     public boolean isEnablePulsarTransfer() {
-        return enableTDBankLogic && enablePulsarTransfer;
+        return enablePulsarTransfer;
     }
 
-    public boolean isEnableInLongMetaWithTDBankLogic() {
-        return enableInLongMetaWithTDBankLogic;
-    }
-
-    public boolean isGetMetaInfoFromTDM() {
-        return enableTDBankLogic;
+    public boolean isMetaInfoGetFromTDBank() {
+        return NodeLogicType.isMetaInfoGetFromTDBank(this.nodeLogicType);
     }
 
     public int getClusterId() {
@@ -442,6 +434,19 @@ public class CommonConfigHolder {
 
     private void preReadFields() {
         String tmpValue;
+        // read proxy running logic configure
+        tmpValue = this.props.get(KEY_PROXY_RUNNING_LOGIC_TYPE_ID);
+        if (StringUtils.isNotEmpty(tmpValue)) {
+            int typeIdValue = NumberUtils.toInt(tmpValue.trim(),
+                    NodeLogicType.INLONG_LOGIC.getTypeId());
+            NodeLogicType tmpLogicType = NodeLogicType.valueOf(typeIdValue);
+            if (NodeLogicType.UNKNOWN == tmpLogicType) {
+                LOG.warn("Unknown running logic configure {}, use default setting, allowed values {}",
+                        tmpLogicType, NodeLogicType.getAllowedValues());
+            } else {
+                this.nodeLogicType = tmpLogicType;
+            }
+        }
         // read cluster tag
         tmpValue = this.props.get(KEY_PROXY_CLUSTER_TAG);
         if (StringUtils.isNotBlank(tmpValue)) {
@@ -650,18 +655,8 @@ public class CommonConfigHolder {
                 this.maxRetriesAfterFailure = retries;
             }
         }
-        // read whether use tdbank process logic
-        tmpValue = this.props.get(KEY_ENABLE_TDBANK_LOGIC);
-        if (StringUtils.isNotBlank(tmpValue)) {
-            this.enableTDBankLogic = "TRUE".equalsIgnoreCase(tmpValue.trim());
-        }
-        // read whether use inlong meta with tdbank process logic
-        tmpValue = this.props.get(KEY_ENABLE_INLONG_META_TDBANK_LOGIC);
-        if (StringUtils.isNotBlank(tmpValue)) {
-            this.enableInLongMetaWithTDBankLogic = "TRUE".equalsIgnoreCase(tmpValue.trim());
-        }
-        // read tdbank's parameters
-        if (this.enableTDBankLogic) {
+        // read tdbank logic parameters
+        if (isEnableTDBankLogic()) {
             // read whether output pcg index log
             tmpValue = this.props.get(KEY_ENABLE_PCG_LOG_OUTPUT);
             if (StringUtils.isNotBlank(tmpValue)) {
@@ -672,7 +667,9 @@ public class CommonConfigHolder {
             if (StringUtils.isNotBlank(tmpValue)) {
                 this.enablePulsarTransfer = "TRUE".equalsIgnoreCase(tmpValue.trim());
             }
-            // read cluster id
+        }
+        // read cluster id
+        if (isMetaInfoGetFromTDBank()) {
             tmpValue = this.props.get(KEY_PROXY_CLUSTER_ID);
             if (StringUtils.isNotBlank(tmpValue)) {
                 int clusterIdVal = NumberUtils.toInt(tmpValue.trim(), VAL_DEF_CLUSTER_ID);
@@ -680,8 +677,11 @@ public class CommonConfigHolder {
                     this.clusterId = clusterIdVal;
                 }
             }
+            if (this.clusterId < 0) {
+                LOG.warn("Illegal {} value {}, please confirm with administrator",
+                        KEY_PROXY_CLUSTER_ID, tmpValue);
+            }
         }
-
         // initial ip parser
         try {
             Class<? extends IManagerIpListParser> ipListParserClass =

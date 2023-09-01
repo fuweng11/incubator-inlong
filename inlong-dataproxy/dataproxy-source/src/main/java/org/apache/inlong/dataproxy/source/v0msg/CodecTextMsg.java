@@ -43,9 +43,8 @@ import static org.apache.inlong.dataproxy.source.v0msg.MsgFieldConsts.TXT_MSG_TO
 public class CodecTextMsg extends AbsV0MsgCodec {
 
     public CodecTextMsg(int totalDataLen, int msgTypeValue, long msgRcvTime,
-            String strRemoteIP, boolean enableTDBankLogic, boolean enableInLongMetaWithTDBankLogic) {
-        super(totalDataLen, msgTypeValue, msgRcvTime,
-                strRemoteIP, enableTDBankLogic, enableInLongMetaWithTDBankLogic);
+            String strRemoteIP, boolean enableTDBankLogic) {
+        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP, enableTDBankLogic);
     }
 
     public boolean descMsg(BaseSource source, ByteBuf cb) throws Exception {
@@ -144,31 +143,15 @@ public class CodecTextMsg extends AbsV0MsgCodec {
 
     public boolean validAndFillFields(BaseSource source, StringBuilder strBuff) {
         // process topic field
-        String tmpGroupId;
-        String tmpStreamId;
-        if (enableTDBankLogic) {
-            tmpGroupId = attrMap.get(AttributeConstants.BUSINESS_ID);
-            tmpStreamId = attrMap.get(AttributeConstants.TID);
-        } else {
-            tmpGroupId = attrMap.get(AttributeConstants.GROUP_ID);
-            tmpStreamId = attrMap.get(AttributeConstants.STREAM_ID);
-        }
+        String tmpGroupId = attrMap.get(source.getAttrKeyGroupId());
+        String tmpStreamId = attrMap.get(source.getAttrKeyStreamId());
         if (StringUtils.isBlank(tmpGroupId)) {
             source.fileMetricIncSumStats(StatConstants.EVENT_MSG_GROUPID_MISSING);
             this.errCode = DataProxyErrCode.MISS_REQUIRED_GROUPID_ARGUMENT;
             return false;
         }
         // get and check topic configure
-        String tmpTopicName;
-        if (enableTDBankLogic) {
-            if (enableInLongMetaWithTDBankLogic) {
-                tmpTopicName = ConfigManager.getInstance().getTopicName(tmpGroupId, tmpStreamId);
-            } else {
-                tmpTopicName = ConfigManager.getInstance().getTDBankSrcTopicName(tmpGroupId);
-            }
-        } else {
-            tmpTopicName = ConfigManager.getInstance().getTopicName(tmpGroupId, tmpStreamId);
-        }
+        String tmpTopicName = ConfigManager.getInstance().getTopicName(tmpGroupId, tmpStreamId);
         if (StringUtils.isBlank(tmpTopicName)) {
             source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_TOPIC_MISSING);
             this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
@@ -228,18 +211,16 @@ public class CodecTextMsg extends AbsV0MsgCodec {
                     .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
             attrMap.put(AttributeConstants.MSG_RPT_TIME, String.valueOf(msgRcvTime));
         }
-        if (enableTDBankLogic) {
-            // add extra attributes
-            if (!enableInLongMetaWithTDBankLogic) {
-                String mValues = ConfigManager.getInstance().getMxProperties(groupId);
-                if (StringUtils.isEmpty(mValues)) {
-                    mValues = source.getDefAttr();
-                }
-                if (strBuff.length() > 0) {
-                    strBuff.append(AttributeConstants.SEPARATOR);
-                }
-                strBuff.append(mValues);
+        // add extra attributes
+        String mValues = ConfigManager.getInstance().getMxProperties(groupId, streamId);
+        if (StringUtils.isEmpty(mValues)) {
+            mValues = source.getDefAttr();
+        }
+        if (StringUtils.isNotEmpty(mValues)) {
+            if (strBuff.length() > 0) {
+                strBuff.append(AttributeConstants.SEPARATOR);
             }
+            strBuff.append(mValues);
         }
         // rebuild attribute string
         if (strBuff.length() > 0) {

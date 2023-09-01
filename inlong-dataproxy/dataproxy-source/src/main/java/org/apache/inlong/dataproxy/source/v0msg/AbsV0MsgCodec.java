@@ -70,18 +70,14 @@ public abstract class AbsV0MsgCodec {
     protected long msgPkgTime;
     // whether enable tdbank logic
     protected boolean enableTDBankLogic;
-    // whether enable tdbank logic
-    protected boolean enableInLongMetaWithTDBankLogic;
 
     public AbsV0MsgCodec(int totalDataLen, int msgTypeValue,
-            long msgRcvTime, String strRemoteIP, boolean enableTDBankLogic,
-            boolean enableInLongMetaWithTDBankLogic) {
+            long msgRcvTime, String strRemoteIP, boolean enableTDBankLogic) {
         this.totalDataLen = totalDataLen;
         this.msgType = (byte) (msgTypeValue & 0xFF);
         this.msgRcvTime = msgRcvTime;
         this.strRemoteIP = strRemoteIP;
         this.enableTDBankLogic = enableTDBankLogic;
-        this.enableInLongMetaWithTDBankLogic = enableInLongMetaWithTDBankLogic;
     }
 
     public abstract boolean descMsg(BaseSource source, ByteBuf cb) throws Exception;

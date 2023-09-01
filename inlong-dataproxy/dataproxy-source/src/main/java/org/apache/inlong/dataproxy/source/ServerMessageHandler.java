@@ -180,8 +180,8 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                         }
                         throw new PkgParseException(errMsg);
                     }
-                    msgCodec = new CodecBinMsg(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP,
-                            source.enableTDBankLogic, source.enableInLongMetaWithTDBankLogic);
+                    msgCodec = new CodecBinMsg(totalDataLen, msgTypeValue,
+                            msgRcvTime, strRemoteIP, source.enableTDBankLogic);
                 } else {
                     if (totalDataLen < TXT_MSG_FIXED_CONTENT_SIZE) {
                         source.fileMetricIncSumStats(StatConstants.EVENT_MSG_TXT_TOTALLEN_BELOWMIN);
@@ -192,8 +192,8 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                         }
                         throw new PkgParseException(errMsg);
                     }
-                    msgCodec = new CodecTextMsg(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP,
-                            source.enableTDBankLogic, source.enableInLongMetaWithTDBankLogic);
+                    msgCodec = new CodecTextMsg(totalDataLen, msgTypeValue,
+                            msgRcvTime, strRemoteIP, source.enableTDBankLogic);
                 }
                 // process request
                 processV0Msg(channel, cb, msgCodec);
