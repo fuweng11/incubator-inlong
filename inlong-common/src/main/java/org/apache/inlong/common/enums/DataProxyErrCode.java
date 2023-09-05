@@ -72,6 +72,9 @@ public enum DataProxyErrCode {
     ATTR_ORDER_CONTROL_CONFLICT_ERROR(150, "Require order send but isAck is false"),
     ATTR_PROXY_CONTROL_CONFLICT_ERROR(151, "Require proxy send but isAck is false"),
 
+    INDEX_BODY_LENGTH_ZERO(165, "Index body length is 0"),
+    INDEX_BODY_LENGTH_LESS_ZERO(166, "Index body length less than 0"),
+
     UNKNOWN_ERROR(Integer.MAX_VALUE, "Unknown error");
 
     private final int errCode;

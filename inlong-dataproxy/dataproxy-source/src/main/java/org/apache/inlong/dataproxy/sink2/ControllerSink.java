@@ -17,14 +17,22 @@
 
 package org.apache.inlong.dataproxy.sink2;
 
+import org.apache.inlong.common.enums.DataProxyErrCode;
 import org.apache.inlong.common.monitor.LogCounter;
+import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
 import org.apache.inlong.dataproxy.base.SinkRspEvent;
 import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.consts.AttrConstants;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
+import org.apache.inlong.dataproxy.metrics.audit.AuditUtils;
+import org.apache.inlong.dataproxy.metrics.stats.MonitorIndex;
 import org.apache.inlong.dataproxy.metrics.stats.MonitorStats;
+import org.apache.inlong.dataproxy.metrics.stats.MonitorSumIndex;
+import org.apache.inlong.dataproxy.utils.BufferQueue;
+import org.apache.inlong.dataproxy.utils.DateTimeUtils;
+import org.apache.inlong.sdk.commons.protocol.EventConstants;
 import org.apache.inlong.tubemq.client.config.TubeClientConfig;
 import org.apache.inlong.tubemq.client.factory.TubeMultiSessionFactory;
 import org.apache.inlong.tubemq.client.producer.MessageProducer;
@@ -38,6 +46,7 @@ import com.tencent.tdbank.ac.controller.avro.FileStatus;
 import com.tencent.tdbank.ac.controller.avro.FileStatusUtil;
 import com.tencent.tdbank.ac.controller.client.ControllerRpcClient;
 import com.tencent.tdbank.ac.controller.client.ControllerRpcClientFactory;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -64,21 +73,20 @@ public class ControllerSink extends AbstractSink implements Configurable {
     private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
     private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 30 * 1000);
 
+    private static final String SEND_REMOTE = "send-remote";
+    private static final boolean VAL_DEF_SEND_REMOTE = true;
+
     private static String CONTROLLER_CONFIG_FILE = "controller-config-file";
     private static final String MAX_RETRY_CNT_STR = "max-retry-cnt";
-    private static final int VAL_DEF_RETRY_CNT_STR = 3;
 
-    private static final String SEND_REMOTE = "send-remote";
-    private static final boolean VAL_DEF_SEND_REMOTE = false;
+    private static final String AGENT_INDEX_TOPIC = "agent-index-topic";
+    private static final String VAL_DEF_AGENT_INDEX_TOPIC = "teg_tdbank";
 
-    private static final String LOG_TOPIC = "agent-log-topic";
-    private static final String VAL_DEF_LOG_TOPIC = "teg_tdbank";
+    private static final String INDEX_STATUS_TID = "agent-index-status-tid";
+    private static final String VAL_DEF_INDEX_STATUS_TID = "agent_file_status_log";
 
-    private static final String LOG_TID = "agent-log-tid";
-    private static final String VAL_DEF_LOG_TID = "agent_measure_log";
-
-    private static final String LOG_BID = "agent-log-bid";
-    private static final String VAL_DEF_LOG_BID = "b_teg_tdbank";
+    private static final String INDEX_MEASURE_TID = "agent-index-measure-tid";
+    private static final String VAL_DEF_INDEX_MEASURE_TID = "agent_measure_log";
 
     // cached sink's name
     protected String cachedSinkName;
@@ -89,37 +97,53 @@ public class ControllerSink extends AbstractSink implements Configurable {
     // whether mq cluster connected
     protected volatile boolean mqClusterStarted = false;
     // message duplicate cache
-    private boolean enableDeDupCheck = true;
+    private boolean enableDeDupCheck;
     private int visitConcurLevel = 32;
     private int initCacheCapacity = 5000000;
     private long expiredDurSec = 30;
     protected MsgIdCache msgIdCache;
-
-    // clusterMasterAddress
-    protected String clusterAddrList;
+    // wether send message to mq
+    private boolean sendRemote;
+    // message send thread count
+    protected int maxThreads;
+    // message send thread pool
+    protected Thread[] sinkThreadPool;
+    // max inflight buffer size in KB
+    private int maxInflightBufferSIzeInKB;
+    // event dispatch queue
+    private BufferQueue<EventProfile> dispatchQueue;
+    // whether to send message
+    private volatile boolean canSend = true;
     // controller agent
     private ControllerRpcClient controllerAgent;
     private String controllerConfigFile;
     private Properties controllerProp;
-    private boolean sendRemote = false;
+    // clusterMasterAddress
+    protected String clusterAddrList;
     private TubeMultiSessionFactory sessionFactory = null;
     private MessageProducer messageProducer = null;
-    private String agentLogTopic;
-    private String agentLogBid;
-    private String agentLogTid;
+    private String agentMeasureTid;
+    private String agentStatusTid;
+    private String agentIndexTopic;
     private long linkMaxAllowedDelayedMsgCount;
     private long sessionWarnDelayedMsgCount;
     private long sessionMaxAllowedDelayedMsgCount;
     private long nettyWriteBufferHighWaterMark;
     // rpc request timeout ms
     protected int requestTimeoutMs;
+    // whether to resend the message after sending failure
+    protected boolean enableRetryAfterFailure;
     // max retry times if send failure
     protected int maxMsgRetries;
+    // max wait time if send failure
+    protected long maxSendFailureWaitDurMs;
     // mq cluster status wait duration
     private final long MQ_CLUSTER_STATUS_WAIT_DUR_MS = 2000L;
     // file metric statistic
-    protected boolean enableFileMetric;
-    protected MonitorStats monitorStats = null;
+    private boolean enableFileMetric;
+    private MonitorStats monitorStats = null;
+    private MonitorIndex detailIndex = null;
+    private MonitorSumIndex sumIndex = null;
 
     public ControllerSink() {
 
@@ -130,34 +154,45 @@ public class ControllerSink extends AbstractSink implements Configurable {
         this.cachedSinkName = getName();
         logger.info("{} start to configure, context:{}.", this.cachedSinkName, context.toString());
         this.enableFileMetric = CommonConfigHolder.getInstance().isEnableFileMetric();
-        // initial controller configure
-        this.controllerConfigFile = context.getString(CONTROLLER_CONFIG_FILE);
-        initControlerAgentConfig();
-        // initial send retry count
-        Integer myRetryCnt = context.getInteger(MAX_RETRY_CNT_STR);
-        if (myRetryCnt == null) {
-            this.maxMsgRetries = VAL_DEF_RETRY_CNT_STR;
-        } else {
-            if (myRetryCnt < 0) {
-                this.maxMsgRetries = Integer.MAX_VALUE;
-            } else if (myRetryCnt == 0) {
-                this.maxMsgRetries = 1;
-            } else {
-                this.maxMsgRetries = myRetryCnt;
-            }
-        }
-
-        this.maxMsgRetries = context.getInteger(MAX_RETRY_CNT_STR,
-                CommonConfigHolder.getInstance().getMaxRetriesAfterFailure());
         // initial send mode
         this.sendRemote = context.getBoolean(SEND_REMOTE, VAL_DEF_SEND_REMOTE);
-        if (sendRemote) {
+        // wether retry send if sent failure
+        this.enableRetryAfterFailure =
+                CommonConfigHolder.getInstance().isEnableSendRetryAfterFailure();
+        // initial send retry count
+        this.maxMsgRetries = context.getInteger(MAX_RETRY_CNT_STR,
+                CommonConfigHolder.getInstance().getMaxRetriesAfterFailure());
+        // get the number of sink worker thread
+        this.maxThreads = context.getInteger(ConfigConstants.MAX_THREADS, ConfigConstants.VAL_DEF_SINK_THREADS);
+        Preconditions.checkArgument((this.maxThreads >= ConfigConstants.VAL_MIN_SINK_THREADS),
+                ConfigConstants.MAX_THREADS + " must be >= " + ConfigConstants.VAL_MIN_SINK_THREADS);
+        if (!this.sendRemote) {
+            this.maxThreads = 1;
+        }
+        // initial sink worker thread pool
+        this.sinkThreadPool = new Thread[this.maxThreads];
+        // get message deduplicate setting
+        this.enableDeDupCheck = context.getBoolean(ConfigConstants.ENABLE_MSG_CACHE_DEDUP,
+                ConfigConstants.VAL_DEF_ENABLE_MSG_CACHE_DEDUP);
+        this.maxInflightBufferSIzeInKB = context.getInteger(ConfigConstants.MAX_INFLIGHT_BUFFER_QUEUE_SIZE_KB,
+                CommonConfigHolder.getInstance().getMaxBufferQueueSizeKb());
+        Preconditions.checkArgument(
+                (this.maxInflightBufferSIzeInKB >= ConfigConstants.VAL_MIN_INFLIGHT_BUFFER_QUEUE_SIZE_KB),
+                ConfigConstants.MAX_INFLIGHT_BUFFER_QUEUE_SIZE_KB + " must be >= "
+                        + ConfigConstants.VAL_MIN_INFLIGHT_BUFFER_QUEUE_SIZE_KB);
+        this.maxSendFailureWaitDurMs = context.getLong(ConfigConstants.MAX_SEND_FAILURE_WAIT_DUR_MS,
+                ConfigConstants.VAL_DEF_SEND_FAILURE_WAIT_DUR_MS);
+        Preconditions.checkArgument(
+                (this.maxSendFailureWaitDurMs >= ConfigConstants.VAL_MIN_SEND_FAILURE_WAIT_DUR_MS),
+                ConfigConstants.MAX_SEND_FAILURE_WAIT_DUR_MS + " must be >= "
+                        + ConfigConstants.VAL_MIN_SEND_FAILURE_WAIT_DUR_MS);
+        if (this.sendRemote) {
             this.clusterAddrList = context.getString(ConfigConstants.MASTER_SERVER_URL_LIST);
-            Preconditions.checkState(clusterAddrList != null,
+            Preconditions.checkState(this.clusterAddrList != null,
                     ConfigConstants.MASTER_SERVER_URL_LIST + " parameter not specified");
-            agentLogTopic = context.getString(LOG_TOPIC, VAL_DEF_LOG_TOPIC);
-            agentLogBid = context.getString(LOG_BID, VAL_DEF_LOG_BID);
-            agentLogTid = context.getString(LOG_TID, VAL_DEF_LOG_TID);
+            this.agentIndexTopic = context.getString(AGENT_INDEX_TOPIC, VAL_DEF_AGENT_INDEX_TOPIC);
+            this.agentStatusTid = context.getString(INDEX_STATUS_TID, VAL_DEF_INDEX_STATUS_TID);
+            this.agentMeasureTid = context.getString(INDEX_MEASURE_TID, VAL_DEF_INDEX_MEASURE_TID);
             this.linkMaxAllowedDelayedMsgCount = context.getLong(
                     ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT,
                     ConfigConstants.VAL_DEF_ALLOWED_DELAYED_MSG_COUNT);
@@ -165,7 +200,6 @@ public class ControllerSink extends AbstractSink implements Configurable {
                     (this.linkMaxAllowedDelayedMsgCount >= ConfigConstants.VAL_MIN_ALLOWED_DELAYED_MSG_COUNT),
                     ConfigConstants.LINK_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= "
                             + ConfigConstants.VAL_MIN_ALLOWED_DELAYED_MSG_COUNT);
-
             this.sessionWarnDelayedMsgCount = context.getLong(
                     ConfigConstants.SESSION_WARN_DELAYED_MSG_COUNT,
                     ConfigConstants.VAL_DEF_SESSION_WARN_DELAYED_MSG_COUNT);
@@ -173,7 +207,6 @@ public class ControllerSink extends AbstractSink implements Configurable {
                     (this.sessionWarnDelayedMsgCount >= ConfigConstants.VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT),
                     ConfigConstants.SESSION_WARN_DELAYED_MSG_COUNT + " must be >= "
                             + ConfigConstants.VAL_MIN_SESSION_WARN_DELAYED_MSG_COUNT);
-
             this.sessionMaxAllowedDelayedMsgCount = context.getLong(
                     ConfigConstants.SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT,
                     ConfigConstants.VAL_DEF_SESSION_DELAYED_MSG_COUNT);
@@ -181,7 +214,6 @@ public class ControllerSink extends AbstractSink implements Configurable {
                     (this.sessionMaxAllowedDelayedMsgCount >= ConfigConstants.VAL_MIN_SESSION_DELAYED_MSG_COUNT),
                     ConfigConstants.SESSION_MAX_ALLOWED_DELAYED_MSG_COUNT + " must be >= "
                             + ConfigConstants.VAL_MIN_SESSION_DELAYED_MSG_COUNT);
-
             this.nettyWriteBufferHighWaterMark = context.getLong(
                     ConfigConstants.NETTY_WRITE_BUFFER_HIGH_WATER_MARK,
                     ConfigConstants.VAL_DEF_NETTY_WRITE_HIGH_WATER_MARK);
@@ -189,13 +221,16 @@ public class ControllerSink extends AbstractSink implements Configurable {
                     (this.nettyWriteBufferHighWaterMark >= ConfigConstants.VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK),
                     ConfigConstants.NETTY_WRITE_BUFFER_HIGH_WATER_MARK + " must be >= "
                             + ConfigConstants.VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK);
-
             // get rpc request timeout ms
             this.requestTimeoutMs = context.getInteger(ConfigConstants.CLIENT_REQUEST_TIMEOUT_MS,
                     ConfigConstants.VAL_DEF_REQUEST_TIMEOUT_MS);
             Preconditions.checkArgument((this.requestTimeoutMs >= ConfigConstants.VAL_MIN_REQUEST_TIMEOUT_MS),
                     ConfigConstants.CLIENT_REQUEST_TIMEOUT_MS + " must be >= "
                             + ConfigConstants.VAL_MIN_REQUEST_TIMEOUT_MS);
+        } else {
+            // initial controller configure
+            this.controllerConfigFile = context.getString(CONTROLLER_CONFIG_FILE);
+            initControlerAgentConfig();
         }
     }
 
@@ -209,7 +244,8 @@ public class ControllerSink extends AbstractSink implements Configurable {
         // initial message duplicate cache
         this.msgIdCache = new MsgIdCache(enableDeDupCheck,
                 visitConcurLevel, initCacheCapacity, expiredDurSec);
-
+        // message dispatch queue
+        this.dispatchQueue = new BufferQueue<>(maxInflightBufferSIzeInKB);
         // init monitor logic
         if (enableFileMetric) {
             this.monitorStats = new MonitorStats(this.cachedSinkName + "_stats",
@@ -218,27 +254,45 @@ public class ControllerSink extends AbstractSink implements Configurable {
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.monitorStats.start();
+            if (this.sendRemote) {
+                this.detailIndex = new MonitorIndex(this.cachedSinkName + "_detail_index",
+                        CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
+                        CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
+                        CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
+                this.detailIndex.start();
+                this.sumIndex = new MonitorSumIndex(this.cachedSinkName + "_sum_index",
+                        CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
+                        CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
+                        CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
+                this.sumIndex.start();
+            }
         }
-        try {
-            createConnection();
-        } catch (Throwable e) {
-            logger.error("Unable to create {} controller client", cachedSinkName, e);
-            destroyConnection();
-            stop();
-        }
-        // initial tube client
-        if (sendRemote) {
+        if (this.sendRemote) {
+            // initial tube client
             try {
                 TubeClientConfig conf = initTubeConfig();
-                sessionFactory = new TubeMultiSessionFactory(conf);
+                this.sessionFactory = new TubeMultiSessionFactory(conf);
             } catch (Throwable e) {
                 stop();
                 logger.error("{} create session factory failure, please re-check. ex2 {}",
-                        cachedSinkName, e.getMessage());
+                        this.cachedSinkName, e.getMessage());
                 throw new FlumeException("create session factory failure, "
                         + "maybe tube master set error/shutdown in progress, please re-check");
             }
             this.reloadMetaConfig();
+        } else {
+            try {
+                createConnection();
+            } catch (Throwable e) {
+                logger.error("Unable to create {} controller client", this.cachedSinkName, e);
+                destroyConnection();
+                stop();
+            }
+        }
+        // start message process logic
+        for (int i = 0; i < sinkThreadPool.length; i++) {
+            sinkThreadPool[i] = new Thread(new SinkTask(), cachedSinkName + "_sender-" + i);
+            sinkThreadPool[i].start();
         }
         this.mqClusterStarted = true;
         super.start();
@@ -267,9 +321,8 @@ public class ControllerSink extends AbstractSink implements Configurable {
             }
         }
         Transaction tx = cachedMsgChannel.getTransaction();
+        tx.begin();
         try {
-            verifyConnection();
-            tx.begin();
             Event event = cachedMsgChannel.take();
             // no data
             if (event == null) {
@@ -285,7 +338,7 @@ public class ControllerSink extends AbstractSink implements Configurable {
                 // file event
                 fileMetricIncSumStats(StatConstants.SINK_INDEX_FILE_TAKE_SUCCESS);
             }
-            processEvent(event);
+            acquireAndOfferDispatchedRecord(new EventProfile(event, true));
             tx.commit();
             return Status.READY;
         } catch (Throwable t) {
@@ -300,7 +353,6 @@ public class ControllerSink extends AbstractSink implements Configurable {
                     logger.error("{} channel take transaction rollback exception", this.cachedSinkName, e);
                 }
             }
-            destroyConnection();
             return Status.BACKOFF;
         } finally {
             tx.close();
@@ -310,10 +362,21 @@ public class ControllerSink extends AbstractSink implements Configurable {
     @Override
     public void stop() {
         logger.info("{} sink is stopping...", this.cachedSinkName);
+        // stop fetch events
         this.isShutdown = true;
-        // process sub-class logic
-        destroyConnection();
-        // shutdown session factory
+        // wait event dispatch
+        int waitCount = 0;
+        // Try to wait for the messages in the cache to be sent
+        while (dispatchQueue.size() > 0 && waitCount++ < 10) {
+            try {
+                Thread.currentThread().sleep(800);
+            } catch (InterruptedException e) {
+                logger.info("{} stop thread has been interrupt!", cachedSinkName);
+                break;
+            }
+        }
+        // set send flag to false
+        this.canSend = false;
         if (sendRemote) {
             if (sessionFactory != null) {
                 try {
@@ -323,12 +386,28 @@ public class ControllerSink extends AbstractSink implements Configurable {
                 }
                 sessionFactory = null;
             }
+        } else {
+            // process sub-class logic
+            destroyConnection();
         }
         // stop file statistic index
         if (enableFileMetric) {
             if (monitorStats != null) {
                 monitorStats.stop();
             }
+            if (sendRemote) {
+                this.detailIndex.stop();
+                this.sumIndex.stop();
+            }
+        }
+        // stop sink worker thread pool
+        if (sinkThreadPool != null) {
+            for (Thread thread : sinkThreadPool) {
+                if (thread != null) {
+                    thread.interrupt();
+                }
+            }
+            sinkThreadPool = null;
         }
         // close message duplicate cache
         msgIdCache.clearMsgIdCache();
@@ -336,94 +415,196 @@ public class ControllerSink extends AbstractSink implements Configurable {
         logger.info("{} sink is stopped", this.cachedSinkName);
     }
 
-    private void processEvent(Event event) {
-        // check duplicate
-        String msgType = event.getHeaders().get(ConfigConstants.INDEX_MSG_TYPE);
-        if (msgType == null || !(msgType.equals(ConfigConstants.INDEX_TYPE_FILE_STATUS)
-                || msgType.equals(ConfigConstants.INDEX_TYPE_MEASURE))) {
-            fileMetricIncSumStats(StatConstants.SINK_INDEX_ILLEGAL_DROPPED);
-            return;
-        }
-        String msgSeqId = event.getHeaders().get(ConfigConstants.SEQUENCE_ID);
-        if (msgIdCache.cacheIfAbsent(msgSeqId)) {
-            fileMetricIncSumStats(StatConstants.SINK_INDEX_DUPLICATE_DROOPED);
-            if (logDupMsgPrinter.shouldPrint()) {
-                logger.info("{} package {} existed,just discard.", cachedSinkName, msgSeqId);
-            }
-            return;
-        }
-        // build message
-        if (msgType.equals(ConfigConstants.INDEX_TYPE_FILE_STATUS)) {
-            try {
-                FileStatus fs = FileStatusUtil.toFileStatus(event.getBody());
-                String fsStr = fs.toString();
-                for (int i = 0; i < maxMsgRetries; ++i) {
+    private class SinkTask implements Runnable {
+
+        @Override
+        public void run() {
+            logger.info("{} task {} start send message logic.",
+                    cachedSinkName, Thread.currentThread().getName());
+            EventProfile profile = null;
+            while (canSend) {
+                try {
+                    if (!sendRemote) {
+                        verifyConnection();
+                    }
+                    // take event profile
+                    profile = takeDispatchedRecord();
+                    if (profile == null) {
+                        continue;
+                    }
+                    // send message
+                    sendMessage(profile);
+                } catch (Throwable e1) {
+                    if (profile != null) {
+                        offerDispatchRecord(profile);
+                    }
+                    if (!sendRemote) {
+                        destroyConnection();
+                    }
+                    if (logCounter.shouldPrint()) {
+                        logger.error("{} - {} send message failure", cachedSinkName,
+                                Thread.currentThread().getName(), e1);
+                    }
+                    // sleep some time
                     try {
-                        controllerAgent.reportFileStatus(fs);
-                        break;
-                    } catch (Throwable ex) {
-                        // just retry
-                        if (i == maxMsgRetries) {
-                            logger.warn(
-                                    "ControllerSink filestatus: '{}' is skipped because of exceeded maxRetryCnt {}, ex {}",
-                                    fsStr, maxMsgRetries, ex);
-                            fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_OVERMAX_DROOPED);
-                            return;
-                        }
+                        Thread.sleep(maxSendFailureWaitDurMs);
+                    } catch (Throwable e2) {
+                        //
                     }
                 }
-                fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_SUCCESS);
-            } catch (Throwable e) {
-                fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION);
-                String s = (event.getBody() != null ? new String(event.getBody()) : "");
-                logger.error("bad event header is " + event.getHeaders() + ", body is " + s);
             }
-        } else {
-            // agent-measure
-            AgentMeasureLogger.logMeasureInfo(event.getBody());
-            fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_OUTPUT_SUCCESS);
+            logger.info("{} task {} exits send message logic.",
+                    cachedSinkName, Thread.currentThread().getName());
+        }
+
+        private void sendMessage(EventProfile profile) {
+            // check duplicate
+            String msgType = profile.getProperties().get(ConfigConstants.INDEX_MSG_TYPE);
+            if (msgType == null || !(msgType.equals(ConfigConstants.INDEX_TYPE_FILE_STATUS)
+                    || msgType.equals(ConfigConstants.INDEX_TYPE_MEASURE))) {
+                fileMetricIncSumStats(StatConstants.SINK_INDEX_ILLEGAL_DROPPED);
+                return;
+            }
+            String msgSeqId = profile.getProperties().get(ConfigConstants.SEQUENCE_ID);
+            if (msgIdCache.cacheIfAbsent(msgSeqId)) {
+                fileMetricIncSumStats(StatConstants.SINK_INDEX_DUPLICATE_DROOPED);
+                if (logDupMsgPrinter.shouldPrint()) {
+                    logger.info("{} package {} existed,just discard.", cachedSinkName, msgSeqId);
+                }
+                return;
+            }
+            // check event type
+            if (profile.getIsStatusIndex() == null) {
+                profile.setStatusIndex(msgType.equals(ConfigConstants.INDEX_TYPE_FILE_STATUS));
+            }
+            // build message
             if (sendRemote) {
-                String attr = "bid=" + agentLogBid
-                        + "&tid=" + agentLogTid
+                String attr = "bid=" + profile.getGroupId()
+                        + "&tid=" + profile.getStreamId()
                         + "&dt=" + System.currentTimeMillis()
-                        + "&m=9&NodeIP=" + event.getHeaders().get(ConfigConstants.REMOTE_IP_KEY);
+                        + "&NodeIP=" + profile.getProperties().get(ConfigConstants.REMOTE_IP_KEY);
                 InLongMsg inLongMsg = InLongMsg.newInLongMsg(false);
-                inLongMsg.addMsg(attr, event.getBody());
-                Message message = new Message(agentLogTopic, inLongMsg.buildArray());
-                message.setAttrKeyVal("tdbusip", event.getHeaders().get(ConfigConstants.DATAPROXY_IP_KEY));
+                inLongMsg.addMsg(attr, profile.getEventBody());
+                // build message
+                long dataTimeL = Long.parseLong(profile.getProperties().get(ConfigConstants.PKG_TIME_KEY));
+                Message message = new Message(agentIndexTopic, inLongMsg.buildArray());
+                message.putSystemHeader((profile.isStatusIndex() ? agentStatusTid : agentMeasureTid),
+                        DateTimeUtils.ms2yyyyMMddHHmm(dataTimeL));
+                message.setAttrKeyVal(AttributeConstants.RCV_TIME,
+                        profile.getProperties().get(AttributeConstants.RCV_TIME));
+                message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER,
+                        profile.getProperties().get(ConfigConstants.MSG_ENCODE_VER));
+                message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION,
+                        profile.getProperties().get(EventConstants.HEADER_KEY_VERSION));
+                message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY,
+                        profile.getProperties().get(ConfigConstants.REMOTE_IP_KEY));
+                message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY,
+                        profile.getProperties().get(ConfigConstants.DATAPROXY_IP_KEY));
+                long sendTime = System.currentTimeMillis();
+                message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(sendTime));
                 try {
-                    messageProducer.sendMessage(message, new MessageCallback());
-                } catch (Throwable e) {
-                    fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_SEND_EXCEPTION);
+                    messageProducer.sendMessage(message, new MyCallback(profile, sendTime, agentIndexTopic));
+                } catch (Throwable ex) {
+                    fileMetricIncWithDetailStats((profile.isStatusIndex()
+                            ? StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION
+                            : StatConstants.SINK_MEASURE_INDEX_SEND_EXCEPTION), agentIndexTopic);
+                    processSendFail(profile, DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
                     if (logCounter.shouldPrint()) {
-                        logger.error("{} send remote message throw exception!", cachedSinkName, e);
+                        logger.error("{} send remote message throw exception!", cachedSinkName, ex);
                     }
+                }
+            } else {
+                if (profile.isStatusIndex()) {
+                    try {
+                        int sentCnt = 0;
+                        FileStatus fs = FileStatusUtil.toFileStatus(profile.getEventBody());
+                        String fsStr = fs.toString();
+                        do {
+                            sentCnt++;
+                            try {
+                                controllerAgent.reportFileStatus(fs);
+                                fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_SUCCESS);
+                                break;
+                            } catch (Throwable ex) {
+                                // just retry
+                                if (maxMsgRetries > 0 && sentCnt > maxMsgRetries) {
+                                    logger.warn(
+                                            "ControllerSink filestatus: '{}' is skipped because of exceeded maxRetryCnt {}, ex {}",
+                                            fsStr, maxMsgRetries, ex);
+                                    fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_OVERMAX_DROOPED);
+                                    return;
+                                }
+                                fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_FAILRETRY);
+                            }
+                        } while (maxMsgRetries < 0 || sentCnt < maxMsgRetries);
+                    } catch (Throwable ex) {
+                        fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION);
+                        String s = (profile.getEventBody() != null ? new String(profile.getEventBody()) : "");
+                        logger.error("{} send status event failure, header is {}, body is {}",
+                                cachedSinkName, profile.getProperties(), s, ex);
+                    }
+                } else {
+                    // agent-measure
+                    AgentMeasureLogger.logMeasureInfo(profile.getEventBody());
+                    fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_OUTPUT_SUCCESS);
                 }
             }
         }
     }
 
-    private class MessageCallback implements MessageSentCallback {
+    private class MyCallback implements MessageSentCallback {
 
-        MessageCallback() {
+        private final EventProfile profile;
+        private final long sendTime;
+        private final String topic;
+
+        public MyCallback(EventProfile profile, long sendTime, String topic) {
+            this.profile = profile;
+            this.sendTime = sendTime;
+            this.topic = topic;
         }
 
         @Override
         public void onMessageSent(MessageSentResult result) {
             if (result.isSuccess()) {
-                fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_REMOTE_SUCCESS);
-
+                fileMetricAddSuccStats(profile, topic, result.getPartition().getHost());
+                releaseAcquiredSizePermit(profile);
+                addSendResultMetric(profile);
+                profile.ack();
             } else {
-                logger.warn("{} remote message send failed: {}", cachedSinkName, result.getErrMsg());
-                fileMetricIncWithDetailStats(StatConstants.SINK_MEASURE_INDEX_REMOTE_FAILURE,
-                        agentLogTopic + "." + result.getErrCode());
+                fileMetricAddFailStats(profile, topic,
+                        result.getPartition().getHost(), topic + "." + result.getErrCode());
+                processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
+                if (logCounter.shouldPrint()) {
+                    logger.warn("{} remote message send failed: {}", cachedSinkName, result.getErrMsg());
+                }
             }
         }
 
         @Override
-        public void onException(Throwable e) {
-            fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_REMOTE_EXCEPTION);
-            logger.error("{} remote message send failed!", cachedSinkName, e);
+        public void onException(Throwable ex) {
+            fileMetricAddExceptStats(profile, topic, "", topic);
+            processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
+            if (logCounter.shouldPrint()) {
+                logger.error("{} remote message send to {} tube exception", cachedSinkName, topic, ex);
+            }
+        }
+    }
+
+    /**
+     * processSendFail
+     */
+    public void processSendFail(EventProfile profile, DataProxyErrCode errCode, String errMsg) {
+        msgIdCache.invalidCache(profile.getProperties().get(ConfigConstants.SEQUENCE_ID));
+        if (profile.isResend(enableRetryAfterFailure, maxMsgRetries)) {
+            offerDispatchRecord(profile);
+            fileMetricIncSumStats(profile.isStatusIndex() ? StatConstants.SINK_STATUS_INDEX_REMOTE_FAILRETRY
+                    : StatConstants.SINK_MEASURE_INDEX_REMOTE_FAILRETRY);
+        } else {
+            releaseAcquiredSizePermit(profile);
+            fileMetricIncSumStats(profile.isStatusIndex() ? StatConstants.SINK_STATUS_INDEX_REMOTE_FAILDROPPED
+                    : StatConstants.SINK_MEASURE_INDEX_REMOTE_FAILDROPPED);
+            profile.fail(errCode, errMsg);
         }
     }
 
@@ -467,7 +648,7 @@ public class ControllerSink extends AbstractSink implements Configurable {
             logger.warn("{} create producer failure", cachedSinkName, e1);
         }
         Set<String> subSet = new HashSet<>();
-        subSet.add(agentLogTopic);
+        subSet.add(agentIndexTopic);
         try {
             messageProducer.publish(subSet);
         } catch (Throwable e) {
@@ -564,5 +745,102 @@ public class ControllerSink extends AbstractSink implements Configurable {
             logger.error("Attempt to close {} client failed.", cachedSinkName, e);
         }
         logger.debug("{} closed controller connection", cachedSinkName);
+    }
+
+    public void acquireAndOfferDispatchedRecord(EventProfile record) {
+        this.dispatchQueue.acquire(record.getMsgSize());
+        this.dispatchQueue.offer(record);
+    }
+
+    public void offerDispatchRecord(EventProfile record) {
+        this.dispatchQueue.offer(record);
+    }
+
+    public EventProfile pollDispatchedRecord() {
+        return this.dispatchQueue.pollRecord();
+    }
+
+    public EventProfile takeDispatchedRecord() {
+        return this.dispatchQueue.takeRecord();
+    }
+
+    public void releaseAcquiredSizePermit(EventProfile record) {
+        this.dispatchQueue.release(record.getMsgSize());
+    }
+
+    public int getDispatchQueueSize() {
+        return this.dispatchQueue.size();
+    }
+
+    public int getDispatchAvailablePermits() {
+        return this.dispatchQueue.availablePermits();
+    }
+
+    public void fileMetricAddSuccStats(EventProfile profile, String topic, String brokerIP) {
+        if (!enableFileMetric) {
+            return;
+        }
+        fileMetricIncStats(profile, true, topic, brokerIP,
+                (profile.isStatusIndex() ? StatConstants.SINK_STATUS_INDEX_REMOTE_SUCCESS
+                        : StatConstants.SINK_MEASURE_INDEX_REMOTE_SUCCESS),
+                "");
+    }
+
+    public void fileMetricAddFailStats(EventProfile profile, String topic, String brokerIP, String detailKey) {
+        if (!enableFileMetric) {
+            return;
+        }
+        fileMetricIncStats(profile, false, topic, brokerIP,
+                (profile.isStatusIndex() ? StatConstants.SINK_STATUS_INDEX_REMOTE_FAILURE
+                        : StatConstants.SINK_MEASURE_INDEX_REMOTE_SUCCESS),
+                detailKey);
+    }
+
+    public void fileMetricAddExceptStats(EventProfile profile, String topic, String brokerIP, String detailKey) {
+        if (!enableFileMetric) {
+            return;
+        }
+        fileMetricIncStats(profile, false, topic, brokerIP,
+                (profile.isStatusIndex() ? StatConstants.SINK_STATUS_INDEX_REMOTE_EXCEPTION
+                        : StatConstants.SINK_MEASURE_INDEX_REMOTE_EXCEPTION),
+                detailKey);
+    }
+
+    private void fileMetricIncStats(EventProfile profile, boolean isSucc,
+            String topic, String brokerIP, String eventKey, String detailInfoKey) {
+        long pkgTimeL = Long.parseLong(profile.getProperties().get(ConfigConstants.PKG_TIME_KEY));
+        String tenMinsDt = DateTimeUtils.ms2yyyyMMddHHmmTenMins(profile.getDt());
+        String tenMinsPkgTime = DateTimeUtils.ms2yyyyMMddHHmmTenMins(pkgTimeL);
+        StringBuilder statsKey = new StringBuilder(512)
+                .append(cachedSinkName)
+                .append(AttrConstants.SEP_HASHTAG).append(profile.getGroupId())
+                .append(AttrConstants.SEP_HASHTAG).append(profile.getStreamId())
+                .append(AttrConstants.SEP_HASHTAG).append(topic)
+                .append(AttrConstants.SEP_HASHTAG).append(AttrConstants.SEP_HASHTAG)
+                .append(profile.getProperties().get(ConfigConstants.DATAPROXY_IP_KEY));
+        String sumKey = statsKey.toString()
+                + AttrConstants.SEP_HASHTAG + tenMinsDt
+                + AttrConstants.SEP_HASHTAG + tenMinsPkgTime;
+        statsKey.append(AttrConstants.SEP_HASHTAG).append(brokerIP)
+                .append(AttrConstants.SEP_HASHTAG).append(tenMinsDt)
+                .append(AttrConstants.SEP_HASHTAG).append(DateTimeUtils.ms2yyyyMMddHHmm(pkgTimeL));
+        if (isSucc) {
+            int msgCnt = NumberUtils.toInt(
+                    profile.getProperties().get(ConfigConstants.MSG_COUNTER_KEY), 1);
+            detailIndex.addSuccStats(statsKey.toString(), msgCnt, 1, profile.getMsgSize());
+            sumIndex.addSuccStats(sumKey, msgCnt, 1, profile.getMsgSize());
+            monitorStats.incSumStats(eventKey);
+        } else {
+            detailIndex.addFailStats(statsKey.toString(), 1);
+            sumIndex.addFailStats(sumKey, 1);
+            monitorStats.incSumStats(eventKey);
+            monitorStats.incDetailStats(eventKey + "#" + detailInfoKey);
+        }
+    }
+    /**
+     * addSendResultMetric
+     */
+    public void addSendResultMetric(EventProfile profile) {
+        AuditUtils.add(AuditUtils.AUDIT_ID_DATAPROXY_SEND_SUCCESS, profile.getEvent());
     }
 }

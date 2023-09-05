@@ -24,9 +24,10 @@ public class AgentMeasureLogger {
 
     private static final Logger logger = LoggerFactory.getLogger(AgentMeasureLogger.class);
 
-    public static void logMeasureInfo(byte data[]) {
-        if (data != null) {
-            logger.info(new String(data));
+    public static void logMeasureInfo(byte[] data) {
+        if (data == null) {
+            return;
         }
+        logger.info(new String(data));
     }
 }

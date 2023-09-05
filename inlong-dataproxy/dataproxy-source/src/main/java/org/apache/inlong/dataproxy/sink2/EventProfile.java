@@ -58,8 +58,11 @@ public class EventProfile {
     private boolean needRspEvent = false;
     private Channel channel;
     private MsgType msgType;
+    private boolean isIndex;
+    private Boolean isStatusIndex = null;
 
     public EventProfile(Event event) {
+        this.isIndex = false;
         this.event = event;
         this.retries = 0;
         this.groupId = event.getHeaders().get(AttributeConstants.GROUP_ID);
@@ -67,6 +70,26 @@ public class EventProfile {
         this.uniqId = event.getHeaders().getOrDefault(AttributeConstants.UNIQ_ID, "");
         this.dt = NumberUtils.toLong(event.getHeaders().get(AttributeConstants.DATA_TIME));
         this.msgSize = event.getBody().length;
+        if (event instanceof SinkRspEvent) {
+            SinkRspEvent rspEvent = (SinkRspEvent) event;
+            this.needRspEvent = true;
+            this.channel = rspEvent.getChannel();
+            this.msgType = rspEvent.getMsgType();
+        }
+    }
+
+    public EventProfile(Event event, boolean isIndex) {
+        this.isIndex = isIndex;
+        this.event = event;
+        this.retries = 0;
+        this.groupId = event.getHeaders().get(AttributeConstants.GROUP_ID);
+        this.streamId = event.getHeaders().get(AttributeConstants.STREAM_ID);
+        this.uniqId = event.getHeaders().getOrDefault(AttributeConstants.UNIQ_ID, "");
+        this.dt = NumberUtils.toLong(event.getHeaders().get(AttributeConstants.DATA_TIME));
+        this.msgSize = event.getBody().length;
+        if (isIndex) {
+            return;
+        }
         if (event instanceof SinkRspEvent) {
             SinkRspEvent rspEvent = (SinkRspEvent) event;
             this.needRspEvent = true;
@@ -137,11 +160,23 @@ public class EventProfile {
         return event.getBody();
     }
 
+    public boolean isStatusIndex() {
+        return isStatusIndex;
+    }
+
+    public void setStatusIndex(boolean statusIndex) {
+        isStatusIndex = statusIndex;
+    }
+
+    public Boolean getIsStatusIndex() {
+        return isStatusIndex;
+    }
+
     /**
      * ack
      */
     public void ack() {
-        if (!this.needRspEvent) {
+        if (this.isIndex || !this.needRspEvent) {
             return;
         }
         responseV0Msg(DataProxyErrCode.SUCCESS, "");
@@ -188,6 +223,10 @@ public class EventProfile {
      *  Return response to client in source
      */
     private void responseV0Msg(DataProxyErrCode errCode, String errMsg) {
+        // whether index message
+        if (this.isIndex) {
+            return;
+        }
         // check channel status
         if (channel == null || !channel.isWritable()) {
             if (logCounter.shouldPrint()) {

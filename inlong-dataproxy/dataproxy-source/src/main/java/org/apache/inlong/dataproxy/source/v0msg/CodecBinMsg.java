@@ -18,6 +18,7 @@
 package org.apache.inlong.dataproxy.source.v0msg;
 
 import org.apache.inlong.common.enums.DataProxyErrCode;
+import org.apache.inlong.common.enums.DataProxyMsgEncType;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
 import org.apache.inlong.common.msg.MsgType;
@@ -27,6 +28,7 @@ import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
 import org.apache.inlong.dataproxy.source.BaseSource;
 import org.apache.inlong.dataproxy.utils.DateTimeUtils;
+import org.apache.inlong.sdk.commons.protocol.EventConstants;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -121,8 +123,6 @@ public class CodecBinMsg extends AbsV0MsgCodec {
                 msgHeadPos + BIN_MSG_BODY_OFFSET + bodyLen + BIN_MSG_ATTRLEN_SIZE)) {
             return false;
         }
-        this.bodyData = new byte[bodyLen];
-        cb.getBytes(msgHeadPos + BIN_MSG_BODY_OFFSET, this.bodyData, 0, bodyLen);
         // process extend field value
         if (((this.extendField & 0x8) == 0x8) || ((this.extendField & 0x10) == 0x10)) {
             this.indexMsg = true;
@@ -133,6 +133,30 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         }
         if (((extendField & 0x4) >> 2) == 0x0) {
             this.num2name = true;
+        }
+        if (this.indexMsg) {
+            int dataLen = cb.getInt(msgHeadPos + BIN_MSG_BODY_OFFSET);
+            if (dataLen <= 0) {
+                if (dataLen == 0) {
+                    source.fileMetricIncSumStats(StatConstants.EVENT_MSG_INDEX_BODY_ZERO);
+                    this.errCode = DataProxyErrCode.INDEX_BODY_LENGTH_ZERO;
+                } else {
+                    source.fileMetricIncSumStats(StatConstants.EVENT_MSG_INDEX_BODY_NEGATIVE);
+                    this.errCode = DataProxyErrCode.INDEX_BODY_LENGTH_LESS_ZERO;
+                }
+                return false;
+            }
+            if (dataLen + 4 > bodyLen) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_INDEX_DATALEN_MALFORMED);
+                this.errCode = DataProxyErrCode.FIELD_LENGTH_VALUE_NOT_EQUAL;
+                this.errMsg = String.format("index message dataLen(%d) + 4 > bodyLen(%d)", dataLen, bodyLen);
+                return false;
+            }
+            this.bodyData = new byte[dataLen];
+            cb.getBytes(msgHeadPos + BIN_MSG_BODY_OFFSET + 4, this.bodyData, 0, dataLen);
+        } else {
+            this.bodyData = new byte[bodyLen];
+            cb.getBytes(msgHeadPos + BIN_MSG_BODY_OFFSET, this.bodyData, 0, bodyLen);
         }
         return true;
     }
@@ -243,8 +267,20 @@ public class CodecBinMsg extends AbsV0MsgCodec {
                 headers.put(ConfigConstants.INDEX_MSG_TYPE, ConfigConstants.INDEX_TYPE_MEASURE);
                 headers.put(ConfigConstants.FILE_CHECK_DATA, "true");
             }
+            headers.put(AttributeConstants.GROUP_ID, groupId);
+            headers.put(AttributeConstants.STREAM_ID, streamId);
+            headers.put(ConfigConstants.TOPIC_KEY, topicName);
+            headers.put(AttributeConstants.DATA_TIME, String.valueOf(dataTimeMs));
             headers.put(ConfigConstants.REMOTE_IP_KEY, strRemoteIP);
             headers.put(ConfigConstants.DATAPROXY_IP_KEY, source.getSrcHost());
+            headers.put(ConfigConstants.MSG_COUNTER_KEY, String.valueOf(msgCount));
+            headers.put(ConfigConstants.MSG_ENCODE_VER,
+                    DataProxyMsgEncType.MSG_ENCODE_TYPE_RAW.getStrId());
+            headers.put(EventConstants.HEADER_KEY_VERSION,
+                    DataProxyMsgEncType.MSG_ENCODE_TYPE_RAW.getStrId());
+            headers.put(AttributeConstants.RCV_TIME, String.valueOf(msgRcvTime));
+            headers.put(AttributeConstants.UNIQ_ID, String.valueOf(uniq));
+            headers.put(ConfigConstants.PKG_TIME_KEY, String.valueOf(msgPkgTime));
             return EventBuilder.withBody(bodyData, headers);
         }
         // fill bin msg package

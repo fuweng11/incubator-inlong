@@ -81,9 +81,9 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         if (StringUtils.isNotEmpty(groupId) && !bid2SrcTopicMap.isEmpty()) {
             topicName = bid2SrcTopicMap.get(groupId);
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Get source topicName = {} by groupId = {}", topicName, groupId);
-        }
+        // if (LOG.isDebugEnabled()) {
+        // LOG.debug("Get source topicName = {} by groupId = {}", topicName, groupId);
+        // }
         return topicName;
     }
 
@@ -95,9 +95,9 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         if (StringUtils.isNotEmpty(groupId) && !bid2SinkTopicMap.isEmpty()) {
             topicName = bid2SinkTopicMap.get(groupId);
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Get sink topicName = {} by groupId = {}", topicName, groupId);
-        }
+        // if (LOG.isDebugEnabled()) {
+        // LOG.debug("Get sink topicName = {} by groupId = {}", topicName, groupId);
+        // }
         return topicName;
     }
 
@@ -106,9 +106,9 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         if (StringUtils.isNotEmpty(groupId) && !bid2SrcMValueMap.isEmpty()) {
             mxValue = bid2SrcMValueMap.get(groupId);
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Get m properties = {} by groupId = {}", mxValue, groupId);
-        }
+        // if (LOG.isDebugEnabled()) {
+        // LOG.debug("Get m properties = {} by groupId = {}", mxValue, groupId);
+        // }
         return mxValue;
     }
 

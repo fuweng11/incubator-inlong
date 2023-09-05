@@ -66,6 +66,8 @@ public class StatConstants {
     public static final java.lang.String EVENT_MSG_BODY_BLANK = "msg.body.blank";
     public static final java.lang.String EVENT_MSG_BODY_ZERO = "msg.body.zero";
     public static final java.lang.String EVENT_MSG_BODY_NEGATIVE = "msg.body.negative";
+    public static final java.lang.String EVENT_MSG_INDEX_BODY_ZERO = "msg.index.body.zero";
+    public static final java.lang.String EVENT_MSG_INDEX_BODY_NEGATIVE = "msg.index.body.negative";
     public static final java.lang.String EVENT_MSG_BODY_UNPRESS_EXP = "msg.body.unpress.exp";
     public static final java.lang.String EVENT_MSG_BODY_OVERMAX = "msg.body.overmax";
     public static final java.lang.String EVENT_MSG_BODY_TRIP = "msg.body.trip";
@@ -75,6 +77,7 @@ public class StatConstants {
     public static final java.lang.String EVENT_MSG_HB_MAGIC_UNEQUAL = "msg.hb.magic.unequal";
     public static final java.lang.String EVENT_MSG_HB_LEN_MALFORMED = "msg.hb.len.malformed";
     public static final java.lang.String EVENT_MSG_BIN_LEN_MALFORMED = "msg.bin.len.malformed";
+    public static final java.lang.String EVENT_MSG_INDEX_DATALEN_MALFORMED = "msg.index.datalen.malformed";
     public static final java.lang.String EVENT_MSG_TXT_LEN_MALFORMED = "msg.txt.len.malformed";
     public static final java.lang.String EVENT_MSG_ITEM_LEN_MALFORMED = "msg.item.len.malformed";
     public static final java.lang.String EVENT_MSG_ATTR_INVALID = "msg.attr.invalid";
@@ -117,13 +120,23 @@ public class StatConstants {
     // status index message
     public static final java.lang.String SINK_STATUS_INDEX_OVERMAX_DROOPED = "sink.status.index.overmax.dropped";
     public static final java.lang.String SINK_STATUS_INDEX_SEND_SUCCESS = "sink.status.index.send.success";
+    public static final java.lang.String SINK_STATUS_INDEX_SEND_FAILRETRY = "sink.status.index.send.retry";
     public static final java.lang.String SINK_STATUS_INDEX_SEND_EXCEPTION = "sink.status.index.send.exception";
+
+    public static final java.lang.String SINK_STATUS_INDEX_REMOTE_SUCCESS = "sink.status.index.remote.success";
+    public static final java.lang.String SINK_STATUS_INDEX_REMOTE_FAILURE = "sink.status.index.remote.failure";
+    public static final java.lang.String SINK_STATUS_INDEX_REMOTE_EXCEPTION = "sink.status.index.remote.exception";
+    public static final java.lang.String SINK_STATUS_INDEX_REMOTE_FAILRETRY = "sink.status.index.remote.retry";
+    public static final java.lang.String SINK_STATUS_INDEX_REMOTE_FAILDROPPED = "sink.status.index.remote.dropped";
+
     // measure index message
     public static final java.lang.String SINK_MEASURE_INDEX_OUTPUT_SUCCESS = "sink.measure.index.output.success";
     public static final java.lang.String SINK_MEASURE_INDEX_SEND_EXCEPTION = "sink.measure.index.send.exception";
     public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_SUCCESS = "sink.measure.index.remote.success";
     public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_FAILURE = "sink.measure.index.remote.failure";
     public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_EXCEPTION = "sink.measure.index.remote.exception";
+    public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_FAILRETRY = "sink.measure.index.remote.retry";
+    public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_FAILDROPPED = "sink.measure.index.remote.dropped";
 
     public static final java.lang.String EVENT_SINK_SEND_EXCEPTION = "sink.send.exception";
     public static final java.lang.String EVENT_SINK_PULSAR_CLIENT_INITIAL_FAILURE =
