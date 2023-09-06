@@ -50,7 +50,25 @@ export const useFormContent = ({ mqType, editing, isCreate }) => {
 function transType(editing: boolean, conf) {
   const arr = [
     {
-      name: ['isDlq', 'deadLetterTopic', 'isRlq', 'retryLetterTopic'],
+      name: [
+        'bg',
+        'productId',
+        'resourceAppGroupName',
+        'inCharges',
+        'usageDesc',
+        'alertEnabled',
+        'alertType',
+        'startTimes',
+        'upgradeTimes',
+        'resetPeriod',
+        'maskSwitch',
+        'maskTime',
+        'threshold',
+        'isDlq',
+        'deadLetterTopic',
+        'isRlq',
+        'retryLetterTopic',
+      ],
       as: 'text',
       active: !editing,
     },

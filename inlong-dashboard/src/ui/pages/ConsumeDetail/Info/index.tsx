@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useDefaultMeta } from '@/plugins';
 import { CommonInterface } from '../common';
 import { useFormContent } from './config';
+import dayjs from 'dayjs';
 
 type Props = CommonInterface;
 
@@ -52,6 +53,10 @@ const Comp = ({ id, readonly, isCreate }: Props, ref) => {
       ...result,
       inCharges: result.inCharges?.split(',') || [],
       topic: result.topic?.split(','),
+      maskTime:
+        result.maskStartTime && result.maskEndTime
+          ? [dayjs(result.maskStartTime), dayjs(result.maskEndTime)]
+          : null,
     }),
     onSuccess: data => {
       form.setFieldsValue(data);
@@ -68,6 +73,12 @@ const Comp = ({ id, readonly, isCreate }: Props, ref) => {
       consumerGroup: values.consumerGroup || data?.consumerGroup,
       topic: values.topic?.join(','),
     };
+
+    if (submitData.maskSwitch === 1) {
+      submitData.maskStartTime = +submitData.maskTime[0];
+      submitData.maskEndTime = +submitData.maskTime[1];
+      delete submitData.maskTime;
+    }
 
     if (isUpdate) {
       submitData.id = data?.id;
