@@ -63,13 +63,13 @@ public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
     private String location;
 
     @ApiModelProperty("partition type, only for thive:LIST,RANGE")
-    private String partitionType = "LIST";
+    private String partitionType;
 
     @ApiModelProperty("partition interval, 1 day, 1 hour, 30 minutes, 10 minutes")
-    private Integer partitionInterval = 1;
+    private Integer partitionInterval;
 
     @ApiModelProperty("partition units: D-Day, H-Hour, i-minute")
-    private String partitionUnit = "D";
+    private String partitionUnit;
 
     @ApiModelProperty("first level partition field")
     private String primaryPartition;
@@ -118,7 +118,7 @@ public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
     private String checkRelative;
 
     @ApiModelProperty("Hadoop dfs replication ")
-    private Integer hadoopDfsReplication = 2;
+    private Integer hadoopDfsReplication;
 
     @ApiModelProperty("background operation log")
     private String optLog;
