@@ -105,13 +105,12 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
             return retChannels;
         }
         if (pulsarXfeMasterChannels.size() > 0) {
-            return retChannels;
-        }
-        if (ConfigManager.getInstance().isRequirePulsarTransfer(
-                event.getHeaders().get(AttributeConstants.GROUP_ID),
-                event.getHeaders().get(AttributeConstants.STREAM_ID))) {
-            retChannels.add(pulsarXfeMasterChannels.get(pulsarXfeMasterIndex));
-            pulsarXfeMasterIndex = (pulsarXfeMasterIndex + 1) % pulsarXfeMasterChannels.size();
+            if (ConfigManager.getInstance().isRequirePulsarTransfer(
+                    event.getHeaders().get(AttributeConstants.GROUP_ID),
+                    event.getHeaders().get(AttributeConstants.STREAM_ID))) {
+                retChannels.add(pulsarXfeMasterChannels.get(pulsarXfeMasterIndex));
+                pulsarXfeMasterIndex = (pulsarXfeMasterIndex + 1) % pulsarXfeMasterChannels.size();
+            }
         }
         return retChannels;
     }
@@ -143,14 +142,13 @@ public class FailoverChannelSelector extends AbstractChannelSelector {
                 || event.getHeaders().containsKey(ConfigConstants.FILE_CHECK_DATA)) {
             return retChannels;
         }
-        if (pulsarXfeSlaveChannels.size() == 0) {
-            return retChannels;
-        }
-        if (ConfigManager.getInstance().isRequirePulsarTransfer(
-                event.getHeaders().get(AttributeConstants.GROUP_ID),
-                event.getHeaders().get(AttributeConstants.STREAM_ID))) {
-            retChannels.add(pulsarXfeSlaveChannels.get(pulsarXfeSlaveIndex));
-            pulsarXfeSlaveIndex = (pulsarXfeSlaveIndex + 1) % pulsarXfeSlaveChannels.size();
+        if (pulsarXfeSlaveChannels.size() > 0) {
+            if (ConfigManager.getInstance().isRequirePulsarTransfer(
+                    event.getHeaders().get(AttributeConstants.GROUP_ID),
+                    event.getHeaders().get(AttributeConstants.STREAM_ID))) {
+                retChannels.add(pulsarXfeSlaveChannels.get(pulsarXfeSlaveIndex));
+                pulsarXfeSlaveIndex = (pulsarXfeSlaveIndex + 1) % pulsarXfeSlaveChannels.size();
+            }
         }
         return retChannels;
     }
