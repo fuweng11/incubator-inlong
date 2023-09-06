@@ -33,6 +33,7 @@ public class AuthConfig {
     private String smk;
     private String account;
     private String cmk;
+    private boolean identitySafeMode;
 
     // used for ioa
     private String appToken;
@@ -79,6 +80,15 @@ public class AuthConfig {
 
     public AuthConfig setAppToken(String appToken) {
         this.appToken = appToken;
+        return this;
+    }
+
+    public boolean getIdentitySafeMode() {
+        return identitySafeMode;
+    }
+
+    public AuthConfig setIdentitySafeMode(boolean identitySafeMode) {
+        this.identitySafeMode = identitySafeMode;
         return this;
     }
 }

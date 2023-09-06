@@ -17,9 +17,8 @@
 
 package org.apache.inlong.manager.plugin.auth.web;
 
-import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
-
 import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,6 +33,7 @@ public class TofAuthenticationToken implements ProxyUserAuthenticationToken {
     public static final String HEADER_USER_ID = "staffid";
     public static final String HEADER_TIMESTAMP = "timestamp";
     public static final String HEADER_X_RIO_SEQ = "x-rio-seq";
+    public static final String HEADER_X_TAI_IDENTITY = "x-tai-identity";
 
     /**
      * Reserved header field to store current staff's extension info
@@ -46,6 +46,7 @@ public class TofAuthenticationToken implements ProxyUserAuthenticationToken {
     private String signature;
     private String timestamp;
     private String rioSeq;
+    private String taiIdentity;
     private String extData;
     private String proxyUser;
 
@@ -55,6 +56,8 @@ public class TofAuthenticationToken implements ProxyUserAuthenticationToken {
         this.signature = request.getHeader(HEADER_SIGNATURE);
         this.timestamp = request.getHeader(HEADER_TIMESTAMP);
         this.rioSeq = request.getHeader(HEADER_X_RIO_SEQ);
+        this.taiIdentity = request.getHeader(HEADER_X_TAI_IDENTITY);
+
         this.extData = request.getHeader(HEADER_X_EXT_DATA);
         extData = StringUtils.isEmpty(extData) ? "" : extData;
         this.proxyUser = getProxyUserFromHeader(request);
@@ -74,7 +77,7 @@ public class TofAuthenticationToken implements ProxyUserAuthenticationToken {
     }
 
     public boolean isEmpty() {
-        return StringUtils.isEmpty(username)
+        return (StringUtils.isEmpty(username) && StringUtils.isEmpty(taiIdentity))
                 || StringUtils.isEmpty(signature)
                 || StringUtils.isEmpty(timestamp);
     }
@@ -83,9 +86,17 @@ public class TofAuthenticationToken implements ProxyUserAuthenticationToken {
         return userId;
     }
 
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     @Autowired
     public String getUsername() {
         return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getSignature() {
@@ -103,6 +114,11 @@ public class TofAuthenticationToken implements ProxyUserAuthenticationToken {
     public String getExtData() {
         return extData;
     }
+
+    public String getTaiIdentity() {
+        return taiIdentity;
+    }
+
 
     @Override
     public String toString() {
