@@ -274,10 +274,6 @@ public class CodecBinMsg extends AbsV0MsgCodec {
             headers.put(ConfigConstants.REMOTE_IP_KEY, strRemoteIP);
             headers.put(ConfigConstants.DATAPROXY_IP_KEY, source.getSrcHost());
             headers.put(ConfigConstants.MSG_COUNTER_KEY, String.valueOf(msgCount));
-            headers.put(ConfigConstants.MSG_ENCODE_VER,
-                    DataProxyMsgEncType.MSG_ENCODE_TYPE_RAW.getStrId());
-            headers.put(EventConstants.HEADER_KEY_VERSION,
-                    DataProxyMsgEncType.MSG_ENCODE_TYPE_RAW.getStrId());
             headers.put(AttributeConstants.RCV_TIME, String.valueOf(msgRcvTime));
             headers.put(AttributeConstants.UNIQ_ID, String.valueOf(uniq));
             headers.put(ConfigConstants.PKG_TIME_KEY, String.valueOf(msgPkgTime));

@@ -18,6 +18,7 @@
 package org.apache.inlong.dataproxy.sink2;
 
 import org.apache.inlong.common.enums.DataProxyErrCode;
+import org.apache.inlong.common.enums.DataProxyMsgEncType;
 import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
@@ -493,9 +494,9 @@ public class ControllerSink extends AbstractSink implements Configurable {
                 message.setAttrKeyVal(AttributeConstants.RCV_TIME,
                         profile.getProperties().get(AttributeConstants.RCV_TIME));
                 message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER,
-                        profile.getProperties().get(ConfigConstants.MSG_ENCODE_VER));
+                        DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId());
                 message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION,
-                        profile.getProperties().get(EventConstants.HEADER_KEY_VERSION));
+                        DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId());
                 message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY,
                         profile.getProperties().get(ConfigConstants.REMOTE_IP_KEY));
                 message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY,
