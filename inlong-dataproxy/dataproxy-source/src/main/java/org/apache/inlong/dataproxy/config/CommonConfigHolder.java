@@ -160,7 +160,7 @@ public class CommonConfigHolder {
     public static final String KEY_PROMETHEUS_HTTP_PORT = "prometheusHttpPort";
     public static final int VAL_DEF_PROMETHEUS_HTTP_PORT = 8080;
     // whether enable tdbank pcg log output
-    public static final String KEY_ENABLE_PCG_LOG_OUTPUT = "proxy.enable.pcg.log.output";
+    public static final String KEY_ENABLE_PCG_LOG_OUTPUT = "file.metric.pcg.log.output";
     public static final boolean VAL_DEF_ENABLE_PCG_LOG_OUTPUT = false;
     // whether enable tdbank pulsar transfer sink
     public static final String KEY_ENABLE_PULSAR_TRANSFER = "proxy.enable.pulsar.transfer";
