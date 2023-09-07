@@ -36,6 +36,7 @@ public class DataNodeType {
     public static final String ORACLE = "ORACLE";
     public static final String SQLSERVER = "SQLSERVER";
     public static final String MONGODB = "MONGODB";
+    public static final String PULSAR = "PULSAR";
 
     // --------------------------------------------------------------------------------------------
     // Inner parameters
