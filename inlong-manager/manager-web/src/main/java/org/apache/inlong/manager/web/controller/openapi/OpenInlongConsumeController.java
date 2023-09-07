@@ -17,14 +17,31 @@
 
 package org.apache.inlong.manager.web.controller.openapi;
 
+import org.apache.inlong.manager.common.enums.OperationType;
+import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
+import org.apache.inlong.manager.common.validation.UpdateValidation;
+import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.Response;
+import org.apache.inlong.manager.pojo.consume.InlongConsumeBriefInfo;
+import org.apache.inlong.manager.pojo.consume.InlongConsumeCountInfo;
+import org.apache.inlong.manager.pojo.consume.InlongConsumeInfo;
+import org.apache.inlong.manager.pojo.consume.InlongConsumePageRequest;
 import org.apache.inlong.manager.pojo.consume.InlongConsumeRequest;
 import org.apache.inlong.manager.pojo.user.LoginUserUtils;
+import org.apache.inlong.manager.pojo.workflow.WorkflowResult;
+import org.apache.inlong.manager.service.consume.InlongConsumeProcessService;
 import org.apache.inlong.manager.service.consume.InlongConsumeService;
+import org.apache.inlong.manager.service.operationlog.OperationLog;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -40,6 +57,62 @@ public class OpenInlongConsumeController {
 
     @Autowired
     private InlongConsumeService consumeService;
+    @Autowired
+    private InlongConsumeProcessService consumeProcessService;
+
+    @RequestMapping(value = "/consume/save", method = RequestMethod.POST)
+    @OperationLog(operation = OperationType.CREATE)
+    @ApiOperation(value = "Save inlong consume")
+    public Response<Integer> save(@RequestBody InlongConsumeRequest request) {
+        String operator = LoginUserUtils.getLoginUser().getName();
+        return Response.success(consumeService.save(request, operator));
+    }
+
+    @GetMapping("/consume/get/{id}")
+    @ApiOperation(value = "Get inlong consume")
+    @ApiImplicitParam(name = "id", value = "Inlong consume ID", dataTypeClass = Integer.class, required = true)
+    public Response<InlongConsumeInfo> get(@PathVariable(name = "id") Integer id) {
+        return Response.success(consumeService.get(id, LoginUserUtils.getLoginUser().getName()));
+    }
+
+    @GetMapping(value = "/consume/countStatus")
+    @ApiOperation(value = "Count inlong consume status by current user")
+    public Response<InlongConsumeCountInfo> countStatusByUser() {
+        return Response.success(consumeService.countStatus(LoginUserUtils.getLoginUser().getName()));
+    }
+
+    @PostMapping("/consume/list")
+    @ApiOperation(value = "List inlong consume by pagination")
+    public Response<PageResult<InlongConsumeBriefInfo>> list(@RequestBody InlongConsumePageRequest request) {
+        request.setCurrentUser(LoginUserUtils.getLoginUser().getName());
+        request.setIsAdminRole(
+                LoginUserUtils.getLoginUser().getRoles().contains(TenantUserTypeEnum.TENANT_ADMIN.name()));
+        return Response.success(consumeService.list(request));
+    }
+
+    @PostMapping("/consume/update")
+    @OperationLog(operation = OperationType.UPDATE)
+    @ApiOperation(value = "Update inlong consume")
+    public Response<Integer> update(@Validated(UpdateValidation.class) @RequestBody InlongConsumeRequest request) {
+        return Response.success(consumeService.update(request, LoginUserUtils.getLoginUser().getName()));
+    }
+
+    @DeleteMapping("/consume/delete/{id}")
+    @OperationLog(operation = OperationType.DELETE)
+    @ApiOperation(value = "Delete inlong consume by ID")
+    @ApiImplicitParam(name = "id", value = "Inlong consume ID", dataTypeClass = Integer.class, required = true)
+    public Response<Boolean> delete(@PathVariable(name = "id") Integer id) {
+        return Response.success(consumeService.delete(id, LoginUserUtils.getLoginUser().getName()));
+    }
+
+    @PostMapping("/consume/startProcess/{id}")
+    @OperationLog(operation = OperationType.UPDATE)
+    @ApiOperation(value = "Start inlong consume process")
+    @ApiImplicitParam(name = "id", value = "Inlong consume ID", dataTypeClass = Integer.class, required = true)
+    public Response<WorkflowResult> startProcess(@PathVariable(name = "id") Integer id) {
+        String username = LoginUserUtils.getLoginUser().getName();
+        return Response.success(consumeProcessService.startProcess(id, username));
+    }
 
     @RequestMapping(value = "/consume/autoAdd", method = RequestMethod.POST)
     @ApiOperation(value = "Auto add inlong consume")

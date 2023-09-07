@@ -30,7 +30,6 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-import java.util.Date;
 
 /**
  * Base inlong consume request
@@ -76,33 +75,5 @@ public abstract class InlongConsumeRequest extends BaseInlongConsume {
 
     @ApiModelProperty(value = "Version number")
     private Integer version;
-
-    @ApiModelProperty(value = "alertEnabled")
-    @NotNull(message = "alertEnabled cannot be null")
-    private Integer alertEnabled;
-
-    @ApiModelProperty(value = "alertType")
-    private String alertType;
-
-    @ApiModelProperty(value = "startTimes")
-    private Integer startTimes;
-
-    @ApiModelProperty(value = "upgradeTimes")
-    private Integer upgradeTimes;
-
-    @ApiModelProperty(value = "resetPeriod")
-    private Integer resetPeriod;
-
-    @ApiModelProperty(value = "threshold")
-    private Long threshold;
-
-    @ApiModelProperty(value = "maskSwitch")
-    private Integer maskSwitch;
-
-    @ApiModelProperty(value = "maskStartTime")
-    private Date maskStartTime;
-
-    @ApiModelProperty(value = "maskEndTime")
-    private Date maskEndTime;
 
 }

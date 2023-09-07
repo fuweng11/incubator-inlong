@@ -163,6 +163,7 @@ public class InlongConsumeServiceImpl implements InlongConsumeService {
 
         InlongConsumeOperator consumeOperator = consumeOperatorFactory.getInstance(entity.getMqType());
         InlongConsumeInfo consumeInfo = consumeOperator.getFromEntity(entity);
+        addConsumptionAlertConfig(consumeInfo);
 
         LOGGER.debug("success to get inlong consume for id={}", id);
         return consumeInfo;
@@ -374,6 +375,23 @@ public class InlongConsumeServiceImpl implements InlongConsumeService {
             alertExist.setCreateTime(now);
             alertExist.setModifyTime(now);
             consumptionAlertMapper.insert(alertExist);
+        }
+    }
+
+    private void addConsumptionAlertConfig(InlongConsumeInfo info) {
+        if (Objects.equals(info.getAlertEnabled(), 1)) {
+            ConsumptionAlertConfigEntity alertEntity = consumptionAlertMapper.selectByConsumptionId(info.getId());
+            if (alertEntity == null) {
+                return;
+            }
+            info.setAlertType(alertEntity.getAlertType());
+            info.setStartTimes(alertEntity.getStartTimes());
+            info.setUpgradeTimes(alertEntity.getUpgradeTimes());
+            info.setResetPeriod(alertEntity.getResetPeriod());
+            info.setThreshold(alertEntity.getThreshold());
+            info.setMaskSwitch(alertEntity.getMaskSwitch());
+            info.setMaskStartTime(alertEntity.getMaskStartTime());
+            info.setMaskEndTime(alertEntity.getMaskEndTime());
         }
     }
 }
