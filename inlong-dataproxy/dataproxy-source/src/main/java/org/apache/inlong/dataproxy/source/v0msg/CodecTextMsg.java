@@ -42,9 +42,8 @@ import static org.apache.inlong.dataproxy.source.v0msg.MsgFieldConsts.TXT_MSG_TO
 
 public class CodecTextMsg extends AbsV0MsgCodec {
 
-    public CodecTextMsg(int totalDataLen, int msgTypeValue, long msgRcvTime,
-            String strRemoteIP, boolean enableTDBankLogic) {
-        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP, enableTDBankLogic);
+    public CodecTextMsg(int totalDataLen, int msgTypeValue, long msgRcvTime, String strRemoteIP) {
+        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP);
     }
 
     public boolean descMsg(BaseSource source, ByteBuf cb) throws Exception {

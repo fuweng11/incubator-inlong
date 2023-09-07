@@ -17,6 +17,7 @@
 
 package org.apache.inlong.dataproxy.source;
 
+import org.apache.inlong.common.enums.DataProxyMsgEncType;
 import org.apache.inlong.common.metric.MetricRegister;
 import org.apache.inlong.dataproxy.admin.ProxyServiceMBean;
 import org.apache.inlong.dataproxy.channel.FailoverChannelProcessor;
@@ -137,6 +138,8 @@ public abstract class BaseSource
     private final String attrKeyGroupId;
     // stream id key name
     private final String attrKeyStreamId;
+    // message encode type id
+    private final String msgEncodeTypeId;
     // whether enable file metric
     protected boolean enableFileMetric;
     // whether enable tdbank logic
@@ -153,9 +156,11 @@ public abstract class BaseSource
         if (this.enableTDBankLogic) {
             this.attrKeyGroupId = HttpAttrConst.TDBANK_KEY_BUSINESS_ID;
             this.attrKeyStreamId = HttpAttrConst.TDBANK_KEY_INTERFACE_ID;
+            this.msgEncodeTypeId = DataProxyMsgEncType.MSG_ENCODE_TYPE_TDMSG1.getStrId();
         } else {
             this.attrKeyGroupId = HttpAttrConst.KEY_GROUP_ID;
             this.attrKeyStreamId = HttpAttrConst.KEY_STREAM_ID;
+            this.msgEncodeTypeId = DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId();
         }
 
     }
@@ -426,6 +431,10 @@ public abstract class BaseSource
         return attrKeyStreamId;
     }
 
+    public String getMsgEncodeTypeId() {
+        return msgEncodeTypeId;
+    }
+
     public int getMaxMsgLength() {
         return maxMsgLength;
     }
@@ -460,6 +469,10 @@ public abstract class BaseSource
 
     public int getMaxWorkerThreads() {
         return maxWorkerThreads;
+    }
+
+    public boolean isEnableTDBankLogic() {
+        return enableTDBankLogic;
     }
 
     public void fileMetricIncSumStats(String eventKey) {

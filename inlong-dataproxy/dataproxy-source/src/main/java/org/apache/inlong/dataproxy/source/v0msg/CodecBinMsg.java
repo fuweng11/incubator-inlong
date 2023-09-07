@@ -18,7 +18,6 @@
 package org.apache.inlong.dataproxy.source.v0msg;
 
 import org.apache.inlong.common.enums.DataProxyErrCode;
-import org.apache.inlong.common.enums.DataProxyMsgEncType;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
 import org.apache.inlong.common.msg.MsgType;
@@ -28,7 +27,6 @@ import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
 import org.apache.inlong.dataproxy.source.BaseSource;
 import org.apache.inlong.dataproxy.utils.DateTimeUtils;
-import org.apache.inlong.sdk.commons.protocol.EventConstants;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -67,9 +65,8 @@ public class CodecBinMsg extends AbsV0MsgCodec {
     private boolean transNum2Name = false;
     private boolean needTraceMsg = false;
 
-    public CodecBinMsg(int totalDataLen, int msgTypeValue, long msgRcvTime,
-            String strRemoteIP, boolean enableTDBankLogic) {
-        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP, enableTDBankLogic);
+    public CodecBinMsg(int totalDataLen, int msgTypeValue, long msgRcvTime, String strRemoteIP) {
+        super(totalDataLen, msgTypeValue, msgRcvTime, strRemoteIP);
     }
 
     public boolean descMsg(BaseSource source, ByteBuf cb) throws Exception {
@@ -163,7 +160,7 @@ public class CodecBinMsg extends AbsV0MsgCodec {
 
     public boolean validAndFillFields(BaseSource source, StringBuilder strBuff) {
         // reject unsupported index messages
-        if (indexMsg && !enableTDBankLogic) {
+        if (indexMsg && !source.isEnableTDBankLogic()) {
             source.fileMetricIncSumStats(StatConstants.EVENT_MSG_INDEXMSG_ILLEGAL);
             this.errCode = DataProxyErrCode.UNSUPPORTED_EXTEND_FIELD_VALUE;
             return false;
@@ -174,7 +171,7 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         }
         // build message seqId
         String pkgTimeStr;
-        if (enableTDBankLogic) {
+        if (source.isEnableTDBankLogic()) {
             pkgTimeStr = attrMap.get(ConfigConstants.PKG_TIME_KEY);
             if (pkgTimeStr == null) {
                 pkgTimeStr = String.valueOf(dataTimeMs);
@@ -305,7 +302,7 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         InLongMsg inLongMsg = InLongMsg.newInLongMsg(source.isCompressed(), 4);
         inLongMsg.addMsg(dataBuf.array());
         byte[] inlongMsgData = inLongMsg.buildArray();
-        if (enableTDBankLogic) {
+        if (source.isEnableTDBankLogic()) {
             String pkgTimeStr = this.attrMap.get(ConfigConstants.PKG_TIME_KEY);
             if (pkgTimeStr == null) {
                 msgPkgTime = inLongMsg.getCreatetime();

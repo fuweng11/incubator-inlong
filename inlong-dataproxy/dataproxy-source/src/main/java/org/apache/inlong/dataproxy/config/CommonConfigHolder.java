@@ -165,6 +165,9 @@ public class CommonConfigHolder {
     // whether enable tdbank pulsar transfer sink
     public static final String KEY_ENABLE_PULSAR_TRANSFER = "proxy.enable.pulsar.transfer";
     public static final boolean VAL_DEF_ENABLE_PULSAR_TRANSFER = false;
+    // whether enable m parameter setting
+    public static final String KEY_ENABLE_TDBANK_M_SETTING = "proxy.enable.use.m.setting";
+    public static final boolean VAL_DEF_ENABLE_TDBANK_M_SETTING = true;
     // cluster id
     public static final String KEY_PROXY_CLUSTER_ID = "proxy.cluster.id";
     public static final int VAL_DEF_CLUSTER_ID = -1;
@@ -215,6 +218,7 @@ public class CommonConfigHolder {
     private int maxRetriesAfterFailure = VAL_DEF_MAX_RETRIES_AFTER_FAILURE;
     private boolean enablePCGLogOutput = VAL_DEF_ENABLE_PCG_LOG_OUTPUT;
     private boolean enablePulsarTransfer = VAL_DEF_ENABLE_PULSAR_TRANSFER;
+    private boolean enableTDBankMparamSetting = VAL_DEF_ENABLE_TDBANK_M_SETTING;
     private int clusterId = VAL_DEF_CLUSTER_ID;
 
     /**
@@ -430,6 +434,10 @@ public class CommonConfigHolder {
 
     public int getMaxRetriesAfterFailure() {
         return maxRetriesAfterFailure;
+    }
+
+    public boolean isUseTDBankMparamSetting() {
+        return (isMetaInfoGetFromTDBank() && enableTDBankMparamSetting);
     }
 
     private void preReadFields() {
@@ -666,6 +674,11 @@ public class CommonConfigHolder {
             tmpValue = this.props.get(KEY_ENABLE_PULSAR_TRANSFER);
             if (StringUtils.isNotBlank(tmpValue)) {
                 this.enablePulsarTransfer = "TRUE".equalsIgnoreCase(tmpValue.trim());
+            }
+            // read whether use m setting
+            tmpValue = this.props.get(KEY_ENABLE_TDBANK_M_SETTING);
+            if (StringUtils.isNotBlank(tmpValue)) {
+                this.enableTDBankMparamSetting = "TRUE".equalsIgnoreCase(tmpValue.trim());
             }
         }
         // read cluster id

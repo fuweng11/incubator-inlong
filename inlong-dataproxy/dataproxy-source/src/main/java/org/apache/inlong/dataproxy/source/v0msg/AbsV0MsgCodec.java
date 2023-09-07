@@ -18,7 +18,6 @@
 package org.apache.inlong.dataproxy.source.v0msg;
 
 import org.apache.inlong.common.enums.DataProxyErrCode;
-import org.apache.inlong.common.enums.DataProxyMsgEncType;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
@@ -68,16 +67,12 @@ public abstract class AbsV0MsgCodec {
     protected String msgProcType = "b2b";
     protected boolean needResp = true;
     protected long msgPkgTime;
-    // whether enable tdbank logic
-    protected boolean enableTDBankLogic;
 
-    public AbsV0MsgCodec(int totalDataLen, int msgTypeValue,
-            long msgRcvTime, String strRemoteIP, boolean enableTDBankLogic) {
+    public AbsV0MsgCodec(int totalDataLen, int msgTypeValue, long msgRcvTime, String strRemoteIP) {
         this.totalDataLen = totalDataLen;
         this.msgType = (byte) (msgTypeValue & 0xFF);
         this.msgRcvTime = msgRcvTime;
         this.strRemoteIP = strRemoteIP;
-        this.enableTDBankLogic = enableTDBankLogic;
     }
 
     public abstract boolean descMsg(BaseSource source, ByteBuf cb) throws Exception;
@@ -242,10 +237,8 @@ public abstract class AbsV0MsgCodec {
         headers.put(ConfigConstants.REMOTE_IP_KEY, strRemoteIP);
         headers.put(ConfigConstants.DATAPROXY_IP_KEY, source.getSrcHost());
         headers.put(ConfigConstants.MSG_COUNTER_KEY, String.valueOf(msgCount));
-        headers.put(ConfigConstants.MSG_ENCODE_VER,
-                DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId());
-        headers.put(EventConstants.HEADER_KEY_VERSION,
-                DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId());
+        headers.put(ConfigConstants.MSG_ENCODE_VER, source.getMsgEncodeTypeId());
+        headers.put(EventConstants.HEADER_KEY_VERSION, source.getMsgEncodeTypeId());
         headers.put(AttributeConstants.RCV_TIME, String.valueOf(msgRcvTime));
         headers.put(AttributeConstants.UNIQ_ID, String.valueOf(uniq));
         headers.put(ConfigConstants.PKG_TIME_KEY, String.valueOf(msgPkgTime));

@@ -145,6 +145,9 @@ public class ControllerSink extends AbstractSink implements Configurable {
     private MonitorStats monitorStats = null;
     private MonitorIndex detailIndex = null;
     private MonitorSumIndex sumIndex = null;
+    // message encode type id
+    private final String msgEncodeTypeId =
+            DataProxyMsgEncType.MSG_ENCODE_TYPE_TDMSG1.getStrId();
 
     public ControllerSink() {
 
@@ -493,10 +496,8 @@ public class ControllerSink extends AbstractSink implements Configurable {
                         DateTimeUtils.ms2yyyyMMddHHmm(dataTimeL));
                 message.setAttrKeyVal(AttributeConstants.RCV_TIME,
                         profile.getProperties().get(AttributeConstants.RCV_TIME));
-                message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER,
-                        DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId());
-                message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION,
-                        DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId());
+                message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, msgEncodeTypeId);
+                message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION, msgEncodeTypeId);
                 message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY,
                         profile.getProperties().get(ConfigConstants.REMOTE_IP_KEY));
                 message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY,

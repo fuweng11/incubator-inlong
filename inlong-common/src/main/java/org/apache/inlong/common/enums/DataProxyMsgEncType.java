@@ -25,6 +25,7 @@ public enum DataProxyMsgEncType {
     MSG_ENCODE_TYPE_RAW(0, "Raw", "Raw message without any InLong format"),
     MSG_ENCODE_TYPE_PB(1, "PB", "The PB MessagePack encode format"),
     MSG_ENCODE_TYPE_INLONGMSG(2, "InLongMsg", "The InLongMsg encode format"),
+    MSG_ENCODE_TYPE_TDMSG1(98, "TDMsg1", "The TDMsg1 encode format"),
     MSG_ENCODE_TYPE_UNKNOWN(99, "Unknown", "Unknown encode format");
 
     DataProxyMsgEncType(int id, String name, String desc) {

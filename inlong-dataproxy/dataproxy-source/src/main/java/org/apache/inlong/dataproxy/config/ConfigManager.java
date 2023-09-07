@@ -188,7 +188,7 @@ public class ConfigManager {
     }
 
     public String getMxProperties(String groupId, String streamId) {
-        if (CommonConfigHolder.getInstance().isMetaInfoGetFromTDBank()) {
+        if (CommonConfigHolder.getInstance().isUseTDBankMparamSetting()) {
             return tdbankMetaHolder.getMxProperties(groupId);
         } else {
             return null;

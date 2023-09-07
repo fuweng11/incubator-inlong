@@ -22,7 +22,6 @@ import org.apache.inlong.common.enums.DataProxyMsgEncType;
 import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
-import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.HttpAttrConst;
@@ -81,6 +80,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
     private final String srvPathHeartBeat;
     private final String srvPathReportMsg;
     private final String keyNameClientIP;
+    private final String msgEncodeTypeId;
 
     /**
      * Constructor
@@ -89,12 +89,14 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
      */
     public HttpMessageHandler(BaseSource source) {
         this.source = source;
-        if (CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+        if (this.source.isEnableTDBankLogic()) {
+            this.msgEncodeTypeId = DataProxyMsgEncType.MSG_ENCODE_TYPE_TDMSG1.getStrId();
             this.keyNameClientIP = AttributeConstants.NODE_IP;
             this.srvPathHeartBeat = HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT;
             this.srvPathReportMsg = HttpAttrConst.TDBANK_KEY_SRV_URL_REPORT_MSG;
         } else {
             this.keyNameClientIP = "clientIp";
+            this.msgEncodeTypeId = DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId();
             this.srvPathHeartBeat = HttpAttrConst.KEY_SRV_URL_HEARTBEAT;
             this.srvPathReportMsg = HttpAttrConst.KEY_SRV_URL_REPORT_MSG;
         }
@@ -383,10 +385,8 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
         eventHeaders.put(ConfigConstants.REMOTE_IP_KEY, clientIp);
         eventHeaders.put(ConfigConstants.DATAPROXY_IP_KEY, source.getSrcHost());
         eventHeaders.put(ConfigConstants.MSG_COUNTER_KEY, strMsgCount);
-        eventHeaders.put(ConfigConstants.MSG_ENCODE_VER,
-                DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId());
-        eventHeaders.put(EventConstants.HEADER_KEY_VERSION,
-                DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId());
+        eventHeaders.put(ConfigConstants.MSG_ENCODE_VER, this.msgEncodeTypeId);
+        eventHeaders.put(EventConstants.HEADER_KEY_VERSION, this.msgEncodeTypeId);
         eventHeaders.put(AttributeConstants.RCV_TIME, String.valueOf(msgRcvTime));
         eventHeaders.put(ConfigConstants.PKG_TIME_KEY, String.valueOf(pkgTime));
         Event event = EventBuilder.withBody(inlongMsgData, eventHeaders);
