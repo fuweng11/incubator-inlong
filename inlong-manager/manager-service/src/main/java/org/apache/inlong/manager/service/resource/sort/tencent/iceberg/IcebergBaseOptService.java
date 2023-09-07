@@ -44,6 +44,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -68,6 +69,9 @@ public class IcebergBaseOptService {
     @Value("${dla.api.url}")
     private String dlaApiUrl;
 
+    @Value("#{${dla.api.map:{'tl':'http://11.151.246.185:8080'}}}")
+    private Map<String, String> dlaApiMap = new HashMap<>();
+
     @Value("${dla.auth.user}")
     private String proxyUser;
 
@@ -85,7 +89,7 @@ public class IcebergBaseOptService {
     public QueryIcebergTableResponse getTableDetail(InnerIcebergSink icebergSink) {
         try {
             return HttpUtils.request(restTemplate,
-                    dlaApiUrl + "/formation/v2/metadata/getTableDetail?dbName=" + icebergSink.getDbName() + "&table="
+                    dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl") + "/formation/v2/metadata/getTableDetail?dbName=" + icebergSink.getDbName() + "&table="
                             + icebergSink.getTableName(),
                     HttpMethod.GET, null, getTauthHeader(icebergSink.getCreator()), QueryIcebergTableResponse.class);
         } catch (Exception e) {
@@ -113,10 +117,10 @@ public class IcebergBaseOptService {
             log.info("get iceberg table detail result={}", queryRsp);
             // the table exists, and the flow direction status is modified to [Configuration Succeeded].
             // return directly
-            String url = dlaApiUrl + "/formation/v2/metadata/createTable";
+            String url = dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl") + "/formation/v2/metadata/createTable";
             if (queryRsp != null && queryRsp.getCode() != 20005) {
                 log.warn("iceberg table [{}.{}] already exists", request.getDb(), request.getTable());
-                url = dlaApiUrl + "/formation/v2/metadata/updateTableSchema";
+                url = dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl") + "/formation/v2/metadata/updateTableSchema";
             }
             // the table does not exist. Create a new table
             String rsp = HttpUtils.postRequest(restTemplate, url,

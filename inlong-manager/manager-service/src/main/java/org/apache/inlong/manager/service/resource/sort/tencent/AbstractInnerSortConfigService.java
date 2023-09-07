@@ -204,7 +204,9 @@ public class AbstractInnerSortConfigService {
                 deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
                 break;
             case TencentConstants.DATA_TYPE_RAW_CSV:
-                deserializationInfo = new CsvDeserializationInfo(separator, escape);
+                deserializationInfo = streamInfo.getWrapWithInlongMsg()
+                        ? new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false)
+                        : new CsvDeserializationInfo(separator, escape);
                 break;
             case TencentConstants.DATA_TYPE_KV:
                 // KV pair separator, which must be the field separator in the data flow
