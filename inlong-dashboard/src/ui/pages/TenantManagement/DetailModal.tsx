@@ -100,19 +100,17 @@ const Comp: React.FC<Props> = ({ id, ...modalProps }) => {
           allowClear: true,
           filterOption: false,
           options: {
-            requestTrigger: ['onOpen', 'onSearch'],
+            requestTrigger: ['onSearch'],
             requestService: keyword => ({
-              url: '/user/listAll',
-              method: 'POST',
-              data: {
-                keyword,
-                pageNum: 1,
-                pageSize: 10,
+              url: '/sc/staff/list',
+              method: 'GET',
+              params: {
+                name: keyword,
               },
             }),
             requestParams: {
               formatResult: result =>
-                result?.list?.map(item => ({
+                result?.map(item => ({
                   ...item,
                   label: item.name,
                   value: item.name,
