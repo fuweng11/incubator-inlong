@@ -23,6 +23,7 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.function.Supplier;
@@ -38,11 +39,14 @@ public class AuthInterceptor implements Interceptor {
 
     private final String username;
     private final String password;
+    private final Supplier<String> proxyUserGetter;
     private final Supplier<String> tenantGetter;
 
-    public AuthInterceptor(String username, String password, Supplier<String> tenantGetter) {
+    public AuthInterceptor(String username, String password, Supplier<String> proxyUserGetter,
+            Supplier<String> tenantGetter) {
         this.username = username;
         this.password = password;
+        this.proxyUserGetter = proxyUserGetter;
         this.tenantGetter = tenantGetter;
     }
 
@@ -50,7 +54,12 @@ public class AuthInterceptor implements Interceptor {
     public Response intercept(Chain chain) throws IOException {
         TauthClient tauthClient = new TauthClient(username, password);
         try {
-            String encodedAuthentication = tauthClient.getAuthentication(MANAGER_NAME);
+            String encodedAuthentication;
+            if (StringUtils.isNotBlank(proxyUserGetter.get())) {
+                encodedAuthentication = tauthClient.getAuthentication(MANAGER_NAME, proxyUserGetter.get());
+            } else {
+                encodedAuthentication = tauthClient.getAuthentication(MANAGER_NAME);
+            }
             Request oldRequest = chain.request();
             HttpUrl.Builder builder = oldRequest.url()
                     .newBuilder()

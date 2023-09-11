@@ -55,4 +55,6 @@ public class ClientConfiguration implements Serializable {
     private boolean retryOnConnectionFailure = true;
 
     private String tenant = "public";
+
+    private String proxyUser;
 }
