@@ -40,7 +40,7 @@ public class SequentialID {
     private SnowFlake snowFlake;
 
     private SequentialID() {
-        long machineId = ipStr2Int(AgentUtils.getLocalIp());
+        long machineId = ipStr2Int(AgentUtils.fetchLocalIp());
         snowFlake = new SnowFlake(machineId);
     }
 

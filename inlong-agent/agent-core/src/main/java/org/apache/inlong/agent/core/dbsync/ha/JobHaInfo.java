@@ -17,12 +17,11 @@
 
 package org.apache.inlong.agent.core.dbsync.ha;
 
-import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.inlong.common.pojo.agent.dbsync.DbSyncTaskInfo;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,7 +42,7 @@ public class JobHaInfo {
     private volatile boolean isZkHealth;
 
     @JSONField(ordinal = 4)
-    private String jobName;
+    private String jobDbName;
     /*
      * taskId ,taskConf
      */

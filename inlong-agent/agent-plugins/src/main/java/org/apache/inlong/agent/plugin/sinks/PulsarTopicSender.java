@@ -17,10 +17,9 @@
 
 package org.apache.inlong.agent.plugin.sinks;
 
-import org.apache.inlong.agent.conf.AgentConfiguration;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -100,8 +99,12 @@ public class PulsarTopicSender {
 
     public Producer getProducer() {
         if (CollectionUtils.isEmpty(producers)) {
-            LOGGER.error("job[{}] empty producers", dbJobId);
-            return null;
+            LOGGER.error("job[{}] producers are empty! and will retry create now!", dbJobId);
+            reInitProducer(producerNum);
+            if (CollectionUtils.isEmpty(producers)) {
+                LOGGER.error("job[{}] producers are also empty after retry create!", dbJobId);
+                return null;
+            }
         }
         if (producerIndex.getAndIncrement() == Integer.MAX_VALUE) {
             producerIndex.set(0);
@@ -123,6 +126,12 @@ public class PulsarTopicSender {
             } catch (Throwable e) {
                 LOGGER.error("job[{}] close pulsar producer error", dbJobId, e);
             }
+        }
+    }
+
+    private synchronized void reInitProducer(int producerNum) {
+        if (CollectionUtils.isEmpty(producers)) {
+            initProducer(producerNum);
         }
     }
 

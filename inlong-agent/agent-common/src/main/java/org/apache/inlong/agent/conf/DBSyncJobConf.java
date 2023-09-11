@@ -254,7 +254,10 @@ public class DBSyncJobConf {
         List<MysqlTableConf> confList = new ArrayList<>();
         if (namePatterns != null) {
             for (String namePattern : namePatterns) {
-                confList.addAll(table2MysqlConf.get(namePattern));
+                List<MysqlTableConf> tmpList = table2MysqlConf.get(namePattern);
+                if (tmpList != null && tmpList.size() > 0) {
+                    confList.addAll(tmpList);
+                }
             }
         } else {
             confList = table2MysqlConf.get(fullName);
@@ -283,6 +286,7 @@ public class DBSyncJobConf {
                 String fullName = entry.getKey();
                 namePatternMap.remove(fullName);
                 lruCache.removeValue(new CopyOnWriteArrayList<>(Collections.singletonList(fullName)));
+                taskNum.decrementAndGet();
                 return true;
             } else {
                 return false;

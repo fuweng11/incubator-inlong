@@ -21,7 +21,7 @@ import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.inlong.agent.conf.JobProfile;
 import org.apache.inlong.agent.constant.CommonConstants;
 import org.apache.inlong.agent.core.dbsync.DBSyncJob;
-import org.apache.inlong.agent.core.task.PositionManager;
+import org.apache.inlong.agent.core.task.TaskPositionManager;
 import org.apache.inlong.agent.message.BatchProxyMessage;
 import org.apache.inlong.agent.message.EndMessage;
 import org.apache.inlong.agent.message.PackProxyMessage;
@@ -76,7 +76,7 @@ public class PulsarSink extends AbstractSink {
     private int waitCnt = 0;
     private int waitCntMaxNum = 5;
     private long lastFlushCache = 0l;
-    private long flushCacheMaxInterval = 2 * 60 * 1000L;
+    private long flushCacheMaxInterval = 10 * 1000L;
     private long maxCacheByteSize = 1024 * 1024 * 1024;
     private int maxFlushMsgNumber = 64;
     private AtomicLong sendingCnt = new AtomicLong(0L);
@@ -99,7 +99,7 @@ public class PulsarSink extends AbstractSink {
             this.enableDiscardExceedMsg = agentConf.getBoolean(PULSAR_SINK_ENABLE_DISCARD_EXCEED_MSG, true);
         }
         this.waitCntMaxNum = agentConf.getInt(PULSAR_SINK_SEND_PACKAGE_WAIT_CNT, 5);
-        this.flushCacheMaxInterval = agentConf.getLong(PULSAR_SINK_FLUSH_CACHE_MAX_INTERVAL, 2 * 60 * 1000L);
+        this.flushCacheMaxInterval = agentConf.getLong(PULSAR_SINK_FLUSH_CACHE_MAX_INTERVAL, 10 * 1000L);
         this.maxFlushMsgNumber = agentConf.getInt(PULSAR_SINK_FLUSH_CACHE_MAX_MSG_NUM, 64);
         this.sendQueueSemaphore = new Semaphore(sendQueueSize);
         this.pulsarSendQueue = new LinkedBlockingQueue<>(sendQueueSize);
@@ -206,7 +206,7 @@ public class PulsarSink extends AbstractSink {
         pulsarClients = pulsarSenderManager.getPulsarClients(job.getDbJobId(), mqClusterInfos);
         for (int i = 0; i < sendThreadSize; i++) {
             PulsarSendThread sender = new PulsarSendThread(pulsarSendQueue, pulsarClients, sinkMetric,
-                    this.job.getDBSyncMetric(), PositionManager.getInstance(), pulsarSenderManager,
+                    this.job.getDBSyncMetric(), TaskPositionManager.getInstance(), pulsarSenderManager,
                     sendQueueSemaphore, sendingCnt,
                     agentConf.getBoolean(PULSAR_CLIENT_ENABLE_ASYNC_SEND, DEFAULT_ENABLE_ASYNC_SEND),
                     sourceName, job.getDbJobId(), String.valueOf(i));
@@ -277,11 +277,6 @@ public class PulsarSink extends AbstractSink {
                 && (sendingCnt.get() == 0);
     }
 
-    /**
-     * flush cache by batch
-     *
-     * @return thread runner
-     */
     private void flushPackMessage(PackProxyMessage packProxyMessage, boolean isFlushAll) {
         if (packProxyMessage != null) {
             long curTotal = packProxyMessage.getCurrentMessageQueueSize();
@@ -336,6 +331,7 @@ public class PulsarSink extends AbstractSink {
     @Override
     public String report() {
         return "cacheMsgSize:" + getFileSize(cacheMsgSize.get())
+                + "|cacheSize:" + (cache == null ? 0 : cache.size())
                 + "|pulsarSendQueue:" + (pulsarSendQueue == null ? 0 : pulsarSendQueue.size())
                 + "|sendingMsgSize:" + sendingCnt.get()
                 + "|sendQueueSemaphore:" + (sendQueueSemaphore == null ? 0 : sendQueueSemaphore.availablePermits())

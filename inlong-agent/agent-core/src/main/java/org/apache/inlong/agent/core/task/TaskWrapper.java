@@ -67,7 +67,7 @@ public class TaskWrapper extends AbstractStateWrapper {
         pushMaxWaitTime = conf.getInt(
                 AgentConstants.TASK_PUSH_MAX_SECOND, AgentConstants.DEFAULT_TASK_PUSH_MAX_SECOND);
         pullMaxWaitTime = conf.getInt(
-                AgentConstants.TASK_PULL_MAX_SECOND, AgentConstants.DEFAULT_TASK_PULL_MAX_SECOND);
+                AgentConstants.TASK_PULL_MAX_MS, AgentConstants.DEFAULT_TASK_PULL_MAX_MS);
         if (executorService == null) {
             executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
                     60L, TimeUnit.SECONDS,

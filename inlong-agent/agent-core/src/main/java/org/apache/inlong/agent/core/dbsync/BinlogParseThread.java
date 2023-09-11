@@ -83,6 +83,8 @@ public class BinlogParseThread extends Thread implements MetricReport {
     private char sep = ',';
     private Map<Integer, AtomicLong> skipMsgNumMap = new HashMap();
 
+    private String localIp;
+
     public BinlogParseThread(String parserName, InetSocketAddress curDbAddress,
             DbAgentReadJob dbSyncReadJob, SnowFlakeManager snowFlakeManager) {
         this.parserJobName = parserName;
@@ -91,6 +93,7 @@ public class BinlogParseThread extends Thread implements MetricReport {
         this.dbSyncReadJob = dbSyncReadJob;
         this.dbJobId = dbSyncReadJob.getDbJobId();
         this.snowFlakeManager = snowFlakeManager;
+        this.localIp = AgentUtils.fetchLocalIp();
         super.setUncaughtExceptionHandler((t, e) -> {
             parseStatus = JobStat.State.STOP;
             LOGGER.error("{} Parse Thread has an uncaught error {}, \n {}",
@@ -353,7 +356,7 @@ public class BinlogParseThread extends Thread implements MetricReport {
             EventType eventType, long msgIdIndex, String dbJobId, String pbInstName) {
         RowData.Builder rowDataOrBuilder = rowData.toBuilder();
         String schemaName = Joiner.on(ipSep)
-                .join(dbName, AgentUtils.getLocalIp(),
+                .join(dbName, this.localIp,
                         snowFlakeManager.generateSnowId(DBSyncUtils.serverId2Int(dbJobId)));
         rowDataOrBuilder.setInstanceName(pbInstName);
         rowDataOrBuilder.setSchemaName(schemaName);
@@ -361,7 +364,7 @@ public class BinlogParseThread extends Thread implements MetricReport {
         rowDataOrBuilder.setExecuteTime(execTime);
         rowDataOrBuilder.setExecuteOrder(msgIdIndex);
         rowDataOrBuilder.setEventType(eventType);
-        rowDataOrBuilder.setTransferIp(AgentUtils.getLocalIp());
+        rowDataOrBuilder.setTransferIp(this.localIp);
         return rowDataOrBuilder.build().toByteArray();
     }
 

@@ -526,7 +526,7 @@ public class DbAgentJobManager extends AbstractDaemon implements ITaskPositionMa
             bs.append("dbJobId:" + entry.getKey()).append("|");
             DBSyncJob tmpJob = entry.getValue();
             if (tmpJob.getDBSyncJobConf() != null) {
-                bs.append("taskNum:" + tmpJob.getDBSyncJobConf().getMysqlTableConfList().size()).append("|");
+                bs.append("taskNum:" + tmpJob.getDBSyncJobConf().getTaskNum()).append("|");
             } else {
                 bs.append("taskNum:0").append("|");
             }

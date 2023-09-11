@@ -138,46 +138,55 @@ public class PulsarSendThread extends Thread {
             return;
         }
         InLongMsg message = batchMsg.getInLongMsg();
+        sendingCnt.incrementAndGet();
         if (preShutdown) {
+            sendingCnt.decrementAndGet();
             return;
         }
-        sendingCnt.incrementAndGet();
         sinkMetric.pluginSendCount.addAndGet(batchMsg.getMsgCnt());
         if (asyncSend) {
             CompletableFuture<MessageId> future = producer.newMessage().eventTime(batchMsg.getDataTime())
                     .value(message.buildArray()).sendAsync();
             future.whenCompleteAsync((m, t) -> {
-                if (t != null) {
-                    // send error
-                    sinkMetric.pluginSendFailCount.addAndGet(batchMsg.getMsgCnt());
-                    long nowTime = Instant.now().toEpochMilli();
-                    if (shouldPrintLog(nowTime, lastPrintErrorLog, printErrorLogInterval)) {
-                        LOGGER.error("send data fail to pulsar, add back to send queue, current queue size {}",
-                                pulsarSendQueue.size(), t);
+                try {
+                    if (t != null) {
+                        // send error
+                        sinkMetric.pluginSendFailCount.addAndGet(batchMsg.getMsgCnt());
+                        long nowTime = Instant.now().toEpochMilli();
+                        if (shouldPrintLog(nowTime, lastPrintErrorLog, printErrorLogInterval)) {
+                            LOGGER.error("[{}] send data fail to pulsar, add back to send queue, current queue size {}",
+                                    dbJobId, pulsarSendQueue.size(), t);
+                        }
+                        try {
+                            pulsarSendQueue.put(batchMsg);
+                        } catch (InterruptedException e) {
+                            LOGGER.error("[{}] put back to queue fail send queue size {}", dbJobId,
+                                    pulsarSendQueue.size(),
+                                    t);
+                        }
+                    } else {
+                        // send success, update metrics
+                        sendQueueSemaphore.release();
+                        updateSuccessSendMetrics(batchMsg);
                     }
-                    try {
-                        pulsarSendQueue.put(batchMsg);
-                    } catch (InterruptedException e) {
-                        LOGGER.error("put back to queue fail send queue size {}", pulsarSendQueue.size(), t);
-                    }
-                } else {
-                    // send success, update metrics
-                    sendQueueSemaphore.release();
+                } catch (Exception e) {
+                    LOGGER.error("[{}] asyncSend send [{}] msg has exception: ", dbJobId, topic, e);
+                } finally {
                     sendingCnt.decrementAndGet();
-                    updateSuccessSendMetrics(batchMsg);
                 }
             });
         } else {
             try {
                 producer.newMessage().eventTime(batchMsg.getDataTime()).value(message.buildArray()).send();
                 sendQueueSemaphore.release();
-                sendingCnt.decrementAndGet();
                 updateSuccessSendMetrics(batchMsg);
             } catch (PulsarClientException e) {
                 sinkMetric.pluginSendFailCount.addAndGet(batchMsg.getMsgCnt());
                 LOGGER.error("send data fail to pulsar, add back to send queue, send queue size {}",
                         pulsarSendQueue.size(), e);
                 pulsarSendQueue.put(batchMsg);
+            } finally {
+                sendingCnt.decrementAndGet();
             }
         }
     }

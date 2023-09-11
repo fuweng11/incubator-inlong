@@ -58,7 +58,7 @@ public class DBSyncUtils {
 
     public static long generateSlaveId(String jobName, String serverId) {
         long result = 0;
-        String ip = AgentUtils.getLocalIp();
+        String ip = AgentUtils.fetchLocalIp();
         try {
             if (Objects.equals(ip, "127.0.0.1") || Objects.equals(ip, "0.0.0.0")) {
                 throw new Exception("conflict address");

@@ -312,7 +312,7 @@ public class ReadJobPositionManager implements MetricReport {
         if (con != null) {
             MysqlConnection metaCon = con;
             try {
-                EntryPosition maxEntryPos = findStartPositionCmd(metaCon);
+                EntryPosition maxEntryPos = findOldestPosition(metaCon, false);
                 logPosition = new LogPosition();
                 logPosition.setPosition(maxEntryPos);
 
@@ -338,9 +338,16 @@ public class ReadJobPositionManager implements MetricReport {
         return oldestLogPosition;
     }
 
-    protected EntryPosition findStartPositionCmd(MysqlConnection mysqlConnection) {
+    protected EntryPosition findOldestPosition(MysqlConnection mysqlConnection, boolean needRetryConnection) {
         try {
             synchronized (mysqlConnection) {
+                if (!mysqlConnection.isConnected()) {
+                    if (needRetryConnection) {
+                        mysqlConnection.connect();
+                    } else {
+                        return null;
+                    }
+                }
                 ResultSetPacket packet = mysqlConnection.query("show binlog events limit 1");
                 List<String> fields = packet.getFieldValues();
                 if (DBSyncUtils.isCollectionsEmpty(fields)) {
@@ -481,7 +488,7 @@ public class ReadJobPositionManager implements MetricReport {
     @Override
     public String report() {
         StringBuilder bs = new StringBuilder();
-        bs.append("|sendLogPositionCache:[").append(sendLogPositionCache.size()).append("]");
+        bs.append("sendLogPositionCache:[").append(sendLogPositionCache.size()).append("]");
         bs.append("|ackLogPositionList:[").append(ackLogPositionList.size()).append("]");
         if (sendAndAckedLogPosition != null) {
             bs.append("Current-ackPosition:[").append(sendAndAckedLogPosition.toMinString()).append("]");

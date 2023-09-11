@@ -84,8 +84,9 @@ public class AgentConstants {
     public static final int DEFAULT_TASK_MAX_RETRY_TIME = 3;
     public static final String TASK_PUSH_MAX_SECOND = "task.push.maxSecond";
     public static final int DEFAULT_TASK_PUSH_MAX_SECOND = 2;
-    public static final String TASK_PULL_MAX_SECOND = "task.pull.maxSecond";
-    public static final int DEFAULT_TASK_PULL_MAX_SECOND = 2;
+    public static final String TASK_PULL_MAX_MS = "task.pull.max.ms";
+
+    public static final int DEFAULT_TASK_PULL_MAX_MS = 50;
     public static final String CHANNEL_MEMORY_CAPACITY = "channel.memory.capacity";
     public static final int DEFAULT_CHANNEL_MEMORY_CAPACITY = 2000;
     public static final String TRIGGER_CHECK_INTERVAL = "trigger.check.interval";

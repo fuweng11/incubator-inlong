@@ -370,7 +370,7 @@ public class DbAgentReadJob implements MetricReport {
     public DbSyncHeartbeat genHeartBeat(boolean markToStop) {
 
         DbSyncHeartbeat hbInfo = new DbSyncHeartbeat();
-        hbInfo.setInstance(AgentUtils.getLocalIp());
+        hbInfo.setInstance(AgentUtils.fetchLocalIp());
         hbInfo.setServerName(dbSyncJobConf.getDbJobId());
         hbInfo.setTaskIds(dbSyncJobConf.getTaskIdList());
         hbInfo.setCurrentDb(dbSyncJobConf.getCurMysqlIp());
@@ -1188,6 +1188,13 @@ public class DbAgentReadJob implements MetricReport {
                 String nextBinlogFileName =
                         DBSyncUtils.getNextBinlogFileName(startPosition.getJournalName());
                 EntryPosition endPos = readJobPositionManager.findEndPosition(connection, true);
+                EntryPosition oldestPos = readJobPositionManager.findOldestPosition(connection, true);
+                boolean isSkipToOldestPosition = false;
+                if (oldestPos != null && StringUtils.isNotEmpty(oldestPos.getJournalName())
+                        && nextBinlogFileName.compareToIgnoreCase(oldestPos.getJournalName()) < 0) {
+                    nextBinlogFileName = oldestPos.getJournalName();
+                    isSkipToOldestPosition = true;
+                }
                 if (nextBinlogFileName.compareToIgnoreCase(endPos.getJournalName()) < 0) {
                     startPosition.setJournalName(nextBinlogFileName);
                 } else {
@@ -1195,8 +1202,10 @@ public class DbAgentReadJob implements MetricReport {
                 }
                 String nextRetryPosition = startPosition.getJsonObj().toString();
                 MonitorLogUtils.printJobStat(this.getCurrentJobAndDbInfo(), MonitorLogUtils.JOB_STAT_ERROR,
-                        ErrorCode.DB_EXCEPTION_BINLOG_MISS, "lostPosition:"
-                                + lostPosition + ",nextRetryPosition:" + nextRetryPosition);
+                        ErrorCode.DB_EXCEPTION_BINLOG_MISS,
+                        "lostPosition:" + lostPosition
+                                + ",nextRetryPosition:" + nextRetryPosition
+                                + ", skipToOldestPosition:" + isSkipToOldestPosition);
             }
 
             // occure binlog miss, set the start pos is binlog file head

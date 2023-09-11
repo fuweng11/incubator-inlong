@@ -187,13 +187,9 @@ public class AgentManager extends AbstractDaemon {
     public void start() throws Exception {
         LOGGER.info("starting agent manager");
         agentConfMonitor.submit(startHotConfReplace());
-        LOGGER.info("starting job manager");
         jobManager.start();
-        LOGGER.info("starting trigger manager");
         triggerManager.start();
-        LOGGER.info("starting task manager");
         taskManager.start();
-        LOGGER.info("starting heartbeat manager");
         heartbeatManager.start();
         LOGGER.info("starting task position manager");
         positionManager.start();
@@ -202,7 +198,6 @@ public class AgentManager extends AbstractDaemon {
         if (fetcher != null) {
             fetcher.start();
         }
-        LOGGER.info("starting agent manager end");
     }
 
     /**

@@ -183,7 +183,7 @@ public class DbAgentHeartbeatManager extends AbstractDaemon implements AbstractH
 
     public DbSyncHeartbeatRequest getDbSyncHeartbeat() {
         DbSyncHeartbeatRequest hbRequest = new DbSyncHeartbeatRequest();
-        hbRequest.setIp(AgentUtils.getLocalIp());
+        hbRequest.setIp(AgentUtils.fetchLocalIp());
         List<DbSyncHeartbeat> hbList = new ArrayList<>();
         ConcurrentHashMap<String, DBSyncJob> allJobs = jobManager.getAllJobs();
         // get running job hb

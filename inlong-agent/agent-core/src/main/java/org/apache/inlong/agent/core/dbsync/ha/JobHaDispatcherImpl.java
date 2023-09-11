@@ -246,7 +246,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
             JobHaInfo newJobHaInfo = new JobHaInfo();
             newJobHaInfo.setZkHealth(true);
             String jobInstanceName = taskConf.getDbServerInfo().getUrl() + ":" + taskConf.getServerName();
-            newJobHaInfo.setJobName(jobInstanceName);
+            newJobHaInfo.setJobDbName(jobInstanceName);
             newJobHaInfo.setDbJobId(k);
             return newJobHaInfo;
         });
@@ -276,18 +276,18 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
      * @param jobHaInfo
      */
     private void stopJob(JobHaInfo jobHaInfo) {
-        String jobName = jobHaInfo.getJobName();
+        String jobDbName = jobHaInfo.getJobDbName();
         String dbJobId = jobHaInfo.getDbJobId();
-        if (jobHaInfo.getTaskConfMap().size() > 0) {
-            Set<Map.Entry<Integer, DbSyncTaskInfo>> entrySet =
-                    jobHaInfo.getTaskConfMap().entrySet();
-            for (Map.Entry<Integer, DbSyncTaskInfo> entry : entrySet) {
-                stopOldRunningNodeTask(jobHaInfo, entry.getValue());
-            }
-        }
+        // if (jobHaInfo.getTaskConfMap().size() > 0) {
+        // Set<Map.Entry<Integer, DbSyncTaskInfo>> entrySet =
+        // jobHaInfo.getTaskConfMap().entrySet();
+        // for (Map.Entry<Integer, DbSyncTaskInfo> entry : entrySet) {
+        // stopOldRunningNodeTask(jobHaInfo, entry.getValue());
+        // }
+        // }
         try {
-            if (StringUtils.isNotEmpty(jobName)) {
-                this.jobManager.checkAndStopJobForce(jobName);
+            if (StringUtils.isNotEmpty(dbJobId)) {
+                this.jobManager.checkAndStopJobForce(dbJobId);
             }
             String position = jobSenderPosition.remove(dbJobId);
             if (position != null) {
@@ -295,7 +295,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
                 updatePositionToZk(jobHaInfo, jobHaInfo.getSyncPosition(), true);
             }
             jobHaInfo.getTaskConfMap().clear();
-            LOGGER.info("Job dbJobId[{}] JobName = {} is stopped!", jobHaInfo.getDbJobId(), jobName);
+            LOGGER.info("Job dbJobId[{}] JobDbName = {} is stopped!", jobHaInfo.getDbJobId(), jobDbName);
         } catch (Throwable e) {
             LOGGER.error("checkAndStopJobForce has error e = {}", e);
         }
@@ -668,7 +668,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
                             jobHaInfo.getDbJobId()),
                     position);
             if (printEnable) {
-                MonitorLogUtils.printZkPositionMetric(jobHaInfo.getJobName(), position);
+                MonitorLogUtils.printZkPositionMetric(jobHaInfo.getJobDbName(), position);
             }
 
         } catch (Throwable e) {
@@ -780,7 +780,7 @@ public class JobHaDispatcherImpl implements JobHaDispatcher {
             LOGGER.error("newClusterId = {}, zkServer = {} has error!", newClusterId, zkServer);
             return false;
         }
-        LOGGER.info("c{}, clusterId = {}, zkServer = {}!", newClusterId, clusterId, zkServer);
+        LOGGER.info("newClusterId {}, clusterId = {}, zkServer = {}!", newClusterId, clusterId, zkServer);
         if ((!Objects.equals(newClusterId, clusterId))
                 || (zkUrl == null || !zkUrl.equals(zkServer))) {
             if (checkNodeRegisterStatus(newClusterId, zkServer)) {
