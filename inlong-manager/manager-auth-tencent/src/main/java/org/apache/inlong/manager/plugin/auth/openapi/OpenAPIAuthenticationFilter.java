@@ -19,11 +19,11 @@ package org.apache.inlong.manager.plugin.auth.openapi;
 
 import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
 import org.apache.inlong.manager.common.util.NetworkUtils;
+import org.apache.inlong.manager.dao.entity.TenantUserRoleEntity;
+import org.apache.inlong.manager.dao.mapper.TenantUserRoleEntityMapper;
 import org.apache.inlong.manager.pojo.user.LoginUserUtils;
-import org.apache.inlong.manager.pojo.user.TenantRoleInfo;
 import org.apache.inlong.manager.pojo.user.TenantRolePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
-import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -53,16 +53,16 @@ public class OpenAPIAuthenticationFilter implements Filter {
     private final boolean supportMockUsername;
 
     private final UserService userService;
-    private final TenantRoleService tenantRoleService;
+    private final TenantUserRoleEntityMapper tenantUserRoleEntityMapper;
 
     public OpenAPIAuthenticationFilter(boolean supportMockUsername, UserService userService,
-            TenantRoleService tenantRoleService) {
+            TenantUserRoleEntityMapper tenantUserRoleEntityMapper) {
         if (supportMockUsername) {
             log.warn("Ensure that you are not using test mode in production environment.");
         }
         this.supportMockUsername = supportMockUsername;
         this.userService = userService;
-        this.tenantRoleService = tenantRoleService;
+        this.tenantUserRoleEntityMapper = tenantUserRoleEntityMapper;
     }
 
     @Override
@@ -111,8 +111,8 @@ public class OpenAPIAuthenticationFilter implements Filter {
         UserInfo userInfoDB = userService.getByName(userName);
         TenantRolePageRequest tenantRolePageRequest = new TenantRolePageRequest();
         tenantRolePageRequest.setUsername(userName);
-        List<String> roles = tenantRoleService.listByCondition(tenantRolePageRequest).getList().stream().map(
-                TenantRoleInfo::getUsername).collect(Collectors.toList());
+        List<String> roles = tenantUserRoleEntityMapper.listByCondition(tenantRolePageRequest).stream().map(
+                TenantUserRoleEntity::getUsername).collect(Collectors.toList());
         userInfo.setName(userName);
         userInfo.setRoles(new HashSet<>(roles));
         // add account type info

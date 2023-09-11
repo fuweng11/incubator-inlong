@@ -18,6 +18,7 @@
 package org.apache.inlong.manager.plugin.auth;
 
 import org.apache.inlong.manager.common.auth.InlongShiro;
+import org.apache.inlong.manager.dao.mapper.TenantUserRoleEntityMapper;
 import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthenticationFilter;
 import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthorizingRealm;
 import org.apache.inlong.manager.plugin.auth.tenant.TenantAuthenticatingFilter;
@@ -29,7 +30,6 @@ import org.apache.inlong.manager.service.tenant.InlongTenantService;
 import org.apache.inlong.manager.service.tencentauth.SmartGateService;
 import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
 import org.apache.inlong.manager.service.user.InlongRoleService;
-import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
 import org.apache.shiro.authc.credential.CredentialsMatcher;
@@ -72,7 +72,7 @@ public class InlongShiroImpl implements InlongShiro {
     private InlongRoleService inlongRoleService;
 
     @Autowired
-    private TenantRoleService tenantRoleService;
+    private TenantUserRoleEntityMapper tenantUserRoleEntityMapper;
 
     @Autowired
     private InlongTenantService tenantService;
@@ -101,10 +101,10 @@ public class InlongShiroImpl implements InlongShiro {
         webRealm.setCredentialsMatcher(getCredentialsMatcher());
 
         // openAPI realm
-        AuthorizingRealm openAPIRealm = new OpenAPIAuthorizingRealm(userService, tenantRoleService, authConfig);
+        AuthorizingRealm openAPIRealm = new OpenAPIAuthorizingRealm(userService, tenantUserRoleEntityMapper, authConfig);
         openAPIRealm.setCredentialsMatcher(getCredentialsMatcher());
 
-        Realm tenantRealm = new TenantAuthenticatingRealm(tenantRoleService, inlongRoleService,
+        Realm tenantRealm = new TenantAuthenticatingRealm(tenantUserRoleEntityMapper, inlongRoleService,
                 userService, tenantService);
         return Arrays.asList(webRealm, openAPIRealm, tenantRealm);
     }
@@ -126,7 +126,7 @@ public class InlongShiroImpl implements InlongShiro {
 
         Map<String, Filter> filters = new LinkedHashMap<>();
         boolean allowMock = !Env.PROD.equals(Env.forName(env));
-        filters.put(FILTER_NAME_WEB, new WebAuthenticationFilter(allowMock, userService, tenantRoleService));
+        filters.put(FILTER_NAME_WEB, new WebAuthenticationFilter(allowMock, userService, tenantUserRoleEntityMapper));
         shiroFilterFactoryBean.setFilters(filters);
 
         // anon: can be accessed by anyone
@@ -140,7 +140,7 @@ public class InlongShiroImpl implements InlongShiro {
         pathDefinitions.put("/swagger-resources", "anon");
 
         // openapi
-        filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, tenantRoleService));
+        filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, tenantUserRoleEntityMapper));
         pathDefinitions.put("/openapi/**/*", genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT));
 
         // other web

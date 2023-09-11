@@ -18,13 +18,13 @@
 package org.apache.inlong.manager.plugin.auth.openapi;
 
 import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
+import org.apache.inlong.manager.dao.entity.TenantUserRoleEntity;
+import org.apache.inlong.manager.dao.mapper.TenantUserRoleEntityMapper;
 import org.apache.inlong.manager.pojo.user.LoginUserUtils;
-import org.apache.inlong.manager.pojo.user.TenantRoleInfo;
 import org.apache.inlong.manager.pojo.user.TenantRolePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.pojo.user.UserRoleCode;
 import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
-import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
 import com.google.common.collect.Sets;
@@ -50,12 +50,12 @@ public class OpenAPIAuthorizingRealm extends AuthorizingRealm {
 
     private final TAuthAuthenticator tAuthAuthenticator;
     private final UserService userService;
-    private final TenantRoleService tenantRoleService;
+    private final TenantUserRoleEntityMapper tenantUserRoleEntityMapper;
 
-    public OpenAPIAuthorizingRealm(UserService userService, TenantRoleService tenantRoleService,
+    public OpenAPIAuthorizingRealm(UserService userService, TenantUserRoleEntityMapper tenantUserRoleEntityMapper,
             AuthConfig authConfig) {
         this.userService = userService;
-        this.tenantRoleService = tenantRoleService;
+        this.tenantUserRoleEntityMapper = tenantUserRoleEntityMapper;
         this.tAuthAuthenticator = new TAuthAuthenticator(authConfig.getService(), authConfig.getSmk());
     }
 
@@ -86,8 +86,8 @@ public class OpenAPIAuthorizingRealm extends AuthorizingRealm {
             UserInfo userInfoDB = userService.getByName((String) principal);
             TenantRolePageRequest tenantRolePageRequest = new TenantRolePageRequest();
             tenantRolePageRequest.setUsername((String) principal);
-            List<String> roles = tenantRoleService.listByCondition(tenantRolePageRequest).getList().stream().map(
-                    TenantRoleInfo::getUsername).collect(Collectors.toList());
+            List<String> roles = tenantUserRoleEntityMapper.listByCondition(tenantRolePageRequest).stream().map(
+                    TenantUserRoleEntity::getUsername).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(roles)) {
                 authorizationInfo.setRoles(Sets.newHashSet(UserRoleCode.TENANT_OPERATOR));
             } else {

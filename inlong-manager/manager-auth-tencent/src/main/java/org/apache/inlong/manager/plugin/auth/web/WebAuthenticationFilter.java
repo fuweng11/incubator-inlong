@@ -21,14 +21,14 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.TenantUserTypeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.NetworkUtils;
+import org.apache.inlong.manager.dao.entity.TenantUserRoleEntity;
+import org.apache.inlong.manager.dao.mapper.TenantUserRoleEntityMapper;
 import org.apache.inlong.manager.plugin.auth.openapi.BasicAuthenticationToken;
 import org.apache.inlong.manager.plugin.auth.openapi.TAuthAuthenticationToken;
 import org.apache.inlong.manager.plugin.common.pojo.user.StaffDTO;
 import org.apache.inlong.manager.pojo.user.LoginUserUtils;
-import org.apache.inlong.manager.pojo.user.TenantRoleInfo;
 import org.apache.inlong.manager.pojo.user.TenantRolePageRequest;
 import org.apache.inlong.manager.pojo.user.UserInfo;
-import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -65,15 +65,15 @@ public class WebAuthenticationFilter implements Filter {
 
     private final UserService userService;
 
-    private final TenantRoleService tenantRoleService;
+    private final TenantUserRoleEntityMapper tenantUserRoleEntityMapper;
 
     public WebAuthenticationFilter(boolean supportMockUsername, UserService userService,
-            TenantRoleService tenantRoleService) {
+            TenantUserRoleEntityMapper tenantUserRoleEntityMapper) {
         if (supportMockUsername) {
             log.warn("ensure that you are not using the test mode in production environment");
         }
         this.userService = userService;
-        this.tenantRoleService = tenantRoleService;
+        this.tenantUserRoleEntityMapper = tenantUserRoleEntityMapper;
         this.supportMockUsername = supportMockUsername;
     }
 
@@ -214,8 +214,8 @@ public class WebAuthenticationFilter implements Filter {
         UserInfo userInfoDB = userService.getByName(userName);
         TenantRolePageRequest tenantRolePageRequest = new TenantRolePageRequest();
         tenantRolePageRequest.setUsername(userName);
-        List<String> roleList = tenantRoleService.listByCondition(tenantRolePageRequest).getList().stream().map(
-                TenantRoleInfo::getUsername).collect(Collectors.toList());
+        List<String> roleList = tenantUserRoleEntityMapper.listByCondition(tenantRolePageRequest).stream().map(
+                TenantUserRoleEntity::getUsername).collect(Collectors.toList());
         userInfo.setName(userName);
         userInfo.setRoles(new HashSet<>(roleList));
         // add account type info

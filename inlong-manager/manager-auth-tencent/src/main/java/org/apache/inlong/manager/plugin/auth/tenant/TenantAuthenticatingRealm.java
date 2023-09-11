@@ -18,14 +18,14 @@
 package org.apache.inlong.manager.plugin.auth.tenant;
 
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.entity.TenantUserRoleEntity;
+import org.apache.inlong.manager.dao.mapper.TenantUserRoleEntityMapper;
 import org.apache.inlong.manager.pojo.tenant.InlongTenantInfo;
 import org.apache.inlong.manager.pojo.user.InlongRoleInfo;
 import org.apache.inlong.manager.pojo.user.LoginUserUtils;
-import org.apache.inlong.manager.pojo.user.TenantRoleInfo;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.tenant.InlongTenantService;
 import org.apache.inlong.manager.service.user.InlongRoleService;
-import org.apache.inlong.manager.service.user.TenantRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -45,18 +45,18 @@ import java.util.Set;
 @Slf4j
 public class TenantAuthenticatingRealm extends AuthenticatingRealm {
 
-    private TenantRoleService tenantRoleService;
+    private TenantUserRoleEntityMapper tenantUserRoleEntityMapper;
     private InlongRoleService inlongRoleService;
     private UserService userService;
 
     private InlongTenantService tenantService;
 
     public TenantAuthenticatingRealm(
-            TenantRoleService tenantRoleService,
+            TenantUserRoleEntityMapper tenantUserRoleEntityMapper,
             InlongRoleService inlongRoleService,
             UserService userService,
             InlongTenantService tenantService) {
-        this.tenantRoleService = tenantRoleService;
+        this.tenantUserRoleEntityMapper = tenantUserRoleEntityMapper;
         this.inlongRoleService = inlongRoleService;
         this.userService = userService;
         this.tenantService = tenantService;
@@ -77,7 +77,8 @@ public class TenantAuthenticatingRealm extends AuthenticatingRealm {
             }
 
             InlongRoleInfo inlongRoleInfo = inlongRoleService.getByUsername(username);
-            TenantRoleInfo tenantRoleInfo = tenantRoleService.getByUsernameAndTenant(username, tenant);
+            TenantUserRoleEntity tenantRoleInfo = tenantUserRoleEntityMapper.selectByUsernameAndTenant(username, tenant);
+
             if (inlongRoleInfo == null && tenantRoleInfo == null) {
                 String errMsg = String.format("user=[%s] has no privilege for tenant=[%s]", username, tenant);
                 log.error(errMsg);
