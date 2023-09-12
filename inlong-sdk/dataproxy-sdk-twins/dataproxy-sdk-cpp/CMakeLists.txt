@@ -29,18 +29,24 @@ include_directories(${PROJECT_SOURCE_DIR}/third_party/rapidjson/src/rapidjson/in
 include_directories(release/inc)
 include_directories(src/base)
 include_directories(src/net)
-include_directories(src/tauth)
 include_directories(src/utils)
+include_directories(src/core)
+include_directories(src/manager)
+include_directories(src/group)
+include_directories(src/protocol)
 
 link_directories(${PROJECT_SOURCE_DIR}/third_party/lib)
 link_directories(${PROJECT_SOURCE_DIR}/third_party/lib64)
 
-add_subdirectory(third_party)
+# add_subdirectory(third_party)
 add_subdirectory(src/base)
 add_subdirectory(src/net)
-add_subdirectory(src/tauth)
 add_subdirectory(src/utils)
 add_subdirectory(src/config)
+add_subdirectory(src/core)
+add_subdirectory(src/manager)
+add_subdirectory(src/group)
+add_subdirectory(src/protocol)
 # add_subdirectory(test)
 add_subdirectory(release)
 
@@ -48,15 +54,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/release/lib)
 # set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/release/so)
 aux_source_directory(src/base BASE_SRCS)
 aux_source_directory(src/net NET_SRCS)
-aux_source_directory(src/tauth TAUTH_SRCS)
 
 # dynamic library
-# # add_library(dataproxy_sdk SHARED ${BASE_SRCS} ${NET_SRCS})
-# # set_target_properties(dataproxy_sdk PROPERTIES PREFIX "")
-#target_link_libraries(dataproxy_sdk -Wl,-dy -lssl -lcrypto)
+# add_library(dataproxy_sdk SHARED ${BASE_SRCS} ${NET_SRCS})
+# set_target_properties(dataproxy_sdk PROPERTIES PREFIX "")
+# target_link_libraries(dataproxy_sdk -llog4cplus -lsnappy -lcurl)
 
 # static library
-add_library(dataproxy_sdk STATIC ${BASE_SRCS} ${NET_SRCS} ${TAUTH_SRCS})
+add_library(dataproxy_sdk STATIC ${BASE_SRCS} ${NET_SRCS})
 set_target_properties(dataproxy_sdk PROPERTIES OUTPUT_NAME "dataproxy_sdk" PREFIX "")
-target_link_libraries(dataproxy_sdk liblog4cplus.a libsnappy.a libcurl.a libssl.a libcrypto.a)
+target_link_libraries(dataproxy_sdk liblog4cplus.a libsnappy.a libcurl.a)
 

@@ -146,12 +146,10 @@ public class MetaConfigHolder extends ConfigHolder {
     }
 
     public String getConfigMd5() {
-        synchronized (this.lastUpdVersion) {
-            if (this.lastSyncVersion.get() > this.lastUpdVersion.get()) {
-                return tmpDataMd5;
-            } else {
-                return dataMd5;
-            }
+        if (this.lastSyncVersion.get() > this.lastUpdVersion.get()) {
+            return tmpDataMd5;
+        } else {
+            return dataMd5;
         }
     }
 
@@ -161,18 +159,16 @@ public class MetaConfigHolder extends ConfigHolder {
             return false;
         }
         synchronized (this.lastSyncVersion) {
-            synchronized (this.lastUpdVersion) {
-                if (this.lastSyncVersion.get() > this.lastUpdVersion.get()) {
-                    if (inDataJsonStr.equals(tmpDataMd5)) {
-                        return false;
-                    }
-                    LOG.info("Load changed metadata {} , but reloading content, over {} ms",
-                            getFileName(), System.currentTimeMillis() - this.lastSyncVersion.get());
+            if (this.lastSyncVersion.get() > this.lastUpdVersion.get()) {
+                if (inDataJsonStr.equals(tmpDataMd5)) {
                     return false;
-                } else {
-                    if (inDataMd5.equals(dataMd5)) {
-                        return false;
-                    }
+                }
+                LOG.info("Load changed metadata {} , but reloading content, over {} ms",
+                        getFileName(), System.currentTimeMillis() - this.lastSyncVersion.get());
+                return false;
+            } else {
+                if (inDataMd5.equals(dataMd5)) {
+                    return false;
                 }
             }
             return storeConfigToFile(inDataMd5, inDataJsonStr);
@@ -227,7 +223,7 @@ public class MetaConfigHolder extends ConfigHolder {
             return false;
         }
         String jsonString = "";
-        readWriteLock.readLock().lock();
+        readWriteLock.writeLock().lock();
         try {
             jsonString = loadConfigFromFile();
             if (StringUtils.isBlank(jsonString)) {
@@ -236,36 +232,20 @@ public class MetaConfigHolder extends ConfigHolder {
             }
             DataProxyConfigResponse metaConfig =
                     GSON.fromJson(jsonString, DataProxyConfigResponse.class);
+            // check result tag
             if (!metaConfig.isResult() || metaConfig.getErrCode() != DataProxyConfigResponse.SUCC) {
                 LOG.warn("Load failed json config from {}, error code is {}",
                         getFileName(), metaConfig.getErrCode());
                 return true;
             }
+            // check cluster data
             DataProxyCluster clusterObj = metaConfig.getData();
             if (clusterObj == null) {
                 LOG.warn("Load failed json config from {}, malformed content, data is null", getFileName());
                 return true;
             }
             // update cache data
-            boolean updated;
-            synchronized (this.lastUpdVersion) {
-                if (metaConfig.getMd5().equals(this.dataMd5)) {
-                    LOG.warn("Load json config from {}, configure md5 not changed!", getFileName());
-                    return true;
-                }
-                updated = updateCacheData(clusterObj);
-                if (updated) {
-                    if (this.lastSyncVersion.get() == 0) {
-                        this.lastUpdVersion.set(System.currentTimeMillis());
-                        this.lastSyncVersion.compareAndSet(0, this.lastUpdVersion.get());
-                    } else {
-                        this.lastUpdVersion.set(this.lastSyncVersion.get());
-                    }
-                    this.dataMd5 = metaConfig.getMd5();
-                    this.dataStr = jsonString;
-                }
-            }
-            if (updated) {
+            if (updateCacheData(jsonString, metaConfig)) {
                 LOG.info("Load changed {} file success!", getFileName());
             }
             return true;
@@ -273,19 +253,19 @@ public class MetaConfigHolder extends ConfigHolder {
             LOG.warn("Process json {} changed data {} failure", getFileName(), jsonString, e);
             return false;
         } finally {
-            readWriteLock.readLock().unlock();
+            readWriteLock.writeLock().unlock();
         }
     }
 
-    private boolean updateCacheData(DataProxyCluster metaConfigObj) {
+    private boolean updateCacheData(String jsonString, DataProxyConfigResponse metaConfig) {
         // get and valid inlongIds configure
-        ProxyClusterObject proxyClusterObject = metaConfigObj.getProxyCluster();
+        ProxyClusterObject proxyClusterObject = metaConfig.getData().getProxyCluster();
         if (proxyClusterObject == null) {
             LOG.warn("Load failed json config from {}, malformed content, proxyCluster field is null",
                     getFileName());
             return false;
         }
-        CacheClusterSetObject clusterSetObject = metaConfigObj.getCacheClusterSet();
+        CacheClusterSetObject clusterSetObject = metaConfig.getData().getCacheClusterSet();
         if (clusterSetObject == null) {
             LOG.warn("Load failed json config from {}, malformed content, cacheClusterSet field is null",
                     getFileName());
@@ -324,6 +304,15 @@ public class MetaConfigHolder extends ConfigHolder {
         // get topic config info
         Map<String, IdTopicConfig> tmpTopicConfigMap = buildCacheTopicConfig(mqType, inLongIds);
         replaceCacheConfig(mqType, tmpClusterConfigMap, tmpTopicConfigMap);
+        // update cached data
+        this.dataMd5 = metaConfig.getMd5();
+        this.dataStr = jsonString;
+        if (this.lastSyncVersion.get() == 0) {
+            this.lastUpdVersion.set(System.currentTimeMillis());
+            this.lastSyncVersion.compareAndSet(0, this.lastUpdVersion.get());
+        } else {
+            this.lastUpdVersion.set(this.lastSyncVersion.get());
+        }
         return true;
     }
 
