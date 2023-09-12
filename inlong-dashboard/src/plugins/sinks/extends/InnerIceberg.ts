@@ -29,7 +29,7 @@ const { I18n } = DataWithBackend;
 const { FieldDecorator } = RenderRow;
 const { ColumnDecorator } = RenderList;
 
-const icebergFieldTypes = [
+export const icebergFieldTypes = [
   'string',
   'boolean',
   'int',

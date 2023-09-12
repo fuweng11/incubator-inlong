@@ -27,6 +27,7 @@ import FormGenerator, { useForm } from '@/ui/components/FormGenerator';
 import { useLoadMeta, SinkMetaType } from '@/plugins';
 import request from '@/core/utils/request';
 import { innerHiveFieldTypes } from '@/plugins/sinks/extends/InnerHive';
+import { icebergFieldTypes } from '@/plugins/sinks/extends/InnerIceberg';
 
 export interface DetailModalProps extends ModalProps {
   inlongGroupId: string;
@@ -106,17 +107,16 @@ const Comp: React.FC<DetailModalProps> = ({
       streamDetail.fieldList?.length &&
       Entity.FieldList?.some(item => item.name === 'sinkFieldList')
     ) {
-      if (sinkType === 'INNER_HIVE' || sinkType === 'INNER_THIVE') {
+      if (sinkType === 'INNER_HIVE' || sinkType === 'INNER_THIVE' || sinkType === 'INNER_ICEBERG') {
         form.setFieldsValue({
           sinkFieldList: streamDetail.fieldList.map(item => ({
             sourceFieldName: item.fieldName,
             sourceFieldType: item.fieldType,
-            fieldName:
-              sinkType === 'INNER_HIVE' || sinkType === 'INNER_THIVE'
-                ? item.fieldName.toLowerCase()
-                : item.fieldName,
+            fieldName: item.fieldName.toLowerCase(),
             fieldType:
-              innerHiveFieldTypes.find(type => type.value === item.fieldType)?.value || 'bigint',
+              sinkType !== 'INNER_ICEBERG'
+                ? innerHiveFieldTypes.find(type => type.value === item.fieldType)?.value || 'bigint'
+                : icebergFieldTypes.find(type => type.value === item.fieldType)?.value,
           })),
         });
         return;
