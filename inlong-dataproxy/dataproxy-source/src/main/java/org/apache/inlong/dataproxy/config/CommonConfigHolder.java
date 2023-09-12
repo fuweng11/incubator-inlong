@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * common.properties Configure Holder
@@ -169,8 +170,8 @@ public class CommonConfigHolder {
     public static final String KEY_ENABLE_TDBANK_M_SETTING = "proxy.enable.use.m.setting";
     public static final boolean VAL_DEF_ENABLE_TDBANK_M_SETTING = true;
     // cluster id
-    public static final String KEY_PROXY_CLUSTER_ID = "proxy.cluster.id";
-    public static final int VAL_DEF_CLUSTER_ID = -1;
+    public static final String KEY_PROXY_CLUSTER_IDS = "proxy.cluster.ids";
+    public static final String VAL_DEF_CLUSTER_IDS = "";
 
     // **** allowed keys and default value, end
 
@@ -219,7 +220,8 @@ public class CommonConfigHolder {
     private boolean enablePCGLogOutput = VAL_DEF_ENABLE_PCG_LOG_OUTPUT;
     private boolean enablePulsarTransfer = VAL_DEF_ENABLE_PULSAR_TRANSFER;
     private boolean enableTDBankMparamSetting = VAL_DEF_ENABLE_TDBANK_M_SETTING;
-    private int clusterId = VAL_DEF_CLUSTER_ID;
+    private Set<Integer> clusterIdSet = new HashSet<>();
+    private String clusterIdsStr = VAL_DEF_CLUSTER_IDS;
 
     /**
      * get instance for common.properties config manager
@@ -280,8 +282,12 @@ public class CommonConfigHolder {
         return NodeLogicType.isMetaInfoGetFromTDBank(this.nodeLogicType);
     }
 
-    public int getClusterId() {
-        return clusterId;
+    public String getClusterIdsStr() {
+        return clusterIdsStr;
+    }
+
+    public Set<Integer> getClusterIdSet() {
+        return clusterIdSet;
     }
 
     public String getClusterTag() {
@@ -514,6 +520,8 @@ public class CommonConfigHolder {
             if (tmpList.size() > 0) {
                 defaultTopics = tmpList;
             }
+            LOG.warn("Configured {}, size is {}, value is {}",
+                    KEY_UNCONFIGURED_TOPIC_DEFAULT_TOPICS, defaultTopics.size(), defaultTopics);
         }
         // read enable whitelist
         tmpValue = this.props.get(KEY_ENABLE_WHITELIST);
@@ -681,19 +689,42 @@ public class CommonConfigHolder {
                 this.enableTDBankMparamSetting = "TRUE".equalsIgnoreCase(tmpValue.trim());
             }
         }
-        // read cluster id
+        // read cluster ids
         if (isMetaInfoGetFromTDBank()) {
-            tmpValue = this.props.get(KEY_PROXY_CLUSTER_ID);
-            if (StringUtils.isNotBlank(tmpValue)) {
-                int clusterIdVal = NumberUtils.toInt(tmpValue.trim(), VAL_DEF_CLUSTER_ID);
-                if (clusterIdVal >= 0) {
-                    this.clusterId = clusterIdVal;
+            tmpValue = this.props.get(KEY_PROXY_CLUSTER_IDS);
+            List<String> tmpList = new ArrayList<>();
+            String[] clusterIdItems = tmpValue.split(",|\\s+");
+            for (String item : clusterIdItems) {
+                if (StringUtils.isBlank(item)) {
+                    continue;
+                }
+                tmpList.add(item.trim());
+            }
+            if (tmpList.isEmpty()) {
+                LOG.error("Required {} field value is blank in {}, exit!",
+                        KEY_PROXY_CLUSTER_IDS, COMMON_CONFIG_FILE_NAME);
+                System.exit(7);
+            }
+            // check ids's value
+            int tmpIntVal;
+            Set<Integer> tmpCulsterIds = new HashSet<>();
+            for (String item : tmpList) {
+                try {
+                    tmpIntVal = Integer.parseInt(item);
+                } catch (Throwable e) {
+                    continue;
+                }
+                if (tmpIntVal >= 0) {
+                    tmpCulsterIds.add(tmpIntVal);
                 }
             }
-            if (this.clusterId < 0) {
-                LOG.warn("Illegal {} value {}, please confirm with administrator",
-                        KEY_PROXY_CLUSTER_ID, tmpValue);
+            if (tmpCulsterIds.isEmpty()) {
+                LOG.error("Required {} field value is not number in {}, exit!",
+                        KEY_PROXY_CLUSTER_IDS, COMMON_CONFIG_FILE_NAME);
+                System.exit(7);
             }
+            this.clusterIdSet = tmpCulsterIds;
+            this.clusterIdsStr = StringUtils.join(tmpCulsterIds, ",");
         }
         // initial ip parser
         try {

@@ -20,6 +20,7 @@ package org.apache.inlong.dataproxy.config.holder;
 import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
+import org.apache.inlong.dataproxy.config.pojo.RmvDataItem;
 import org.apache.inlong.dataproxy.config.pojo.TDBankMetaConfig;
 import org.apache.inlong.dataproxy.consts.AttrConstants;
 
@@ -53,17 +54,22 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
 
     private static final String metaConfigFileName = "tdbank_metadata.json";
 
+    public static final String REMOVE_META_ITEMS = "removeMetaItems";
+    public static final String REMOVE_ITEMS_KEY = "rmvItems";
+
     private static final int MAX_ALLOWED_JSON_FILE_SIZE = 300 * 1024 * 1024;
     private static final Logger LOG = LoggerFactory.getLogger(TDBankMetaConfigHolder.class);
     private static final Gson GSON = new Gson();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     // meta data
-    private String dataStr = "";
     private String tmpDataStr = "";
     private List<String> tmpMetaList = new ArrayList<>();
     private final AtomicLong lastSyncVersion = new AtomicLong(0);
+    private String dataStr = "";
     private List<String> metaList = new ArrayList<>();
+    private final Map<String, TDBankMetaConfig.ConfigItem> metaConfItemMap = new HashMap<>();
     private final AtomicLong lastUpdVersion = new AtomicLong(0);
+
     // cached data
     private final ConcurrentHashMap<String, String> bid2SrcTopicMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> bid2SrcMValueMap = new ConcurrentHashMap<>();
@@ -125,51 +131,63 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         if (result.isEmpty()) {
             return false;
         }
+        // check and update configure
         synchronized (this.lastSyncVersion) {
-            synchronized (this.lastUpdVersion) {
-                if (this.lastSyncVersion.get() > this.lastUpdVersion.get()) {
-                    if (inDataJsonStr.equals(tmpDataStr) || this.tmpMetaList.equals(result)) {
-                        return false;
-                    }
-                    LOG.info("Load changed metadata {} , but reloading content, over {} ms",
-                            getFileName(), System.currentTimeMillis() - this.lastSyncVersion.get());
+            if (this.lastSyncVersion.get() > this.lastUpdVersion.get()) {
+                if (inDataJsonStr.equals(tmpDataStr) || !needAppend(this.tmpMetaList, result)) {
                     return false;
-                } else {
-                    if (inDataJsonStr.equals(dataStr) || this.metaList.equals(result)) {
-                        return false;
-                    }
                 }
+                LOG.info("Load changed metadata {} , but reloading content, over {} ms",
+                        getFileName(), System.currentTimeMillis() - this.lastSyncVersion.get());
+                return false;
             }
-            return storeConfigToFile(inDataJsonStr, result);
+            return storeConfigToFile(true, inDataJsonStr, result, metaConfig.getData());
         }
     }
 
-    public Map<String, String> forkCachedSrcBidTopicConfig() {
-        Map<String, String> result = new HashMap<>();
-        if (bid2SrcTopicMap.isEmpty()) {
-            return result;
-        }
-        for (Map.Entry<String, String> entry : bid2SrcTopicMap.entrySet()) {
-            if (entry == null || entry.getKey() == null || entry.getValue() == null) {
+    public boolean manualRmvMetaConfig(List<RmvDataItem> origRmvItems) {
+        String key;
+        List<String> rmvItemKeys = new ArrayList<>();
+        for (RmvDataItem item : origRmvItems) {
+            if (item == null
+                    || !CommonConfigHolder.getInstance().getClusterIdSet().contains(item.getClusterId())
+                    || StringUtils.isBlank(item.getBid())) {
                 continue;
             }
-            result.put(entry.getKey(), entry.getValue());
+            key = AttrConstants.SEPARATOR + item.getClusterId()
+                    + AttrConstants.SEPARATOR + item.getBid().trim();
+            rmvItemKeys.add(key);
         }
-        return result;
-    }
-
-    public Map<String, String> forkCachedSinkBidTopicConfig() {
-        Map<String, String> result = new HashMap<>();
-        if (bid2SinkTopicMap.isEmpty()) {
-            return result;
+        if (rmvItemKeys.isEmpty()) {
+            LOG.warn("Manual remove meta-data failure: no valid data to be deleted!");
+            return false;
         }
-        for (Map.Entry<String, String> entry : bid2SinkTopicMap.entrySet()) {
-            if (entry == null || entry.getKey() == null || entry.getValue() == null) {
-                continue;
+        // check whether empty meta configure
+        int count = 0;
+        for (String rmvKey : rmvItemKeys) {
+            if (this.metaConfItemMap.containsKey(rmvKey)) {
+                count++;
             }
-            result.put(entry.getKey(), entry.getValue());
         }
-        return result;
+        if (count >= this.metaConfItemMap.size()) {
+            LOG.warn("Manual remove meta-data failure: not allowed to delete all meta-data!");
+            return false;
+        }
+        // remove items
+        for (String rmvKey : rmvItemKeys) {
+            this.metaConfItemMap.remove(rmvKey);
+        }
+        // build new Meta configiure
+        TDBankMetaConfig metaConfig = new TDBankMetaConfig(this.metaConfItemMap.values());
+        List<String> result = getMetaStrList(metaConfig.getData());
+        if (result.isEmpty()) {
+            return false;
+        }
+        String newDataJsonStr = GSON.toJson(metaConfig);
+        // check and update configure
+        synchronized (this.lastSyncVersion) {
+            return storeConfigToFile(false, newDataJsonStr, result, metaConfig.getData());
+        }
     }
 
     public Set<String> getAllSinkTopicName() {
@@ -202,7 +220,8 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
             return false;
         }
         String jsonString = "";
-        readWriteLock.readLock().lock();
+        List<String> newDataList;
+        readWriteLock.writeLock().lock();
         try {
             jsonString = loadConfigFromFile();
             if (StringUtils.isBlank(jsonString)) {
@@ -225,31 +244,17 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
                 LOG.warn("Load failed json config from {}, malformed content, data is empty!", getFileName());
                 return true;
             }
-            List<String> newDataList = getMetaStrList(bidConfigs);
+            newDataList = getMetaStrList(bidConfigs);
             if (newDataList.isEmpty()) {
                 LOG.warn("Load json config from {} failed, no valid topic record!", getFileName());
                 return true;
             }
             // update cache data
-            boolean updated;
-            synchronized (this.lastUpdVersion) {
-                if (jsonString.equals(this.dataStr) || newDataList.equals(this.metaList)) {
-                    LOG.warn("Load json config from {}, no new records found!", getFileName());
-                    return true;
-                }
-                updated = updateCacheData(metaConfig);
-                if (updated) {
-                    if (this.lastSyncVersion.get() == 0) {
-                        this.lastUpdVersion.set(System.currentTimeMillis());
-                        this.lastSyncVersion.compareAndSet(0, this.lastUpdVersion.get());
-                    } else {
-                        this.lastUpdVersion.set(this.lastSyncVersion.get());
-                    }
-                    this.metaList = newDataList;
-                    this.dataStr = jsonString;
-                }
+            if (jsonString.equals(this.dataStr) || !needAppend(this.metaList, newDataList)) {
+                LOG.warn("Load json config from {}, no new records found!", getFileName());
+                return true;
             }
-            if (updated) {
+            if (updateCacheData(jsonString, newDataList, metaConfig)) {
                 LOG.info("Load changed {} file success!", getFileName());
             }
             return true;
@@ -257,11 +262,12 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
             LOG.warn("Process json {} changed data {} failure", getFileName(), jsonString, e);
             return false;
         } finally {
-            readWriteLock.readLock().unlock();
+            readWriteLock.writeLock().unlock();
         }
     }
 
-    private boolean updateCacheData(TDBankMetaConfig metaConfig) {
+    private boolean updateCacheData(String newConfigStr,
+            List<String> newDataList, TDBankMetaConfig metaConfig) {
         // get and valid bid-topic configure
         List<TDBankMetaConfig.ConfigItem> bidConfigs = metaConfig.getData();
         if (bidConfigs == null) {
@@ -274,7 +280,7 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         Map<String, String> tmpBidMValueMap = new HashMap<>();
         for (TDBankMetaConfig.ConfigItem item : bidConfigs) {
             if (item == null
-                    || item.getClusterId() != CommonConfigHolder.getInstance().getClusterId()
+                    || !CommonConfigHolder.getInstance().getClusterIdSet().contains(item.getClusterId())
                     || StringUtils.isBlank(item.getBid())
                     || StringUtils.isBlank(item.getTopic())) {
                 continue;
@@ -287,47 +293,31 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         }
         if (tmpBidTopicMap.isEmpty()) {
             LOG.warn("Load failed json config from {}, no valid bid-topic metaConfig for clusterId {}",
-                    getFileName(), CommonConfigHolder.getInstance().getClusterId());
+                    getFileName(), CommonConfigHolder.getInstance().getClusterIdsStr());
             return false;
-        }
-        // remove deleted bid2topic config
-        Set<String> tmpKeys = new HashSet<>();
-        for (Map.Entry<String, String> entry : bid2SrcTopicMap.entrySet()) {
-            if (entry == null || entry.getKey() == null || entry.getValue() == null) {
-                continue;
-            }
-            if (!tmpBidTopicMap.containsKey(entry.getKey())) {
-                tmpKeys.add(entry.getKey());
-            }
-        }
-        for (String key : tmpKeys) {
-            bid2SrcTopicMap.remove(key);
         }
         // add new bid2SrcTopic config
         bid2SrcTopicMap.putAll(tmpBidTopicMap);
         bid2SinkTopicMap.putAll(tmpBidTopicMap);
-        // remove deleted cluster config
-        tmpKeys.clear();
-        for (Map.Entry<String, String> entry : bid2SrcMValueMap.entrySet()) {
-            if (entry == null || entry.getKey() == null || entry.getValue() == null) {
-                continue;
-            }
-            if (!tmpBidMValueMap.containsKey(entry.getKey())) {
-                tmpKeys.add(entry.getKey());
-            }
-        }
-        for (String key : tmpKeys) {
-            bid2SrcMValueMap.remove(key);
-        }
         // add new mq cluster config
         bid2SrcMValueMap.putAll(tmpBidMValueMap);
+        if (this.lastSyncVersion.get() == 0) {
+            this.lastUpdVersion.set(System.currentTimeMillis());
+            this.lastSyncVersion.compareAndSet(0, this.lastUpdVersion.get());
+        } else {
+            this.lastUpdVersion.set(this.lastSyncVersion.get());
+        }
+        this.metaList = newDataList;
+        this.dataStr = newConfigStr;
+        repCachedConfigItems(bidConfigs);
         return true;
     }
 
     /**
      * store meta config to file
      */
-    private boolean storeConfigToFile(String metaJsonStr, List<String> result) {
+    private boolean storeConfigToFile(boolean onlyAppend, String metaJsonStr,
+            List<String> result, List<TDBankMetaConfig.ConfigItem> configItemList) {
         boolean isSuccess = false;
         String filePath = getFilePath();
         if (StringUtils.isBlank(filePath)) {
@@ -335,6 +325,16 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
             return isSuccess;
         }
         readWriteLock.writeLock().lock();
+        // prepare update
+        String newMetaJsonStr;
+        if (onlyAppend) {
+            if (metaJsonStr.equals(dataStr) || !needAppend(this.metaList, result)) {
+                return false;
+            }
+            newMetaJsonStr = appendUpdatedMetaConfig(configItemList);
+        } else {
+            newMetaJsonStr = metaJsonStr;
+        }
         try {
             File sourceFile = new File(filePath);
             File targetFile = new File(getNextBackupFileName());
@@ -343,7 +343,7 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
             if (sourceFile.exists()) {
                 FileUtils.copyFile(sourceFile, targetFile);
             }
-            FileUtils.writeStringToFile(tmpNewFile, metaJsonStr, StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(tmpNewFile, newMetaJsonStr, StandardCharsets.UTF_8);
             FileUtils.copyFile(tmpNewFile, sourceFile);
             tmpNewFile.delete();
             this.tmpDataStr = metaJsonStr;
@@ -407,7 +407,7 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         String key;
         for (TDBankMetaConfig.ConfigItem item : bidConfigs) {
             if (item == null
-                    || item.getClusterId() != CommonConfigHolder.getInstance().getClusterId()
+                    || !CommonConfigHolder.getInstance().getClusterIdSet().contains(item.getClusterId())
                     || StringUtils.isBlank(item.getBid())
                     || StringUtils.isBlank(item.getTopic())) {
                 continue;
@@ -423,5 +423,50 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         }
         Collections.sort(result);
         return result;
+    }
+
+    private String appendUpdatedMetaConfig(List<TDBankMetaConfig.ConfigItem> bidConfigs) {
+        String key;
+        for (TDBankMetaConfig.ConfigItem item : bidConfigs) {
+            if (item == null
+                    || !CommonConfigHolder.getInstance().getClusterIdSet().contains(item.getClusterId())
+                    || StringUtils.isBlank(item.getBid())
+                    || StringUtils.isBlank(item.getTopic())) {
+                continue;
+            }
+            key = AttrConstants.SEPARATOR + item.getClusterId()
+                    + AttrConstants.SEPARATOR + item.getBid().trim();
+            this.metaConfItemMap.put(key, item);
+        }
+        TDBankMetaConfig metaConfig = new TDBankMetaConfig(this.metaConfItemMap.values());
+        return GSON.toJson(metaConfig);
+    }
+
+    private void repCachedConfigItems(List<TDBankMetaConfig.ConfigItem> bidConfigs) {
+        String key;
+        this.metaConfItemMap.clear();
+        for (TDBankMetaConfig.ConfigItem item : bidConfigs) {
+            if (item == null
+                    || !CommonConfigHolder.getInstance().getClusterIdSet().contains(item.getClusterId())
+                    || StringUtils.isBlank(item.getBid())
+                    || StringUtils.isBlank(item.getTopic())) {
+                continue;
+            }
+            key = AttrConstants.SEPARATOR + item.getClusterId()
+                    + AttrConstants.SEPARATOR + item.getBid().trim();
+            this.metaConfItemMap.put(key, item);
+        }
+    }
+
+    private boolean needAppend(List<String> curList, List<String> newList) {
+        if (curList.equals(newList)) {
+            return false;
+        }
+        for (String item : newList) {
+            if (!curList.contains(item)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

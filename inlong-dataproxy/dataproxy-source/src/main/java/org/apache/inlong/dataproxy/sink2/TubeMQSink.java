@@ -295,20 +295,24 @@ public class TubeMQSink extends BaseSink {
         private boolean sendMessage(EventProfile profile) {
             // get topic name
             String topic = ConfigManager.getInstance().getTDBankSinkTopicName(profile.getGroupId());
-            if (topic == null) {
-                if (!CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
+            if (StringUtils.isEmpty(topic)) {
+                // add default topics first
+                if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
+                    topic = CommonConfigHolder.getInstance().getRandDefTopics();
+                    if (StringUtils.isEmpty(topic)) {
+                        fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_MISSING,
+                                profile.getGroupId());
+                        profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
+                        return false;
+                    }
+                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_USED,
+                            profile.getGroupId());
+                } else {
                     fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
                             profile.getGroupId());
                     profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
                     return false;
                 }
-                topic = CommonConfigHolder.getInstance().getRandDefTopics();
-                if (StringUtils.isEmpty(topic)) {
-                    fileMetricIncSumStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_MISSING);
-                    profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
-                    return false;
-                }
-                fileMetricIncSumStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_USED);
             }
             // get producer by topic
             MessageProducer producer = producerMap.get(topic);

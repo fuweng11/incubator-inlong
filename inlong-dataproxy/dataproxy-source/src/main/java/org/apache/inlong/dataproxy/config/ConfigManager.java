@@ -32,6 +32,7 @@ import org.apache.inlong.dataproxy.config.holder.WeightConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.WhiteListConfigHolder;
 import org.apache.inlong.dataproxy.config.pojo.CacheClusterConfig;
 import org.apache.inlong.dataproxy.config.pojo.IdTopicConfig;
+import org.apache.inlong.dataproxy.config.pojo.RmvDataItem;
 import org.apache.inlong.dataproxy.config.pojo.TDBankMetaConfig;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.utils.HttpUtils;
@@ -198,6 +199,13 @@ public class ConfigManager {
     // register meta-config callback
     public void regTDBankMetaChgCallback(ConfigUpdateCallback callback) {
         tdbankMetaHolder.addUpdateCallback(callback);
+    }
+
+    public boolean manualRmvMetaConfig(List<RmvDataItem> rmvItems) {
+        if (CommonConfigHolder.getInstance().isMetaInfoGetFromTDBank()) {
+            return tdbankMetaHolder.manualRmvMetaConfig(rmvItems);
+        }
+        return false;
     }
 
     // get groupId num 2 name info
@@ -403,10 +411,10 @@ public class ConfigManager {
         }
 
         private void checkTDBankRemoteConfig() {
-            int clusterId = CommonConfigHolder.getInstance().getClusterId();
-            if (clusterId == CommonConfigHolder.VAL_DEF_CLUSTER_ID) {
+            String clusterIdsStr = CommonConfigHolder.getInstance().getClusterIdsStr();
+            if (CommonConfigHolder.VAL_DEF_CLUSTER_IDS.equals(clusterIdsStr)) {
                 LOG.error("Found {} is not configured in {}, can't quest remote configure!",
-                        CommonConfigHolder.KEY_PROXY_CLUSTER_ID, CommonConfigHolder.COMMON_CONFIG_FILE_NAME);
+                        CommonConfigHolder.KEY_PROXY_CLUSTER_IDS, CommonConfigHolder.COMMON_CONFIG_FILE_NAME);
                 return;
             }
             List<String> managerIpList = CommonConfigHolder.getInstance().getManagerHosts();
@@ -417,7 +425,7 @@ public class ConfigManager {
             int managerIpSize = managerIpList.size();
             for (int i = 0; i < managerIpList.size(); i++) {
                 String host = managerIpList.get(Math.abs(managerIpListIndex.getAndIncrement()) % managerIpSize);
-                if (this.reloadTDBankDataProxyConfig(clusterId, host)) {
+                if (this.reloadTDBankDataProxyConfig(clusterIdsStr, host)) {
                     break;
                 }
             }
@@ -508,11 +516,11 @@ public class ConfigManager {
         /**
          * reloadTDBankDataProxyConfig
          */
-        private boolean reloadTDBankDataProxyConfig(int clusterId, String host) {
+        private boolean reloadTDBankDataProxyConfig(String clusterIdsStr, String host) {
             String url = null;
             HttpGet httpGet = null;
             try {
-                url = "http://" + host + "/business?opType=queryBusConfig&cluster_ids=" + clusterId;
+                url = "http://" + host + "/business?opType=queryBusConfig&cluster_ids=" + clusterIdsStr;
                 httpGet = HttpUtils.getTDBankHttpGet(url);
                 // request with post
                 if (LOG.isDebugEnabled()) {
@@ -524,12 +532,12 @@ public class ConfigManager {
                 String returnStr = EntityUtils.toString(response.getEntity());
                 long dltTime = System.currentTimeMillis() - startTime;
                 if (dltTime >= CommonConfigHolder.getInstance().getMetaConfigWastAlarmMs()) {
-                    LOG.warn("End to request {} to get config info:{}, WAIST {} ms",
-                            url, returnStr, dltTime);
+                    LOG.warn("End to request {} WAIST {} ms, get config info:{}",
+                            url, dltTime, returnStr);
                 } else {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("End to request {} to get config info:{}, WAIST {} ms",
-                                url, returnStr, dltTime);
+                        LOG.debug("End to request {}, WAIST {} ms, get config info:{}",
+                                url, dltTime, returnStr);
                     }
                 }
                 if (response.getStatusLine().getStatusCode() != 200) {

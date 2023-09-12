@@ -300,20 +300,24 @@ public class PulsarSink extends BaseSink {
             // get topic name
             String topic = ConfigManager.getInstance().getPulsarXfeSinkTopic(
                     profile.getGroupId(), profile.getStreamId());
-            if (topic == null) {
-                if (!CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
+            if (StringUtils.isEmpty(topic)) {
+                // add default topics first
+                if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
+                    topic = CommonConfigHolder.getInstance().getRandDefTopics();
+                    if (StringUtils.isEmpty(topic)) {
+                        fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
+                                getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
+                        profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
+                        return false;
+                    }
+                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_USED,
+                            profile.getGroupId());
+                } else {
                     fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
                             getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
                     profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
                     return false;
                 }
-                topic = CommonConfigHolder.getInstance().getRandDefTopics();
-                if (StringUtils.isEmpty(topic)) {
-                    fileMetricIncSumStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_MISSING);
-                    profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
-                    return false;
-                }
-                fileMetricIncSumStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_USED);
             }
             // get producer by topic
             Producer producer = producerMap.get(topic);

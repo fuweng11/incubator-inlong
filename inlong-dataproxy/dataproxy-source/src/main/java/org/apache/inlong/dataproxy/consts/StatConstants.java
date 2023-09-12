@@ -41,7 +41,9 @@ public class StatConstants {
     public static final java.lang.String EVENT_HTTP_LINK_UNKNOWN_EXCEPTION = "http.link.unknown.exception";
     public static final java.lang.String EVENT_HTTP_LINK_UNWRITABLE = "http.link.unwritable";
     // configure
-    public static final java.lang.String EVENT_CONFIG_TOPIC_MISSING = "config.topic.missing";
+    public static final java.lang.String EVENT_SOURCE_TOPIC_MISSING = "source.topic.missing";
+    public static final java.lang.String EVENT_SOURCE_DEFAULT_TOPIC_USED = "source.default.topic.used";
+    public static final java.lang.String EVENT_SOURCE_DEF_TOPIC_MISSING = "source.default.topic.empty";
     public static final java.lang.String EVENT_CONFIG_IDNUM_EMPTY = "config.idnum.empty";
     public static final java.lang.String EVENT_CONFIG_GROUPIDNUM_MISSING = "config.groupidnum.missing";
     public static final java.lang.String EVENT_CONFIG_GROUP_IDNUM_INCONSTANT = "config.group.idnum.incons";
@@ -103,8 +105,8 @@ public class StatConstants {
     public static final java.lang.String EVENT_SINK_EVENT_V1_FILE_TAKE_SUCCESS = "sink.event.v1.file.take.success";
     public static final java.lang.String EVENT_SINK_EVENT_V0_FILE_TAKE_SUCCESS = "sink.event.v0.file.take.success";
     public static final java.lang.String EVENT_SINK_CONFIG_TOPIC_MISSING = "sink.topic.missing";
-    public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_MISSING = "default.topic.empty";
-    public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_USED = "default.topic.used";
+    public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_MISSING = "sink.default.topic.empty";
+    public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_USED = "sink.default.topic.used";
     public static final java.lang.String EVENT_SINK_PRODUCER_NULL = "sink.producer.null";
     public static final java.lang.String EVENT_SINK_CLUSTER_EMPTY = "sink.cluster.empty";
     public static final java.lang.String EVENT_SINK_CLUSTER_UNMATCHED = "sink.cluster.unmatched";

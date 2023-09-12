@@ -17,6 +17,8 @@
 
 package org.apache.inlong.dataproxy.config.pojo;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class TDBankMetaConfig {
@@ -24,6 +26,17 @@ public class TDBankMetaConfig {
     private boolean result;
     private List<ConfigItem> data;
     private int errCode;
+
+    public TDBankMetaConfig() {
+
+    }
+
+    public TDBankMetaConfig(Collection<ConfigItem> dataList) {
+        this.result = true;
+        this.errCode = 0;
+        this.data = new ArrayList<>();
+        this.data.addAll(dataList);
+    }
 
     public boolean isResult() {
         return result;

@@ -17,8 +17,13 @@
 
 package org.apache.inlong.dataproxy.admin;
 
+import org.apache.inlong.dataproxy.config.ConfigManager;
+import org.apache.inlong.dataproxy.config.holder.TDBankMetaConfigHolder;
+import org.apache.inlong.dataproxy.config.pojo.RmvDataItem;
 import org.apache.inlong.sdk.commons.admin.AbstractAdminEventHandler;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Context;
@@ -30,6 +35,8 @@ import javax.management.ObjectName;
 import javax.servlet.http.HttpServletResponse;
 
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Set;
 
 import static org.apache.inlong.dataproxy.admin.ProxyServiceMBean.MBEAN_TYPE;
@@ -61,7 +68,7 @@ public class ProxyServiceAdminEventHandler extends AbstractAdminEventHandler {
         LOG.info("start to process admin task:{},sourceName:{}", cmd, sourceName);
         switch (cmd) {
             case ProxyServiceMBean.METHOD_STOPSERVICE:
-            case ProxyServiceMBean.METHOD_RECOVERSERVICE:
+            case ProxyServiceMBean.METHOD_RECOVERSERVICE: {
                 if (sourceName == null) {
                     break;
                 }
@@ -71,10 +78,47 @@ public class ProxyServiceAdminEventHandler extends AbstractAdminEventHandler {
                     this.processOne(cmd, sourceName, response);
                 }
                 break;
+            }
+
+            case TDBankMetaConfigHolder.REMOVE_META_ITEMS: {
+                processRmvMetaData(event, response);
+                break;
+            }
+
             default:
                 break;
         }
         LOG.info("end to process admin task:{},sourceName:{}", cmd, sourceName);
+    }
+
+    private void processRmvMetaData(Event event, HttpServletResponse response) {
+        String rmvConfigJsonStr = event.getHeaders().get(TDBankMetaConfigHolder.REMOVE_ITEMS_KEY);
+        LOG.info("Received manual remove meta-data request, remove targets are {}", rmvConfigJsonStr);
+        if (StringUtils.isBlank(rmvConfigJsonStr)) {
+            this.outputResponse(response,
+                    "Manual remove meta-data failure: the data to be deleted is blank!");
+            LOG.warn("Received manual remove meta-data request: the data to be deleted is blank!");
+            return;
+        }
+        Gson gson = new Gson();
+        Type type = new TypeToken<List<RmvDataItem>>() {
+        }.getType();
+        List<RmvDataItem> origRmvItems = gson.fromJson(rmvConfigJsonStr, type);
+        if (origRmvItems == null || origRmvItems.isEmpty()) {
+            this.outputResponse(response,
+                    "Manual remove meta-data failure: the data to be deleted translate to json failure!");
+            LOG.warn("Received manual remove meta-data request: the data to be deleted to object empty!");
+            return;
+        }
+        if (ConfigManager.getInstance().manualRmvMetaConfig(origRmvItems)) {
+            this.outputResponse(response, "Manual remove meta-data success!");
+            LOG.info("Received manual remove meta-data request: operation successful");
+        } else {
+            this.outputResponse(response,
+                    "Manual remove meta-data failure: please check data and contact the administrator!");
+            LOG.info("Received manual remove meta-data request: operation failure");
+        }
+
     }
 
     /**
