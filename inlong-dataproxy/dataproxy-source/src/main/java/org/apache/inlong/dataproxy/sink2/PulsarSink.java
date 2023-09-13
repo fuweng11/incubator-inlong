@@ -206,14 +206,13 @@ public class PulsarSink extends BaseSink {
                 }
             }
             if (!added) {
-                logger.info("{} topics changed, no added topics, reload topics are {}, cached topics are {}",
-                        cachedSinkName, curTopicSet, lastRefreshTopics);
+                logger.info("{} topics changed, no added topics", cachedSinkName);
                 return;
             }
             // publish need added topics
             publishTopics(addedTopics);
-            logger.info("{} topics changed, added topics {}, reload topics are {}, cached topics are {}",
-                    cachedSinkName, addedTopics, curTopicSet, lastRefreshTopics);
+            logger.info("{} topics changed, reload topics are {}, cached topics are {}",
+                    cachedSinkName, curTopicSet, lastRefreshTopics);
         }
     }
 
@@ -322,7 +321,7 @@ public class PulsarSink extends BaseSink {
             // get producer by topic
             Producer producer = producerMap.get(topic);
             if (producer == null) {
-                fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_PRODUCER_NULL, topic);
+                fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_TOPIC_WITHOUT_PRODUCER, topic);
                 processSendFail(profile, DataProxyErrCode.PRODUCER_IS_NULL, "");
                 return false;
             }

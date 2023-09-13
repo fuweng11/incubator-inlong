@@ -221,6 +221,7 @@ public class TubeMQSink extends BaseSink {
         int remainder;
         int startIndex;
         int endIndex = 0;
+        Set<String> successSet = new HashSet<>();
         Set<String> subSet = new HashSet<>();
         long startTime = System.currentTimeMillis();
         Collections.sort(addedTopics);
@@ -234,6 +235,7 @@ public class TubeMQSink extends BaseSink {
                 try {
                     latestProducer = sessionFactory.createProducer();
                 } catch (Throwable e1) {
+                    fileMetricIncSumStats(StatConstants.EVENT_SINK_PRODUCER_CREATE_FAILURE);
                     logger.warn("{} create producer failure", cachedSinkName, e1);
                     continue;
                 }
@@ -244,7 +246,7 @@ public class TubeMQSink extends BaseSink {
             endIndex = Math.min(startIndex + remainder, addedTopics.size());
             subSet.addAll(addedTopics.subList(startIndex, endIndex));
             try {
-                latestProducer.publish(subSet);
+                successSet.addAll(latestProducer.publish(subSet));
             } catch (Throwable e) {
                 if (logCounter.shouldPrint()) {
                     logger.warn("{} publish topics failure, topics = {}", cachedSinkName, subSet, e);
@@ -255,8 +257,20 @@ public class TubeMQSink extends BaseSink {
             }
             latestPublishTopicNum.addAndGet(subSet.size());
         } while (endIndex < addedTopics.size());
-        logger.info("{} publish topics, added topics {}, cost: {} ms",
-                cachedSinkName, addedTopics, (System.currentTimeMillis() - startTime));
+        if (successSet.size() < addedTopics.size()) {
+            Set<String> failSet = new HashSet<>();
+            for (String topic : addedTopics) {
+                if (successSet.contains(topic)) {
+                    continue;
+                }
+                failSet.add(topic);
+            }
+            logger.warn("{} failure to published topic set {}, cost: {} ms",
+                    cachedSinkName, failSet, (System.currentTimeMillis() - startTime));
+        } else {
+            logger.info("{} published topics, added topics {}, cost: {} ms",
+                    cachedSinkName, addedTopics, (System.currentTimeMillis() - startTime));
+        }
     }
 
     private class SinkTask implements Runnable {
@@ -317,7 +331,7 @@ public class TubeMQSink extends BaseSink {
             // get producer by topic
             MessageProducer producer = producerMap.get(topic);
             if (producer == null) {
-                fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_PRODUCER_NULL, topic);
+                fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_TOPIC_WITHOUT_PRODUCER, topic);
                 processSendFail(profile, DataProxyErrCode.PRODUCER_IS_NULL, "");
                 return false;
             }

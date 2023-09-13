@@ -256,13 +256,16 @@ public class PulsarHandler implements MessageQueueHandler {
                 } catch (Throwable ex) {
                     logger.error("create new producer failed", ex);
                 }
-            }
-            // create producer failed
-            if (producer == null) {
-                sinkContext.fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_PRODUCER_NULL, producerTopic);
-                sinkContext.processSendFail(profile, clusterName, producerTopic, 0,
-                        DataProxyErrCode.PRODUCER_IS_NULL, "");
-                return false;
+                // create producer failed
+                if (producer == null) {
+                    sinkContext.fileMetricIncWithDetailStats(
+                            StatConstants.EVENT_SINK_PRODUCER_CREATE_FAILURE, producerTopic);
+                    sinkContext.processSendFail(profile, clusterName, producerTopic, 0,
+                            DataProxyErrCode.PRODUCER_IS_NULL, "");
+                    return false;
+                }
+                sinkContext.fileMetricIncWithDetailStats(
+                        StatConstants.EVENT_SINK_PRODUCER_CREATE_SUCCESS, producerTopic);
             }
             // send
             if (profile instanceof SimplePackProfile) {

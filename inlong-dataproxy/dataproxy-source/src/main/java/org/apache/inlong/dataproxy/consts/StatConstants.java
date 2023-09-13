@@ -108,6 +108,9 @@ public class StatConstants {
     public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_MISSING = "sink.default.topic.empty";
     public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_USED = "sink.default.topic.used";
     public static final java.lang.String EVENT_SINK_PRODUCER_NULL = "sink.producer.null";
+    public static final java.lang.String EVENT_SINK_TOPIC_WITHOUT_PRODUCER = "sink.topic.without.producer";
+    public static final java.lang.String EVENT_SINK_PRODUCER_CREATE_SUCCESS = "sink.producer.create.success";
+    public static final java.lang.String EVENT_SINK_PRODUCER_CREATE_FAILURE = "sink.producer.create.failure";
     public static final java.lang.String EVENT_SINK_CLUSTER_EMPTY = "sink.cluster.empty";
     public static final java.lang.String EVENT_SINK_CLUSTER_UNMATCHED = "sink.cluster.unmatched";
     public static final java.lang.String EVENT_SINK_CPRODUCER_NULL = "sink.cluster.producer.null";
