@@ -132,7 +132,9 @@ public class ZhiyanMetricListener implements MetricListener {
                 reporter.sumMetric(DataProxyMetricItem.M_WHOLE_DURATION,
                         (double) metricMap.getOrDefault(DataProxyMetricItem.M_WHOLE_DURATION, ZERO).value);
                 int result = reporter.report();
-                LOG.info("zhiyan,dimensions:{},values:{},result:{}", dimensionMap, gson.toJson(metricMap), result);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("zhiyan,dimensions:{},values:{},result:{}", dimensionMap, gson.toJson(metricMap), result);
+                }
             }
         } catch (Exception e) {
             LOG.error("reportZhiyan error:{}", e.getMessage(), e);
