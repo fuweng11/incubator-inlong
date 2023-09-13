@@ -63,7 +63,7 @@ static const char kManagerClusterURL[] =
     "dataproxy_ip_v2?cluster_id=0&net_tag=normal";
 static const uint32_t kManagerUpdateInterval = 2;
 static const uint32_t kManagerTimeout = 5;
-static const uint32_t kMaxProxyNum = 200;
+static const uint32_t kMaxProxyNum = 8;
 
 static const bool kEnableTCPNagle = true;
 static const uint32_t kTcpIdleTime = 600000;
@@ -84,6 +84,7 @@ static const char kBasicAuthSeparator[] = " ";
 static const char kBasicAuthJoiner[] = ":";
 static const char kProtocolType[] = "TCP";
 static const bool kNeedAuth = false;
+static const char kInternalAuthHeader[] = "secure-authentication:";
 
 static const uint32_t kMaxAttrLen = 2048;
 

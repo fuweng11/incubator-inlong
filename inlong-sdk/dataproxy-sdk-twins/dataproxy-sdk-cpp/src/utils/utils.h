@@ -40,6 +40,7 @@ struct HttpRequest {
   std::string auth_id;
   std::string auth_key;
   std::string post_data;
+  bool internal;
 };
 class Utils {
 private:

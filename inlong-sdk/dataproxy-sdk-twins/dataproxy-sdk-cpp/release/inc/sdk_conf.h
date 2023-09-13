@@ -87,6 +87,7 @@ public:
   bool need_auth_;
   std::string auth_id_;
   std::string auth_key_;
+  bool internal_;
 
   // Other parameters
   std::string local_ip_;        // local ip

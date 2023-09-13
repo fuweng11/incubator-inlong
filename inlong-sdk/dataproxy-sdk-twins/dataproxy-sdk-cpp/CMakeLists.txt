@@ -33,6 +33,7 @@ include_directories(src/manager)
 include_directories(src/group)
 include_directories(src/protocol)
 include_directories(src/client)
+include_directories(src/tauth)
 
 link_directories(${PROJECT_SOURCE_DIR}/third_party/lib)
 link_directories(${PROJECT_SOURCE_DIR}/third_party/lib64)
@@ -45,6 +46,7 @@ add_subdirectory(src/manager)
 add_subdirectory(src/group)
 add_subdirectory(src/protocol)
 add_subdirectory(src/client)
+add_subdirectory(src/tauth)
 add_subdirectory(release)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/release/lib)
@@ -56,11 +58,12 @@ aux_source_directory(src/manager MANAGER)
 aux_source_directory(src/group GROUP)
 aux_source_directory(src/protocol PROTOCOL)
 aux_source_directory(src/client CLIENT)
+aux_source_directory(src/tauth TAUTH)
 
 # static library
-add_library(dataproxy_sdk STATIC ${UTILS} ${CONFIGS} ${CORE} ${MANAGER} ${GROUP} ${PROTOCOL} ${CLIENT})
+add_library(dataproxy_sdk STATIC ${UTILS} ${CONFIGS} ${CORE} ${MANAGER} ${GROUP} ${PROTOCOL} ${CLIENT} ${TAUTH})
 
 set_target_properties(dataproxy_sdk PROPERTIES OUTPUT_NAME "dataproxy_sdk" PREFIX "")
 
-target_link_libraries(dataproxy_sdk liblog4cplus.a libsnappy.a libcurl.a)
+target_link_libraries(dataproxy_sdk liblog4cplus.a libsnappy.a libcurl.a libssl.a libcrypto.a)
 

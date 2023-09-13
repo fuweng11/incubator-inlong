@@ -30,6 +30,7 @@
 #include <sstream>
 #include <sys/time.h>
 #include <utility>
+#include "../utils/logger.h"
 //using namespace zj;
 namespace tauth {
 #define SET_KS(_ks, _pos)                    \
@@ -109,11 +110,11 @@ namespace tauth {
 
         rapidjson::Document root;
         if (root.Parse(resBody.c_str()).HasParseError()) {
-            std::cout << "failed to parse user config file: " << resBody.c_str() << std::endl;
+            LOG_INFO( "failed to parse user config file: " << resBody.c_str() );
             return kFailed;
         }
         if (!root.HasMember("st")) {
-            std::cout << "param st is not an object " << resBody.c_str() << std::endl;
+            LOG_INFO("param st is not an object " << resBody.c_str() );
             return kFailed;
         } else {
             const rapidjson::Value &objServiceTicket = root["st"];
@@ -121,7 +122,7 @@ namespace tauth {
         }
 
         if (!root.HasMember("ct")) {
-            std::cout << "param ct is not an object " << resBody.c_str() << std::endl;
+            LOG_INFO( "param ct is not an object " << resBody.c_str() );
             return kFailed;
         } else {
             const rapidjson::Value &objClientTicket = root["ct"];
@@ -145,7 +146,7 @@ namespace tauth {
         //转换成json
         rapidjson::Document ClientTicketJson;
         if (ClientTicketJson.Parse(decryptCt.c_str()).HasParseError()) {
-            std::cout << "failed to parse user config file: " << decryptCt << std::endl;
+            LOG_ERROR( "failed to parse user config file: " << decryptCt );
             return {};
         }
         const rapidjson::Value &objTimeStamp = ClientTicketJson["timestamp"];
@@ -159,7 +160,7 @@ namespace tauth {
             const rapidjson::Value &objSessionKey = ClientTicketJson["sessionKey"];
             return objSessionKey.GetString();
         }
-        std::cout << "sessionKey is empty: " << std::endl;
+        LOG_ERROR( "sessionKey is empty: " );
         return {};
     }
 

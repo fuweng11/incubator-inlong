@@ -42,6 +42,7 @@
 
 #include "api_code.h"
 #include "capi_constant.h"
+#include "../tauth/manager_auth.h"
 
 namespace inlong {
 uint16_t Utils::sequence = 0;
@@ -418,13 +419,22 @@ int32_t Utils::requestUrl(std::string &res, const HttpRequest *request) {
   list = curl_slist_append(list,
                            "Content-Type: application/x-www-form-urlencoded");
 
-  if (request->need_auth && !request->auth_id.empty() &&
-      !request->auth_key.empty()) {
+  if ( request->need_auth && !request->auth_id.empty() && !request->auth_key.empty())
+  {
     // Authorization: Basic xxxxxxxx
-    std::string auth = constants::kBasicAuthHeader;
+    std::string auth = "";
     auth.append(constants::kBasicAuthSeparator);
-    auth.append(GenBasicAuthCredential(request->auth_id, request->auth_key));
-    LOG_INFO("request manager, auth-header:" << auth.c_str());
+    if (request->internal) {
+      auth = constants::kInternalAuthHeader;
+      tauth::TAuthClient tAuthClient;
+      std::string authCredential=tAuthClient.constructAuthentication(request->auth_id, request->auth_key);
+      auth.append(authCredential);
+    } else {
+      auth = constants::kBasicAuthHeader;
+      auth.append(
+          GenBasicAuthCredential(request->auth_id, request->auth_key));
+    }
+    LOG_INFO("request manager, auth-header:%s"<< auth.c_str());
     list = curl_slist_append(list, auth.c_str());
   }
 

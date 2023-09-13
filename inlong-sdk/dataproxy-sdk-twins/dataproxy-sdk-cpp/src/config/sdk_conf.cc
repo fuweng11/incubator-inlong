@@ -63,6 +63,7 @@ bool SdkConfig::ParseConfig(const std::string &config_path) {
   InitManagerParam(doc);
   InitTcpParam(doc);
   OthersParam(doc);
+  InitAuthParm(doc);
 
   inlong::initLog4cplus();
 
@@ -112,6 +113,8 @@ void SdkConfig::defaultInit() {
   enable_setaffinity_ = constants::kEnableSetAffinity;
   mask_cpu_affinity_ = constants::kMaskCPUAffinity;
   extend_field_ = constants::kExtendField;
+
+  need_auth_=constants::kNeedAuth;
 }
 
 void SdkConfig::InitThreadParam(const rapidjson::Value &doc) {
@@ -348,6 +351,9 @@ void SdkConfig::InitAuthParm(const rapidjson::Value &doc) {
     need_auth_ = true;
     auth_id_ = doc["auth_id"].GetString();
     auth_key_ = doc["auth_key"].GetString();
+    if(doc.HasMember("is_internal") && doc["need_auth"].IsBool()){
+      internal_=doc["need_auth"].GetBool();
+    }
     LOG_INFO("need_auth, auth_id:%s, auth_key:%s" << auth_id_.c_str()
                                                   << auth_key_.c_str());
   } else {
@@ -439,6 +445,7 @@ void SdkConfig::ShowClientConfig() {
   LOG_INFO("need_auth: " << need_auth_ ? "true" : "false");
   LOG_INFO("auth_id: " << auth_id_.c_str());
   LOG_INFO("auth_key: " << auth_key_.c_str());
+  LOG_INFO("internal_: " << internal_);
 }
 
 } // namespace inlong

@@ -20,6 +20,7 @@
 #include "http_client.h"
 #include "curl/curl.h"
 #include <iostream>
+#include "../utils/logger.h"
 namespace tauth{
     int HttpClient::requestUrl(std::string &res, const tauth::HttpRequestPar request) {
         CURL *curl = NULL;
@@ -39,7 +40,7 @@ namespace tauth{
         }
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
-        std::cout<<"requestUrl url:"<<request.url.c_str()<<std::endl;
+        LOG_INFO("requestUrl url:"<<request.url.c_str());
         //set url
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, request.type.c_str());
         curl_easy_setopt(curl, CURLOPT_URL,request.url.c_str());
