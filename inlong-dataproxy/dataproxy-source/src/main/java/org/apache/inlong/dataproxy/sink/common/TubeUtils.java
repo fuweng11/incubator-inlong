@@ -22,9 +22,9 @@ import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.utils.Constants;
 import org.apache.inlong.dataproxy.utils.DateTimeUtils;
 import org.apache.inlong.dataproxy.utils.MessageUtils;
-import org.apache.inlong.tubemq.client.config.TubeClientConfig;
-import org.apache.inlong.tubemq.corebase.Message;
 
+import com.tencent.tubemq.client.config.TubeClientConfig;
+import com.tencent.tubemq.corebase.Message;
 import org.apache.flume.Event;
 
 import java.util.Map;

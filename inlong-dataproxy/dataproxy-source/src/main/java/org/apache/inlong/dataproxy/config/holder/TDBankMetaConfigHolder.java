@@ -148,6 +148,7 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
     public boolean manualRmvMetaConfig(List<RmvDataItem> origRmvItems) {
         String key;
         List<String> rmvItemKeys = new ArrayList<>();
+        LOG.info("manual remove meta-data: enter process!");
         for (RmvDataItem item : origRmvItems) {
             if (item == null
                     || !CommonConfigHolder.getInstance().getClusterIdSet().contains(item.getClusterId())
@@ -177,12 +178,15 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
         for (String rmvKey : rmvItemKeys) {
             this.metaConfItemMap.remove(rmvKey);
         }
+        LOG.info("manual remove meta-data: removed cached data process!");
         // build new Meta configiure
         TDBankMetaConfig metaConfig = new TDBankMetaConfig(this.metaConfItemMap.values());
         List<String> result = getMetaStrList(metaConfig.getData());
         if (result.isEmpty()) {
+            LOG.warn("Manual remove meta-data failure: prepare store data is empty!");
             return false;
         }
+        LOG.info("manual remove meta-data: prepare remove data set are {}", rmvItemKeys);
         String newDataJsonStr = GSON.toJson(metaConfig);
         // check and update configure
         synchronized (this.lastSyncVersion) {
@@ -325,17 +329,18 @@ public class TDBankMetaConfigHolder extends ConfigHolder {
             return isSuccess;
         }
         readWriteLock.writeLock().lock();
-        // prepare update
-        String newMetaJsonStr;
-        if (onlyAppend) {
-            if (metaJsonStr.equals(dataStr) || !needAppend(this.metaList, result)) {
-                return false;
-            }
-            newMetaJsonStr = appendUpdatedMetaConfig(configItemList);
-        } else {
-            newMetaJsonStr = metaJsonStr;
-        }
         try {
+            // prepare update
+            String newMetaJsonStr;
+            if (onlyAppend) {
+                if (metaJsonStr.equals(dataStr) || !needAppend(this.metaList, result)) {
+                    return false;
+                }
+                newMetaJsonStr = appendUpdatedMetaConfig(configItemList);
+            } else {
+                newMetaJsonStr = metaJsonStr;
+            }
+            // process store file
             File sourceFile = new File(filePath);
             File targetFile = new File(getNextBackupFileName());
             File tmpNewFile = new File(getFileName() + ".tmp");

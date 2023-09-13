@@ -18,12 +18,12 @@
 package org.apache.inlong.dataproxy.sink.common;
 
 import org.apache.inlong.dataproxy.config.pojo.MQClusterConfig;
-import org.apache.inlong.tubemq.client.config.TubeClientConfig;
-import org.apache.inlong.tubemq.client.exception.TubeClientException;
-import org.apache.inlong.tubemq.client.factory.TubeMultiSessionFactory;
-import org.apache.inlong.tubemq.client.producer.MessageProducer;
 
 import com.google.common.base.Preconditions;
+import com.tencent.tubemq.client.config.TubeClientConfig;
+import com.tencent.tubemq.client.exception.TubeClientException;
+import com.tencent.tubemq.client.factory.TubeMultiSessionFactory;
+import com.tencent.tubemq.client.producer.MessageProducer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.FlumeException;
 import org.slf4j.Logger;

@@ -46,9 +46,9 @@
             <artifactId>tdbank-access-center</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.inlong</groupId>
+            <groupId>com.tencent.tubemq</groupId>
             <artifactId>tubemq-client</artifactId>
-            <version>${project.version}</version>
+            <version>3.9.3.3</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
