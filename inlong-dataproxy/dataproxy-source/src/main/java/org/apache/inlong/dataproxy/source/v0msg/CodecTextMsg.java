@@ -227,9 +227,6 @@ public class CodecTextMsg extends AbsV0MsgCodec {
         }
         // add extra attributes
         String mValues = ConfigManager.getInstance().getMxProperties(groupId, streamId);
-        if (StringUtils.isEmpty(mValues)) {
-            mValues = source.getDefAttr();
-        }
         if (StringUtils.isNotEmpty(mValues)) {
             if (strBuff.length() > 0) {
                 strBuff.append(AttributeConstants.SEPARATOR);

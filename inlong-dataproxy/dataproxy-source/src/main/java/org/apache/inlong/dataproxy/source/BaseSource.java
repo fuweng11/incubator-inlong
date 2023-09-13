@@ -94,8 +94,6 @@ public abstract class BaseSource
     protected String msgFactoryName;
     // message handler name
     protected String messageHandlerName;
-    // source default append attribute
-    protected String defAttr = "";
     // allowed max message length
     protected int maxMsgLength;
     // whether compress message
@@ -189,11 +187,6 @@ public abstract class BaseSource
         Preconditions.checkArgument(StringUtils.isNotBlank(tmpVal),
                 SourceConstants.SRCCXT_MESSAGE_HANDLER_NAME + " config is blank");
         this.messageHandlerName = tmpVal;
-        // get default attributes
-        tmpVal = context.getString(SourceConstants.SRCCXT_DEF_ATTR);
-        if (StringUtils.isNotBlank(tmpVal)) {
-            this.defAttr = tmpVal.trim();
-        }
         // get allowed max message length
         this.maxMsgLength = ConfStringUtils.getIntValue(context,
                 SourceConstants.SRCCXT_MAX_MSG_LENGTH, SourceConstants.VAL_DEF_MAX_MSG_LENGTH);
@@ -417,10 +410,6 @@ public abstract class BaseSource
 
     public String getStrPort() {
         return strPort;
-    }
-
-    public String getDefAttr() {
-        return defAttr;
     }
 
     public String getAttrKeyGroupId() {

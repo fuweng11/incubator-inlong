@@ -191,19 +191,6 @@ public class CodecBinMsg extends AbsV0MsgCodec {
                     .append(AttributeConstants.KEY_VALUE_SEPARATOR).append(msgRcvTime);
             attrMap.put(AttributeConstants.MSG_RPT_TIME, String.valueOf(msgRcvTime));
         }
-        if (!indexMsg) {
-            // add extra attributes
-            String mValues = ConfigManager.getInstance().getMxProperties(groupId, streamId);
-            if (StringUtils.isEmpty(mValues)) {
-                mValues = source.getDefAttr();
-            }
-            if (StringUtils.isNotEmpty(mValues)) {
-                if (strBuff.length() > 0) {
-                    strBuff.append(AttributeConstants.SEPARATOR);
-                }
-                strBuff.append(mValues);
-            }
-        }
         // get trace requirement
         if (this.needTraceMsg) {
             if (strBuff.length() > 0) {
