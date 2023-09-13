@@ -99,45 +99,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String AT_LEAST_ONCE = "AT_LEAST_ONCE";
 
-    private static final Map<String, String> TIME_UNIT_MAP = new HashMap<>();
 
-    private static final Map<String, String> PARTITION_TIME_FORMAT_MAP = new HashMap<>();
-
-    private static final Map<String, TimeUnit> PARTITION_TIME_UNIT_MAP = new HashMap<>();
-    /**
-     * Built in fields that sort needs to process when the source data is dbsync
-     */
-    private static final Map<String, BuiltInField> BUILT_IN_FIELD_MAP = new HashMap<>();
-
-    private static final Map<String, CompressionType> COMPRESSION_TYPE_MAP = new HashMap<>();
-
-    static {
-        TIME_UNIT_MAP.put("10I", "t");
-        TIME_UNIT_MAP.put("15I", "q");
-        TIME_UNIT_MAP.put("30I", "n");
-        TIME_UNIT_MAP.put("1H", "h");
-        TIME_UNIT_MAP.put("1D", "d");
-
-        PARTITION_TIME_FORMAT_MAP.put("D", "yyyyMMdd");
-        PARTITION_TIME_FORMAT_MAP.put("H", "yyyyMMddHH");
-        PARTITION_TIME_FORMAT_MAP.put("I", "yyyyMMddHHmm");
-
-        PARTITION_TIME_UNIT_MAP.put("D", TimeUnit.DAYS);
-        PARTITION_TIME_UNIT_MAP.put("H", TimeUnit.HOURS);
-        PARTITION_TIME_UNIT_MAP.put("I", TimeUnit.MINUTES);
-
-        BUILT_IN_FIELD_MAP.put("db_name", BuiltInField.DBSYNC_DB_NAME);
-        BUILT_IN_FIELD_MAP.put("tb_name", BuiltInField.DBSYNC_TABLE_NAME);
-        BUILT_IN_FIELD_MAP.put("op_name", BuiltInField.DBSYNC_OPERATION_TYPE);
-        BUILT_IN_FIELD_MAP.put("exp_time_stample", BuiltInField.DBSYNC_EXECUTE_TIME);
-        BUILT_IN_FIELD_MAP.put("exp_time_stample_order", BuiltInField.DBSYNC_EXECUTE_ORDER);
-        BUILT_IN_FIELD_MAP.put("tdbank_transfer_ip", BuiltInField.DBSYNC_TRANSFER_IP);
-        BUILT_IN_FIELD_MAP.put("dt", BuiltInField.DATA_TIME);
-
-        COMPRESSION_TYPE_MAP.put("none", CompressionType.NONE);
-        COMPRESSION_TYPE_MAP.put("gzip", CompressionType.GZIP);
-        COMPRESSION_TYPE_MAP.put("lzo", CompressionType.LZO);
-    }
 
     @Autowired
     private StreamSinkEntityMapper sinkMapper;
@@ -646,48 +608,5 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         return pulsarClusterInfos;
     }
 
-    /**
-     * Get the source field information, pay attention to encapsulating the built-in field,
-     * and generally handle the same field as the partition field
-     *
-     * @see <a href="https://iwiki.woa.com/pages/viewpage.action?pageId=989893490">Field info protocol</a>
-     */
-    private List<FieldInfo> getSourceFields(
-            List<StreamSinkFieldEntity> fieldList,
-            String partitionField,
-            boolean isTextFormat) {
-        boolean duplicate = false;
-        List<FieldInfo> fieldInfoList = new ArrayList<>();
-        for (StreamSinkFieldEntity field : fieldList) {
-            FormatInfo formatInfo = isTextFormat ? new StringFormatInfo()
-                    : SortFieldFormatUtils.convertFieldFormat(
-                            field.getSourceFieldType().toLowerCase());
-            // In order to ensure the successful deserialization of etl2.0, we set source type of each fields to string
-            String fieldName = field.getSourceFieldName();
-
-            FieldInfo fieldInfo;
-            // Determine whether it is a normal field or a built-in field.
-            // If the field name is the same as the partition field, set this field as a normal field
-            BuiltInField builtInField = BUILT_IN_FIELD_MAP.get(fieldName);
-            if (builtInField == null) {
-                fieldInfo = new FieldInfo(fieldName, formatInfo);
-            } else if (fieldName.equals(partitionField)) {
-                duplicate = true;
-                fieldInfo = new FieldInfo(fieldName, formatInfo);
-            } else {
-                fieldInfo = new BuiltInFieldInfo(fieldName, formatInfo, builtInField);
-            }
-            fieldInfoList.add(fieldInfo);
-        }
-
-        // If there is no partition field in the field list, the partition field is appended to the front
-        // @see Field order in hivetableoperator # gettableinfo
-        if (!duplicate && StringUtils.isNotBlank(partitionField)) {
-            fieldInfoList.add(0, new BuiltInFieldInfo(partitionField, new TimestampFormatInfo("MILLIS"),
-                    BuiltInField.DATA_TIME));
-        }
-
-        return fieldInfoList;
-    }
 
 }

@@ -18,8 +18,13 @@
 package org.apache.inlong.manager.service.resource.sort.tencent;
 
 import com.tencent.flink.formats.common.FormatInfo;
+import com.tencent.flink.formats.common.StringFormatInfo;
+import com.tencent.flink.formats.common.TimestampFormatInfo;
 import com.tencent.oceanus.etl.ZkTools;
 import com.tencent.oceanus.etl.configuration.Constants;
+import com.tencent.oceanus.etl.configuration.Constants.CompressionType;
+import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo;
+import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo.BuiltInField;
 import com.tencent.oceanus.etl.protocol.FieldInfo;
 import com.tencent.oceanus.etl.protocol.KafkaClusterInfo;
 import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
@@ -73,9 +78,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.inlong.manager.pojo.stream.InlongStreamExtParam.unpackExtParams;
@@ -85,7 +93,43 @@ import static org.apache.inlong.manager.pojo.stream.InlongStreamExtParam.unpackE
  */
 public class AbstractInnerSortConfigService {
 
+    protected static final Map<String, String> TIME_UNIT_MAP = new HashMap<>();
+    protected static final Map<String, String> PARTITION_TIME_FORMAT_MAP = new HashMap<>();
+    protected static final Map<String, TimeUnit> PARTITION_TIME_UNIT_MAP = new HashMap<>();
+    /**
+     * Built in fields that sort needs to process when the source data is dbsync
+     */
+    protected static final Map<String, BuiltInField> BUILT_IN_FIELD_MAP = new HashMap<>();
+    protected static final Map<String, CompressionType> COMPRESSION_TYPE_MAP = new HashMap<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractInnerSortConfigService.class);
+
+    static {
+        TIME_UNIT_MAP.put("10I", "t");
+        TIME_UNIT_MAP.put("15I", "q");
+        TIME_UNIT_MAP.put("30I", "n");
+        TIME_UNIT_MAP.put("1H", "h");
+        TIME_UNIT_MAP.put("1D", "d");
+
+        PARTITION_TIME_FORMAT_MAP.put("D", "yyyyMMdd");
+        PARTITION_TIME_FORMAT_MAP.put("H", "yyyyMMddHH");
+        PARTITION_TIME_FORMAT_MAP.put("I", "yyyyMMddHHmm");
+
+        PARTITION_TIME_UNIT_MAP.put("D", TimeUnit.DAYS);
+        PARTITION_TIME_UNIT_MAP.put("H", TimeUnit.HOURS);
+        PARTITION_TIME_UNIT_MAP.put("I", TimeUnit.MINUTES);
+
+        BUILT_IN_FIELD_MAP.put("db_name", BuiltInField.DBSYNC_DB_NAME);
+        BUILT_IN_FIELD_MAP.put("tb_name", BuiltInField.DBSYNC_TABLE_NAME);
+        BUILT_IN_FIELD_MAP.put("op_name", BuiltInField.DBSYNC_OPERATION_TYPE);
+        BUILT_IN_FIELD_MAP.put("exp_time_stample", BuiltInField.DBSYNC_EXECUTE_TIME);
+        BUILT_IN_FIELD_MAP.put("exp_time_stample_order", BuiltInField.DBSYNC_EXECUTE_ORDER);
+        BUILT_IN_FIELD_MAP.put("tdbank_transfer_ip", BuiltInField.DBSYNC_TRANSFER_IP);
+        BUILT_IN_FIELD_MAP.put("dt", BuiltInField.DATA_TIME);
+
+        COMPRESSION_TYPE_MAP.put("none", CompressionType.NONE);
+        COMPRESSION_TYPE_MAP.put("gzip", CompressionType.GZIP);
+        COMPRESSION_TYPE_MAP.put("lzo", CompressionType.LZO);
+    }
 
     @Autowired
     private InlongConsumeEntityMapper inlongConsumeMapper;
@@ -345,7 +389,8 @@ public class AbstractInnerSortConfigService {
         String groupId = sinkInfo.getInlongGroupId();
         String streamId = sinkInfo.getInlongStreamId();
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
-
+        List<FieldInfo> sourceFields = getSourceFields(fieldList, null,
+                false);
         String mqType = groupInfo.getMqType();
         SourceInfo sourceInfo = null;
         if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
@@ -367,11 +412,7 @@ public class AbstractInnerSortConfigService {
                     masterAddress,
                     consumerGroup,
                     deserializationInfo,
-                    fieldList.stream().map(f -> {
-                        FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
-                                f.getSourceFieldType().toLowerCase());
-                        return new FieldInfo(f.getSourceFieldName(), formatInfo);
-                    }).toArray(FieldInfo[]::new),
+                    sourceFields.toArray(new FieldInfo[0]),
                     stream.getDataEncoding());
         } else if (MQType.PULSAR.equalsIgnoreCase(mqType)) {
             List<InlongClusterEntity> pulsarClusters = clusterMapper.selectByKey(
@@ -421,11 +462,8 @@ public class AbstractInnerSortConfigService {
                 // otherwise, create the subscription according to the new rule
                 String subscription = getConsumerGroup(groupInfo, streamId, topic, sortClusterName, sinkInfo.getId());
                 sourceInfo = new PulsarSourceInfo(adminUrl, masterAddress, fullTopic, subscription,
-                        deserializationInfo, fieldList.stream().map(f -> {
-                            FormatInfo formatInfo = SortFieldFormatUtils.convertFieldFormat(
-                                    f.getSourceFieldType().toLowerCase());
-                            return new FieldInfo(f.getSourceFieldName(), formatInfo);
-                        }).toArray(FieldInfo[]::new), pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null,
+                        deserializationInfo, sourceFields.toArray(new FieldInfo[0]),
+                        pulsarClusterInfos.toArray(new PulsarClusterInfo[0]), null,
                         stream.getDataEncoding());
             } catch (Exception e) {
                 LOGGER.error("get pulsar information failed", e);
@@ -476,6 +514,50 @@ public class AbstractInnerSortConfigService {
             consumerGroup = String.format(TencentConstants.V1_SORT_PULSAR_GROUP, taskName, groupId, streamId);
         }
         return consumerGroup;
+    }
+
+    /**
+     * Get the source field information, pay attention to encapsulating the built-in field,
+     * and generally handle the same field as the partition field
+     *
+     * @see <a href="https://iwiki.woa.com/pages/viewpage.action?pageId=989893490">Field info protocol</a>
+     */
+    public List<FieldInfo> getSourceFields(
+            List<StreamSinkFieldEntity> fieldList,
+            String partitionField,
+            boolean isTextFormat) {
+        boolean duplicate = false;
+        List<FieldInfo> fieldInfoList = new ArrayList<>();
+        for (StreamSinkFieldEntity field : fieldList) {
+            FormatInfo formatInfo = isTextFormat ? new StringFormatInfo()
+                    : SortFieldFormatUtils.convertFieldFormat(
+                            field.getSourceFieldType().toLowerCase());
+            // In order to ensure the successful deserialization of etl2.0, we set source type of each fields to string
+            String fieldName = field.getSourceFieldName();
+
+            FieldInfo fieldInfo;
+            // Determine whether it is a normal field or a built-in field.
+            // If the field name is the same as the partition field, set this field as a normal field
+            BuiltInField builtInField = BUILT_IN_FIELD_MAP.get(fieldName);
+            if (builtInField == null) {
+                fieldInfo = new FieldInfo(fieldName, formatInfo);
+            } else if (fieldName.equals(partitionField)) {
+                duplicate = true;
+                fieldInfo = new FieldInfo(fieldName, formatInfo);
+            } else {
+                fieldInfo = new BuiltInFieldInfo(fieldName, formatInfo, builtInField);
+            }
+            fieldInfoList.add(fieldInfo);
+        }
+
+        // If there is no partition field in the field list, the partition field is appended to the front
+        // @see Field order in hivetableoperator # gettableinfo
+        if (!duplicate && StringUtils.isNotBlank(partitionField)) {
+            fieldInfoList.add(0, new BuiltInFieldInfo(partitionField, new TimestampFormatInfo("MILLIS"),
+                    BuiltInField.DATA_TIME));
+        }
+
+        return fieldInfoList;
     }
 
 }
