@@ -639,10 +639,8 @@ public abstract class BaseSource
                     SourceConstants.SYSENV_HOST_IP + "(" + tmpVal + ") config in system env not valid");
             result = tmpVal.trim();
         }
-        if (StringUtils.isBlank(result)) {
-            result = SourceConstants.VAL_DEF_HOST_VALUE;
-        }
-        if (SourceConstants.VAL_DEF_HOST_VALUE.equals(result)) {
+        if (StringUtils.isBlank(result)
+                || SourceConstants.VAL_DEF_HOST_VALUE.equals(result)) {
             result = AddressUtils.getLocalIp();
         }
         return result;

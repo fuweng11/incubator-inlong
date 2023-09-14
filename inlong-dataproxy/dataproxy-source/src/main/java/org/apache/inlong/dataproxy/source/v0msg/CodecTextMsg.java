@@ -21,7 +21,6 @@ import org.apache.inlong.common.enums.DataProxyErrCode;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
 import org.apache.inlong.common.msg.MsgType;
-import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.StatConstants;
 import org.apache.inlong.dataproxy.source.BaseSource;
@@ -151,27 +150,13 @@ public class CodecTextMsg extends AbsV0MsgCodec {
             return false;
         }
         // get and check topic configure
-        String tmpTopicName = ConfigManager.getInstance().getTopicName(tmpGroupId, tmpStreamId);
+        String tmpTopicName = ConfigManager.getInstance().getTopicName(source, tmpGroupId, tmpStreamId);
         if (StringUtils.isEmpty(tmpTopicName)) {
-            // add default topics first
-            if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
-                tmpTopicName = CommonConfigHolder.getInstance().getRandDefTopics();
-                if (StringUtils.isEmpty(tmpTopicName)) {
-                    source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_DEF_TOPIC_MISSING, tmpGroupId);
-                    this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
-                    this.errMsg = String.format(
-                            "Topic not configured for groupId=(%s), streamId=(%s)", tmpGroupId, tmpStreamId);
-                    return false;
-                }
-                source.fileMetricIncWithDetailStats(
-                        StatConstants.EVENT_SOURCE_DEFAULT_TOPIC_USED, tmpGroupId);
-            } else {
-                source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_TOPIC_MISSING, tmpGroupId);
-                this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
-                this.errMsg = String.format(
-                        "Topic not configured for groupId=(%s), streamId=(%s)", tmpGroupId, tmpStreamId);
-                return false;
-            }
+            source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_TOPIC_MISSING, tmpGroupId);
+            this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
+            this.errMsg = String.format(
+                    "Topic not configured for groupId=(%s), streamId=(%s)", tmpGroupId, tmpStreamId);
+            return false;
         }
         this.groupId = tmpGroupId;
         this.topicName = tmpTopicName;

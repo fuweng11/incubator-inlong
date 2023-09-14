@@ -455,8 +455,9 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
         for (ProxyEvent event : events) {
             // get configured topic name
             String topic = configManager.getTopicName(event.getInlongGroupId(), event.getInlongStreamId());
-            if (StringUtils.isBlank(topic)) {
-                source.fileMetricIncSumStats(StatConstants.EVENT_SOURCE_TOPIC_MISSING);
+            if (StringUtils.isEmpty(topic)) {
+                source.fileMetricIncWithDetailStats(
+                        StatConstants.EVENT_SOURCE_TOPIC_MISSING, event.getInlongGroupId());
                 source.addMetric(false, event.getBody().length, event);
                 this.responsePackage(ctx, ProxySdk.ResultCode.ERR_ID_ERROR, packObject);
                 return;

@@ -35,6 +35,8 @@ import org.apache.inlong.dataproxy.config.pojo.IdTopicConfig;
 import org.apache.inlong.dataproxy.config.pojo.RmvDataItem;
 import org.apache.inlong.dataproxy.config.pojo.TDBankMetaConfig;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
+import org.apache.inlong.dataproxy.consts.StatConstants;
+import org.apache.inlong.dataproxy.source.BaseSource;
 import org.apache.inlong.dataproxy.utils.HttpUtils;
 
 import com.google.gson.Gson;
@@ -137,11 +139,30 @@ public class ConfigManager {
      * get source topic by groupId and streamId
      */
     public String getTopicName(String groupId, String streamId) {
+        return metaConfigHolder.getSrcBaseTopicName(groupId, streamId);
+    }
+
+    /**
+     * get source topic by groupId and streamId
+     */
+    public String getTopicName(BaseSource source, String groupId, String streamId) {
+        String topicName;
         if (CommonConfigHolder.getInstance().isMetaInfoGetFromTDBank()) {
-            return tdbankMetaHolder.getSrcTopicName(groupId);
+            topicName = tdbankMetaHolder.getSrcTopicName(groupId);
         } else {
-            return metaConfigHolder.getSrcBaseTopicName(groupId, streamId);
+            topicName = metaConfigHolder.getSrcBaseTopicName(groupId, streamId);
         }
+        if (StringUtils.isEmpty(topicName)
+                && CommonConfigHolder.getInstance().isEnableTDBankLogic()) {
+            // use default topics
+            topicName = CommonConfigHolder.getInstance().getRandDefTopics();
+            if (StringUtils.isEmpty(topicName)) {
+                source.fileMetricIncSumStats(StatConstants.EVENT_SOURCE_DEF_TOPIC_MISSING);
+            } else {
+                source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_DEFAULT_TOPIC_USED, groupId);
+            }
+        }
+        return topicName;
     }
 
     public IdTopicConfig getSrcIdTopicConfig(String groupId, String streamId) {

@@ -22,7 +22,6 @@ import org.apache.inlong.common.enums.DataProxyMsgEncType;
 import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
-import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.HttpAttrConst;
@@ -300,32 +299,16 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
         // get and check topicName
-        String topicName = ConfigManager.getInstance().getTopicName(groupId, streamId);
+        String topicName = ConfigManager.getInstance().getTopicName(source, groupId, streamId);
         if (StringUtils.isEmpty(topicName)) {
-            // add default topics first
-            if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
-                topicName = CommonConfigHolder.getInstance().getRandDefTopics();
-                if (StringUtils.isEmpty(topicName)) {
-                    source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_DEF_TOPIC_MISSING, groupId);
-                    sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
-                            strBuff.append("Topic not configured for ").append(source.getAttrKeyGroupId())
-                                    .append("(").append(groupId).append("),")
-                                    .append(source.getAttrKeyStreamId())
-                                    .append("(,").append(streamId).append(")").toString(),
-                            isCloseCon, callback);
-                    return;
-                }
-                source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_DEFAULT_TOPIC_USED, groupId);
-            } else {
-                source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_TOPIC_MISSING, groupId);
-                sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
-                        strBuff.append("Topic not configured for ").append(source.getAttrKeyGroupId())
-                                .append("(").append(groupId).append("),")
-                                .append(source.getAttrKeyStreamId())
-                                .append("(,").append(streamId).append(")").toString(),
-                        isCloseCon, callback);
-                return;
-            }
+            source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_TOPIC_MISSING, groupId);
+            sendResponse(ctx, DataProxyErrCode.TOPIC_IS_BLANK.getErrCode(),
+                    strBuff.append("Topic not configured for ").append(source.getAttrKeyGroupId())
+                            .append("(").append(groupId).append("),")
+                            .append(source.getAttrKeyStreamId())
+                            .append("(,").append(streamId).append(")").toString(),
+                    isCloseCon, callback);
+            return;
         }
         // get and check dt
         long dataTime = msgRcvTime;
@@ -418,7 +401,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
                     "b2b", dataTime, pkgTime, 1);
             source.addMetric(false, event.getBody().length, event);
             sendErrorMsg(ctx, DataProxyErrCode.PUT_EVENT_TO_CHANNEL_FAILURE,
-                    strBuff.append("Put event to channel failure: ").append(ex.getMessage()).toString(), callback);
+                    strBuff.append("Put HTTP event to channel failure: ").append(ex.getMessage()).toString(), callback);
             if (logCounter.shouldPrint()) {
                 logger.error("Error writing HTTP event to channel failure.", ex);
             }

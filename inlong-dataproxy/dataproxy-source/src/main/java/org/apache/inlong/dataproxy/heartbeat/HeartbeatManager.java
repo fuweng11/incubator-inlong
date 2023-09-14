@@ -106,9 +106,11 @@ public class HeartbeatManager implements AbstractHeartbeatManager {
             post.setEntity(stringEntity);
             CloseableHttpResponse response = httpClient.execute(post);
             String isSuccess = EntityUtils.toString(response.getEntity());
-            if (StringUtils.isNotEmpty(isSuccess) && response.getStatusLine().getStatusCode() == 200) {
-                if (log.isDebugEnabled()) {
-                    log.debug("reportHeartbeat url {}, heartbeat: {}, return str {}", url, body, isSuccess);
+            if (response.getStatusLine().getStatusCode() == 200) {
+                if (StringUtils.isNotEmpty(isSuccess)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("reportHeartbeat url {}, heartbeat: {}, return str {}", url, body, isSuccess);
+                    }
                 }
                 return true;
             }

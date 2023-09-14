@@ -22,7 +22,6 @@ import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
 import org.apache.inlong.common.msg.MsgType;
 import org.apache.inlong.dataproxy.base.SinkRspEvent;
-import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
@@ -328,7 +327,7 @@ public class CodecBinMsg extends AbsV0MsgCodec {
             String confStreamId;
             String strGroupIdNum = String.valueOf(this.groupIdNum);
             confGroupId = ConfigManager.getInstance().getGroupIdNameByNum(strGroupIdNum);
-            if (StringUtils.isBlank(confGroupId)) {
+            if (StringUtils.isEmpty(confGroupId)) {
                 if (ConfigManager.getInstance().isGroupIdNumConfigEmpty()) {
                     source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_IDNUM_EMPTY);
                     this.errCode = DataProxyErrCode.CONF_SERVICE_UNREADY;
@@ -361,7 +360,7 @@ public class CodecBinMsg extends AbsV0MsgCodec {
                 String strStreamIdNum = String.valueOf(this.streamIdNum);
                 confStreamId = ConfigManager.getInstance().getStreamIdNameByIdNum(
                         strGroupIdNum, strStreamIdNum);
-                if (StringUtils.isBlank(confStreamId)) {
+                if (StringUtils.isEmpty(confStreamId)) {
                     if (ConfigManager.getInstance().isStreamIdNumConfigEmpty()) {
                         source.fileMetricIncSumStats(StatConstants.EVENT_CONFIG_IDNUM_EMPTY);
                         this.errCode = DataProxyErrCode.CONF_SERVICE_UNREADY;
@@ -397,29 +396,14 @@ public class CodecBinMsg extends AbsV0MsgCodec {
         }
         // get and check topic configure
         if (!indexMsg) {
-            this.topicName = ConfigManager.getInstance().getTopicName(this.groupId, this.streamId);
+            this.topicName = ConfigManager.getInstance().getTopicName(source, this.groupId, this.streamId);
             if (StringUtils.isEmpty(this.topicName)) {
-                // add default topics first
-                if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
-                    this.topicName = CommonConfigHolder.getInstance().getRandDefTopics();
-                    if (StringUtils.isEmpty(this.topicName)) {
-                        source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_DEF_TOPIC_MISSING, this.groupId);
-                        this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
-                        this.errMsg = String.format("Topic not configured for (%s)=(%s), (%s)=(%s)",
-                                source.getAttrKeyGroupId(), this.groupId,
-                                source.getAttrKeyStreamId(), this.streamId);
-                        return false;
-                    }
-                    source.fileMetricIncWithDetailStats(
-                            StatConstants.EVENT_SOURCE_DEFAULT_TOPIC_USED, this.groupId);
-                } else {
-                    source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_TOPIC_MISSING, this.groupId);
-                    this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
-                    this.errMsg = String.format("Topic not configured for (%s)=(%s), (%s)=(%s)",
-                            source.getAttrKeyGroupId(), this.groupId,
-                            source.getAttrKeyStreamId(), this.streamId);
-                    return false;
-                }
+                source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_TOPIC_MISSING, this.groupId);
+                this.errCode = DataProxyErrCode.TOPIC_IS_BLANK;
+                this.errMsg = String.format("Topic not configured for (%s)=(%s), (%s)=(%s)",
+                        source.getAttrKeyGroupId(), this.groupId,
+                        source.getAttrKeyStreamId(), this.streamId);
+                return false;
             }
             if (StringUtils.isBlank(this.streamId)) {
                 this.streamId = "";
