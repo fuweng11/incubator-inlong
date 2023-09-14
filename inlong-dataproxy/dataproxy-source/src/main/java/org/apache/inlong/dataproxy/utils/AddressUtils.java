@@ -31,8 +31,7 @@ public class AddressUtils {
 
     private static String localIp;
 
-    static
-    {
+    static {
         localIp = getLocalIp();
     }
 

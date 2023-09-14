@@ -25,8 +25,10 @@ import org.apache.inlong.dataproxy.base.SinkRspEvent;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.sink.mq.SimplePackProfile;
 import org.apache.inlong.dataproxy.source.ServerMessageHandler;
+import org.apache.inlong.dataproxy.utils.DateTimeUtils;
 import org.apache.inlong.sdk.commons.protocol.EventConstants;
 
+import com.tencent.tubemq.corebase.Message;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -217,6 +219,27 @@ public class EventProfile {
         result.put(ConfigConstants.REMOTE_IP_KEY, event.getHeaders().get(ConfigConstants.REMOTE_IP_KEY));
         result.put(ConfigConstants.DATAPROXY_IP_KEY, event.getHeaders().get(ConfigConstants.DATAPROXY_IP_KEY));
         return result;
+    }
+
+    /**
+     * get required properties to MQ
+     *
+     * @param message  message object
+     * @return the set time
+     */
+    public long setPropsToMQ(Message message) {
+        long dataTimeL = Long.parseLong(event.getHeaders().get(ConfigConstants.PKG_TIME_KEY));
+        message.putSystemHeader(getStreamId(), DateTimeUtils.ms2yyyyMMddHHmm(dataTimeL));
+        message.setAttrKeyVal(AttributeConstants.RCV_TIME, event.getHeaders().get(AttributeConstants.RCV_TIME));
+        message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, event.getHeaders().get(ConfigConstants.MSG_ENCODE_VER));
+        message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION,
+                event.getHeaders().get(EventConstants.HEADER_KEY_VERSION));
+        message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY, event.getHeaders().get(ConfigConstants.REMOTE_IP_KEY));
+        message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY,
+                event.getHeaders().get(ConfigConstants.DATAPROXY_IP_KEY));
+        dataTimeL = System.currentTimeMillis();
+        message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(dataTimeL));
+        return dataTimeL;
     }
 
     /**

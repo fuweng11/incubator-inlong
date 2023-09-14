@@ -23,7 +23,6 @@ import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
-import org.apache.inlong.dataproxy.utils.DateTimeUtils;
 
 import com.google.common.base.Preconditions;
 import com.tencent.tubemq.client.config.TubeClientConfig;
@@ -347,15 +346,10 @@ public class TubeMQSink extends BaseSink {
                 }
                 return false;
             }
-            // build message
-            Message message = new Message(topic, profile.getEventBody());
-            long dataTimeL = Long.parseLong(profile.getProperties().get(ConfigConstants.PKG_TIME_KEY));
-            message.putSystemHeader(profile.getStreamId(), DateTimeUtils.ms2yyyyMMddHHmm(dataTimeL));
-            // add headers
-            long sendTime = System.currentTimeMillis();
-            Map<String, String> headers = profile.getPropsToMQ(sendTime);
-            headers.forEach(message::setAttrKeyVal);
             try {
+                // build message
+                Message message = new Message(topic, profile.getEventBody());
+                long sendTime = profile.setPropsToMQ(message);
                 producer.sendMessage(message, new MyCallback(profile, sendTime, topic));
                 return true;
             } catch (Throwable ex) {
