@@ -466,11 +466,13 @@ public class ControllerSink extends AbstractSink implements Configurable {
             String msgType = profile.getProperties().get(ConfigConstants.INDEX_MSG_TYPE);
             if (msgType == null || !(msgType.equals(ConfigConstants.INDEX_TYPE_FILE_STATUS)
                     || msgType.equals(ConfigConstants.INDEX_TYPE_MEASURE))) {
+                releaseAcquiredSizePermit(profile);
                 fileMetricIncSumStats(StatConstants.SINK_INDEX_ILLEGAL_DROPPED);
                 return;
             }
             String msgSeqId = profile.getProperties().get(ConfigConstants.SEQUENCE_ID);
             if (msgIdCache.cacheIfAbsent(msgSeqId)) {
+                releaseAcquiredSizePermit(profile);
                 fileMetricIncSumStats(StatConstants.SINK_INDEX_DUPLICATE_DROOPED);
                 if (logDupMsgPrinter.shouldPrint()) {
                     logger.info("{} package {} existed,just discard.", cachedSinkName, msgSeqId);
@@ -545,9 +547,11 @@ public class ControllerSink extends AbstractSink implements Configurable {
                         logger.error("{} send status event failure, header is {}, body is {}",
                                 cachedSinkName, profile.getProperties(), s, ex);
                     }
+                    releaseAcquiredSizePermit(profile);
                 } else {
                     // agent-measure
                     AgentMeasureLogger.logMeasureInfo(profile.getEventBody());
+                    releaseAcquiredSizePermit(profile);
                     fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_OUTPUT_SUCCESS);
                 }
             }

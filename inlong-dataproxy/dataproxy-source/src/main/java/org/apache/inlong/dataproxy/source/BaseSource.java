@@ -642,6 +642,9 @@ public abstract class BaseSource
         if (StringUtils.isBlank(result)) {
             result = SourceConstants.VAL_DEF_HOST_VALUE;
         }
+        if (SourceConstants.VAL_DEF_HOST_VALUE.equals(result)) {
+            result = AddressUtils.getLocalIp();
+        }
         return result;
     }
 

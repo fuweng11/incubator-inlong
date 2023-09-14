@@ -304,6 +304,7 @@ public class PulsarSink extends BaseSink {
                 if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
                     topic = CommonConfigHolder.getInstance().getRandDefTopics();
                     if (StringUtils.isEmpty(topic)) {
+                        releaseAcquiredSizePermit(profile);
                         fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
                                 getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
                         profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
@@ -312,6 +313,7 @@ public class PulsarSink extends BaseSink {
                     fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_USED,
                             profile.getGroupId());
                 } else {
+                    releaseAcquiredSizePermit(profile);
                     fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
                             getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
                     profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
@@ -328,6 +330,7 @@ public class PulsarSink extends BaseSink {
             // check duplicate
             String msgSeqId = profile.getProperties().get(ConfigConstants.SEQUENCE_ID);
             if (msgIdCache.cacheIfAbsent(msgSeqId)) {
+                releaseAcquiredSizePermit(profile);
                 fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_MESSAGE_DUPLICATE, topic);
                 if (logDupMsgPrinter.shouldPrint()) {
                     logger.info("{} package {} existed,just discard.", cachedSinkName, msgSeqId);

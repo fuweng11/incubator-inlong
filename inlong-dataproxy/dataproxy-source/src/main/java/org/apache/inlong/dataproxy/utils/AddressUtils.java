@@ -21,11 +21,40 @@ import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketAddress;
 
 public class AddressUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(AddressUtils.class);
+
+    private static String localIp;
+
+    static
+    {
+        localIp = getLocalIp();
+    }
+
+    public static String getLocalIp() {
+        if (localIp != null) {
+            return localIp;
+        }
+        String ip = "127.0.0.1";
+        DatagramSocket socket = null;
+        try {
+            socket = new DatagramSocket();
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            ip = socket.getLocalAddress().getHostAddress();
+        } catch (Exception ex) {
+            logger.warn("Get local IP failure,", ex);
+        } finally {
+            if (socket != null) {
+                socket.close();
+            }
+        }
+        return ip;
+    }
 
     public static String getChannelLocalIP(Channel channel) {
         return getChannelIP(channel, true);
