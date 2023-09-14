@@ -102,8 +102,8 @@ public class StatConstants {
     public static final java.lang.String EVENT_SINK_EVENT_V1_MALFORMED = "sink.event.v1.malformed";
     public static final java.lang.String EVENT_SINK_EVENT_TAKE_SUCCESS = "sink.event.take.success";
     public static final java.lang.String EVENT_SINK_EVENT_TAKE_FAILURE = "sink.event.take.failure";
-    public static final java.lang.String EVENT_SINK_EVENT_V1_FILE_TAKE_SUCCESS = "sink.event.v1.file.take.success";
-    public static final java.lang.String EVENT_SINK_EVENT_V0_FILE_TAKE_SUCCESS = "sink.event.v0.file.take.success";
+    public static final java.lang.String EVENT_SINK_FILE_V1_TAKE_SUCCESS = "sink.file.v1.take.success";
+    public static final java.lang.String EVENT_SINK_FILE_V0_TAKE_SUCCESS = "sink.file.v0.take.success";
     public static final java.lang.String EVENT_SINK_CONFIG_TOPIC_MISSING = "sink.topic.missing";
     public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_MISSING = "sink.default.topic.empty";
     public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_USED = "sink.default.topic.used";
