@@ -244,7 +244,7 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
                 fileMetricIncSumStats(StatConstants.EVENT_SINK_EVENT_TAKE_SUCCESS);
             } else {
                 // file event
-                fileMetricIncSumStats(StatConstants.EVENT_SINK_EVENT_V0_FILE_TAKE_SUCCESS);
+                fileMetricIncSumStats(StatConstants.EVENT_SINK_FILE_V0_TAKE_SUCCESS);
             }
             acquireAndOfferDispatchedRecord(new EventProfile(event));
             tx.commit();
