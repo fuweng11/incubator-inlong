@@ -64,41 +64,41 @@ const matchPartitionStrategies = fieldType => {
     {
       label: 'Year',
       value: 'Year',
-      disabled: !['timestamp', 'date'].includes(fieldType),
+      // disabled: !['timestamp', 'date'].includes(fieldType),
     },
     {
       label: 'Month',
       value: 'Month',
-      disabled: !['timestamp', 'date'].includes(fieldType),
+      // disabled: !['timestamp', 'date'].includes(fieldType),
     },
     {
       label: 'Day',
       value: 'Day',
-      disabled: !['timestamp', 'date'].includes(fieldType),
+      // disabled: !['timestamp', 'date'].includes(fieldType),
     },
     {
       label: 'Hour',
       value: 'Hour',
-      disabled: fieldType !== 'timestamp',
+      // disabled: fieldType !== 'timestamp',
     },
     {
       label: 'Bucket',
       value: 'Bucket',
-      disabled: ![
-        'string',
-        'boolean',
-        'short',
-        'int',
-        'long',
-        'float',
-        'double',
-        'decimal',
-      ].includes(fieldType),
+      // disabled: ![
+      //   'string',
+      //   'boolean',
+      //   'short',
+      //   'int',
+      //   'long',
+      //   'float',
+      //   'double',
+      //   'decimal',
+      // ].includes(fieldType),
     },
     {
       label: 'Truncate',
       value: 'Truncate',
-      disabled: !['string', 'int', 'long', 'binary', 'decimal'].includes(fieldType),
+      // disabled: !['string', 'int', 'long', 'binary', 'decimal'].includes(fieldType),
     },
   ];
 
@@ -204,7 +204,7 @@ export default class InnerIcebergSink
     type: EditableTable,
     props: values => ({
       size: 'small',
-      editing: ![110, 130].includes(values?.status),
+      canDelete: ![110, 130].includes(values?.status),
       columns: getFieldListColumns(values),
     }),
   })
@@ -258,7 +258,9 @@ const getFieldListColumns = sinkValues => {
       },
       initialValue: 1,
       rules: [{ type: 'number', required: true }],
-      visible: (text, record) => record.fieldType === 'fixed',
+      // visible: (text, record) => record.fieldType === 'fixed',
+      visible: (text, record) =>
+        record.partitionStrategy === 'Bucket' || record.partitionStrategy === 'Truncate',
     },
     {
       title: 'Precision',
