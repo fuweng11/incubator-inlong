@@ -66,6 +66,7 @@ public class IcebergTableCreateRequest {
 
         private String field;
         private String transform;
+        private String width;
         private Map<String, String> parameter;
 
     }

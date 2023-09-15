@@ -17,6 +17,10 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent.iceberg;
 
+import com.tencent.tdw.security.authentication.v2.TauthClient;
+import com.tencent.tdw.security.exceptions.SecureException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowException;
 import org.apache.inlong.manager.common.util.HttpUtils;
@@ -25,15 +29,12 @@ import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest.FieldsBean;
+import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest.PartitionsBean;
+import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergFieldInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.QueryIcebergTableResponse;
 import org.apache.inlong.manager.service.resource.sc.ScService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
-
-import com.tencent.tdw.security.authentication.v2.TauthClient;
-import com.tencent.tdw.security.exceptions.SecureException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -42,8 +43,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,6 +62,7 @@ import static org.apache.inlong.manager.common.util.JsonUtils.OBJECT_MAPPER;
 public class IcebergBaseOptService {
 
     private static final int MAX_RETRY_TIMES = 20;
+    private static final String PARTITION_STARTEGY_NONE = "none";
 
     @Autowired
     private RestTemplate restTemplate;
@@ -157,14 +161,27 @@ public class IcebergBaseOptService {
         createRequest.setDescription(icebergSink.getDescription());
         createRequest.setTable(icebergSink.getTableName());
         List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(icebergSink.getId());
+        List<PartitionsBean> partitionsBeanList = new ArrayList<>();
         List<FieldsBean> fields = fieldList.stream().map(f -> {
-            IcebergTableCreateRequest.FieldsBean field = new IcebergTableCreateRequest.FieldsBean();
+            FieldsBean field = new FieldsBean();
             field.setName(f.getFieldName());
             field.setType(f.getFieldType());
             field.setDesc(f.getFieldComment());
+            if (StringUtils.isNotBlank(f.getExtParams())) {
+                InnerIcebergFieldInfo innerIcebergFieldInfo = InnerIcebergFieldInfo.getFromJson(f.getExtParams());
+                PartitionsBean partitionsBean = new PartitionsBean();
+                String partitionStartegy = innerIcebergFieldInfo.getPartitionStrategy();
+                if (!PARTITION_STARTEGY_NONE.equalsIgnoreCase(partitionStartegy)) {
+                    partitionsBean.setField(f.getFieldName());
+                    partitionsBean.setTransform(partitionStartegy.toLowerCase(Locale.ROOT));
+                    partitionsBean.setWidth(String.valueOf(innerIcebergFieldInfo.getFieldLength()));
+                    partitionsBeanList.add(partitionsBean);
+                }
+            }
             return field;
         }).collect(Collectors.toList());
         createRequest.setFields(fields);
+        createRequest.setPartitions(partitionsBeanList);
         HashMap<String, Object> map = new HashMap<>();
         if (Objects.equals("APPEND", icebergSink.getAppendMode())) {
             map.put("write.upsert.enabled", false);
