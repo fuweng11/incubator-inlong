@@ -78,6 +78,12 @@
             </includes>
         </fileSet>
 
+        <!-- Package the oceanus plugins -->
+        <fileSet>
+            <directory>../oceanus-plugins/target/plugins</directory>
+            <outputDirectory>plugins</outputDirectory>
+        </fileSet>
+
         <!-- Package the client jars into the lib directory -->
         <fileSet>
             <directory>../manager-client/target</directory>

@@ -92,8 +92,10 @@ public class IcebergBaseOptService {
 
     public QueryIcebergTableResponse getTableDetail(InnerIcebergSink icebergSink) {
         try {
+            String clusterTag = StringUtils.isNotBlank(icebergSink.getClusterTag()) ? icebergSink.getClusterTag() : "tl";
             return HttpUtils.request(restTemplate,
-                    dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl") + "/formation/v2/metadata/getTableDetail?dbName=" + icebergSink.getDbName() + "&table="
+                    dlaApiMap.getOrDefault(clusterTag, "tl")
+                            + "/formation/v2/metadata/getTableDetail?dbName=" + icebergSink.getDbName() + "&table="
                             + icebergSink.getTableName(),
                     HttpMethod.GET, null, getTauthHeader(icebergSink.getCreator()), QueryIcebergTableResponse.class);
         } catch (Exception e) {
@@ -121,10 +123,12 @@ public class IcebergBaseOptService {
             log.info("get iceberg table detail result={}", queryRsp);
             // the table exists, and the flow direction status is modified to [Configuration Succeeded].
             // return directly
-            String url = dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl") + "/formation/v2/metadata/createTable";
+            String url =
+                    dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl") + "/formation/v2/metadata/createTable";
             if (queryRsp != null && queryRsp.getCode() != 20005) {
                 log.warn("iceberg table [{}.{}] already exists", request.getDb(), request.getTable());
-                url = dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl") + "/formation/v2/metadata/updateTableSchema";
+                url = dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl")
+                        + "/formation/v2/metadata/updateTableSchema";
             }
             // the table does not exist. Create a new table
             String rsp = HttpUtils.postRequest(restTemplate, url,
