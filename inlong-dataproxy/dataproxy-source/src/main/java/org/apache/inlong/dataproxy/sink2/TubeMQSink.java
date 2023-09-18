@@ -31,6 +31,7 @@ import com.tencent.tubemq.client.producer.MessageProducer;
 import com.tencent.tubemq.client.producer.MessageSentCallback;
 import com.tencent.tubemq.client.producer.MessageSentResult;
 import com.tencent.tubemq.corebase.Message;
+import com.tencent.tubemq.corebase.TErrCodeConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
@@ -45,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TubeMQSink extends BaseSink {
 
@@ -52,6 +54,7 @@ public class TubeMQSink extends BaseSink {
     // log print count
     private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
     private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 30 * 1000);
+    private static final LogCounter logMsgOverSizePrinter = new LogCounter(10, 100000, 30 * 1000);
 
     private static final String MAX_TOPICS_EACH_PRODUCER_HOLD_NAME = "max-topic-each-producer-hold";
     private static final int VAL_DEF_TOPICS_EACH_PRODUCER_HOLD_NAME = 200;
@@ -61,6 +64,10 @@ public class TubeMQSink extends BaseSink {
     private long sessionWarnDelayedMsgCount;
     private long sessionMaxAllowedDelayedMsgCount;
     private long nettyWriteBufferHighWaterMark;
+    private long sendStatusCheckMsgCnt;
+    private long sendMsgFailureCheckCnt;
+    private long sendThrownCheckCnt;
+    private long sendSlowSleepMs;
 
     // last refresh topics
     private final Set<String> lastRefreshTopics = new HashSet<>();
@@ -117,6 +124,34 @@ public class TubeMQSink extends BaseSink {
                 MAX_TOPICS_EACH_PRODUCER_HOLD_NAME, VAL_DEF_TOPICS_EACH_PRODUCER_HOLD_NAME);
         Preconditions.checkArgument((this.maxAllowedPublishTopicNum >= VAL_MIN_TOPICS_EACH_PRODUCER_HOLD_NAME),
                 MAX_TOPICS_EACH_PRODUCER_HOLD_NAME + " must be >= " + VAL_MIN_TOPICS_EACH_PRODUCER_HOLD_NAME);
+
+        this.sendStatusCheckMsgCnt = context.getLong(
+                ConfigConstants.SEND_WORKER_STATUS_CHECK_MSG_CNT,
+                ConfigConstants.VAL_DEF_SEND_WORKER_STATUS_MSG_CNT);
+
+        this.sendMsgFailureCheckCnt = context.getLong(
+                ConfigConstants.SEND_WORKER_MSG_FAILURE_CHECK_CNT,
+                ConfigConstants.VAL_DEF_SEND_WORKER_MSG_FAILURE_CHECK_CNT);
+        Preconditions.checkArgument(
+                (this.sendMsgFailureCheckCnt >= ConfigConstants.VAL_MIN_SEND_WORKER_MSG_FAILURE_CHECK_CNT),
+                ConfigConstants.SEND_WORKER_MSG_FAILURE_CHECK_CNT + " must be >= "
+                        + ConfigConstants.VAL_MIN_SEND_WORKER_MSG_FAILURE_CHECK_CNT);
+
+        this.sendThrownCheckCnt = context.getLong(
+                ConfigConstants.SEND_WORKER_THROWN_CHECK_MSG_CNT,
+                ConfigConstants.VAL_DEF_SEND_WORKER_THROWN_MSG_CNT);
+        Preconditions.checkArgument(
+                (this.sendThrownCheckCnt >= ConfigConstants.VAL_MIN_SEND_WORKER_THROWN_MSG_CNT),
+                ConfigConstants.SEND_WORKER_THROWN_CHECK_MSG_CNT + " must be >= "
+                        + ConfigConstants.VAL_MIN_SEND_WORKER_THROWN_MSG_CNT);
+
+        this.sendSlowSleepMs = context.getLong(
+                ConfigConstants.SEND_WORKER_SLOW_SLEEP_MS,
+                ConfigConstants.VAL_DEF_SEND_WORKER_SLOW__SLEEP_MS);
+        Preconditions.checkArgument(
+                (this.sendSlowSleepMs >= ConfigConstants.VAL_MIN_SEND_WORKER_SLOW_SLEEP_MS),
+                ConfigConstants.SEND_WORKER_SLOW_SLEEP_MS + " must be >= "
+                        + ConfigConstants.VAL_MIN_SEND_WORKER_SLOW_SLEEP_MS);
     }
 
     @Override
@@ -136,7 +171,7 @@ public class TubeMQSink extends BaseSink {
         }
         // start message process logic
         for (int i = 0; i < sinkThreadPool.length; i++) {
-            sinkThreadPool[i] = new Thread(new SinkTask(), cachedSinkName + "_tube_sink_sender-" + i);
+            sinkThreadPool[i] = new Thread(new SinkTask(this), cachedSinkName + "_tube_sink_sender-" + i);
             sinkThreadPool[i].start();
         }
         // set mq cluster ready
@@ -274,9 +309,28 @@ public class TubeMQSink extends BaseSink {
 
     private class SinkTask implements Runnable {
 
+        private long sendThrownCnt = 0L;
+        private final AtomicLong cumThrownCnt = new AtomicLong(0);
+        private final long sendStatusCheckMsgCnt;
+        private final long sendMsgFailureCheckCnt;
+        private final long sendThrownCheckCnt;
+        private final long sendSlowSleepMs;
+        private final long sendHighThrownCheckCnt;
+        private final long sendHighSlowSleepMs;
+
+        public SinkTask(TubeMQSink tubeMQSink) {
+            this.sendStatusCheckMsgCnt = tubeMQSink.sendStatusCheckMsgCnt;
+            this.sendMsgFailureCheckCnt = tubeMQSink.sendMsgFailureCheckCnt;
+            this.sendThrownCheckCnt = tubeMQSink.sendThrownCheckCnt;
+            this.sendSlowSleepMs = tubeMQSink.sendSlowSleepMs;
+            this.sendHighThrownCheckCnt = tubeMQSink.sendThrownCheckCnt * 2;
+            this.sendHighSlowSleepMs = tubeMQSink.sendSlowSleepMs * 2;
+        }
+
         @Override
         public void run() {
             logger.info("task {} start send message logic.", Thread.currentThread().getName());
+            long sentCnt = 0;
             EventProfile profile = null;
             while (canSend) {
                 try {
@@ -301,40 +355,49 @@ public class TubeMQSink extends BaseSink {
                         //
                     }
                 }
+                if ((this.sendStatusCheckMsgCnt > 0)
+                        && (++sentCnt % this.sendStatusCheckMsgCnt == 0)) {
+                    if (this.cumThrownCnt.get() >= this.sendMsgFailureCheckCnt) {
+                        fileMetricIncSumStats(StatConstants.EVENT_SINK_SEND_WORKER_SLEEP_COUNT);
+                        try {
+                            Thread.sleep(this.sendSlowSleepMs);
+                        } catch (Throwable ex2) {
+                            //
+                        }
+                    }
+                }
             }
             logger.info("TubeMQSink task {} exits send message logic.", Thread.currentThread().getName());
         }
 
         private boolean sendMessage(EventProfile profile) {
             // get topic name
-            String topic = ConfigManager.getInstance().getTDBankSinkTopicName(profile.getGroupId());
-            if (StringUtils.isEmpty(topic)) {
+            String topic = profile.getSrcTopic();
+            MessageProducer producer = producerMap.get(topic);
+            if (producer == null) {
+                if (CommonConfigHolder.getInstance().isDefTopic(topic)) {
+                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEF_TOPIC_WITHOUT_PRODUCER, topic);
+                    processSendFail(profile, DataProxyErrCode.PRODUCER_IS_NULL, "");
+                    return false;
+                }
+                fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_TOPIC_WITHOUT_PRODUCER, topic);
                 // add default topics first
-                if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
-                    topic = CommonConfigHolder.getInstance().getRandDefTopics();
-                    if (StringUtils.isEmpty(topic)) {
-                        releaseAcquiredSizePermit(profile);
-                        fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_MISSING,
-                                profile.getGroupId());
-                        profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
-                        return false;
-                    }
-                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_USED,
-                            profile.getGroupId());
-                } else {
+                topic = CommonConfigHolder.getInstance().getRandDefTopics();
+                if (StringUtils.isEmpty(topic)) {
                     releaseAcquiredSizePermit(profile);
-                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
+                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_MISSING,
                             profile.getGroupId());
                     profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
                     return false;
                 }
-            }
-            // get producer by topic
-            MessageProducer producer = producerMap.get(topic);
-            if (producer == null) {
-                fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_TOPIC_WITHOUT_PRODUCER, topic);
-                processSendFail(profile, DataProxyErrCode.PRODUCER_IS_NULL, "");
-                return false;
+                fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_USED, profile.getGroupId());
+                // get producer by topic again
+                producer = producerMap.get(topic);
+                if (producer == null) {
+                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEF_TOPIC_WITHOUT_PRODUCER, topic);
+                    processSendFail(profile, DataProxyErrCode.PRODUCER_IS_NULL, "");
+                    return false;
+                }
             }
             // check duplicate
             String msgSeqId = profile.getProperties().get(ConfigConstants.SEQUENCE_ID);
@@ -350,11 +413,23 @@ public class TubeMQSink extends BaseSink {
                 // build message
                 Message message = new Message(topic, profile.getEventBody());
                 long sendTime = profile.setPropsToMQ(message);
-                producer.sendMessage(message, new MyCallback(profile, sendTime, topic));
+                producer.sendMessage(message, new MyCallback(cumThrownCnt, profile, sendTime, topic));
+                sendThrownCnt = 0;
                 return true;
             } catch (Throwable ex) {
+                this.cumThrownCnt.incrementAndGet();
                 fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_SEND_EXCEPTION, topic);
                 processSendFail(profile, DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
+                if (++sendThrownCnt > this.sendThrownCheckCnt) {
+                    fileMetricIncSumStats(StatConstants.EVENT_SINK_SEND_WORKER_SLEEP_COUNT);
+                    try {
+                        Thread.sleep((sendThrownCnt > this.sendHighThrownCheckCnt)
+                                ? this.sendHighSlowSleepMs
+                                : this.sendSlowSleepMs);
+                    } catch (Throwable ex2) {
+                        //
+                    }
+                }
                 if (logCounter.shouldPrint()) {
                     logger.error("Send Message to Tube failure", ex);
                 }
@@ -365,11 +440,13 @@ public class TubeMQSink extends BaseSink {
 
     private class MyCallback implements MessageSentCallback {
 
+        private final AtomicLong cumFailureCnt;
         private final EventProfile profile;
         private final long sendTime;
         private final String topic;
 
-        public MyCallback(EventProfile profile, long sendTime, String topic) {
+        public MyCallback(AtomicLong cumThrownCnt, EventProfile profile, long sendTime, String topic) {
+            this.cumFailureCnt = cumThrownCnt;
             this.profile = profile;
             this.sendTime = sendTime;
             this.topic = topic;
@@ -378,6 +455,7 @@ public class TubeMQSink extends BaseSink {
         @Override
         public void onMessageSent(MessageSentResult result) {
             if (result.isSuccess()) {
+                this.cumFailureCnt.set(0);
                 fileMetricAddSuccStats(profile, topic, result.getPartition().getHost());
                 releaseAcquiredSizePermit(profile);
                 addSendResultMetric(profile);
@@ -386,8 +464,15 @@ public class TubeMQSink extends BaseSink {
                 fileMetricAddFailStats(profile, topic,
                         result.getPartition().getHost(), topic + "." + result.getErrCode());
                 processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
-                if (logCounter.shouldPrint()) {
-                    logger.error("Send message to tube failure: {}", result.getErrMsg());
+                if (result.getErrCode() == TErrCodeConstants.PARAMETER_MSG_OVER_MAX_LENGTH) {
+                    this.cumFailureCnt.incrementAndGet();
+                    if (logMsgOverSizePrinter.shouldPrint()) {
+                        logger.error("Message over max-length {}", topic, result.getErrMsg());
+                    }
+                } else {
+                    if (logCounter.shouldPrint()) {
+                        logger.error("Send message to tube failure: {}", result.getErrMsg());
+                    }
                 }
             }
         }

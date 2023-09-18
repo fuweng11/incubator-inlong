@@ -318,6 +318,13 @@ public class CommonConfigHolder {
         return enableUnConfigTopicAccept;
     }
 
+    public boolean isDefTopic(String topicName) {
+        if (StringUtils.isEmpty(topicName)) {
+            return false;
+        }
+        return defaultTopics.contains(topicName);
+    }
+
     public List<String> getDefTopics() {
         return defaultTopics;
     }

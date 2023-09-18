@@ -109,6 +109,7 @@ public class StatConstants {
     public static final java.lang.String EVENT_SINK_DEFAULT_TOPIC_USED = "sink.default.topic.used";
     public static final java.lang.String EVENT_SINK_PRODUCER_NULL = "sink.producer.null";
     public static final java.lang.String EVENT_SINK_TOPIC_WITHOUT_PRODUCER = "sink.topic.without.producer";
+    public static final java.lang.String EVENT_SINK_DEF_TOPIC_WITHOUT_PRODUCER = "sink.default.topic.without.producer";
     public static final java.lang.String EVENT_SINK_PRODUCER_CREATE_SUCCESS = "sink.producer.create.success";
     public static final java.lang.String EVENT_SINK_PRODUCER_CREATE_FAILURE = "sink.producer.create.failure";
     public static final java.lang.String EVENT_SINK_CLUSTER_EMPTY = "sink.cluster.empty";
@@ -142,6 +143,8 @@ public class StatConstants {
     public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_EXCEPTION = "sink.measure.index.remote.exception";
     public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_FAILRETRY = "sink.measure.index.remote.retry";
     public static final java.lang.String SINK_MEASURE_INDEX_REMOTE_FAILDROPPED = "sink.measure.index.remote.dropped";
+
+    public static final java.lang.String EVENT_SINK_SEND_WORKER_SLEEP_COUNT = "sink.send.worker.sleep.count";
 
     public static final java.lang.String EVENT_SINK_SEND_EXCEPTION = "sink.send.exception";
     public static final java.lang.String EVENT_SINK_PULSAR_CLIENT_INITIAL_FAILURE =

@@ -19,7 +19,6 @@ package org.apache.inlong.dataproxy.sink2;
 
 import org.apache.inlong.common.enums.DataProxyErrCode;
 import org.apache.inlong.common.monitor.LogCounter;
-import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.config.ConfigManager;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
@@ -300,25 +299,11 @@ public class PulsarSink extends BaseSink {
             String topic = ConfigManager.getInstance().getPulsarXfeSinkTopic(
                     profile.getGroupId(), profile.getStreamId());
             if (StringUtils.isEmpty(topic)) {
-                // add default topics first
-                if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
-                    topic = CommonConfigHolder.getInstance().getRandDefTopics();
-                    if (StringUtils.isEmpty(topic)) {
-                        releaseAcquiredSizePermit(profile);
-                        fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
-                                getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
-                        profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
-                        return false;
-                    }
-                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_USED,
-                            profile.getGroupId());
-                } else {
-                    releaseAcquiredSizePermit(profile);
-                    fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
-                            getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
-                    profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
-                    return false;
-                }
+                releaseAcquiredSizePermit(profile);
+                fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
+                        getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
+                profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
+                return false;
             }
             // get producer by topic
             Producer producer = producerMap.get(topic);
