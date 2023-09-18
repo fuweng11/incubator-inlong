@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 /**
  * Listener of startup sort.
  */
@@ -94,7 +93,7 @@ public class StartupSortListener implements SortOperateListener {
 
         InlongGroupInfo inlongGroupInfo = groupResourceForm.getGroupInfo();
         if (InlongConstants.ENABLE_ZK.equals(inlongGroupInfo.getEnableZookeeper())
-                || InlongConstants.DATASYNC_MODE.equals(inlongGroupInfo.getInlongGroupMode())) {
+                || InlongConstants.STANDARD_MODE.equals(inlongGroupInfo.getInlongGroupMode())) {
             log.warn("not need with group for enable zookeeper={} or group mode = {}",
                     inlongGroupInfo.getEnableZookeeper(), inlongGroupInfo.getInlongGroupMode());
             return ListenerResult.success();

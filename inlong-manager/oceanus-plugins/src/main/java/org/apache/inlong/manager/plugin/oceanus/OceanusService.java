@@ -415,14 +415,18 @@ public class OceanusService {
         }
     }
 
-    public JsonArray listFile(JobBaseInfo jobInfo) throws Exception {
+    public JsonArray listFile(JobBaseInfo jobInfo, String fileName) throws Exception {
         PluginRestTemplateConfig restTemplateConfig = new PluginRestTemplateConfig();
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         JsonArray fileList = new JsonArray();
         try {
             String listFileUrl = oceanusConfig.getOpenApi() + String.format(LIST_FILE_API, jobInfo.getProjectId());
             log.info("list file path=：{}", listFileUrl);
-            String rsp = HttpUtils.getRequest(restTemplate, listFileUrl, new HashMap<>(),
+            HashMap<String, Object> params = new HashMap<>();
+            if (StringUtils.isNotBlank(fileName)) {
+                params.put("keyword", fileName);
+            }
+            String rsp = HttpUtils.getRequest(restTemplate, listFileUrl, params,
                     getHeader(jobInfo.getOperator()), new ParameterizedTypeReference<String>() {
                     });
             JsonObject rspObj = GSON.fromJson(rsp, JsonObject.class);
@@ -436,7 +440,7 @@ public class OceanusService {
 
     public OceanusFile getFileByName(JobBaseInfo jobInfo, String fileName) throws Exception {
         try {
-            JsonArray fileList = listFile(jobInfo);
+            JsonArray fileList = listFile(jobInfo, fileName);
             OceanusFile file = new OceanusFile();
             for (JsonElement datum : fileList) {
                 JsonObject record = datum.getAsJsonObject();
