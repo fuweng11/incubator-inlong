@@ -247,7 +247,9 @@ public class AbstractInnerSortConfigService {
                 break;
             case TencentConstants.DATA_TYPE_CSV:
                 // need to delete the first separator? default is false
-                deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
+                deserializationInfo = streamInfo.getWrapWithInlongMsg()
+                        ? new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false)
+                        : new CsvDeserializationInfo(separator, escape);
                 break;
             case TencentConstants.DATA_TYPE_TDMSG_CSV:
                 deserializationInfo = new TDMsgCsvDeserializationInfo(streamId, separator, escape, false);
