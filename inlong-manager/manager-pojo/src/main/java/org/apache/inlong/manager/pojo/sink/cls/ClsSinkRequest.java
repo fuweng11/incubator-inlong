@@ -15,32 +15,37 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.tubemq.manager.controller.node.request;
+package org.apache.inlong.manager.pojo.sink.cls;
 
+import org.apache.inlong.manager.common.consts.SinkType;
+import org.apache.inlong.manager.common.util.JsonTypeDefine;
+import org.apache.inlong.manager.pojo.sink.SinkRequest;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+/**
+ * Cloud log service sink request.
+ */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class AddTopicReq extends BaseReq {
+@EqualsAndHashCode(callSuper = true)
+@ApiModel(value = "Cloud log service sink request")
+@JsonTypeDefine(value = SinkType.CLS)
+public class ClsSinkRequest extends SinkRequest {
 
+    @ApiModelProperty("Cloud log service topic name")
     private String topicName;
-    private String brokerId;
-    private Integer numPartitions;
-    private Integer numTopicStores;
-    private String deleteWhen;
-    private Integer unflushInterval;
-    private Integer unflushThreshold;
-    private Integer unflushDataHold;
-    private Integer memCacheMsgCntInK;
-    private Integer memCacheFlushIntvl;
-    private Integer memCacheMsgSizeInMB;
-    private Integer maxMsgSizeInMB;
-    private String deletePolicy;
-    private Boolean acceptPublish;
-    private Boolean acceptSubscribe;
-    private String confModAuthToken;
-    private String createUser;
+
+    @ApiModelProperty("Cloud log service topic save time")
+    private Integer saveTime;
+
+    @ApiModelProperty("Cloud log service tag name")
+    private String tag;
+
+    @ApiModelProperty("Cloud log service index tokenizer")
+    private String tokenizer;
 }
