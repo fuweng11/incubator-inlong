@@ -140,14 +140,10 @@ public class TubeMQSink extends BaseSink {
         this.sendThrownCheckCnt = context.getLong(
                 ConfigConstants.SEND_WORKER_THROWN_CHECK_MSG_CNT,
                 ConfigConstants.VAL_DEF_SEND_WORKER_THROWN_MSG_CNT);
-        Preconditions.checkArgument(
-                (this.sendThrownCheckCnt >= ConfigConstants.VAL_MIN_SEND_WORKER_THROWN_MSG_CNT),
-                ConfigConstants.SEND_WORKER_THROWN_CHECK_MSG_CNT + " must be >= "
-                        + ConfigConstants.VAL_MIN_SEND_WORKER_THROWN_MSG_CNT);
 
         this.sendSlowSleepMs = context.getLong(
                 ConfigConstants.SEND_WORKER_SLOW_SLEEP_MS,
-                ConfigConstants.VAL_DEF_SEND_WORKER_SLOW__SLEEP_MS);
+                ConfigConstants.VAL_DEF_SEND_WORKER_SLOW_SLEEP_MS);
         Preconditions.checkArgument(
                 (this.sendSlowSleepMs >= ConfigConstants.VAL_MIN_SEND_WORKER_SLOW_SLEEP_MS),
                 ConfigConstants.SEND_WORKER_SLOW_SLEEP_MS + " must be >= "
@@ -310,7 +306,7 @@ public class TubeMQSink extends BaseSink {
     private class SinkTask implements Runnable {
 
         private long sendThrownCnt = 0L;
-        private final AtomicLong cumThrownCnt = new AtomicLong(0);
+        private final AtomicLong cumExceptionCnt = new AtomicLong(0);
         private final long sendStatusCheckMsgCnt;
         private final long sendMsgFailureCheckCnt;
         private final long sendThrownCheckCnt;
@@ -357,7 +353,7 @@ public class TubeMQSink extends BaseSink {
                 }
                 if ((this.sendStatusCheckMsgCnt > 0)
                         && (++sentCnt % this.sendStatusCheckMsgCnt == 0)) {
-                    if (this.cumThrownCnt.get() >= this.sendMsgFailureCheckCnt) {
+                    if (this.cumExceptionCnt.get() >= this.sendMsgFailureCheckCnt) {
                         fileMetricIncSumStats(StatConstants.EVENT_SINK_SEND_WORKER_SLEEP_COUNT);
                         try {
                             Thread.sleep(this.sendSlowSleepMs);
@@ -413,14 +409,15 @@ public class TubeMQSink extends BaseSink {
                 // build message
                 Message message = new Message(topic, profile.getEventBody());
                 long sendTime = profile.setPropsToMQ(message);
-                producer.sendMessage(message, new MyCallback(cumThrownCnt, profile, sendTime, topic));
+                producer.sendMessage(message, new MyCallback(cumExceptionCnt, profile, sendTime, topic));
                 sendThrownCnt = 0;
                 return true;
             } catch (Throwable ex) {
-                this.cumThrownCnt.incrementAndGet();
+                this.cumExceptionCnt.incrementAndGet();
                 fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_SEND_EXCEPTION, topic);
                 processSendFail(profile, DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
-                if (++sendThrownCnt > this.sendThrownCheckCnt) {
+                if ((this.sendThrownCheckCnt > 0)
+                        && (++sendThrownCnt > this.sendThrownCheckCnt)) {
                     fileMetricIncSumStats(StatConstants.EVENT_SINK_SEND_WORKER_SLEEP_COUNT);
                     try {
                         Thread.sleep((sendThrownCnt > this.sendHighThrownCheckCnt)
@@ -445,8 +442,8 @@ public class TubeMQSink extends BaseSink {
         private final long sendTime;
         private final String topic;
 
-        public MyCallback(AtomicLong cumThrownCnt, EventProfile profile, long sendTime, String topic) {
-            this.cumFailureCnt = cumThrownCnt;
+        public MyCallback(AtomicLong cumFailureCnt, EventProfile profile, long sendTime, String topic) {
+            this.cumFailureCnt = cumFailureCnt;
             this.profile = profile;
             this.sendTime = sendTime;
             this.topic = topic;

@@ -695,6 +695,12 @@ public class CommonConfigHolder {
             if (StringUtils.isNotBlank(tmpValue)) {
                 this.enableTDBankMparamSetting = "TRUE".equalsIgnoreCase(tmpValue.trim());
             }
+            // check whether configure default topics
+            if (this.defaultTopics.isEmpty()) {
+                LOG.error("Required {} field value is blank in {}, exit!",
+                        KEY_UNCONFIGURED_TOPIC_DEFAULT_TOPICS, COMMON_CONFIG_FILE_NAME);
+                System.exit(7);
+            }
         }
         // read cluster ids
         if (isMetaInfoGetFromTDBank()) {

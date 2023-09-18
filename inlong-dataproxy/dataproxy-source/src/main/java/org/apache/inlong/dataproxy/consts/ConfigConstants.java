@@ -169,10 +169,9 @@ public class ConfigConstants {
 
     public static final String SEND_WORKER_THROWN_CHECK_MSG_CNT = "send-worker-thrown-check-cnt";
     public static final long VAL_DEF_SEND_WORKER_THROWN_MSG_CNT = 100L;
-    public static final long VAL_MIN_SEND_WORKER_THROWN_MSG_CNT = 1L;
 
     public static final String SEND_WORKER_SLOW_SLEEP_MS = "send-worker-slow-sleep-ms";
-    public static final long VAL_DEF_SEND_WORKER_SLOW__SLEEP_MS = 150L;
+    public static final long VAL_DEF_SEND_WORKER_SLOW_SLEEP_MS = 150L;
     public static final long VAL_MIN_SEND_WORKER_SLOW_SLEEP_MS = 50L;
 
     public static final String RECOVER_THREAD_COUNT = "recover_thread_count";
