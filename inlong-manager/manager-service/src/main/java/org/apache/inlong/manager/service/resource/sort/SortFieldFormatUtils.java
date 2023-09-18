@@ -32,6 +32,7 @@ import com.tencent.flink.formats.common.ShortFormatInfo;
 import com.tencent.flink.formats.common.StringFormatInfo;
 import com.tencent.flink.formats.common.TimeFormatInfo;
 import com.tencent.flink.formats.common.TimestampFormatInfo;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Sort field formatting tool
@@ -131,13 +132,14 @@ public class SortFieldFormatUtils {
                 formatInfo = new DecimalFormatInfo();
                 break;
             case "date":
-                formatInfo = new DateFormatInfo(format);
+                formatInfo = StringUtils.isNotBlank(format) ? new DateFormatInfo(format) : new DateFormatInfo();
                 break;
             case "time":
-                formatInfo = new TimeFormatInfo(format);
+                formatInfo = StringUtils.isNotBlank(format) ? new TimeFormatInfo(format) : new TimeFormatInfo();
                 break;
             case "timestamp":
-                formatInfo = new TimestampFormatInfo(format);
+                formatInfo = StringUtils.isNotBlank(format) ?
+                        new TimestampFormatInfo(format) : new TimestampFormatInfo();
                 break;
             case "binary":
             case "fixed":
