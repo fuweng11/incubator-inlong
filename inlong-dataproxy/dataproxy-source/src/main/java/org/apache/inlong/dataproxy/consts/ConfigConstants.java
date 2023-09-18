@@ -160,6 +160,21 @@ public class ConfigConstants {
     public static final long VAL_DEF_NETTY_WRITE_HIGH_WATER_MARK = 15 * 1024 * 1024L;
     public static final long VAL_MIN_NETTY_WRITE_HIGH_WATER_MARK = 0L;
 
+    public static final String SEND_WORKER_STATUS_CHECK_MSG_CNT = "send-worker-status-check-msg-cnt";
+    public static final long VAL_DEF_SEND_WORKER_STATUS_MSG_CNT = 2000L;
+
+    public static final String SEND_WORKER_MSG_FAILURE_CHECK_CNT = "send-worker-msg-failure-check-cnt";
+    public static final long VAL_DEF_SEND_WORKER_MSG_FAILURE_CHECK_CNT = 20000L;
+    public static final long VAL_MIN_SEND_WORKER_MSG_FAILURE_CHECK_CNT = VAL_DEF_SEND_WORKER_STATUS_MSG_CNT;
+
+    public static final String SEND_WORKER_THROWN_CHECK_MSG_CNT = "send-worker-thrown-check-cnt";
+    public static final long VAL_DEF_SEND_WORKER_THROWN_MSG_CNT = 100L;
+    public static final long VAL_MIN_SEND_WORKER_THROWN_MSG_CNT = 1L;
+
+    public static final String SEND_WORKER_SLOW_SLEEP_MS = "send-worker-slow-sleep-ms";
+    public static final long VAL_DEF_SEND_WORKER_SLOW__SLEEP_MS = 150L;
+    public static final long VAL_MIN_SEND_WORKER_SLOW_SLEEP_MS = 50L;
+
     public static final String RECOVER_THREAD_COUNT = "recover_thread_count";
 
     public static final String MANAGER_PATH = "/inlong/manager/openapi";

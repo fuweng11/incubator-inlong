@@ -54,6 +54,7 @@ public class EventProfile {
     // cache information
     private final String groupId;
     private final String streamId;
+    private final String srcTopic;
     private final String uniqId;
     private final long dt;
     private long msgSize;
@@ -69,6 +70,7 @@ public class EventProfile {
         this.retries = 0;
         this.groupId = event.getHeaders().get(AttributeConstants.GROUP_ID);
         this.streamId = event.getHeaders().get(AttributeConstants.STREAM_ID);
+        this.srcTopic = event.getHeaders().get(ConfigConstants.TOPIC_KEY);
         this.uniqId = event.getHeaders().getOrDefault(AttributeConstants.UNIQ_ID, "");
         this.dt = NumberUtils.toLong(event.getHeaders().get(AttributeConstants.DATA_TIME));
         this.msgSize = event.getBody().length;
@@ -86,6 +88,7 @@ public class EventProfile {
         this.retries = 0;
         this.groupId = event.getHeaders().get(AttributeConstants.GROUP_ID);
         this.streamId = event.getHeaders().get(AttributeConstants.STREAM_ID);
+        this.srcTopic = event.getHeaders().get(ConfigConstants.TOPIC_KEY);
         this.uniqId = event.getHeaders().getOrDefault(AttributeConstants.UNIQ_ID, "");
         this.dt = NumberUtils.toLong(event.getHeaders().get(AttributeConstants.DATA_TIME));
         this.msgSize = event.getBody().length;
@@ -172,6 +175,10 @@ public class EventProfile {
 
     public Boolean getIsStatusIndex() {
         return isStatusIndex;
+    }
+
+    public String getSrcTopic() {
+        return srcTopic;
     }
 
     /**
