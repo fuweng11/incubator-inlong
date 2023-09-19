@@ -640,6 +640,7 @@ public abstract class BaseSource
             result = tmpVal.trim();
         }
         if (StringUtils.isBlank(result)
+                || SourceConstants.VAL_LOOPBACK_HOST_VALUE.equals(result)
                 || SourceConstants.VAL_DEF_HOST_VALUE.equals(result)) {
             result = AddressUtils.getLocalIp();
         }
