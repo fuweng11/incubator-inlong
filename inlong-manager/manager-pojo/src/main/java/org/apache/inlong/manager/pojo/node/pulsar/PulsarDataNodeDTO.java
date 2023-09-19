@@ -51,6 +51,12 @@ public class PulsarDataNodeDTO {
     @ApiModelProperty(value = "Pulsar token")
     private String token;
 
+    @ApiModelProperty(value = "Pulsar instance id")
+    private Integer instanceId;
+
+    @ApiModelProperty(value = "Pulsar cluster name")
+    private String clusterName;
+
     /**
      * Get the dto instance from the request
      */

@@ -44,6 +44,12 @@ public class PulsarDataNodeInfo extends DataNodeInfo {
     @ApiModelProperty("Pulsar admin url")
     private String adminUrl;
 
+    @ApiModelProperty(value = "Pulsar instance id")
+    private Integer instanceId;
+
+    @ApiModelProperty(value = "Pulsar cluster name")
+    private String clusterName;
+
     public PulsarDataNodeInfo() {
         this.setType(DataNodeType.PULSAR);
     }

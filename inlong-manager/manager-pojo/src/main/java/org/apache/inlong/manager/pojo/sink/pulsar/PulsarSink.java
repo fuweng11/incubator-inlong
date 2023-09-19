@@ -64,6 +64,12 @@ public class PulsarSink extends StreamSink {
     @ApiModelProperty("Pulsar partition number")
     private Integer partitionNum;
 
+    @ApiModelProperty(value = "Pulsar instance id")
+    private String instanceID;
+
+    @ApiModelProperty(value = "Pulsar cluster name")
+    private String cluster;
+
     public PulsarSink() {
         this.setSinkType(SinkType.PULSAR);
     }
