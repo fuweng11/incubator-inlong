@@ -37,7 +37,7 @@
 
     <properties>
         <inlong.root.dir>${project.parent.parent.parent.basedir}</inlong.root.dir>
-        <flink.version>1.15.4</flink.version>
+        <flink.version>1.15-tq-0.1.11</flink.version>
         <debezium.version>1.6.4.Final</debezium.version>
         <flink.connector.mongodb.cdc.version>2.3.0</flink.connector.mongodb.cdc.version>
         <flink.connector.oracle.cdc.version>2.3.0</flink.connector.oracle.cdc.version>
@@ -53,6 +53,9 @@
         <sqlserver.jdbc.version>7.2.2.jre8</sqlserver.jdbc.version>
         <hudi.version>0.12.3</hudi.version>
         <thrift.version>0.9.3</thrift.version>
+        <inner.iceberg.version>1.3.0-1-tq</inner.iceberg.version>
+        <inner.hive.version>2.3.5-tq-0.1.1</inner.hive.version>
+        <inner.hadoop.mapreduce.version>2.8.5-tq-0.1.6</inner.hadoop.mapreduce.version>
         <kafka-clients.version>2.7.1</kafka-clients.version>
         <flink-connector-debezium.version>2.3.0</flink-connector-debezium.version>
     </properties>

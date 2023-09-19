@@ -23,6 +23,7 @@ import org.apache.flink.table.catalog.Catalog;
 import org.apache.flink.table.factories.CatalogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.iceberg.CatalogProperties;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.flink.CatalogLoader;
@@ -211,6 +212,8 @@ public class FlinkCatalogFactory implements CatalogFactory {
     }
 
     public static Configuration clusterHadoopConf() {
-        return HadoopUtils.getHadoopConfiguration(GlobalConfiguration.loadConfiguration());
+        Configuration configuration = HadoopUtils.getHadoopConfiguration(GlobalConfiguration.loadConfiguration());
+        configuration.set(HiveConf.ConfVars.METASTORE_EXECUTE_SET_UGI.varname, "false");
+        return configuration;
     }
 }
