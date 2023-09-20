@@ -55,10 +55,12 @@ public class InlongStreamPageRequest extends PageRequest {
     @ApiModelProperty(value = "Inlong group in charge")
     private String inCharge;
 
+    @ApiModelProperty(value = "Standard mode(include Data Ingestion and Synchronization): 0, DataSync mode(only Data Synchronization): 1")
+    private Integer inlongGroupMode;
+
     @ApiModelProperty(value = "Current user", hidden = true)
     private String currentUser;
 
     @ApiModelProperty(value = "weather is admin role.", hidden = true)
     private Boolean isAdminRole;
-
 }

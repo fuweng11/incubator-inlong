@@ -446,10 +446,19 @@
         from inlong_stream stream
         <where>
             stream.is_deleted = 0
-            and stream.inlong_group_id in (select inlong_group_id from inlong_group where tenant=#{tenant, jdbcType=VARCHAR} and is_deleted=0)
+            and stream.inlong_group_id in (
+            select inlong_group_id from inlong_group
+            where tenant=#{tenant, jdbcType=VARCHAR}
+            and is_deleted=0
+            <if test="request.inlongGroupMode != null">
+            and inlong_group_mode = #{request.inlongGroupMode}
+            </if>
+            )
             <if test="request.keyword != null and request.keyword != ''">
                 and (
                 stream.inlong_stream_id like CONCAT('%', #{request.keyword}, '%')
+                or stream.creator like CONCAT('%', #{request.keyword}, '%')
+                or stream.inlong_group_id like CONCAT('%', #{request.keyword}, '%')
                 or stream.name like CONCAT('%', #{request.keyword}, '%')
                 )
             </if>
