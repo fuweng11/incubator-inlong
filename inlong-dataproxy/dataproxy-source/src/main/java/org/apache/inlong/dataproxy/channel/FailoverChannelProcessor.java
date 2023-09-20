@@ -55,7 +55,7 @@ public class FailoverChannelProcessor
             ChannelProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(FailoverChannelProcessor.class);
-    private static final LogCounter logPrinter = new LogCounter(10, 10000, 40 * 1000);
+    private static final LogCounter logPrinter = new LogCounter(10, 100000, 60 * 1000);
 
     private final BaseSource baseSource;
     private final boolean enablePulsarXfe;

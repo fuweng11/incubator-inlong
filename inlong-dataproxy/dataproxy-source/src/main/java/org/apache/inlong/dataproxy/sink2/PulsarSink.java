@@ -374,7 +374,7 @@ public class PulsarSink extends BaseSink {
             fileMetricIncSumStats(StatConstants.EVENT_SINK_FAILRETRY);
         } else {
             releaseAcquiredSizePermit(profile);
-            fileMetricIncSumStats(StatConstants.EVENT_SINK_FAILDROPPED);
+            fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_FAILDROPPED, profile.getGroupId());
             profile.fail(errCode, errMsg);
         }
     }
