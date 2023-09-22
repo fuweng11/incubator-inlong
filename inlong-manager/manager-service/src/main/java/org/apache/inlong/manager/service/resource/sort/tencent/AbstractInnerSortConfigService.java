@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent;
 
+import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
