@@ -47,7 +47,6 @@ import com.tencent.tubemq.client.producer.MessageProducer;
 import com.tencent.tubemq.client.producer.MessageSentCallback;
 import com.tencent.tubemq.client.producer.MessageSentResult;
 import com.tencent.tubemq.corebase.Message;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -462,52 +461,69 @@ public class ControllerSink extends AbstractSink implements Configurable {
         }
 
         private void sendMessage(EventProfile profile) {
-            // check duplicate
-            String msgType = profile.getProperties().get(ConfigConstants.INDEX_MSG_TYPE);
-            if (msgType == null || !(msgType.equals(ConfigConstants.INDEX_TYPE_FILE_STATUS)
-                    || msgType.equals(ConfigConstants.INDEX_TYPE_MEASURE))) {
-                releaseAcquiredSizePermit(profile);
-                fileMetricIncSumStats(StatConstants.SINK_INDEX_ILLEGAL_DROPPED);
+            // check task whether invalid
+            if (profile.isInValidTask()) {
+                releaseAcquiredSizePermit(profile.getMsgSize());
+                fileMetricIncWithDetailStats(
+                        StatConstants.EVENT_SINK_CHANNEL_INVALID_DROPPED, profile.getGroupId());
+                profile.clear();
                 return;
             }
-            String msgSeqId = profile.getProperties().get(ConfigConstants.SEQUENCE_ID);
-            if (msgIdCache.cacheIfAbsent(msgSeqId)) {
-                releaseAcquiredSizePermit(profile);
+            // parse fields in headers
+            profile.parseFields();
+            if (!profile.isValidIndexMsg()) {
+                releaseAcquiredSizePermit(profile.getMsgSize());
+                fileMetricIncSumStats(StatConstants.SINK_INDEX_ILLEGAL_DROPPED);
+                profile.clear();
+                return;
+            }
+            // check duplicate
+            if (msgIdCache.cacheIfAbsent(profile.getMsgSeqId())) {
+                releaseAcquiredSizePermit(profile.getMsgSize());
                 fileMetricIncSumStats(StatConstants.SINK_INDEX_DUPLICATE_DROOPED);
                 if (logDupMsgPrinter.shouldPrint()) {
-                    logger.info("{} package {} existed,just discard.", cachedSinkName, msgSeqId);
+                    logger.info("{} package {} existed,just discard.",
+                            cachedSinkName, profile.getMsgSeqId());
                 }
+                profile.clear();
                 return;
-            }
-            // check event type
-            if (profile.getIsStatusIndex() == null) {
-                profile.setStatusIndex(msgType.equals(ConfigConstants.INDEX_TYPE_FILE_STATUS));
             }
             // build message
             if (sendRemote) {
-                String attr = "bid=" + profile.getGroupId()
-                        + "&tid=" + profile.getStreamId()
-                        + "&dt=" + System.currentTimeMillis()
-                        + "&NodeIP=" + profile.getProperties().get(ConfigConstants.REMOTE_IP_KEY);
-                InLongMsg inLongMsg = InLongMsg.newInLongMsg(false);
-                inLongMsg.addMsg(attr, profile.getEventBody());
-                // build message
-                long dataTimeL = Long.parseLong(profile.getProperties().get(ConfigConstants.PKG_TIME_KEY));
-                Message message = new Message(agentIndexTopic, inLongMsg.buildArray());
-                message.putSystemHeader((profile.isStatusIndex() ? agentStatusTid : agentMeasureTid),
-                        DateTimeUtils.ms2yyyyMMddHHmm(dataTimeL));
-                message.setAttrKeyVal(AttributeConstants.RCV_TIME,
-                        profile.getProperties().get(AttributeConstants.RCV_TIME));
-                message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, msgEncodeTypeId);
-                message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION, msgEncodeTypeId);
-                message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY,
-                        profile.getProperties().get(ConfigConstants.REMOTE_IP_KEY));
-                message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY,
-                        profile.getProperties().get(ConfigConstants.DATAPROXY_IP_KEY));
-                long sendTime = System.currentTimeMillis();
-                message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(sendTime));
+                long sendTime;
+                Message message;
                 try {
-                    messageProducer.sendMessage(message, new MyCallback(profile, sendTime, agentIndexTopic));
+                    if (profile.isBringEvent()) {
+                        String attr = "bid=" + profile.getGroupId()
+                                + "&tid=" + profile.getStreamId()
+                                + "&dt=" + System.currentTimeMillis()
+                                + "&NodeIP=" + profile.getClientIp();
+                        InLongMsg inLongMsg = InLongMsg.newInLongMsg(false);
+                        inLongMsg.addMsg(attr, profile.getEventBody());
+                        // build message
+                        message = new Message(agentIndexTopic, inLongMsg.buildArray());
+                        message.putSystemHeader((profile.isStatusIndex() ? agentStatusTid : agentMeasureTid),
+                                DateTimeUtils.ms2yyyyMMddHHmm(profile.getPkgTime()));
+                        message.setAttrKeyVal(AttributeConstants.RCV_TIME,
+                                profile.getProperties().get(AttributeConstants.RCV_TIME));
+                        message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, msgEncodeTypeId);
+                        message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION, msgEncodeTypeId);
+                        message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY, profile.getClientIp());
+                        message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY, profile.getDataProxyIp());
+                        sendTime = System.currentTimeMillis();
+                        message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(sendTime));
+                        EventProfile newProfile = new EventProfile(profile, message);
+                        // send message
+                        messageProducer.sendMessage(message,
+                                new MyCallback(newProfile, sendTime, agentIndexTopic));
+                        profile.clear();
+                    } else {
+                        // send message
+                        sendTime = profile.updateSendTime();
+                        message = profile.getMessage();
+                        messageProducer.sendMessage(message,
+                                new MyCallback(profile, sendTime, agentIndexTopic));
+                    }
                 } catch (Throwable ex) {
                     fileMetricIncWithDetailStats((profile.isStatusIndex()
                             ? StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION
@@ -547,12 +563,13 @@ public class ControllerSink extends AbstractSink implements Configurable {
                         logger.error("{} send status event failure, header is {}, body is {}",
                                 cachedSinkName, profile.getProperties(), s, ex);
                     }
-                    releaseAcquiredSizePermit(profile);
+                    releaseAcquiredSizePermit(profile.getMsgSize());
                 } else {
                     // agent-measure
                     AgentMeasureLogger.logMeasureInfo(profile.getEventBody());
-                    releaseAcquiredSizePermit(profile);
+                    releaseAcquiredSizePermit(profile.getMsgSize());
                     fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_OUTPUT_SUCCESS);
+                    profile.clear();
                 }
             }
         }
@@ -574,7 +591,7 @@ public class ControllerSink extends AbstractSink implements Configurable {
         public void onMessageSent(MessageSentResult result) {
             if (result.isSuccess()) {
                 fileMetricAddSuccStats(profile, topic, result.getPartition().getHost());
-                releaseAcquiredSizePermit(profile);
+                releaseAcquiredSizePermit(profile.getMsgSize());
                 addSendResultMetric(profile);
                 profile.ack();
             } else {
@@ -601,16 +618,17 @@ public class ControllerSink extends AbstractSink implements Configurable {
      * processSendFail
      */
     public void processSendFail(EventProfile profile, DataProxyErrCode errCode, String errMsg) {
-        msgIdCache.invalidCache(profile.getProperties().get(ConfigConstants.SEQUENCE_ID));
+        msgIdCache.invalidCache(profile.getMsgSeqId());
         if (profile.isResend(enableRetryAfterFailure, maxMsgRetries)) {
             offerDispatchRecord(profile);
             fileMetricIncSumStats(profile.isStatusIndex() ? StatConstants.SINK_STATUS_INDEX_REMOTE_FAILRETRY
                     : StatConstants.SINK_MEASURE_INDEX_REMOTE_FAILRETRY);
         } else {
-            releaseAcquiredSizePermit(profile);
+            releaseAcquiredSizePermit(profile.getMsgSize());
             fileMetricIncSumStats(profile.isStatusIndex() ? StatConstants.SINK_STATUS_INDEX_REMOTE_FAILDROPPED
                     : StatConstants.SINK_MEASURE_INDEX_REMOTE_FAILDROPPED);
             profile.fail(errCode, errMsg);
+            profile.clear();
         }
     }
 
@@ -770,8 +788,8 @@ public class ControllerSink extends AbstractSink implements Configurable {
         return this.dispatchQueue.takeRecord();
     }
 
-    public void releaseAcquiredSizePermit(EventProfile record) {
-        this.dispatchQueue.release(record.getMsgSize());
+    public void releaseAcquiredSizePermit(long msgSize) {
+        this.dispatchQueue.release(msgSize);
     }
 
     public int getDispatchQueueSize() {
@@ -814,27 +832,25 @@ public class ControllerSink extends AbstractSink implements Configurable {
 
     private void fileMetricIncStats(EventProfile profile, boolean isSucc,
             String topic, String brokerIP, String eventKey, String detailInfoKey) {
-        long pkgTimeL = Long.parseLong(profile.getProperties().get(ConfigConstants.PKG_TIME_KEY));
         String tenMinsDt = DateTimeUtils.ms2yyyyMMddHHmmTenMins(profile.getDt());
-        String tenMinsPkgTime = DateTimeUtils.ms2yyyyMMddHHmmTenMins(pkgTimeL);
+        String tenMinsPkgTime = DateTimeUtils.ms2yyyyMMddHHmmTenMins(profile.getPkgTime());
         StringBuilder statsKey = new StringBuilder(512)
                 .append(cachedSinkName)
                 .append(AttrConstants.SEP_HASHTAG).append(profile.getGroupId())
                 .append(AttrConstants.SEP_HASHTAG).append(profile.getStreamId())
                 .append(AttrConstants.SEP_HASHTAG).append(topic)
                 .append(AttrConstants.SEP_HASHTAG).append(AttrConstants.SEP_HASHTAG)
-                .append(profile.getProperties().get(ConfigConstants.DATAPROXY_IP_KEY));
+                .append(profile.getDataProxyIp());
         String sumKey = statsKey.toString()
                 + AttrConstants.SEP_HASHTAG + tenMinsDt
                 + AttrConstants.SEP_HASHTAG + tenMinsPkgTime;
         statsKey.append(AttrConstants.SEP_HASHTAG).append(brokerIP)
                 .append(AttrConstants.SEP_HASHTAG).append(tenMinsDt)
-                .append(AttrConstants.SEP_HASHTAG).append(DateTimeUtils.ms2yyyyMMddHHmm(pkgTimeL));
+                .append(AttrConstants.SEP_HASHTAG).append(
+                        DateTimeUtils.ms2yyyyMMddHHmm(profile.getPkgTime()));
         if (isSucc) {
-            int msgCnt = NumberUtils.toInt(
-                    profile.getProperties().get(ConfigConstants.MSG_COUNTER_KEY), 1);
-            detailIndex.addSuccStats(statsKey.toString(), msgCnt, 1, profile.getMsgSize());
-            sumIndex.addSuccStats(sumKey, msgCnt, 1, profile.getMsgSize());
+            detailIndex.addSuccStats(statsKey.toString(), profile.getMsgCnt(), 1, profile.getMsgSize());
+            sumIndex.addSuccStats(sumKey, profile.getMsgCnt(), 1, profile.getMsgSize());
             monitorStats.incSumStats(eventKey);
         } else {
             detailIndex.addFailStats(statsKey.toString(), 1);
@@ -847,6 +863,6 @@ public class ControllerSink extends AbstractSink implements Configurable {
      * addSendResultMetric
      */
     public void addSendResultMetric(EventProfile profile) {
-        AuditUtils.add(AuditUtils.AUDIT_ID_DATAPROXY_SEND_SUCCESS, profile.getEvent());
+        AuditUtils.addTDBus(AuditUtils.AUDIT_ID_DATAPROXY_SEND_SUCCESS, profile);
     }
 }

@@ -49,51 +49,92 @@ public class EventProfile {
     // log print count
     private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
 
-    private final Event event;
+    private boolean bringEvent;
+    private boolean isIndex;
+    private Message message;
+    private Event event;
     private int retries;
     // cache information
-    private final String groupId;
-    private final String streamId;
-    private final String srcTopic;
-    private final String uniqId;
-    private final long dt;
-    private long msgSize;
+    private boolean parsedFields = false;
+    private boolean isValidIndexMsg = false;
+    private boolean isStatusIndex = false;
     private boolean needRspEvent = false;
+    private boolean needAck = true;
+    private String groupId;
+    private String streamId;
+    private String srcTopic;
+    private String uniqId;
+    private String msgSeqId;
+    private long dt;
+    private int msgCnt;
+    private long msgSize;
+    private long pkgTime;
+    private String dataProxyIp;
+    private String clientIp;
     private Channel channel;
     private MsgType msgType;
-    private boolean isIndex;
-    private Boolean isStatusIndex = null;
-
-    public EventProfile(Event event) {
-        this.isIndex = false;
-        this.event = event;
-        this.retries = 0;
-        this.groupId = event.getHeaders().get(AttributeConstants.GROUP_ID);
-        this.streamId = event.getHeaders().get(AttributeConstants.STREAM_ID);
-        this.srcTopic = event.getHeaders().get(ConfigConstants.TOPIC_KEY);
-        this.uniqId = event.getHeaders().getOrDefault(AttributeConstants.UNIQ_ID, "");
-        this.dt = NumberUtils.toLong(event.getHeaders().get(AttributeConstants.DATA_TIME));
-        this.msgSize = event.getBody().length;
-        if (event instanceof SinkRspEvent) {
-            SinkRspEvent rspEvent = (SinkRspEvent) event;
-            this.needRspEvent = true;
-            this.channel = rspEvent.getChannel();
-            this.msgType = rspEvent.getMsgType();
-        }
-    }
 
     public EventProfile(Event event, boolean isIndex) {
         this.isIndex = isIndex;
+        this.bringEvent = true;
         this.event = event;
-        this.retries = 0;
+        this.message = null;
         this.groupId = event.getHeaders().get(AttributeConstants.GROUP_ID);
+        this.msgSize = event.getBody().length;
+    }
+
+    public EventProfile(EventProfile that, Message message) {
+        this.bringEvent = false;
+        this.event = null;
+        this.message = message;
+        this.isIndex = that.isIndex;
+        this.isValidIndexMsg = that.isValidIndexMsg;
+        this.isStatusIndex = that.isStatusIndex;
+        this.clientIp = that.clientIp;
+        this.groupId = that.groupId;
+        this.streamId = that.streamId;
+        this.srcTopic = that.srcTopic;
+        this.uniqId = that.uniqId;
+        this.msgSeqId = that.msgSeqId;
+        this.dt = that.dt;
+        this.msgSize = that.msgSize;
+        this.retries = that.retries;
+        this.parsedFields = that.parsedFields;
+        this.needRspEvent = that.needRspEvent;
+        this.needAck = that.needAck;
+        this.pkgTime = that.pkgTime;
+        this.msgCnt = that.msgCnt;
+        this.dataProxyIp = that.dataProxyIp;
+        this.channel = null;
+        this.msgType = null;
+    }
+
+    public void parseFields() {
+        if (!bringEvent || parsedFields) {
+            return;
+        }
+        this.retries = 0;
         this.streamId = event.getHeaders().get(AttributeConstants.STREAM_ID);
         this.srcTopic = event.getHeaders().get(ConfigConstants.TOPIC_KEY);
         this.uniqId = event.getHeaders().getOrDefault(AttributeConstants.UNIQ_ID, "");
         this.dt = NumberUtils.toLong(event.getHeaders().get(AttributeConstants.DATA_TIME));
-        this.msgSize = event.getBody().length;
-        if (isIndex) {
+        this.msgSeqId = event.getHeaders().get(ConfigConstants.SEQUENCE_ID);
+        this.pkgTime = Long.parseLong(event.getHeaders().get(ConfigConstants.PKG_TIME_KEY));
+        this.msgCnt = NumberUtils.toInt(event.getHeaders().get(ConfigConstants.MSG_COUNTER_KEY), 1);
+        this.clientIp = event.getHeaders().get(ConfigConstants.REMOTE_IP_KEY);
+        this.dataProxyIp = event.getHeaders().get(ConfigConstants.DATAPROXY_IP_KEY);
+        if (this.isIndex) {
+            String indexMsgType = event.getHeaders().get(ConfigConstants.INDEX_MSG_TYPE);
+            if (ConfigConstants.INDEX_TYPE_FILE_STATUS.equals(indexMsgType)
+                    || ConfigConstants.INDEX_TYPE_MEASURE.equals(indexMsgType)) {
+                this.isValidIndexMsg = true;
+                this.isStatusIndex = ConfigConstants.INDEX_TYPE_FILE_STATUS.equals(indexMsgType);
+            }
+            this.parsedFields = true;
             return;
+        }
+        if ("false".equalsIgnoreCase(event.getHeaders().get(AttributeConstants.MESSAGE_IS_ACK))) {
+            this.needAck = false;
         }
         if (event instanceof SinkRspEvent) {
             SinkRspEvent rspEvent = (SinkRspEvent) event;
@@ -101,6 +142,88 @@ public class EventProfile {
             this.channel = rspEvent.getChannel();
             this.msgType = rspEvent.getMsgType();
         }
+        this.parsedFields = true;
+    }
+
+    public boolean isInValidTask() {
+        if (needRspEvent) {
+            // check channel status
+            if (channel == null || !channel.isWritable()) {
+                String origAttr = event.getHeaders().getOrDefault(ConfigConstants.DECODER_ATTRS, "");
+                if (logCounter.shouldPrint()) {
+                    logger.warn("Prepare send msg but channel full, attr={}, channel={}", origAttr, channel);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void clear() {
+        this.event = null;
+        this.message = null;
+        this.channel = null;
+        this.groupId = null;
+        this.parsedFields = false;
+    }
+
+    public boolean isParsedFields() {
+        return parsedFields;
+    }
+
+    public boolean isBringEvent() {
+        return bringEvent;
+    }
+
+    public String getMsgSeqId() {
+        return msgSeqId;
+    }
+
+    public Message getMessage() {
+        return message;
+    }
+
+    public long getPkgTime() {
+        return pkgTime;
+    }
+
+    public int getMsgCnt() {
+        return msgCnt;
+    }
+
+    public String getDataProxyIp() {
+        return dataProxyIp;
+    }
+
+    public String getClientIp() {
+        return clientIp;
+    }
+
+    /**
+     * get required properties to MQ
+     *
+     * @param message  message object
+     * @return the set time
+     */
+    public long setPropsToMQ(Message message) {
+        long dataTimeL = Long.parseLong(event.getHeaders().get(ConfigConstants.PKG_TIME_KEY));
+        message.putSystemHeader(getStreamId(), DateTimeUtils.ms2yyyyMMddHHmm(dataTimeL));
+        message.setAttrKeyVal(AttributeConstants.RCV_TIME, event.getHeaders().get(AttributeConstants.RCV_TIME));
+        message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, event.getHeaders().get(ConfigConstants.MSG_ENCODE_VER));
+        message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION,
+                event.getHeaders().get(EventConstants.HEADER_KEY_VERSION));
+        message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY, this.getClientIp());
+        message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY,
+                event.getHeaders().get(ConfigConstants.DATAPROXY_IP_KEY));
+        dataTimeL = System.currentTimeMillis();
+        message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(dataTimeL));
+        return dataTimeL;
+    }
+
+    public long updateSendTime() {
+        long curTime = System.currentTimeMillis();
+        message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(curTime));
+        return curTime;
     }
 
     /**
@@ -165,15 +288,11 @@ public class EventProfile {
         return event.getBody();
     }
 
+    public boolean isValidIndexMsg() {
+        return isValidIndexMsg;
+    }
+
     public boolean isStatusIndex() {
-        return isStatusIndex;
-    }
-
-    public void setStatusIndex(boolean statusIndex) {
-        isStatusIndex = statusIndex;
-    }
-
-    public Boolean getIsStatusIndex() {
         return isStatusIndex;
     }
 
@@ -223,30 +342,9 @@ public class EventProfile {
         result.put(ConfigConstants.MSG_SEND_TIME, String.valueOf(sendTime));
         result.put(ConfigConstants.MSG_ENCODE_VER, event.getHeaders().get(ConfigConstants.MSG_ENCODE_VER));
         result.put(EventConstants.HEADER_KEY_VERSION, event.getHeaders().get(EventConstants.HEADER_KEY_VERSION));
-        result.put(ConfigConstants.REMOTE_IP_KEY, event.getHeaders().get(ConfigConstants.REMOTE_IP_KEY));
-        result.put(ConfigConstants.DATAPROXY_IP_KEY, event.getHeaders().get(ConfigConstants.DATAPROXY_IP_KEY));
+        result.put(ConfigConstants.REMOTE_IP_KEY, this.clientIp);
+        result.put(ConfigConstants.DATAPROXY_IP_KEY, this.dataProxyIp);
         return result;
-    }
-
-    /**
-     * get required properties to MQ
-     *
-     * @param message  message object
-     * @return the set time
-     */
-    public long setPropsToMQ(Message message) {
-        long dataTimeL = Long.parseLong(event.getHeaders().get(ConfigConstants.PKG_TIME_KEY));
-        message.putSystemHeader(getStreamId(), DateTimeUtils.ms2yyyyMMddHHmm(dataTimeL));
-        message.setAttrKeyVal(AttributeConstants.RCV_TIME, event.getHeaders().get(AttributeConstants.RCV_TIME));
-        message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, event.getHeaders().get(ConfigConstants.MSG_ENCODE_VER));
-        message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION,
-                event.getHeaders().get(EventConstants.HEADER_KEY_VERSION));
-        message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY, event.getHeaders().get(ConfigConstants.REMOTE_IP_KEY));
-        message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY,
-                event.getHeaders().get(ConfigConstants.DATAPROXY_IP_KEY));
-        dataTimeL = System.currentTimeMillis();
-        message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(dataTimeL));
-        return dataTimeL;
     }
 
     /**
@@ -265,7 +363,7 @@ public class EventProfile {
             }
             return;
         }
-        if ("false".equals(event.getHeaders().get(AttributeConstants.MESSAGE_IS_ACK))) {
+        if (!this.needAck) {
             if (logger.isDebugEnabled()) {
                 logger.debug("not need to rsp message: groupId = {}, streamId = {}", groupId, streamId);
             }

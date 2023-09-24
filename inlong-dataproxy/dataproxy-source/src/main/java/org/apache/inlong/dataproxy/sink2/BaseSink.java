@@ -33,7 +33,6 @@ import org.apache.inlong.dataproxy.utils.BufferQueue;
 import org.apache.inlong.dataproxy.utils.DateTimeUtils;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -246,7 +245,7 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
                 // file event
                 fileMetricIncSumStats(StatConstants.EVENT_SINK_FILE_V0_TAKE_SUCCESS);
             }
-            acquireAndOfferDispatchedRecord(new EventProfile(event));
+            acquireAndOfferDispatchedRecord(new EventProfile(event, false));
             tx.commit();
             return Status.READY;
         } catch (Throwable t) {
@@ -353,8 +352,8 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
         return this.dispatchQueue.takeRecord();
     }
 
-    public void releaseAcquiredSizePermit(EventProfile record) {
-        this.dispatchQueue.release(record.getMsgSize());
+    public void releaseAcquiredSizePermit(long msgSize) {
+        this.dispatchQueue.release(msgSize);
     }
 
     public int getDispatchQueueSize() {
@@ -401,27 +400,24 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
 
     private void fileMetricIncStats(EventProfile profile, boolean isSucc,
             String topic, String brokerIP, String eventKey, String detailInfoKey) {
-        long pkgTimeL = Long.parseLong(profile.getProperties().get(ConfigConstants.PKG_TIME_KEY));
         String tenMinsDt = DateTimeUtils.ms2yyyyMMddHHmmTenMins(profile.getDt());
-        String tenMinsPkgTime = DateTimeUtils.ms2yyyyMMddHHmmTenMins(pkgTimeL);
+        String tenMinsPkgTime = DateTimeUtils.ms2yyyyMMddHHmmTenMins(profile.getPkgTime());
         StringBuilder statsKey = new StringBuilder(512)
                 .append(cachedSinkName)
                 .append(AttrConstants.SEP_HASHTAG).append(profile.getGroupId())
                 .append(AttrConstants.SEP_HASHTAG).append(profile.getStreamId())
                 .append(AttrConstants.SEP_HASHTAG).append(topic)
                 .append(AttrConstants.SEP_HASHTAG).append(AttrConstants.SEP_HASHTAG)
-                .append(profile.getProperties().get(ConfigConstants.DATAPROXY_IP_KEY));
+                .append(profile.getDataProxyIp());
         String sumKey = statsKey.toString()
                 + AttrConstants.SEP_HASHTAG + tenMinsDt
                 + AttrConstants.SEP_HASHTAG + tenMinsPkgTime;
         statsKey.append(AttrConstants.SEP_HASHTAG).append(brokerIP)
                 .append(AttrConstants.SEP_HASHTAG).append(tenMinsDt)
-                .append(AttrConstants.SEP_HASHTAG).append(DateTimeUtils.ms2yyyyMMddHHmm(pkgTimeL));
+                .append(AttrConstants.SEP_HASHTAG).append(DateTimeUtils.ms2yyyyMMddHHmm(profile.getPkgTime()));
         if (isSucc) {
-            int msgCnt = NumberUtils.toInt(
-                    profile.getProperties().get(ConfigConstants.MSG_COUNTER_KEY), 1);
-            detailIndex.addSuccStats(statsKey.toString(), msgCnt, 1, profile.getMsgSize());
-            sumIndex.addSuccStats(sumKey, msgCnt, 1, profile.getMsgSize());
+            detailIndex.addSuccStats(statsKey.toString(), profile.getMsgCnt(), 1, profile.getMsgSize());
+            sumIndex.addSuccStats(sumKey, profile.getMsgCnt(), 1, profile.getMsgSize());
             monitorStats.incSumStats(eventKey);
         } else {
             detailIndex.addFailStats(statsKey.toString(), 1);
@@ -467,6 +463,6 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
      * addSendResultMetric
      */
     public void addSendResultMetric(EventProfile profile) {
-        AuditUtils.add(AuditUtils.AUDIT_ID_DATAPROXY_SEND_SUCCESS, profile.getEvent());
+        AuditUtils.addTDBus(AuditUtils.AUDIT_ID_DATAPROXY_SEND_SUCCESS, profile);
     }
 }

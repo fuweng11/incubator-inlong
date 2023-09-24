@@ -367,6 +367,16 @@ public class TubeMQSink extends BaseSink {
         }
 
         private boolean sendMessage(EventProfile profile) {
+            // check task whether invalid
+            if (profile.isInValidTask()) {
+                releaseAcquiredSizePermit(profile.getMsgSize());
+                fileMetricIncWithDetailStats(
+                        StatConstants.EVENT_SINK_CHANNEL_INVALID_DROPPED, profile.getGroupId());
+                profile.clear();
+                return false;
+            }
+            // parse fields in headers
+            profile.parseFields();
             // get topic name
             String topic = profile.getSrcTopic();
             MessageProducer producer = producerMap.get(topic);
@@ -380,10 +390,11 @@ public class TubeMQSink extends BaseSink {
                 // add default topics first
                 topic = CommonConfigHolder.getInstance().getRandDefTopics();
                 if (StringUtils.isEmpty(topic)) {
-                    releaseAcquiredSizePermit(profile);
+                    releaseAcquiredSizePermit(profile.getMsgSize());
                     fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_MISSING,
                             profile.getGroupId());
                     profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
+                    profile.clear();
                     return false;
                 }
                 fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_DEFAULT_TOPIC_USED, profile.getGroupId());
@@ -396,20 +407,30 @@ public class TubeMQSink extends BaseSink {
                 }
             }
             // check duplicate
-            String msgSeqId = profile.getProperties().get(ConfigConstants.SEQUENCE_ID);
-            if (msgIdCache.cacheIfAbsent(msgSeqId)) {
-                releaseAcquiredSizePermit(profile);
+            if (msgIdCache.cacheIfAbsent(profile.getMsgSeqId())) {
+                releaseAcquiredSizePermit(profile.getMsgSize());
                 fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_MESSAGE_DUPLICATE, topic);
                 if (logDupMsgPrinter.shouldPrint()) {
-                    logger.info("{} package {} existed,just discard.", cachedSinkName, msgSeqId);
+                    logger.info("{} package {} existed,just discard.", cachedSinkName, profile.getMsgSeqId());
                 }
+                profile.clear();
                 return false;
             }
+            long sendTime;
+            Message message;
             try {
-                // build message
-                Message message = new Message(topic, profile.getEventBody());
-                long sendTime = profile.setPropsToMQ(message);
-                producer.sendMessage(message, new MyCallback(cumExceptionCnt, profile, sendTime, topic));
+                if (profile.isBringEvent()) {
+                    // build message
+                    message = new Message(topic, profile.getEventBody());
+                    sendTime = profile.setPropsToMQ(message);
+                    EventProfile newProfile = new EventProfile(profile, message);
+                    producer.sendMessage(message, new MyCallback(cumExceptionCnt, newProfile, sendTime, topic));
+                    profile.clear();
+                } else {
+                    sendTime = profile.updateSendTime();
+                    message = profile.getMessage();
+                    producer.sendMessage(message, new MyCallback(cumExceptionCnt, profile, sendTime, topic));
+                }
                 sendThrownCnt = 0;
                 return true;
             } catch (Throwable ex) {
@@ -454,9 +475,10 @@ public class TubeMQSink extends BaseSink {
             if (result.isSuccess()) {
                 this.cumFailureCnt.set(0);
                 fileMetricAddSuccStats(profile, topic, result.getPartition().getHost());
-                releaseAcquiredSizePermit(profile);
+                releaseAcquiredSizePermit(profile.getMsgSize());
                 addSendResultMetric(profile);
                 profile.ack();
+                profile.clear();
             } else {
                 fileMetricAddFailStats(profile, topic,
                         result.getPartition().getHost(), topic + "." + result.getErrCode());
@@ -488,14 +510,15 @@ public class TubeMQSink extends BaseSink {
      * processSendFail
      */
     public void processSendFail(EventProfile profile, DataProxyErrCode errCode, String errMsg) {
-        msgIdCache.invalidCache(profile.getProperties().get(ConfigConstants.SEQUENCE_ID));
+        msgIdCache.invalidCache(profile.getMsgSeqId());
         if (profile.isResend(enableRetryAfterFailure, maxRetries)) {
             offerDispatchRecord(profile);
             fileMetricIncSumStats(StatConstants.EVENT_SINK_FAILRETRY);
         } else {
-            releaseAcquiredSizePermit(profile);
+            releaseAcquiredSizePermit(profile.getMsgSize());
             fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_FAILDROPPED, profile.getGroupId());
             profile.fail(errCode, errMsg);
+            profile.clear();
         }
     }
 

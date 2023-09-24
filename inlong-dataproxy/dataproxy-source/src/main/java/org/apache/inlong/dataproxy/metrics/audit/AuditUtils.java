@@ -24,6 +24,7 @@ import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.dataproxy.config.CommonConfigHolder;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.metrics.DataProxyMetricItem;
+import org.apache.inlong.dataproxy.sink2.EventProfile;
 import org.apache.inlong.dataproxy.utils.Constants;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -82,6 +83,17 @@ public class AuditUtils {
             AuditOperator.getInstance().add(auditID, groupId,
                     streamId, dataTime, msgCount, event.getBody().length);
         }
+    }
+
+    /**
+     * Add audit data
+     */
+    public static void addTDBus(int auditID, EventProfile profile) {
+        if (!CommonConfigHolder.getInstance().isEnableAudit() || profile == null) {
+            return;
+        }
+        AuditOperator.getInstance().add(auditID, profile.getGroupId(),
+                profile.getStreamId(), profile.getDt(), profile.getMsgCnt(), profile.getMsgSize());
     }
 
     /**

@@ -295,14 +295,25 @@ public class PulsarSink extends BaseSink {
         }
 
         private boolean sendMessage(EventProfile profile) {
+            // check task whether invalid
+            if (profile.isInValidTask()) {
+                releaseAcquiredSizePermit(profile.getMsgSize());
+                fileMetricIncWithDetailStats(
+                        StatConstants.EVENT_SINK_CHANNEL_INVALID_DROPPED, profile.getGroupId());
+                profile.clear();
+                return false;
+            }
+            // parse fields in headers
+            profile.parseFields();
             // get topic name
             String topic = ConfigManager.getInstance().getPulsarXfeSinkTopic(
                     profile.getGroupId(), profile.getStreamId());
             if (StringUtils.isEmpty(topic)) {
-                releaseAcquiredSizePermit(profile);
+                releaseAcquiredSizePermit(profile.getMsgSize());
                 fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_CONFIG_TOPIC_MISSING,
                         getGroupIdStreamIdKey(profile.getGroupId(), profile.getStreamId()));
                 profile.fail(DataProxyErrCode.GROUPID_OR_STREAMID_NOT_CONFIGURE, "");
+                profile.clear();
                 return false;
             }
             // get producer by topic
@@ -313,13 +324,14 @@ public class PulsarSink extends BaseSink {
                 return false;
             }
             // check duplicate
-            String msgSeqId = profile.getProperties().get(ConfigConstants.SEQUENCE_ID);
-            if (msgIdCache.cacheIfAbsent(msgSeqId)) {
-                releaseAcquiredSizePermit(profile);
+            if (msgIdCache.cacheIfAbsent(profile.getMsgSeqId())) {
+                releaseAcquiredSizePermit(profile.getMsgSize());
                 fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_MESSAGE_DUPLICATE, topic);
                 if (logDupMsgPrinter.shouldPrint()) {
-                    logger.info("{} package {} existed,just discard.", cachedSinkName, msgSeqId);
+                    logger.info("{} package {} existed,just discard.",
+                            cachedSinkName, profile.getMsgSeqId());
                 }
+                profile.clear();
                 return false;
             }
             // add headers
@@ -351,9 +363,10 @@ public class PulsarSink extends BaseSink {
 
     public void handleSendSuccessResult(String xfeTopic, MessageIdImpl result, EventProfile profile) {
         fileMetricAddSuccStats(profile, xfeTopic, result.toString());
-        releaseAcquiredSizePermit(profile);
+        releaseAcquiredSizePermit(profile.getMsgSize());
         addSendResultMetric(profile);
         profile.ack();
+        profile.clear();
     }
 
     public void handleSendExceptionResult(String xfeTopic, Object ex, EventProfile profile) {
@@ -368,14 +381,15 @@ public class PulsarSink extends BaseSink {
      * processSendFail
      */
     public void processSendFail(EventProfile profile, DataProxyErrCode errCode, String errMsg) {
-        msgIdCache.invalidCache(profile.getProperties().get(ConfigConstants.SEQUENCE_ID));
+        msgIdCache.invalidCache(profile.getMsgSeqId());
         if (profile.isResend(enableRetryAfterFailure, maxRetries)) {
             offerDispatchRecord(profile);
             fileMetricIncSumStats(StatConstants.EVENT_SINK_FAILRETRY);
         } else {
-            releaseAcquiredSizePermit(profile);
+            releaseAcquiredSizePermit(profile.getMsgSize());
             fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_FAILDROPPED, profile.getGroupId());
             profile.fail(errCode, errMsg);
+            profile.clear();
         }
     }
 

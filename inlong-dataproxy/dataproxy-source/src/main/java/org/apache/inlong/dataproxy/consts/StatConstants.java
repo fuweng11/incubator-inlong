@@ -116,6 +116,7 @@ public class StatConstants {
     public static final java.lang.String EVENT_SINK_CLUSTER_UNMATCHED = "sink.cluster.unmatched";
     public static final java.lang.String EVENT_SINK_CPRODUCER_NULL = "sink.cluster.producer.null";
     public static final java.lang.String EVENT_SINK_MESSAGE_DUPLICATE = "sink.msg.dup.dropped";
+    public static final java.lang.String EVENT_SINK_CHANNEL_INVALID_DROPPED = "sink.channel.invalid.dropped";
 
     // controller sink process
     public static final java.lang.String SINK_INDEX_EVENT_TAKE_SUCCESS = "sink.index.event.take.success";
