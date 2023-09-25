@@ -17,15 +17,14 @@
 
 package org.apache.inlong.manager.plugin.auth.web;
 
-import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
-import org.apache.inlong.manager.service.tencentauth.SmartGateService;
-import org.apache.inlong.manager.service.user.UserService;
-
 import com.google.common.hash.Hashing;
 import com.nimbusds.jose.JWEDecrypter;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.DirectDecrypter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
+import org.apache.inlong.manager.service.tencentauth.SmartGateService;
+import org.apache.inlong.manager.service.user.UserService;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 
@@ -52,69 +51,6 @@ public class TofAuthenticator extends BaseProxyAuthenticator {
         super(userService, smartGateService);
         this.appToken = appToken;
         this.identitySafeMode = identitySafeMode;
-    }
-
-    @Override
-    public String getUserName(AuthenticationToken authenticationToken) {
-        checkSignature((TofAuthenticationToken) authenticationToken);
-        return ((TofAuthenticationToken) authenticationToken).getUsername();
-    }
-
-    @Override
-    public AuthenticationType getAuthenticationType() {
-        return AuthenticationType.TOF;
-    }
-
-    private void checkSignature(TofAuthenticationToken token) {
-        if (log.isDebugEnabled()) {
-            log.info(token.toString() + ", key = " + this.appToken);
-        }
-
-        long now = System.currentTimeMillis();
-        if (Math.abs(now / 1000 - Long.parseLong(token.getTimestamp())) > 180) {
-            throw new AuthenticationException("Tof token expired.");
-        }
-
-        String computedSignature = identitySafeMode ?
-                computeSignatureForSafeMode(token.getTimestamp(), token.getRioSeq(),
-                        "", "", "")
-                : computeSignature(token.getTimestamp(), token.getRioSeq(),
-                        token.getUserId(), token.getUsername(), token.getExtData());
-        try {
-            if (!computedSignature.toUpperCase().equals(token.getSignature())) {
-                throw new AuthenticationException("Invalid tof token.");
-            } else {
-                Map<String, Object> payload = decodeAuthorizationHeader(appToken, token.getTaiIdentity());
-                if (payload != null && !payload.isEmpty()) {
-                    token.setUserId(payload.get("StaffId").toString());
-                    token.setUsername((String) payload.get("LoginName"));
-                    log.info("result: " + token);
-                }
-            }
-        } catch (Exception e) {
-            log.error("auth failed :", e);
-            throw new AuthenticationException("auth failed" + e.getMessage());
-        }
-    }
-
-    private String computeSignature(String timestamp, String rioSeq, String userId, String userName, String extData) {
-
-        String builder = timestamp
-                + appToken + rioSeq + COMMA
-                + userId + COMMA + userName + COMMA
-                + extData + timestamp;
-        return Hashing.sha256().hashString(builder, StandardCharsets.UTF_8).toString();
-    }
-
-
-    private String computeSignatureForSafeMode(String timestamp, String x_rio_seq, String userId, String userName,
-            String x_ext_data) {
-
-        String builder = timestamp
-                + appToken + x_rio_seq + COMMA
-                + userId + COMMA + userName + COMMA
-                + x_ext_data + timestamp;
-        return Hashing.sha256().hashString(builder, StandardCharsets.UTF_8).toString();
     }
 
     public static Map<String, Object> decodeAuthorizationHeader(String token, String authorizationHeader)
@@ -147,5 +83,67 @@ public class TofAuthenticator extends BaseProxyAuthenticator {
             log.info("excption: ", e);
             throw new Exception("excption: " + e.getMessage());
         }
+    }
+
+    @Override
+    public String getUserName(AuthenticationToken authenticationToken) {
+        checkSignature((TofAuthenticationToken) authenticationToken);
+        return ((TofAuthenticationToken) authenticationToken).getUsername();
+    }
+
+    @Override
+    public AuthenticationType getAuthenticationType() {
+        return AuthenticationType.TOF;
+    }
+
+    private void checkSignature(TofAuthenticationToken token) {
+        if (log.isDebugEnabled()) {
+            log.info(token.toString() + ", key = " + this.appToken);
+        }
+
+        long now = System.currentTimeMillis();
+        if (Math.abs(now / 1000 - Long.parseLong(token.getTimestamp())) > 180) {
+            throw new AuthenticationException("Tof token expired.");
+        }
+
+        String computedSignature = identitySafeMode ?
+                computeSignatureForSafeMode(token.getTimestamp(), token.getRioSeq(),
+                        "", "", "")
+                : computeSignature(token.getTimestamp(), token.getRioSeq(),
+                        token.getUserId(), token.getUsername(), token.getExtData());
+        try {
+            if (!computedSignature.toUpperCase().equals(token.getSignature())) {
+                throw new AuthenticationException("Invalid tof token.");
+            } else if (identitySafeMode) {
+                Map<String, Object> payload = decodeAuthorizationHeader(appToken, token.getTaiIdentity());
+                if (payload != null && !payload.isEmpty()) {
+                    token.setUserId(payload.get("StaffId").toString());
+                    token.setUsername((String) payload.get("LoginName"));
+                    log.info("result: " + token);
+                }
+            }
+        } catch (Exception e) {
+            log.error("auth failed :", e);
+            throw new AuthenticationException("auth failed" + e.getMessage());
+        }
+    }
+
+    private String computeSignature(String timestamp, String rioSeq, String userId, String userName, String extData) {
+
+        String builder = timestamp
+                + appToken + rioSeq + COMMA
+                + userId + COMMA + userName + COMMA
+                + extData + timestamp;
+        return Hashing.sha256().hashString(builder, StandardCharsets.UTF_8).toString();
+    }
+
+    private String computeSignatureForSafeMode(String timestamp, String x_rio_seq, String userId, String userName,
+            String x_ext_data) {
+
+        String builder = timestamp
+                + appToken + x_rio_seq + COMMA
+                + userId + COMMA + userName + COMMA
+                + x_ext_data + timestamp;
+        return Hashing.sha256().hashString(builder, StandardCharsets.UTF_8).toString();
     }
 }
