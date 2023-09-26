@@ -18,6 +18,7 @@
 package org.apache.inlong.dataproxy.source.httpMsg;
 
 import org.apache.inlong.common.enums.DataProxyErrCode;
+import org.apache.inlong.common.enums.MessageWrapType;
 import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
@@ -89,13 +90,13 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
     public HttpMessageHandler(BaseSource source) {
         this.source = source;
         if (this.source.isEnableTDBankLogic()) {
-            this.msgEncodeTypeId = DataProxyMsgEncType.MSG_ENCODE_TYPE_TDMSG1.getStrId();
+            this.msgEncodeTypeId = MessageWrapType.TDMSG1.getStrId();
             this.keyNameClientIP = AttributeConstants.NODE_IP;
             this.srvPathHeartBeat = HttpAttrConst.TDBANK_KEY_SRV_URL_HEARTBEAT;
             this.srvPathReportMsg = HttpAttrConst.TDBANK_KEY_SRV_URL_REPORT_MSG;
         } else {
             this.keyNameClientIP = "clientIp";
-            this.msgEncodeTypeId = DataProxyMsgEncType.MSG_ENCODE_TYPE_INLONGMSG.getStrId();
+            this.msgEncodeTypeId = MessageWrapType.TDMSG1.getStrId();
             this.srvPathHeartBeat = HttpAttrConst.KEY_SRV_URL_HEARTBEAT;
             this.srvPathReportMsg = HttpAttrConst.KEY_SRV_URL_REPORT_MSG;
         }

@@ -18,7 +18,7 @@
 package org.apache.inlong.dataproxy.sink2;
 
 import org.apache.inlong.common.enums.DataProxyErrCode;
-import org.apache.inlong.common.enums.DataProxyMsgEncType;
+import org.apache.inlong.common.enums.MessageWrapType;
 import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.common.msg.InLongMsg;
@@ -146,7 +146,7 @@ public class ControllerSink extends AbstractSink implements Configurable {
     private MonitorSumIndex sumIndex = null;
     // message encode type id
     private final String msgEncodeTypeId =
-            DataProxyMsgEncType.MSG_ENCODE_TYPE_TDMSG1.getStrId();
+            MessageWrapType.TDMSG1.getStrId();
 
     public ControllerSink() {
 
