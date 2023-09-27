@@ -96,7 +96,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
             this.srvPathReportMsg = HttpAttrConst.TDBANK_KEY_SRV_URL_REPORT_MSG;
         } else {
             this.keyNameClientIP = "clientIp";
-            this.msgEncodeTypeId = MessageWrapType.TDMSG1.getStrId();
+            this.msgEncodeTypeId = MessageWrapType.INLONG_MSG_V0.getStrId();
             this.srvPathHeartBeat = HttpAttrConst.KEY_SRV_URL_HEARTBEAT;
             this.srvPathReportMsg = HttpAttrConst.KEY_SRV_URL_REPORT_MSG;
         }

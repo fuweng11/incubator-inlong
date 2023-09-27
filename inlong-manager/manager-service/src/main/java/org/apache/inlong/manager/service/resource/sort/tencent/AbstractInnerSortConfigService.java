@@ -19,6 +19,7 @@ package org.apache.inlong.manager.service.resource.sort.tencent;
 
 import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
 import org.apache.inlong.common.constant.MQType;
+import org.apache.inlong.common.enums.MessageWrapType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
@@ -84,6 +85,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -241,23 +243,28 @@ public class AbstractInnerSortConfigService {
         if (StringUtils.isNotBlank(streamInfo.getDataSeparator())) {
             separator = (char) Integer.parseInt(streamInfo.getDataSeparator());
         }
+        String wrapType = streamInfo.getWrapType();
         switch (dataType) {
             case TencentConstants.DATA_TYPE_BINLOG:
                 deserializationInfo = new InlongMsgBinlogDeserializationInfo(streamId);
                 break;
             case TencentConstants.DATA_TYPE_CSV:
                 // need to delete the first separator? default is false
-                deserializationInfo = streamInfo.getWrapWithInlongMsg()
-                        ? new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false)
-                        : new CsvDeserializationInfo(separator, escape);
+                if (Objects.equals(wrapType, MessageWrapType.RAW.getName())){
+                    deserializationInfo = new CsvDeserializationInfo(separator, escape);
+                }else {
+                    deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
+                }
                 break;
             case TencentConstants.DATA_TYPE_TDMSG_CSV:
                 deserializationInfo = new TDMsgCsvDeserializationInfo(streamId, separator, escape, false);
                 break;
             case TencentConstants.DATA_TYPE_RAW_CSV:
-                deserializationInfo = streamInfo.getWrapWithInlongMsg()
-                        ? new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false)
-                        : new CsvDeserializationInfo(separator, escape);
+                if (Objects.equals(wrapType, MessageWrapType.RAW.getName())){
+                    deserializationInfo = new CsvDeserializationInfo(separator, escape);
+                }else {
+                    deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
+                }
                 break;
             case TencentConstants.DATA_TYPE_KV:
                 // KV pair separator, which must be the field separator in the data flow

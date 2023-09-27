@@ -158,7 +158,7 @@ public abstract class BaseSource
         } else {
             this.attrKeyGroupId = HttpAttrConst.KEY_GROUP_ID;
             this.attrKeyStreamId = HttpAttrConst.KEY_STREAM_ID;
-            this.msgEncodeTypeId = MessageWrapType.TDMSG1.getStrId();
+            this.msgEncodeTypeId = MessageWrapType.INLONG_MSG_V0.getStrId();
         }
 
     }
