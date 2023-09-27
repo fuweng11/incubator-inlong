@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.service.stream;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.GroupStatus;
@@ -1089,6 +1090,11 @@ public class InlongStreamServiceImpl implements InlongStreamService {
         PageHelper.startPage(request.getPageNum(), request.getPageSize());
         OrderFieldEnum.checkOrderField(request);
         OrderTypeEnum.checkOrderType(request);
+        if (verifyDateTimeLegal(request)) {
+            LOGGER.error("list inlong stream failed, because endTime={} < startTime={} by tenant={}, groupId={}",
+                    request.getEndTime(), request.getStartTime(), tenant, request.getInlongGroupId());
+            return new PageResult<>();
+        }
         Page<InlongStreamEntity> entityPage = (Page<InlongStreamEntity>) streamMapper.selectByTenant(request);
         List<InlongStreamBriefInfo> streamList = CommonBeanUtils.copyListProperties(entityPage,
                 InlongStreamBriefInfo::new);
@@ -1098,5 +1104,12 @@ public class InlongStreamServiceImpl implements InlongStreamService {
 
         LOGGER.debug("success to list inlong stream info for tenant={}", tenant);
         return pageResult;
+    }
+
+    private boolean verifyDateTimeLegal(InlongStreamPageRequest request) {
+        if (!ObjectUtils.allNotNull(request.getStartTime(), request.getEndTime())) {
+            return false;
+        }
+        return request.getEndTime().before(request.getStartTime());
     }
 }

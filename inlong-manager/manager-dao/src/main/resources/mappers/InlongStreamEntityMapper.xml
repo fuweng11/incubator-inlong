@@ -477,6 +477,14 @@
             <if test="request.status != null and request.status != ''">
                 and stream.status = #{request.status, jdbcType=INTEGER}
             </if>
+            <if test="request.startTime != null">
+                and stream.create_time &gt;= #{request.startTime}
+            </if>
+
+            <if test="request.endTime != null">
+                and stream.create_time &lt;= #{request.endTime}
+            </if>
+
             <if test="request.statusList != null and request.statusList.size() > 0">
                 and stream.status in
                 <foreach collection="request.statusList" item="status" index="index" open="(" close=")" separator=",">

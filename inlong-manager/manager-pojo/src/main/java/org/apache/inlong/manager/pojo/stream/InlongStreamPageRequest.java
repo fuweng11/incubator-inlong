@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.pojo.stream;
 
+import java.util.Date;
 import org.apache.inlong.manager.pojo.common.PageRequest;
 
 import io.swagger.annotations.ApiModel;
@@ -57,6 +58,12 @@ public class InlongStreamPageRequest extends PageRequest {
 
     @ApiModelProperty(value = "Standard mode(include Data Ingestion and Synchronization): 0, DataSync mode(only Data Synchronization): 1")
     private Integer inlongGroupMode;
+
+    @ApiModelProperty(value = "Query stream by create start time")
+    private Date startTime;
+
+    @ApiModelProperty(value = "Query stream by create end time")
+    private Date endTime;
 
     @ApiModelProperty(value = "Current user", hidden = true)
     private String currentUser;
