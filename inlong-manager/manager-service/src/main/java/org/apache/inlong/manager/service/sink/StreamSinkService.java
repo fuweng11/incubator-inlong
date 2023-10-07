@@ -271,4 +271,16 @@ public interface StreamSinkService {
      * @return list of sink field
      */
     List<SinkField> parseFields(ParseFieldRequest parseFieldRequest);
+
+
+    /**
+     * Stop the stream sink by the given id and sink type.
+     *
+     * @param id stream sink id
+     * @param startProcess whether to start the process after saving or updating
+     * @param operator name of operator
+     * @return whether succeed
+     */
+    Boolean stop(Integer id, Boolean startProcess, String operator);
+
 }

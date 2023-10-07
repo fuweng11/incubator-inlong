@@ -116,4 +116,12 @@ public interface StreamSinkOperator {
      * @return
      */
     Map<String, String> parse2IdParams(StreamSinkEntity streamSink, List<String> fields);
+
+    /**
+     * Stop the sink info.
+     *
+     * @param entity sink info needs to delete
+     * @param operator name of the operator
+     */
+    void stopOpt(StreamSinkEntity entity, String operator);
 }

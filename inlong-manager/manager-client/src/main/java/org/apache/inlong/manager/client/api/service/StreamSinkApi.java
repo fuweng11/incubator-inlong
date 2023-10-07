@@ -63,4 +63,7 @@ public interface StreamSinkApi {
     @POST("sink/parseFields")
     Call<Response<List<SinkField>>> parseFields(@Body ParseFieldRequest parseFieldRequest);
 
+    @POST("sink/stop/{id}")
+    Call<Response<Boolean>> stop(@Path("id") Integer id);
+
 }

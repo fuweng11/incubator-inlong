@@ -997,4 +997,21 @@ public class StreamSinkServiceImpl implements StreamSinkService {
             startProcessForSink(groupId, streamId, defaultOperator);
         }
     }
+
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    public Boolean stop(Integer id, Boolean startProcess, String operator) {
+        LOGGER.info("begin to stop sink by id={}", id);
+        Preconditions.expectNotNull(id, ErrorCodeEnum.ID_IS_EMPTY.getMessage());
+        StreamSinkEntity entity = sinkMapper.selectByPrimaryKey(id);
+        Preconditions.expectNotNull(entity, ErrorCodeEnum.SINK_INFO_NOT_FOUND.getMessage());
+
+        groupCheckService.checkGroupStatus(entity.getInlongGroupId(), operator);
+
+        StreamSinkOperator sinkOperator = operatorFactory.getInstance(entity.getSinkType());
+        sinkOperator.stopOpt(entity, operator);
+
+        LOGGER.info("success to stop sink by id: {}", id);
+        return true;
+    }
 }

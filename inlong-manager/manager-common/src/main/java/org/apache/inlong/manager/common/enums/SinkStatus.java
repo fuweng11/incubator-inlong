@@ -28,6 +28,8 @@ public enum SinkStatus {
     CONFIG_FAILED(120, "configuration failed"),
     CONFIG_SUCCESSFUL(130, "configuration successful"),
 
+    SUSPEND(140, "suspend"),
+
     ;
 
     private final Integer code;

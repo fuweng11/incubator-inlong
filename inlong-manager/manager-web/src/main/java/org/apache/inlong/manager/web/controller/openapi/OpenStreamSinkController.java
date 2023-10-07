@@ -103,4 +103,16 @@ public class OpenStreamSinkController {
         Preconditions.expectNotNull(LoginUserUtils.getLoginUser(), ErrorCodeEnum.LOGIN_USER_EMPTY);
         return Response.success(sinkService.delete(id, startProcess, LoginUserUtils.getLoginUser()));
     }
+
+    @RequestMapping(value = "/sink/stop/{id}", method = RequestMethod.POST)
+    @ApiOperation(value = "Stop stream sink")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "startProcess", dataTypeClass = boolean.class),
+            @ApiImplicitParam(name = "id", dataTypeClass = Integer.class, required = true)
+    })
+    public Response<Boolean> stop(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "false") boolean startProcess) {
+        return Response.success(sinkService.stop(id, startProcess, LoginUserUtils.getLoginUser().getName()));
+    }
+
 }

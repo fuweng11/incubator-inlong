@@ -17,9 +17,10 @@
 
 package org.apache.inlong.agent.plugin.sinks;
 
+import org.apache.inlong.agent.conf.AgentConfiguration;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.inlong.agent.conf.AgentConfiguration;
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;

@@ -245,4 +245,18 @@ public abstract class AbstractSinkOperator implements StreamSinkOperator {
 
     }
 
+    @Override
+    public void stopOpt(StreamSinkEntity entity, String operator) {
+        entity.setPreviousStatus(entity.getStatus());
+        entity.setStatus(SinkStatus.SUSPEND.getCode());
+        entity.setModifier(operator);
+        int rowCount = sinkMapper.updateByIdSelective(entity);
+        if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
+            throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED,
+                    String.format("sink has already updated with groupId=%s, streamId=%s, name=%s, curVersion=%s",
+                            entity.getInlongGroupId(), entity.getInlongStreamId(), entity.getSinkName(),
+                            entity.getVersion()));
+        }
+    }
+
 }

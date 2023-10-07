@@ -20,6 +20,7 @@ package org.apache.inlong.manager.service.sink.ck;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
+import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
@@ -194,6 +195,26 @@ public class ClickHouseSinkOperator extends AbstractSinkOperator {
             throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
         }
         sinkFieldMapper.logicDeleteAll(entity.getId());
+    }
+
+    @Override
+    public void stopOpt(StreamSinkEntity entity, String operator) {
+        try {
+            sortCkConfigService.deleteSortConfig(entity);
+        } catch (Exception e) {
+            String errMsg = String.format("delete zk config faild for sink id=%s, sink name=%s", entity.getId(),
+                    entity.getSinkName());
+            LOGGER.error(errMsg, e);
+        }
+        entity.setPreviousStatus(entity.getStatus());
+        entity.setStatus(SinkStatus.SUSPEND.getCode());
+        entity.setModifier(operator);
+        int rowCount = sinkMapper.updateByIdSelective(entity);
+        if (rowCount != InlongConstants.AFFECTED_ONE_ROW) {
+            LOGGER.error("sink has already updated with groupId={}, streamId={}, name={}, curVersion={}",
+                    entity.getInlongGroupId(), entity.getInlongStreamId(), entity.getSinkName(), entity.getVersion());
+            throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
+        }
     }
 
 }

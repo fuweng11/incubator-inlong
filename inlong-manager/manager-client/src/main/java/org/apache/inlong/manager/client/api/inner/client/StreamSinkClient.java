@@ -74,6 +74,16 @@ public class StreamSinkClient {
     }
 
     /**
+     * Stop stream sink info by ID.
+     */
+    public boolean stopSink(int id) {
+        Preconditions.expectTrue(id > 0, "sinkId is illegal");
+        Response<Boolean> response = ClientUtils.executeHttpCall(streamSinkApi.stop(id));
+        ClientUtils.assertRespSuccess(response);
+        return response.getData();
+    }
+
+    /**
      * List stream sinks by the given groupId and streamId.
      */
     public List<StreamSink> listSinks(String groupId, String streamId) {
