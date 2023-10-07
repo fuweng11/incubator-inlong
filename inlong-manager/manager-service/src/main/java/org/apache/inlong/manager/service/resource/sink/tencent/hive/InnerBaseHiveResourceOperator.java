@@ -214,6 +214,9 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                 TableInfoBean existTable = upsOperator.queryTableInfo(hiveFullInfo.getIsThive(),
                         hiveFullInfo.getClusterTag(), hiveFullInfo.getUsername(), dbName, tbName);
                 LOGGER.info("hive table [{}.{}] exists, it will be updated", dbName, tbName);
+                String priPartType = existTable.getPriPartType();
+                Preconditions.expectTrue(StringUtils.equalsIgnoreCase(priPartType, hiveFullInfo.getPartitionType()),
+                        String.format("error partition type %s for dbName=%s, tableName=%s", priPartType, dbName, tbName));
                 dealResult = compareTableAndModifyColumn(existTable, hiveFullInfo);
             } else {
                 // grant superuser permission to create tables, and create tables with superuser
