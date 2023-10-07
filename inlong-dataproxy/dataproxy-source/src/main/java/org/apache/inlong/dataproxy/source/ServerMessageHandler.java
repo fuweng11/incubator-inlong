@@ -28,6 +28,7 @@ import org.apache.inlong.dataproxy.consts.StatConstants;
 import org.apache.inlong.dataproxy.exception.ChannelUnWritableException;
 import org.apache.inlong.dataproxy.exception.PkgParseException;
 import org.apache.inlong.dataproxy.exception.TDBankException;
+import org.apache.inlong.dataproxy.loadmonitor.LoadMonitor;
 import org.apache.inlong.dataproxy.source.v0msg.AbsV0MsgCodec;
 import org.apache.inlong.dataproxy.source.v0msg.CodecBinMsg;
 import org.apache.inlong.dataproxy.source.v0msg.CodecTextMsg;
@@ -587,7 +588,8 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
         }
         // build and send response message
         flushV0MsgPackage(source, channel,
-                buildHBRspPackage(attrData, version, 0), MsgType.MSG_BIN_HEARTBEAT.name());
+                buildHBRspPackage(attrData, version, LoadMonitor.getInstance().getLoadValue()),
+                MsgType.MSG_BIN_HEARTBEAT.name());
     }
 
     /**
