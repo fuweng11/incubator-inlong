@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent;
 
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.common.enums.MessageWrapType;
 import org.apache.inlong.manager.common.consts.InlongConstants;
@@ -69,6 +68,7 @@ import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializat
 import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgPbV1DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgSeaCubeDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.source.KafkaSourceInfo;
 import com.tencent.oceanus.etl.protocol.source.PulsarSourceInfo;
@@ -86,9 +86,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.apache.inlong.manager.pojo.stream.InlongStreamExtParam.unpackExtParams;
 
@@ -250,9 +248,9 @@ public class AbstractInnerSortConfigService {
                 break;
             case TencentConstants.DATA_TYPE_CSV:
                 // need to delete the first separator? default is false
-                if (Objects.equals(wrapType, MessageWrapType.RAW.getName())){
+                if (Objects.equals(wrapType, MessageWrapType.RAW.getName())) {
                     deserializationInfo = new CsvDeserializationInfo(separator, escape);
-                }else {
+                } else {
                     deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
                 }
                 break;
@@ -260,9 +258,9 @@ public class AbstractInnerSortConfigService {
                 deserializationInfo = new TDMsgCsvDeserializationInfo(streamId, separator, escape, false);
                 break;
             case TencentConstants.DATA_TYPE_RAW_CSV:
-                if (Objects.equals(wrapType, MessageWrapType.RAW.getName())){
+                if (Objects.equals(wrapType, MessageWrapType.RAW.getName())) {
                     deserializationInfo = new CsvDeserializationInfo(separator, escape);
-                }else {
+                } else {
                     deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
                 }
                 break;
@@ -390,7 +388,7 @@ public class AbstractInnerSortConfigService {
         String streamId = sinkInfo.getInlongStreamId();
         InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupId, streamId);
         List<FieldInfo> sourceFields = getSourceFields(fieldList, null,
-                false);
+                stream.getDataType(), false);
         String mqType = groupInfo.getMqType();
         SourceInfo sourceInfo = null;
         if (MQType.TUBEMQ.equalsIgnoreCase(mqType)) {
@@ -525,6 +523,7 @@ public class AbstractInnerSortConfigService {
     public List<FieldInfo> getSourceFields(
             List<StreamSinkFieldEntity> fieldList,
             String partitionField,
+            String dataType,
             boolean isTextFormat) {
         boolean duplicate = false;
         List<FieldInfo> fieldInfoList = new ArrayList<>();
@@ -539,7 +538,7 @@ public class AbstractInnerSortConfigService {
             // Determine whether it is a normal field or a built-in field.
             // If the field name is the same as the partition field, set this field as a normal field
             BuiltInField builtInField = BUILT_IN_FIELD_MAP.get(fieldName);
-            if (builtInField == null) {
+            if (builtInField == null || !Objects.equals(dataType, TencentConstants.DATA_TYPE_BINLOG)) {
                 fieldInfo = new FieldInfo(fieldName, formatInfo);
             } else if (fieldName.equals(partitionField)) {
                 duplicate = true;

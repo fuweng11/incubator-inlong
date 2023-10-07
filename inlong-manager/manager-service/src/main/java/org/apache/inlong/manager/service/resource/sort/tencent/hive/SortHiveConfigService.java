@@ -96,11 +96,6 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String AT_LEAST_ONCE = "AT_LEAST_ONCE";
 
-
-
-    @Autowired
-    private StreamSinkEntityMapper sinkMapper;
-
     @Autowired
     private StreamSinkFieldEntityMapper sinkFieldMapper;
 
@@ -469,8 +464,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         // the number and order of source fields must be the same as the target fields
         SourceInfo sourceInfo = null;
         // Get the source field. If there is no partition field in the source, add the partition field to the last
-        List<FieldInfo> sourceFields = getSourceFields(fieldList, hiveFullInfo.getPrimaryPartition(),
-                "TextFile".equalsIgnoreCase(hiveFullInfo.getFileFormat()));
+        List<FieldInfo> sourceFields =
+                getSourceFields(fieldList, hiveFullInfo.getPrimaryPartition(), hiveFullInfo.getDataType(),
+                        "TextFile".equalsIgnoreCase(hiveFullInfo.getFileFormat()));
 
         String groupId = groupInfo.getInlongGroupId();
         String mqType = groupInfo.getMqType();
@@ -604,6 +600,5 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         });
         return pulsarClusterInfos;
     }
-
 
 }
