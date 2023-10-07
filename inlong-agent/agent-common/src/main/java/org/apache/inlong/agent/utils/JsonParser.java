@@ -347,7 +347,7 @@ public class JsonParser {
                     buf.append("true");
                     break;
                 case LITERAL_NULL:
-                    buf.append("NULL");
+                    buf.append("null");
                     break;
                 case OPAQUE:
                     String text = null;
