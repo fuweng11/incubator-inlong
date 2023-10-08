@@ -21,6 +21,7 @@ import org.apache.inlong.manager.common.auth.InlongShiro;
 import org.apache.inlong.manager.dao.mapper.TenantUserRoleEntityMapper;
 import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthenticationFilter;
 import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthorizingRealm;
+import org.apache.inlong.manager.plugin.auth.openapi.InlongServiceAPIFilter;
 import org.apache.inlong.manager.plugin.auth.tenant.TenantAuthenticatingFilter;
 import org.apache.inlong.manager.plugin.auth.tenant.TenantAuthenticatingRealm;
 import org.apache.inlong.manager.plugin.auth.web.WebAuthenticationFilter;
@@ -32,6 +33,7 @@ import org.apache.inlong.manager.service.tencentauth.config.AuthConfig;
 import org.apache.inlong.manager.service.user.InlongRoleService;
 import org.apache.inlong.manager.service.user.UserService;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.AuthorizingRealm;
@@ -59,11 +61,13 @@ import java.util.Map;
  */
 @Component
 @ConditionalOnProperty(name = "type", prefix = "inlong.auth", havingValue = "tencent")
+@Slf4j
 public class InlongShiroImpl implements InlongShiro {
 
     private static final String FILTER_NAME_WEB = "authWeb";
     private static final String FILTER_NAME_API = "authAPI";
     private static final String FILTER_NAME_TENANT = "authTenant";
+    private static final String FILTER_INLONG_SERVICE = "authInlongService";
 
     @Value("${openapi.auth.enabled:false}")
     private Boolean openAPIAuthEnabled;
@@ -138,6 +142,15 @@ public class InlongShiroImpl implements InlongShiro {
         pathDefinitions.put("/webjars/**/*", "anon");
         pathDefinitions.put("/swagger-resources/**/*", "anon");
         pathDefinitions.put("/swagger-resources", "anon");
+
+        // inlong service api
+        filters.put(FILTER_INLONG_SERVICE, new InlongServiceAPIFilter());
+        pathDefinitions.put("/openapi/dataproxy/**",
+                genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT, FILTER_INLONG_SERVICE));
+        pathDefinitions.put("/openapi/agent/**",
+                genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT, FILTER_INLONG_SERVICE));
+        pathDefinitions.put("/openapi/dbsync/**",
+                genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT, FILTER_INLONG_SERVICE));
 
         // openapi
         filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, tenantUserRoleEntityMapper));
