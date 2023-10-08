@@ -43,10 +43,10 @@ public class LoadMonitor implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(LoadMonitor.class);
     private static final AtomicBoolean started = new AtomicBoolean(false);
     private static LoadMonitor instance = null;
-    private long intervalInMs = 10000;
+    private long intervalInMs = 5000;
     private String netName = "eth1";
     private int accCnt = 0;
-    private int maxAccPrintCnt = 6;
+    private int maxAccPrintCnt = 24;
     private static final AtomicInteger loadValue = new AtomicInteger(200);
     private final ArrayList<Integer> hisLoadList = new ArrayList<>();
     private final ScheduledExecutorService executorService;
@@ -141,25 +141,27 @@ public class LoadMonitor implements Runnable {
             ConfigManager configManager = ConfigManager.getInstance();
             // calc load value
             if (cpuPercent < configManager.getCpuThresholdWeight()) {
-                hisLoadList.add(accCnt,
-                        loadValue.getAndSet((int) Math.ceil(cpuPercent * configManager.getCpuWeight()
-                                + netIn * configManager.getNetInWeight()
-                                + netOut * configManager.getNetOutWeight()
-                                + tcpCon * configManager.getTcpWeight())));
+                hisLoadList.add(accCnt, (int) Math.ceil(cpuPercent * configManager.getCpuWeight()
+                        + netIn * configManager.getNetInWeight()
+                        + netOut * configManager.getNetOutWeight()
+                        + tcpCon * configManager.getTcpWeight()));
             } else {
-                hisLoadList.add(accCnt, loadValue.getAndSet(200));
+                hisLoadList.add(accCnt, 200);
             }
+            long newLoad = 0L;
+            for (Integer itemData : hisLoadList) {
+                newLoad += itemData;
+            }
+            newLoad /= hisLoadList.size();
+            int oldLoad = loadValue.getAndSet((int) newLoad);
             if (++accCnt >= maxAccPrintCnt) {
                 accCnt = 0;
-                logger.info("[Load Monitor] load calculate: calc weight is (cpu={}, net-in={},"
-                        + " net-out={}, tcp={}, cpuThreshold={}), latest probe values"
-                        + " (cpuPercent={}, memPercent={}, netIn={}, netOut={}, tcpConn={}),"
-                        + " history is {}",
-                        configManager.getCpuWeight(), configManager.getNetInWeight(),
+                logger.info("[Load Monitor] load calculate: curLoad={}, oldLoad={},"
+                        + " calc weight is (cpu={}, net-in={}, net-out={}, tcp={}, cpuThreshold={}),"
+                        + " maxSlots={}, collDur={}, history={}",
+                        oldLoad, loadValue.get(), configManager.getCpuWeight(), configManager.getNetInWeight(),
                         configManager.getNetOutWeight(), configManager.getTcpWeight(),
-                        configManager.getCpuThresholdWeight(), cpuPercent, memPercent,
-                        netIn, netOut, tcpCon, hisLoadList);
-                hisLoadList.clear();
+                        configManager.getCpuThresholdWeight(), maxAccPrintCnt, intervalInMs, hisLoadList);
             }
         } catch (Throwable e) {
             logger.error("LoadCompute Exception, ", e);
