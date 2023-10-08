@@ -106,6 +106,7 @@ public class ConfigConstants {
     public static final String DATAPROXY_IP_KEY = "dpIp";
     public static final String MSG_ENCODE_VER = "msgEnType";
     public static final String MSG_SEND_TIME = "st";
+    public static final String MSG_SEND_RETRY_CNT = "retries";
     public static final String REMOTE_IDC_KEY = "idc";
     public static final String MSG_COUNTER_KEY = "msgcnt";
     public static final String PKG_COUNTER_KEY = "pkgcnt";
@@ -208,7 +209,14 @@ public class ConfigConstants {
 
     public static final String KEY_LOAD_NETWORK = "loadMonNetworkName";
     public static final String KEY_LOAD_COLLECT_INTERVALMS = "loadMonCollectIntervalMs";
+    public static final long VAL_DEF_LOAD_COLLECT_INTERVALMS = 6000L;
+    public static final long VAL_MIN_LOAD_COLLECT_INTERVALMS = 1000L;
+    public static final long VAL_MAX_LOAD_COLLECT_INTERVALMS = 60000L;
+
     public static final String KEY_LOAD_MAX_ACC_PRINT = "loadMonMaxAccPrintCnt";
+    public static final int VAL_DEF_LOAD_MAX_ACC_PRINT = 16;
+    public static final int VAL_MIN_LOAD_MAX_ACC_PRINT = 1;
+    public static final int VAL_MAX_LOAD_MAX_ACC_PRINT = 100;
 
     public static final String INTER_MANAGER_SECURE_AUTH = "manager.internal.secure.auth";
     public static final String DEFAULT_INTER_MANAGER_SECURE_AUTH = "secure-authentication";

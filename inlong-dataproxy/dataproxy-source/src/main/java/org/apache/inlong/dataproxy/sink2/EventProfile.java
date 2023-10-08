@@ -223,6 +223,9 @@ public class EventProfile {
     public long updateSendTime() {
         long curTime = System.currentTimeMillis();
         message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(curTime));
+        if (this.retries > 0) {
+            message.setAttrKeyVal(ConfigConstants.MSG_SEND_RETRY_CNT, String.valueOf(this.retries));
+        }
         return curTime;
     }
 
@@ -344,6 +347,9 @@ public class EventProfile {
         result.put(EventConstants.HEADER_KEY_VERSION, event.getHeaders().get(EventConstants.HEADER_KEY_VERSION));
         result.put(ConfigConstants.REMOTE_IP_KEY, this.clientIp);
         result.put(ConfigConstants.DATAPROXY_IP_KEY, this.dataProxyIp);
+        if (this.retries > 0) {
+            result.put(ConfigConstants.MSG_SEND_RETRY_CNT, String.valueOf(this.retries));
+        }
         return result;
     }
 

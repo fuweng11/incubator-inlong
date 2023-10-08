@@ -29,7 +29,6 @@ import org.hyperic.sigar.SigarException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -43,12 +42,13 @@ public class LoadMonitor implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(LoadMonitor.class);
     private static final AtomicBoolean started = new AtomicBoolean(false);
     private static LoadMonitor instance = null;
-    private long intervalInMs = 5000;
+    private long intervalInMs = ConfigConstants.VAL_DEF_LOAD_COLLECT_INTERVALMS;
     private String netName = "eth1";
     private int accCnt = 0;
-    private int maxAccPrintCnt = 24;
+    private boolean fulled = false;
+    private int maxCollSlotCnt = ConfigConstants.VAL_DEF_LOAD_MAX_ACC_PRINT;
     private static final AtomicInteger loadValue = new AtomicInteger(200);
-    private final ArrayList<Integer> hisLoadList = new ArrayList<>();
+    private int[] hisLoadList = new int[maxCollSlotCnt];
     private final ScheduledExecutorService executorService;
 
     public static LoadMonitor getInstance() {
@@ -82,12 +82,29 @@ public class LoadMonitor implements Runnable {
             this.netName = comPropMap.get(ConfigConstants.KEY_LOAD_NETWORK);
         }
         if (comPropMap.containsKey(ConfigConstants.KEY_LOAD_COLLECT_INTERVALMS)) {
-            this.intervalInMs =
-                    Long.parseLong(comPropMap.get(ConfigConstants.KEY_LOAD_COLLECT_INTERVALMS));
+            long tmpValue = Long.parseLong(comPropMap.get(ConfigConstants.KEY_LOAD_COLLECT_INTERVALMS));
+            if (tmpValue >= ConfigConstants.VAL_MIN_LOAD_COLLECT_INTERVALMS
+                    && tmpValue <= ConfigConstants.VAL_MAX_LOAD_COLLECT_INTERVALMS) {
+                this.intervalInMs = tmpValue;
+            } else {
+                logger.warn("Illegal {} setting, {} must in [{}, {}]",
+                        ConfigConstants.KEY_LOAD_COLLECT_INTERVALMS, tmpValue,
+                        ConfigConstants.VAL_MIN_LOAD_COLLECT_INTERVALMS,
+                        ConfigConstants.VAL_MAX_LOAD_COLLECT_INTERVALMS);
+            }
         }
         if (comPropMap.containsKey(ConfigConstants.KEY_LOAD_MAX_ACC_PRINT)) {
-            this.maxAccPrintCnt =
-                    Integer.parseInt(comPropMap.get(ConfigConstants.KEY_LOAD_MAX_ACC_PRINT));
+            int tmpValue = Integer.parseInt(comPropMap.get(ConfigConstants.KEY_LOAD_MAX_ACC_PRINT));
+            if (tmpValue >= ConfigConstants.VAL_MIN_LOAD_MAX_ACC_PRINT
+                    && tmpValue <= ConfigConstants.VAL_MAX_LOAD_MAX_ACC_PRINT) {
+                this.maxCollSlotCnt = tmpValue;
+                this.hisLoadList = new int[this.maxCollSlotCnt];
+            } else {
+                logger.warn("Illegal {} setting, {} must in [{}, {}]",
+                        ConfigConstants.KEY_LOAD_MAX_ACC_PRINT, tmpValue,
+                        ConfigConstants.VAL_MIN_LOAD_MAX_ACC_PRINT,
+                        ConfigConstants.VAL_MAX_LOAD_MAX_ACC_PRINT);
+            }
         }
         this.executorService =
                 Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
@@ -141,31 +158,49 @@ public class LoadMonitor implements Runnable {
             ConfigManager configManager = ConfigManager.getInstance();
             // calc load value
             if (cpuPercent < configManager.getCpuThresholdWeight()) {
-                hisLoadList.add(accCnt, (int) Math.ceil(cpuPercent * configManager.getCpuWeight()
+                hisLoadList[accCnt] = (int) Math.ceil(cpuPercent * configManager.getCpuWeight()
                         + netIn * configManager.getNetInWeight()
                         + netOut * configManager.getNetOutWeight()
-                        + tcpCon * configManager.getTcpWeight()));
+                        + tcpCon * configManager.getTcpWeight());
             } else {
-                hisLoadList.add(accCnt, 200);
+                hisLoadList[accCnt] = 200;
             }
             long newLoad = 0L;
-            for (Integer itemData : hisLoadList) {
-                newLoad += itemData;
+            for (int j : hisLoadList) {
+                newLoad += j;
             }
-            newLoad /= hisLoadList.size();
+            if (this.fulled) {
+                newLoad /= hisLoadList.length;
+            } else {
+                newLoad /= (accCnt + 1);
+            }
             int oldLoad = loadValue.getAndSet((int) newLoad);
-            if (++accCnt >= maxAccPrintCnt) {
-                accCnt = 0;
+            if (++accCnt >= maxCollSlotCnt) {
+                this.accCnt = 0;
+                this.fulled = true;
                 logger.info("[Load Monitor] load calculate: curLoad={}, oldLoad={},"
                         + " calc weight is (cpu={}, net-in={}, net-out={}, tcp={}, cpuThreshold={}),"
-                        + " maxSlots={}, collDur={}, history={}",
+                        + " maxSlots={}, collDur={}, hisValues={}",
                         oldLoad, loadValue.get(), configManager.getCpuWeight(), configManager.getNetInWeight(),
                         configManager.getNetOutWeight(), configManager.getTcpWeight(),
-                        configManager.getCpuThresholdWeight(), maxAccPrintCnt, intervalInMs, hisLoadList);
+                        configManager.getCpuThresholdWeight(), maxCollSlotCnt, intervalInMs, getSlotStrValues());
             }
         } catch (Throwable e) {
             logger.error("LoadCompute Exception, ", e);
         }
+    }
+
+    private String getSlotStrValues() {
+        int cnt = 0;
+        StringBuilder strBuff = new StringBuilder(512).append("[");
+        for (int j : hisLoadList) {
+            if (cnt++ > 0) {
+                strBuff.append(",");
+            }
+            strBuff.append(j);
+        }
+        strBuff.append("]");
+        return strBuff.toString();
     }
 
     private void readSysInfo(SysInfoItem probeValue) throws Exception {
