@@ -149,6 +149,8 @@ public class InlongShiroImpl implements InlongShiro {
                 genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT, FILTER_INLONG_SERVICE));
         pathDefinitions.put("/openapi/agent/**",
                 genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT, FILTER_INLONG_SERVICE));
+        pathDefinitions.put("/openapi/sort/**",
+                genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT, FILTER_INLONG_SERVICE));
         pathDefinitions.put("/openapi/dbsync/**",
                 genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT, FILTER_INLONG_SERVICE));
 
