@@ -47,18 +47,18 @@ export default class PulsarNode extends NodeInfo implements DataWithBackend, Ren
   adminUrl: string;
 
   @FieldDecorator({
-    type: 'input',
+    type: 'inputnumber',
     rules: [{ required: true }],
   })
   @I18n('Instance ID')
-  instanceID: string;
+  instanceId: number;
 
   @FieldDecorator({
     type: 'input',
     rules: [{ required: true }],
   })
   @I18n('Cluster Name')
-  cluster: string;
+  clusterName: string;
 
   @FieldDecorator({
     type: 'password',
