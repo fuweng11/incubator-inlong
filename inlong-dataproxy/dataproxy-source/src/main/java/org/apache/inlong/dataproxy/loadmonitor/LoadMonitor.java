@@ -179,11 +179,13 @@ public class LoadMonitor implements Runnable {
                 this.accCnt = 0;
                 this.fulled = true;
                 logger.info("[Load Monitor] load calculate: curLoad={}, oldLoad={},"
-                        + " calc weight is (cpu={}, net-in={}, net-out={}, tcp={}, cpuThreshold={}),"
-                        + " maxSlots={}, collDur={}, hisValues={}",
+                        + " weight is (cpu={}, net-in={}, net-out={}, tcp={}, cpuThreshold={}),"
+                        + " value is (cpuPer={}, netIn={}, netOut={}, tcpCon={}, memPer={}),"
+                        + ", maxSlots={}, collDur={}, hisVals={}",
                         oldLoad, loadValue.get(), configManager.getCpuWeight(), configManager.getNetInWeight(),
                         configManager.getNetOutWeight(), configManager.getTcpWeight(),
-                        configManager.getCpuThresholdWeight(), maxCollSlotCnt, intervalInMs, getSlotStrValues());
+                        configManager.getCpuThresholdWeight(), cpuPercent, netIn, netOut, tcpCon, memPercent,
+                        maxCollSlotCnt, intervalInMs, getSlotStrValues());
             }
         } catch (Throwable e) {
             logger.error("LoadCompute Exception, ", e);

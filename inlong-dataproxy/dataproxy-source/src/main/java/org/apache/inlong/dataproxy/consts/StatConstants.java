@@ -124,6 +124,11 @@ public class StatConstants {
     public static final java.lang.String SINK_INDEX_FILE_TAKE_SUCCESS = "sink.index.file.take.success";
     public static final java.lang.String SINK_INDEX_ILLEGAL_DROPPED = "sink.index.illegal.dropped";
     public static final java.lang.String SINK_INDEX_DUPLICATE_DROOPED = "sink.index.duplicate.dropped";
+    // controller agent
+    public static final java.lang.String SINK_INDEX_AGENT_CREATE_SUCCESS = "sink.index.agent.create.success";
+    public static final java.lang.String SINK_INDEX_AGENT_CREATE_EXCEPTION = "sink.index.agent.create.exception";
+    public static final java.lang.String SINK_INDEX_AGENT_DESTROY_SUCCESS = "sink.index.agent.destory.success";
+    public static final java.lang.String SINK_INDEX_AGENT_DESTROY_EXCEPTION = "sink.index.agent.destory.exception";
     // status index message
     public static final java.lang.String SINK_STATUS_INDEX_OVERMAX_DROOPED = "sink.status.index.overmax.dropped";
     public static final java.lang.String SINK_STATUS_INDEX_SEND_SUCCESS = "sink.status.index.send.success";

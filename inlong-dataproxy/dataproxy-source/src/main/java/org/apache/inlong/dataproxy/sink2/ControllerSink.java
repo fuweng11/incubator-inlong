@@ -70,7 +70,9 @@ public class ControllerSink extends AbstractSink implements Configurable {
 
     private static final Logger logger = LoggerFactory.getLogger(ControllerSink.class);
     // log print count
-    private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
+    private static final LogCounter logAgentCounter = new LogCounter(10, 100000, 30 * 1000);
+    private static final LogCounter logSendMsgCounter = new LogCounter(10, 100000, 30 * 1000);
+    private static final LogCounter logPubTopicPrinter = new LogCounter(10, 100000, 30 * 1000);
     private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 30 * 1000);
 
     private static final String SEND_REMOTE = "send-remote";
@@ -169,11 +171,6 @@ public class ControllerSink extends AbstractSink implements Configurable {
         this.maxThreads = context.getInteger(ConfigConstants.MAX_THREADS, ConfigConstants.VAL_DEF_SINK_THREADS);
         Preconditions.checkArgument((this.maxThreads >= ConfigConstants.VAL_MIN_SINK_THREADS),
                 ConfigConstants.MAX_THREADS + " must be >= " + ConfigConstants.VAL_MIN_SINK_THREADS);
-        if (!this.sendRemote) {
-            this.maxThreads = 1;
-        }
-        // initial sink worker thread pool
-        this.sinkThreadPool = new Thread[this.maxThreads];
         // get message deduplicate setting
         this.enableDeDupCheck = context.getBoolean(ConfigConstants.ENABLE_MSG_CACHE_DEDUP,
                 ConfigConstants.VAL_DEF_ENABLE_MSG_CACHE_DEDUP);
@@ -189,7 +186,10 @@ public class ControllerSink extends AbstractSink implements Configurable {
                 (this.maxSendFailureWaitDurMs >= ConfigConstants.VAL_MIN_SEND_FAILURE_WAIT_DUR_MS),
                 ConfigConstants.MAX_SEND_FAILURE_WAIT_DUR_MS + " must be >= "
                         + ConfigConstants.VAL_MIN_SEND_FAILURE_WAIT_DUR_MS);
+
         if (this.sendRemote) {
+            // initial sink worker thread pool
+            this.sinkThreadPool = new Thread[this.maxThreads];
             this.clusterAddrList = context.getString(ConfigConstants.MASTER_SERVER_URL_LIST);
             Preconditions.checkState(this.clusterAddrList != null,
                     ConfigConstants.MASTER_SERVER_URL_LIST + " parameter not specified");
@@ -244,11 +244,6 @@ public class ControllerSink extends AbstractSink implements Configurable {
             logger.error("{}'s channel is null", this.cachedSinkName);
         }
         cachedMsgChannel = getChannel();
-        // initial message duplicate cache
-        this.msgIdCache = new MsgIdCache(enableDeDupCheck,
-                visitConcurLevel, initCacheCapacity, expiredDurSec);
-        // message dispatch queue
-        this.dispatchQueue = new BufferQueue<>(maxInflightBufferSIzeInKB);
         // init monitor logic
         if (enableFileMetric) {
             this.monitorStats = new MonitorStats(this.cachedSinkName + "_stats",
@@ -257,7 +252,14 @@ public class ControllerSink extends AbstractSink implements Configurable {
                     CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
                     CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
             this.monitorStats.start();
-            if (this.sendRemote) {
+        }
+        if (this.sendRemote) {
+            // initial message duplicate cache
+            this.msgIdCache = new MsgIdCache(enableDeDupCheck,
+                    visitConcurLevel, initCacheCapacity, expiredDurSec);
+            // message dispatch queue
+            this.dispatchQueue = new BufferQueue<>(maxInflightBufferSIzeInKB);
+            if (enableFileMetric) {
                 this.detailIndex = new MonitorIndex(this.cachedSinkName + "_detail_index",
                         CommonConfigHolder.getInstance().getFileMetricSinkOutName(),
                         CommonConfigHolder.getInstance().getFileMetricStatInvlSec() * 1000L,
@@ -269,8 +271,6 @@ public class ControllerSink extends AbstractSink implements Configurable {
                         CommonConfigHolder.getInstance().getFileMetricStatCacheCnt());
                 this.sumIndex.start();
             }
-        }
-        if (this.sendRemote) {
             // initial tube client
             try {
                 TubeClientConfig conf = initTubeConfig();
@@ -283,19 +283,19 @@ public class ControllerSink extends AbstractSink implements Configurable {
                         + "maybe tube master set error/shutdown in progress, please re-check");
             }
             this.reloadMetaConfig();
+            // start message process logic
+            for (int i = 0; i < sinkThreadPool.length; i++) {
+                sinkThreadPool[i] = new Thread(new SinkTask(), cachedSinkName + "_sender-" + i);
+                sinkThreadPool[i].start();
+            }
         } else {
             try {
-                createConnection();
+                createConnection(true);
             } catch (Throwable e) {
                 logger.error("Unable to create {} controller client", this.cachedSinkName, e);
                 destroyConnection();
                 stop();
             }
-        }
-        // start message process logic
-        for (int i = 0; i < sinkThreadPool.length; i++) {
-            sinkThreadPool[i] = new Thread(new SinkTask(), cachedSinkName + "_sender-" + i);
-            sinkThreadPool[i].start();
         }
         this.mqClusterStarted = true;
         super.start();
@@ -341,18 +341,22 @@ public class ControllerSink extends AbstractSink implements Configurable {
                 // file event
                 fileMetricIncSumStats(StatConstants.SINK_INDEX_FILE_TAKE_SUCCESS);
             }
-            acquireAndOfferDispatchedRecord(new EventProfile(event, true));
+            if (this.sendRemote) {
+                acquireAndOfferDispatchedRecord(new EventProfile(event, true));
+            } else {
+                sendIndexToController(new EventProfile(event, true));
+            }
             tx.commit();
             return Status.READY;
         } catch (Throwable t) {
             fileMetricIncSumStats(StatConstants.SINK_INDEX_EVENT_TAKE_FAILURE);
-            if (logCounter.shouldPrint()) {
+            if (logSendMsgCounter.shouldPrint()) {
                 logger.error("{} process event failed!", this.cachedSinkName, t);
             }
             try {
                 tx.rollback();
             } catch (Throwable e) {
-                if (logCounter.shouldPrint()) {
+                if (logSendMsgCounter.shouldPrint()) {
                     logger.error("{} channel take transaction rollback exception", this.cachedSinkName, e);
                 }
             }
@@ -367,20 +371,32 @@ public class ControllerSink extends AbstractSink implements Configurable {
         logger.info("{} sink is stopping...", this.cachedSinkName);
         // stop fetch events
         this.isShutdown = true;
-        // wait event dispatch
-        int waitCount = 0;
-        // Try to wait for the messages in the cache to be sent
-        while (dispatchQueue.size() > 0 && waitCount++ < 10) {
-            try {
-                Thread.currentThread().sleep(800);
-            } catch (InterruptedException e) {
-                logger.info("{} stop thread has been interrupt!", cachedSinkName);
-                break;
-            }
-        }
-        // set send flag to false
-        this.canSend = false;
         if (sendRemote) {
+            // wait event dispatch
+            int waitCount = 0;
+            // Try to wait for the messages in the cache to be sent
+            while (dispatchQueue.size() > 0 && waitCount++ < 10) {
+                try {
+                    Thread.currentThread().sleep(800);
+                } catch (InterruptedException e) {
+                    logger.info("{} stop thread has been interrupt!", cachedSinkName);
+                    break;
+                }
+            }
+            // set send flag to false
+            this.canSend = false;
+            // stop sink worker thread pool
+            if (sinkThreadPool != null) {
+                for (Thread thread : sinkThreadPool) {
+                    if (thread != null) {
+                        thread.interrupt();
+                    }
+                }
+                sinkThreadPool = null;
+            }
+            // close message duplicate cache
+            msgIdCache.clearMsgIdCache();
+            // close session factory
             if (sessionFactory != null) {
                 try {
                     sessionFactory.shutdown();
@@ -403,19 +419,59 @@ public class ControllerSink extends AbstractSink implements Configurable {
                 this.sumIndex.stop();
             }
         }
-        // stop sink worker thread pool
-        if (sinkThreadPool != null) {
-            for (Thread thread : sinkThreadPool) {
-                if (thread != null) {
-                    thread.interrupt();
-                }
-            }
-            sinkThreadPool = null;
-        }
-        // close message duplicate cache
-        msgIdCache.clearMsgIdCache();
         super.stop();
         logger.info("{} sink is stopped", this.cachedSinkName);
+    }
+
+    private void sendIndexToController(EventProfile profile) throws Exception {
+        if (profile.isStatusIndex()) {
+            try {
+                int sentCnt = 0;
+                FileStatus fs = FileStatusUtil.toFileStatus(profile.getEventBody());
+                String fsStr = fs.toString();
+                do {
+                    if (this.isShutdown) {
+                        throw new Exception("Sink node is shut down!");
+                    }
+                    if (!verifyConnection()) {
+                        sleepSomeTime(maxSendFailureWaitDurMs);
+                        continue;
+                    }
+                    sentCnt++;
+                    try {
+                        controllerAgent.reportFileStatus(fs);
+                        fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_SUCCESS);
+                        profile.clear();
+                        break;
+                    } catch (Throwable ex) {
+                        // just retry
+                        if (maxMsgRetries > 0 && sentCnt > maxMsgRetries) {
+                            logger.warn(
+                                    "ControllerSink filestatus: '{}' is skipped because of exceeded maxRetryCnt {}, ex {}",
+                                    fsStr, maxMsgRetries, ex);
+                            fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_OVERMAX_DROOPED);
+                            return;
+                        }
+                        if (logAgentCounter.shouldPrint()) {
+                            logger.warn("{} send message to Controller failure", cachedSinkName, ex);
+                        }
+                        // sleep some time
+                        sleepSomeTime(maxSendFailureWaitDurMs);
+                    }
+                } while (maxMsgRetries < 0 || sentCnt < maxMsgRetries);
+            } catch (Throwable ex) {
+                destroyConnection();
+                fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION);
+                String s = (profile.getEventBody() != null ? new String(profile.getEventBody()) : "");
+                logger.error("{} send status event failure, header is {}, body is {}",
+                        cachedSinkName, profile.getProperties(), s, ex);
+            }
+        } else {
+            // agent-measure
+            AgentMeasureLogger.logMeasureInfo(profile.getEventBody());
+            fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_OUTPUT_SUCCESS);
+            profile.clear();
+        }
     }
 
     private class SinkTask implements Runnable {
@@ -427,9 +483,6 @@ public class ControllerSink extends AbstractSink implements Configurable {
             EventProfile profile = null;
             while (canSend) {
                 try {
-                    if (!sendRemote) {
-                        verifyConnection();
-                    }
                     // take event profile
                     profile = takeDispatchedRecord();
                     if (profile == null) {
@@ -441,19 +494,12 @@ public class ControllerSink extends AbstractSink implements Configurable {
                     if (profile != null) {
                         offerDispatchRecord(profile);
                     }
-                    if (!sendRemote) {
-                        destroyConnection();
-                    }
-                    if (logCounter.shouldPrint()) {
+                    if (logSendMsgCounter.shouldPrint()) {
                         logger.error("{} - {} send message failure", cachedSinkName,
                                 Thread.currentThread().getName(), e1);
                     }
                     // sleep some time
-                    try {
-                        Thread.sleep(maxSendFailureWaitDurMs);
-                    } catch (Throwable e2) {
-                        //
-                    }
+                    sleepSomeTime(maxSendFailureWaitDurMs);
                 }
             }
             logger.info("{} task {} exits send message logic.",
@@ -489,87 +535,47 @@ public class ControllerSink extends AbstractSink implements Configurable {
                 return;
             }
             // build message
-            if (sendRemote) {
-                long sendTime;
-                Message message;
-                try {
-                    if (profile.isBringEvent()) {
-                        String attr = "bid=" + profile.getGroupId()
-                                + "&tid=" + profile.getStreamId()
-                                + "&dt=" + System.currentTimeMillis()
-                                + "&NodeIP=" + profile.getClientIp();
-                        InLongMsg inLongMsg = InLongMsg.newInLongMsg(false);
-                        inLongMsg.addMsg(attr, profile.getEventBody());
-                        // build message
-                        message = new Message(agentIndexTopic, inLongMsg.buildArray());
-                        message.putSystemHeader((profile.isStatusIndex() ? agentStatusTid : agentMeasureTid),
-                                DateTimeUtils.ms2yyyyMMddHHmm(profile.getPkgTime()));
-                        message.setAttrKeyVal(AttributeConstants.RCV_TIME,
-                                profile.getProperties().get(AttributeConstants.RCV_TIME));
-                        message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, msgEncodeTypeId);
-                        message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION, msgEncodeTypeId);
-                        message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY, profile.getClientIp());
-                        message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY, profile.getDataProxyIp());
-                        sendTime = System.currentTimeMillis();
-                        message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(sendTime));
-                        EventProfile newProfile = new EventProfile(profile, message);
-                        // send message
-                        messageProducer.sendMessage(message,
-                                new MyCallback(newProfile, sendTime, agentIndexTopic));
-                        profile.clear();
-                    } else {
-                        // send message
-                        sendTime = profile.updateSendTime();
-                        message = profile.getMessage();
-                        messageProducer.sendMessage(message,
-                                new MyCallback(profile, sendTime, agentIndexTopic));
-                    }
-                } catch (Throwable ex) {
-                    fileMetricIncWithDetailStats((profile.isStatusIndex()
-                            ? StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION
-                            : StatConstants.SINK_MEASURE_INDEX_SEND_EXCEPTION), agentIndexTopic);
-                    processSendFail(profile, DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
-                    if (logCounter.shouldPrint()) {
-                        logger.error("{} send remote message throw exception!", cachedSinkName, ex);
-                    }
-                }
-            } else {
-                if (profile.isStatusIndex()) {
-                    try {
-                        int sentCnt = 0;
-                        FileStatus fs = FileStatusUtil.toFileStatus(profile.getEventBody());
-                        String fsStr = fs.toString();
-                        do {
-                            sentCnt++;
-                            try {
-                                controllerAgent.reportFileStatus(fs);
-                                fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_SUCCESS);
-                                break;
-                            } catch (Throwable ex) {
-                                // just retry
-                                if (maxMsgRetries > 0 && sentCnt > maxMsgRetries) {
-                                    logger.warn(
-                                            "ControllerSink filestatus: '{}' is skipped because of exceeded maxRetryCnt {}, ex {}",
-                                            fsStr, maxMsgRetries, ex);
-                                    fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_OVERMAX_DROOPED);
-                                    return;
-                                }
-                                fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_FAILRETRY);
-                            }
-                        } while (maxMsgRetries < 0 || sentCnt < maxMsgRetries);
-                    } catch (Throwable ex) {
-                        fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION);
-                        String s = (profile.getEventBody() != null ? new String(profile.getEventBody()) : "");
-                        logger.error("{} send status event failure, header is {}, body is {}",
-                                cachedSinkName, profile.getProperties(), s, ex);
-                    }
-                    releaseAcquiredSizePermit(profile.getMsgSize());
-                } else {
-                    // agent-measure
-                    AgentMeasureLogger.logMeasureInfo(profile.getEventBody());
-                    releaseAcquiredSizePermit(profile.getMsgSize());
-                    fileMetricIncSumStats(StatConstants.SINK_MEASURE_INDEX_OUTPUT_SUCCESS);
+            long sendTime;
+            Message message;
+            try {
+                if (profile.isBringEvent()) {
+                    String attr = "bid=" + profile.getGroupId()
+                            + "&tid=" + profile.getStreamId()
+                            + "&dt=" + System.currentTimeMillis()
+                            + "&NodeIP=" + profile.getClientIp();
+                    InLongMsg inLongMsg = InLongMsg.newInLongMsg(false);
+                    inLongMsg.addMsg(attr, profile.getEventBody());
+                    // build message
+                    message = new Message(agentIndexTopic, inLongMsg.buildArray());
+                    message.putSystemHeader((profile.isStatusIndex() ? agentStatusTid : agentMeasureTid),
+                            DateTimeUtils.ms2yyyyMMddHHmm(profile.getPkgTime()));
+                    message.setAttrKeyVal(AttributeConstants.RCV_TIME,
+                            profile.getProperties().get(AttributeConstants.RCV_TIME));
+                    message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, msgEncodeTypeId);
+                    message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION, msgEncodeTypeId);
+                    message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY, profile.getClientIp());
+                    message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY, profile.getDataProxyIp());
+                    sendTime = System.currentTimeMillis();
+                    message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(sendTime));
+                    EventProfile newProfile = new EventProfile(profile, message);
+                    // send message
+                    messageProducer.sendMessage(message,
+                            new MyCallback(newProfile, sendTime, agentIndexTopic));
                     profile.clear();
+                } else {
+                    // send message
+                    sendTime = profile.updateSendTime();
+                    message = profile.getMessage();
+                    messageProducer.sendMessage(message,
+                            new MyCallback(profile, sendTime, agentIndexTopic));
+                }
+            } catch (Throwable ex) {
+                fileMetricIncWithDetailStats((profile.isStatusIndex()
+                        ? StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION
+                        : StatConstants.SINK_MEASURE_INDEX_SEND_EXCEPTION), agentIndexTopic);
+                processSendFail(profile, DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
+                if (logSendMsgCounter.shouldPrint()) {
+                    logger.error("{} send remote message throw exception!", cachedSinkName, ex);
                 }
             }
         }
@@ -598,7 +604,7 @@ public class ControllerSink extends AbstractSink implements Configurable {
                 fileMetricAddFailStats(profile, topic,
                         result.getPartition().getHost(), topic + "." + result.getErrCode());
                 processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
-                if (logCounter.shouldPrint()) {
+                if (logSendMsgCounter.shouldPrint()) {
                     logger.warn("{} remote message send failed: {}", cachedSinkName, result.getErrMsg());
                 }
             }
@@ -608,9 +614,18 @@ public class ControllerSink extends AbstractSink implements Configurable {
         public void onException(Throwable ex) {
             fileMetricAddExceptStats(profile, topic, "", topic);
             processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
-            if (logCounter.shouldPrint()) {
+            if (logSendMsgCounter.shouldPrint()) {
                 logger.error("{} remote message send to {} tube exception", cachedSinkName, topic, ex);
             }
+        }
+    }
+
+    private void sleepSomeTime(long someTime) {
+        // sleep some time
+        try {
+            Thread.sleep(someTime);
+        } catch (Throwable e2) {
+            //
         }
     }
 
@@ -676,7 +691,7 @@ public class ControllerSink extends AbstractSink implements Configurable {
         try {
             messageProducer.publish(subSet);
         } catch (Throwable e) {
-            if (logCounter.shouldPrint()) {
+            if (logPubTopicPrinter.shouldPrint()) {
                 logger.warn("{} publish topics failure, topics = {}", cachedSinkName, subSet, e);
             }
         }
@@ -715,9 +730,11 @@ public class ControllerSink extends AbstractSink implements Configurable {
      *
      * @throws FlumeException If there are errors closing or opening the RPC connection.
      */
-    private void verifyConnection() throws FlumeException {
-        if (controllerAgent == null || !controllerAgent.isActive()) {
-            createConnection();
+    private boolean verifyConnection() throws FlumeException {
+        if (controllerAgent != null && controllerAgent.isActive()) {
+            return true;
+        } else {
+            return createConnection(false);
         }
     }
 
@@ -727,35 +744,38 @@ public class ControllerSink extends AbstractSink implements Configurable {
      *
      * @throws ControllerException if an RPC client connection could not be opened
      */
-    private void createConnection() throws ControllerException {
+    private boolean createConnection(boolean needthrow) throws ControllerException {
         boolean isReCreate = false;
         if (controllerAgent != null) {
             isReCreate = true;
             if (controllerAgent.isActive()) {
-                return;
-            } else {
-                try {
-                    controllerAgent.close();
-                    controllerAgent = null;
-                } catch (Exception ex) {
-                    // ignore
-                }
+                return true;
             }
+            destroyConnection();
         }
-
         try {
             controllerAgent = ControllerRpcClientFactory.getInstance(controllerProp);
-        } catch (Throwable ex) {
-            if (ex instanceof ControllerException) {
-                throw (ControllerException) ex;
+            fileMetricIncSumStats(StatConstants.SINK_INDEX_AGENT_CREATE_SUCCESS);
+            if (isReCreate) {
+                logger.info("{} created controller connnection {}", cachedSinkName, controllerProp);
             } else {
-                throw new ControllerException(ex);
+                logger.info("{} re-created controller connnection {}", cachedSinkName, controllerProp);
             }
-        }
-        if (isReCreate) {
-            logger.info("{} created controller connnection {}", cachedSinkName, controllerProp);
-        } else {
-            logger.info("{} re-created controller connnection {}", cachedSinkName, controllerProp);
+            return true;
+        } catch (Throwable ex) {
+            controllerAgent = null;
+            fileMetricIncSumStats(StatConstants.SINK_INDEX_AGENT_CREATE_EXCEPTION);
+            if (logAgentCounter.shouldPrint()) {
+                logger.error("Attempt to create controller failed.", ex);
+            }
+            if (needthrow) {
+                if (ex instanceof ControllerException) {
+                    throw (ControllerException) ex;
+                } else {
+                    throw new ControllerException(ex);
+                }
+            }
+            return false;
         }
     }
 
@@ -764,11 +784,18 @@ public class ControllerSink extends AbstractSink implements Configurable {
             if (controllerAgent != null) {
                 controllerAgent.close();
                 controllerAgent = null;
+                fileMetricIncSumStats(StatConstants.SINK_INDEX_AGENT_DESTROY_SUCCESS);
             }
         } catch (Throwable e) {
-            logger.error("Attempt to close {} client failed.", cachedSinkName, e);
+            controllerAgent = null;
+            fileMetricIncSumStats(StatConstants.SINK_INDEX_AGENT_DESTROY_EXCEPTION);
+            if (logAgentCounter.shouldPrint()) {
+                logger.error("{} attempt to close controller agent failed.", cachedSinkName, e);
+            }
         }
-        logger.debug("{} closed controller connection", cachedSinkName);
+        if (logger.isDebugEnabled()) {
+            logger.debug("{} closed controller connection", cachedSinkName);
+        }
     }
 
     public void acquireAndOfferDispatchedRecord(EventProfile record) {

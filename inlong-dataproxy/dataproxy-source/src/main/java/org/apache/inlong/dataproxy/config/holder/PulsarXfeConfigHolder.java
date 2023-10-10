@@ -17,8 +17,6 @@
 
 package org.apache.inlong.dataproxy.config.holder;
 
-import org.apache.inlong.dataproxy.config.CommonConfigHolder;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,10 +72,6 @@ public class PulsarXfeConfigHolder extends PropertiesHolder {
 
     public Set<String> getAllPulsarXfeTopics() {
         Set<String> result = new HashSet<>();
-        // add default topics first
-        if (CommonConfigHolder.getInstance().isEnableUnConfigTopicAccept()) {
-            result.addAll(CommonConfigHolder.getInstance().getDefTopics());
-        }
         // add configured topics
         for (String topicName : sinkTopicMap.values()) {
             if (StringUtils.isBlank(topicName)) {
