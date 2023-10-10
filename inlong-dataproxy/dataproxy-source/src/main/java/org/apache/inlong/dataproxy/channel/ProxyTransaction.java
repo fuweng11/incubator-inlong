@@ -19,7 +19,9 @@ package org.apache.inlong.dataproxy.channel;
 
 import org.apache.inlong.dataproxy.utils.BufferQueue;
 import org.apache.inlong.sdk.commons.protocol.ProxyEvent;
+import org.apache.inlong.sdk.commons.protocol.ProxyPackEvent;
 
+import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +38,9 @@ public class ProxyTransaction implements Transaction {
     public static final Logger LOG = LoggerFactory.getLogger(ProxyTransaction.class);
 
     private Semaphore countSemaphore;
-    private BufferQueue<ProxyEvent> bufferQueue;
-    private List<ProxyEvent> takeList = new ArrayList<>();
-    private List<ProxyEvent> putList = new ArrayList<>();
+    private BufferQueue<Event> bufferQueue;
+    private List<Event> takeList = new ArrayList<>();
+    private List<Event> putList = new ArrayList<>();
 
     /**
      * Constructor
@@ -46,7 +48,7 @@ public class ProxyTransaction implements Transaction {
      * @param countSemaphore
      * @param bufferQueue
      */
-    public ProxyTransaction(Semaphore countSemaphore, BufferQueue<ProxyEvent> bufferQueue) {
+    public ProxyTransaction(Semaphore countSemaphore, BufferQueue<Event> bufferQueue) {
         this.countSemaphore = countSemaphore;
         this.bufferQueue = bufferQueue;
     }
@@ -63,12 +65,23 @@ public class ProxyTransaction implements Transaction {
      */
     @Override
     public void commit() {
-        for (ProxyEvent event : takeList) {
-            countSemaphore.release();
-            bufferQueue.release(event.getBody().length);
+        for (Event event : takeList) {
+            if (event instanceof ProxyPackEvent) {
+                ProxyPackEvent packEvent = (ProxyPackEvent) event;
+                int eventCount = packEvent.getEvents().size();
+                int eventSize = 0;
+                for (ProxyEvent e : packEvent.getEvents()) {
+                    eventSize += e.getBody().length;
+                }
+                countSemaphore.release(eventCount);
+                bufferQueue.release(eventSize);
+            } else {
+                countSemaphore.release();
+                bufferQueue.release(event.getBody().length);
+            }
         }
         this.takeList.clear();
-        for (ProxyEvent event : putList) {
+        for (Event event : putList) {
             this.bufferQueue.offer(event);
         }
         this.putList.clear();
@@ -79,13 +92,24 @@ public class ProxyTransaction implements Transaction {
      */
     @Override
     public void rollback() {
-        for (ProxyEvent event : takeList) {
+        for (Event event : takeList) {
             this.bufferQueue.offer(event);
         }
         this.takeList.clear();
-        for (ProxyEvent event : putList) {
-            countSemaphore.release();
-            bufferQueue.release(event.getBody().length);
+        for (Event event : putList) {
+            if (event instanceof ProxyPackEvent) {
+                ProxyPackEvent packEvent = (ProxyPackEvent) event;
+                int eventCount = packEvent.getEvents().size();
+                int eventSize = 0;
+                for (ProxyEvent e : packEvent.getEvents()) {
+                    eventSize += e.getBody().length;
+                }
+                countSemaphore.release(eventCount);
+                bufferQueue.release(eventSize);
+            } else {
+                countSemaphore.release();
+                bufferQueue.release(event.getBody().length);
+            }
         }
         this.putList.clear();
     }
@@ -102,7 +126,7 @@ public class ProxyTransaction implements Transaction {
      *
      * @param event
      */
-    public void doTake(ProxyEvent event) {
+    public void doTake(Event event) {
         this.takeList.add(event);
     }
 
@@ -111,7 +135,7 @@ public class ProxyTransaction implements Transaction {
      *
      * @param event
      */
-    public void doPut(ProxyEvent event) {
+    public void doPut(Event event) {
         this.putList.add(event);
     }
 }

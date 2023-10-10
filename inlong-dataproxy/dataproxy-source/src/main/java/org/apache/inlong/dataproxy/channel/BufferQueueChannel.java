@@ -19,6 +19,7 @@ package org.apache.inlong.dataproxy.channel;
 
 import org.apache.inlong.dataproxy.utils.BufferQueue;
 import org.apache.inlong.sdk.commons.protocol.ProxyEvent;
+import org.apache.inlong.sdk.commons.protocol.ProxyPackEvent;
 
 import com.google.common.base.Preconditions;
 import org.apache.flume.ChannelException;
@@ -50,14 +51,16 @@ public class BufferQueueChannel extends AbstractChannel {
     public static final String KEY_RELOADINTERVAL = "reloadInterval";
 
     private Context context;
+    private String cachedName;
     private int maxBufferQueueCount;
     private Semaphore countSemaphore;
     private int maxBufferQueueSizeKb;
-    private BufferQueue<ProxyEvent> bufferQueue;
+    private BufferQueue<Event> bufferQueue;
     private ThreadLocal<ProxyTransaction> currentTransaction = new ThreadLocal<ProxyTransaction>();
     protected Timer channelTimer;
     private AtomicLong takeCounter = new AtomicLong(0);
     private AtomicLong putCounter = new AtomicLong(0);
+    private AtomicLong putFailCounter = new AtomicLong(0);
 
     /**
      * Constructor
@@ -73,16 +76,25 @@ public class BufferQueueChannel extends AbstractChannel {
      */
     @Override
     public void put(Event event) throws ChannelException {
-        if (event instanceof ProxyEvent) {
-            putCounter.incrementAndGet();
-            int eventSize = event.getBody().length;
-            this.countSemaphore.acquireUninterruptibly();
-            this.bufferQueue.acquire(eventSize);
-            ProxyTransaction transaction = currentTransaction.get();
-            Preconditions.checkState(transaction != null, "No transaction exists for this thread");
-            ProxyEvent profile = (ProxyEvent) event;
-            transaction.doPut(profile);
+        // count size
+        int eventCount;
+        int eventSize;
+        if (event instanceof ProxyPackEvent) {
+            ProxyPackEvent packEvent = (ProxyPackEvent) event;
+            eventCount = packEvent.getEvents().size();
+            eventSize = 0;
+            for (ProxyEvent e : packEvent.getEvents()) {
+                eventSize += e.getBody().length;
+            }
+        } else {
+            eventCount = 1;
+            eventSize = event.getBody().length;
         }
+        putCounter.addAndGet(eventCount);
+        this.countSemaphore.acquireUninterruptibly(eventCount);
+        this.bufferQueue.acquire(eventSize);
+        ProxyTransaction transaction = currentTransaction.get();
+        transaction.doPut(event);
     }
 
     /**
@@ -93,12 +105,18 @@ public class BufferQueueChannel extends AbstractChannel {
      */
     @Override
     public Event take() throws ChannelException {
-        ProxyEvent event = this.bufferQueue.pollRecord();
+        Event event = this.bufferQueue.pollRecord();
         if (event != null) {
             ProxyTransaction transaction = currentTransaction.get();
-            Preconditions.checkState(transaction != null, "No transaction exists for this thread");
-            transaction.doTake(event);
-            takeCounter.incrementAndGet();
+            if (event instanceof ProxyPackEvent) {
+                transaction.doTake(event);
+                takeCounter.addAndGet(((ProxyPackEvent) event).getEvents().size());
+
+            } else {
+                Preconditions.checkState(transaction != null, "No transaction exists for this thread");
+                transaction.doTake(event);
+                takeCounter.incrementAndGet();
+            }
         }
         return event;
     }
@@ -137,13 +155,12 @@ public class BufferQueueChannel extends AbstractChannel {
         TimerTask channelTask = new TimerTask() {
 
             public void run() {
-                LOG.info("queueSize:{},availablePermits:{},maxBufferQueueCount:{},availablePermits:{},put:{},take:{}",
-                        bufferQueue.size(),
-                        bufferQueue.availablePermits(),
-                        maxBufferQueueCount,
-                        countSemaphore.availablePermits(),
-                        putCounter.getAndSet(0),
-                        takeCounter.getAndSet(0));
+                LOG.info("{} status check: queueSize={},availablePermits={},maxBufferQueueCount={},"
+                        + "availablePermits={},put={},take={},putFail={}",
+                        cachedName, bufferQueue.size(), bufferQueue.availablePermits(),
+                        maxBufferQueueCount, countSemaphore.availablePermits(),
+                        putCounter.getAndSet(0), takeCounter.getAndSet(0),
+                        putFailCounter.getAndSet(0));
             }
         };
         channelTimer.schedule(channelTask,
@@ -159,6 +176,7 @@ public class BufferQueueChannel extends AbstractChannel {
     @Override
     public void configure(Context context) {
         this.context = context;
+        this.cachedName = getName();
         this.maxBufferQueueCount = context.getInteger(KEY_MAX_BUFFERQUEUE_COUNT, DEFAULT_MAX_BUFFERQUEUE_COUNT);
         this.countSemaphore = new Semaphore(maxBufferQueueCount, true);
         this.maxBufferQueueSizeKb = context.getInteger(KEY_MAX_BUFFERQUEUE_SIZE_KB, DEFAULT_MAX_BUFFERQUEUE_SIZE_KB);
