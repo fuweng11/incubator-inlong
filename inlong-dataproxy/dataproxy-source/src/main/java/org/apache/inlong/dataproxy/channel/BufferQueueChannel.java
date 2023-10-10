@@ -56,7 +56,7 @@ public class BufferQueueChannel extends AbstractChannel {
     private Semaphore countSemaphore;
     private int maxBufferQueueSizeKb;
     private BufferQueue<Event> bufferQueue;
-    private ThreadLocal<ProxyTransaction> currentTransaction = new ThreadLocal<ProxyTransaction>();
+    private ThreadLocal<ProxyTransaction> currentTransaction = new ThreadLocal<>();
     protected Timer channelTimer;
     private AtomicLong takeCounter = new AtomicLong(0);
     private AtomicLong putCounter = new AtomicLong(0);
@@ -91,10 +91,26 @@ public class BufferQueueChannel extends AbstractChannel {
             eventSize = event.getBody().length;
         }
         putCounter.addAndGet(eventCount);
-        this.countSemaphore.acquireUninterruptibly(eventCount);
-        this.bufferQueue.acquire(eventSize);
-        ProxyTransaction transaction = currentTransaction.get();
-        transaction.doPut(event);
+        if (this.countSemaphore.tryAcquire(eventCount)) {
+            if (this.bufferQueue.tryAcquire(eventSize)) {
+                ProxyTransaction transaction = currentTransaction.get();
+                Preconditions.checkState(transaction != null, "No transaction exists for this thread");
+                transaction.doPut(event);
+            } else {
+                this.countSemaphore.release(eventCount);
+                this.putFailCounter.addAndGet(eventCount);
+                throw new ChannelException(
+                        "Put queue for BufferQueue channel of maxBufferQueueSizeKb capacity " +
+                                maxBufferQueueSizeKb + " full, consider committing more frequently, " +
+                                "increasing maxBufferQueueSizeKb count");
+            }
+        } else {
+            this.putFailCounter.addAndGet(eventCount);
+            throw new ChannelException(
+                    "Put queue for BufferQueue channel of maxBufferQueueCount capacity " +
+                            maxBufferQueueCount + " full, consider committing more frequently, " +
+                            "increasing maxBufferQueueCount count");
+        }
     }
 
     /**
