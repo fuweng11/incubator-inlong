@@ -642,7 +642,9 @@ public class FlinkSink {
                         format,
                         writeProperties(table, format, flinkWriteConf),
                         equalityFieldIds,
-                        flinkWriteConf.upsertMode());
+                        flinkWriteConf.upsertMode(),
+                        flinkWriteConf.fileDedup(),
+                        flinkWriteConf.partialInsert());
         return new IcebergStreamWriter<>(table.name(), taskWriterFactory, sinkMetadataUtils, metricOption);
     }
 
