@@ -24,6 +24,7 @@
   "meta.Consume.MaskTime": "屏蔽时间设置",
   "meta.Consume.Threshold": "单Topic分区消息的滞后量",
   "meta.Consume.Threshold.Unit": "条",
+  "meta.Sinks.THive.DbName": "目标库",
   "meta.Sinks.THive.TableName": "目标表",
   "meta.Sinks.THive.FieldNameRule": "以小写英文字母开头，只能包含小写英文字母、数字、下划线",
   "meta.Sinks.THive.FieldFormat": "落地格式",
