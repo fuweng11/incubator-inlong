@@ -328,9 +328,11 @@ public class EventProfile {
      * @return whether resend message
      */
     public boolean isResend(boolean enableResend, int maxRetries) {
-        return !needRspEvent
-                && enableResend
-                && (maxRetries < 0 || ++retries <= maxRetries);
+        if (needRspEvent || !enableResend) {
+            return false;
+        }
+        retries++;
+        return (maxRetries < 0 || retries <= maxRetries);
     }
 
     /**
