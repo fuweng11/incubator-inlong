@@ -424,6 +424,21 @@ public class ControllerSink extends AbstractSink implements Configurable {
     }
 
     private void sendIndexToController(EventProfile profile) throws Exception {
+        // check task whether invalid
+        if (profile.isInValidTask()) {
+            fileMetricIncWithDetailStats(
+                    StatConstants.EVENT_SINK_CHANNEL_INVALID_DROPPED, profile.getGroupId());
+            profile.clear();
+            return;
+        }
+        // parse fields in headers
+        profile.parseFields();
+        if (!profile.isValidIndexMsg()) {
+            fileMetricIncSumStats(StatConstants.SINK_INDEX_ILLEGAL_DROPPED);
+            profile.clear();
+            return;
+        }
+        // process message
         if (profile.isStatusIndex()) {
             try {
                 int sentCnt = 0;
