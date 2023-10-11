@@ -104,6 +104,9 @@ public class SourceRequest {
     @ApiModelProperty(value = "Start collection from the specified binlog location", notes = "The administrator sets it in the database and deletes it after publishing")
     private String startPosition;
 
+    @ApiModelProperty(value = "Whether to sync schema from source after saving or updating. Default is false")
+    private Boolean enableSyncSchema = false;
+
     @ApiModelProperty("Version")
     @NotNull(groups = UpdateValidation.class, message = "version cannot be null")
     private Integer version;
