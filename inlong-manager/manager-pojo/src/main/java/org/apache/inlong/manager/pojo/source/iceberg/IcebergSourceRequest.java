@@ -52,6 +52,9 @@ public class IcebergSourceRequest extends SourceRequest {
     @ApiModelProperty("PrimaryKey")
     private String primaryKey;
 
+    @ApiModelProperty("server tag")
+    private String serverTag;
+
     public IcebergSourceRequest() {
         this.setSourceType(SourceType.ICEBERG);
     }

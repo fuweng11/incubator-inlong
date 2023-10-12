@@ -55,6 +55,9 @@ public class IcebergSourceDTO {
     @ApiModelProperty("PrimaryKey")
     private String primaryKey;
 
+    @ApiModelProperty("server tag")
+    private String serverTag;
+
     /**
      * Get the dto instance from the request
      */

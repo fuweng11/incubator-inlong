@@ -25,6 +25,9 @@ import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.entity.InlongStreamFieldEntity;
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
 import org.apache.inlong.manager.pojo.sink.iceberg.IcebergColumnInfo;
+import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
+import org.apache.inlong.manager.pojo.sink.tencent.iceberg.QueryIcebergTableResponse;
+import org.apache.inlong.manager.pojo.sink.tencent.iceberg.QueryIcebergTableResponse.TableStructure.FieldsBean;
 import org.apache.inlong.manager.pojo.sort.util.FieldInfoUtils;
 import org.apache.inlong.manager.pojo.source.SourceRequest;
 import org.apache.inlong.manager.pojo.source.StreamSource;
@@ -33,6 +36,7 @@ import org.apache.inlong.manager.pojo.source.iceberg.IcebergSourceDTO;
 import org.apache.inlong.manager.pojo.source.iceberg.IcebergSourceRequest;
 import org.apache.inlong.manager.pojo.stream.StreamField;
 import org.apache.inlong.manager.service.resource.sink.iceberg.IcebergCatalogUtils;
+import org.apache.inlong.manager.service.resource.sort.tencent.iceberg.IcebergBaseOptService;
 import org.apache.inlong.manager.service.source.AbstractSourceOperator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +44,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +62,11 @@ public class IcebergSourceOperator extends AbstractSourceOperator {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AutowireCapableBeanFactory autowireCapableBeanFactory;
+
+    private IcebergBaseOptService icebergBaseOptService;
 
     @Override
     public Boolean accept(String sourceType) {
@@ -106,15 +116,24 @@ public class IcebergSourceOperator extends AbstractSourceOperator {
         String metastoreUri = sourceRequest.getUri();
         String dbName = sourceRequest.getDatabase();
         String tableName = sourceRequest.getTableName();
-        boolean tableExists = IcebergCatalogUtils.tableExists(metastoreUri, dbName, tableName);
-        List<StreamField> streamFields = new ArrayList<>();
-        if (tableExists) {
-            List<IcebergColumnInfo> existColumns = IcebergCatalogUtils.getColumns(metastoreUri, dbName, tableName);
-            for (IcebergColumnInfo columnInfo : existColumns) {
+        if (icebergBaseOptService == null) {
+            icebergBaseOptService = new IcebergBaseOptService();
+            autowireCapableBeanFactory.autowireBean(icebergBaseOptService);
+        }
+        InnerIcebergSink icebergSink = new InnerIcebergSink();
+        icebergSink.setDbName(dbName);
+        icebergSink.setTableName(tableName);
+        icebergSink.setClusterTag(sourceRequest.getServerTag());
+        icebergSink.setCreator(operator);
+        QueryIcebergTableResponse tableDetail = icebergBaseOptService.getTableDetail(icebergSink);
+        LOGGER.info("sync field info rsp={}", tableDetail);
+        if (tableDetail != null && tableDetail.getCode() != 20005) {
+            List<StreamField> streamFields = new ArrayList<>();
+            for (FieldsBean fieldsBean : tableDetail.getData().getFields()) {
                 StreamField streamField = new StreamField();
-                streamField.setFieldName(columnInfo.getName());
-                streamField.setFieldType(FieldInfoUtils.sqlTypeToJavaTypeStr(columnInfo.getType()));
-                streamField.setFieldComment(columnInfo.getDesc());
+                streamField.setFieldName(fieldsBean.getName());
+                streamField.setFieldType(fieldsBean.getType());
+                streamField.setFieldComment(fieldsBean.getDesc());
                 streamFields.add(streamField);
             }
             updateField(sourceRequest.getInlongGroupId(), sourceRequest.getInlongStreamId(), streamFields);

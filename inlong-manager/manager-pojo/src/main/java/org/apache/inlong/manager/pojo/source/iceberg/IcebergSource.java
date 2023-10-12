@@ -58,6 +58,9 @@ public class IcebergSource extends StreamSource {
     @ApiModelProperty("PrimaryKey")
     private String primaryKey;
 
+    @ApiModelProperty("server tag")
+    private String serverTag;
+
     public IcebergSource() {
         this.setSourceType(SourceType.ICEBERG);
     }
