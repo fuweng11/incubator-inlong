@@ -18,8 +18,10 @@
 package org.apache.inlong.manager.service.resource.sink.tencent.pulsar;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString
 public class PulsarManagerResult {
 
     private int data;

@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sink.tencent.pulsar;
 
-import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
@@ -37,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -44,18 +44,36 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class InnerPulsarResourceOperator {
+public class InnerPulsarOperator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(InnerPulsarResourceOperator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(InnerPulsarOperator.class);
+    /**
+     * The pulsar manager create topic path
+     */
+    private final String CREATE_TOPIC_PATH = "/pulsar-manager/openapi/topic/create";
+
+    /**
+     * The pulsar manager create pulsar tenant path
+     */
+    private final String CREATE_TENANT_PATH = "/pulsar-manager/openapi/tenant/create";
+
+    /**
+     * The pulsar manager create pulsar namespace path
+     */
+    private final String CREATE_NAMESPACE_PATH = "/pulsar-manager/openapi/namespace/create";
+
+    private final String REQUEST_HEADER_APP_ID = "app_id";
+
+    private final String REQUEST_HEADER_APP_SECRET = "app_secret";
 
     @Autowired
-    InnerPulsarResourceConfig innerPulsarResourceConfig;
+    private InnerPulsarResourceConfig innerPulsarResourceConfig;
     @Autowired
     private RestTemplate restTemplate;
     @Autowired
-    DataNodeOperateHelper dataNodeOperateHelper;
+    private DataNodeOperateHelper dataNodeOperateHelper;
     @Autowired
-    StreamSinkService sinkService;
+    private StreamSinkService sinkService;
 
     public void createTopic(SinkInfo sinkInfo) {
         try {
@@ -64,8 +82,7 @@ public class InnerPulsarResourceOperator {
             createPulsarNameSpace(sinkInfo, pulsarDataNodeInfo);
             Map<String, Object> params = buildCreateTopicParams(sinkInfo, pulsarDataNodeInfo);
             String pulsarManagerUrl = innerPulsarResourceConfig.getPulsarManagerUrl();
-            String createTopicPath = InnerPulsarResourceConfig.CREATE_TOPIC_PATH;
-            excute(sinkInfo, params, pulsarManagerUrl + createTopicPath);
+            postRequest(sinkInfo, params, pulsarManagerUrl + CREATE_TOPIC_PATH);
             final String info = "success to create Pulsar topic";
             sinkService.updateStatus(sinkInfo.getId(), SinkStatus.CONFIG_SUCCESSFUL.getCode(), info);
         } catch (Exception e) {
@@ -90,8 +107,7 @@ public class InnerPulsarResourceOperator {
         PulsarSinkDTO pulsarSinkDTO = JsonUtils.parseObject(sinkInfo.getExtParams(), PulsarSinkDTO.class);
         Map<String, Object> params = buildRequestBaseParams(pulsarDataNodeDTO, pulsarSinkDTO);
         String pulsarManagerUrl = innerPulsarResourceConfig.getPulsarManagerUrl();
-        String createTenantPath = InnerPulsarResourceConfig.CREATE_TENANT_PATH;
-        excute(sinkInfo, params, pulsarManagerUrl + createTenantPath);
+        postRequest(sinkInfo, params, pulsarManagerUrl+CREATE_TENANT_PATH);
     }
 
     private void createPulsarNameSpace(SinkInfo sinkInfo, PulsarDataNodeDTO pulsarDataNodeDTO) {
@@ -99,23 +115,30 @@ public class InnerPulsarResourceOperator {
         Map<String, Object> params = buildRequestBaseParams(pulsarDataNodeDTO, pulsarSinkDTO);
         params.put("namespace", pulsarSinkDTO.getNamespace());
         String pulsarManagerUrl = innerPulsarResourceConfig.getPulsarManagerUrl();
-        String createNameSpacePath = InnerPulsarResourceConfig.CREATE_NAMESPACE_PATH;
-        excute(sinkInfo, params, pulsarManagerUrl + createNameSpacePath);
+        postRequest(sinkInfo, params, pulsarManagerUrl + CREATE_NAMESPACE_PATH);
     }
 
-    private void excute(SinkInfo sinkInfo, Map<String, Object> params, String url) {
+    private void postRequest(SinkInfo sinkInfo, Map<String, Object> params, String url) {
         PulsarManagerResult pulsarManagerResult = HttpUtils.postRequest(restTemplate,
-                url, params, null,
+                url, params, getHttpHeaders(),
                 new ParameterizedTypeReference<PulsarManagerResult>() {
                 });
         int otherErrorCode = 2;
+        LOGGER.debug("request pulsar manager result {}", pulsarManagerResult);
         if (!pulsarManagerResult.isSuccess() && pulsarManagerResult.getData() == otherErrorCode) {
-            String errorMsg = "group %s stream %s sink %s  create topic in pulsar manager error %s";
+            String errorMsg = "create topic by pulsar manager error for groupId = %s, streamId = %s, sinkId = %s, errorMsg = %s";
             String errorInfo = String.format(errorMsg, sinkInfo.getInlongGroupId(), sinkInfo.getInlongStreamId(),
-                    sinkInfo.getSinkName(),
+                    sinkInfo.getId(),
                     pulsarManagerResult.getErrorMessage());
             throw new BusinessException(errorInfo);
         }
+    }
+
+    private HttpHeaders getHttpHeaders() {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(REQUEST_HEADER_APP_ID, innerPulsarResourceConfig.getAppId());
+        httpHeaders.add(REQUEST_HEADER_APP_SECRET, innerPulsarResourceConfig.getAppSecret());
+        return httpHeaders;
     }
 
     private Map<String, Object> buildRequestBaseParams(PulsarDataNodeDTO pulsarDataNodeDTO,

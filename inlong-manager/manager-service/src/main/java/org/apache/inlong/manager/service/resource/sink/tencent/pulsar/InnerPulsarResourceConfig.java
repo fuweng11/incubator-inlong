@@ -31,20 +31,4 @@ public class InnerPulsarResourceConfig {
     private String appSecret;
     @Value("${pulsar.manager.url}")
     private String pulsarManagerUrl;
-    /**
-     * The pulsar manager create topic path
-     */
-    public static final String CREATE_TOPIC_PATH = "/pulsar-manager/openapi/topic/create";
-
-    /**
-     *
-     * The pulsar manager create pulsar tenant path
-     */
-    public static final String CREATE_TENANT_PATH = "/pulsar-manager/openapi/tenant/create";
-
-    /**
-     *
-     * The pulsar manager create pulsar namespace path
-     */
-    public static final String CREATE_NAMESPACE_PATH = "/pulsar-manager/openapi/namespace/create";
 }

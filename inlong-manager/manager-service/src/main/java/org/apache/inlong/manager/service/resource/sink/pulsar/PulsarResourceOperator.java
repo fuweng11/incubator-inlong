@@ -36,7 +36,7 @@ import org.apache.inlong.manager.service.resource.queue.pulsar.PulsarOperator;
 import org.apache.inlong.manager.service.resource.queue.pulsar.PulsarUtils;
 import org.apache.inlong.manager.service.resource.sink.AbstractStandaloneSinkResourceOperator;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
-import org.apache.inlong.manager.service.resource.sink.tencent.pulsar.InnerPulsarResourceOperator;
+import org.apache.inlong.manager.service.resource.sink.tencent.pulsar.InnerPulsarOperator;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.admin.PulsarAdminException;
@@ -59,7 +59,7 @@ public class PulsarResourceOperator extends AbstractStandaloneSinkResourceOperat
     @Autowired
     private PulsarOperator pulsarOperator;
     @Autowired
-    private InnerPulsarResourceOperator innerPulsarResourceOperator;
+    private InnerPulsarOperator innerPulsarOperator;
     @Autowired
     private StreamSinkService sinkService;
 
@@ -78,7 +78,7 @@ public class PulsarResourceOperator extends AbstractStandaloneSinkResourceOperat
             LOG.warn("create resource was disabled, skip to create for [" + sinkInfo.getId() + "]");
             return;
         }
-        innerPulsarResourceOperator.createTopic(sinkInfo);
+        innerPulsarOperator.createTopic(sinkInfo);
         this.assignCluster(sinkInfo);
     }
 
