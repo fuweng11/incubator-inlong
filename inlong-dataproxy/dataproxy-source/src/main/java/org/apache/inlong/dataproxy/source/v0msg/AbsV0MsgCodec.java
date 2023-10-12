@@ -18,6 +18,7 @@
 package org.apache.inlong.dataproxy.source.v0msg;
 
 import org.apache.inlong.common.enums.DataProxyErrCode;
+import org.apache.inlong.common.monitor.LogCounter;
 import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.consts.StatConstants;
@@ -30,12 +31,18 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Event;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbsV0MsgCodec {
+
+    private static final Logger logger = LoggerFactory.getLogger(AbsV0MsgCodec.class);
+    // log print count
+    private static final LogCounter attrLogCounter = new LogCounter(10, 100000, 60 * 1000);
 
     // string splitter
     protected static final Splitter.MapSplitter mapSplitter = Splitter
@@ -184,7 +191,11 @@ public abstract class AbsV0MsgCodec {
             try {
                 this.origAttr = new String(attrData, StandardCharsets.UTF_8);
             } catch (Throwable err) {
-                //
+                this.origAttr = "";
+                source.fileMetricIncSumStats(StatConstants.EVENT_MSG_ATTR_STRING_ILLEGAL);
+                this.errCode = DataProxyErrCode.SPLIT_ATTR_ERROR;
+                this.errMsg = "Translate attr value to UTF-8 failure";
+                return false;
             }
         }
         // parse attribute field
@@ -192,9 +203,13 @@ public abstract class AbsV0MsgCodec {
             try {
                 this.attrMap.putAll(mapSplitter.split(this.origAttr));
             } catch (Exception e) {
+                if (attrLogCounter.shouldPrint()) {
+                    logger.warn("Parse attr failure, attr={}, from={}", this.origAttr, strRemoteIP);
+                }
                 source.fileMetricIncSumStats(StatConstants.EVENT_MSG_ATTR_INVALID);
                 this.errCode = DataProxyErrCode.SPLIT_ATTR_ERROR;
-                this.errMsg = String.format("Parse attr (%s) failure", this.origAttr);
+                this.errMsg = "Parse attr value to map failure";
+                this.origAttr = "";
                 return false;
             }
         }

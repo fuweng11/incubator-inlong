@@ -82,6 +82,7 @@ public class StatConstants {
     public static final java.lang.String EVENT_MSG_INDEX_DATALEN_MALFORMED = "msg.index.datalen.malformed";
     public static final java.lang.String EVENT_MSG_TXT_LEN_MALFORMED = "msg.txt.len.malformed";
     public static final java.lang.String EVENT_MSG_ITEM_LEN_MALFORMED = "msg.item.len.malformed";
+    public static final java.lang.String EVENT_MSG_ATTR_STRING_ILLEGAL = "msg.attr.illegal";
     public static final java.lang.String EVENT_MSG_ATTR_INVALID = "msg.attr.invalid";
     public static final java.lang.String EVENT_MSG_ORDER_ACK_INVALID = "msg.attr.order.noack";
     public static final java.lang.String EVENT_MSG_PROXY_ACK_INVALID = "msg.attr.proxy.noack";

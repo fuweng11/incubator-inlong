@@ -162,6 +162,9 @@ public class ConfigManager {
                 source.fileMetricIncWithDetailStats(StatConstants.EVENT_SOURCE_DEFAULT_TOPIC_USED, groupId);
             }
         }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getTopicName ({}, {}) to {}", groupId, streamId, topicName);
+        }
         return topicName;
     }
 
