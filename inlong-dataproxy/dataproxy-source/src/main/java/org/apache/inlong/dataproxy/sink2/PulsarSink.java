@@ -46,8 +46,8 @@ public class PulsarSink extends BaseSink {
 
     private static final Logger logger = LoggerFactory.getLogger(PulsarSink.class);
     // log print count
-    private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
-    private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 30 * 1000);
+    private static final LogCounter logCounter = new LogCounter(10, 100000, 60 * 1000);
+    private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 40 * 1000);
 
     private static final String MAX_BROKER_QUARANTINE_TIME_SEC = "max-broker-abnormal-quarantine-sec";
     private static final int VAL_DEF_BROKER_QUARANTINE_TIME_SEC = 300;
@@ -252,7 +252,7 @@ public class PulsarSink extends BaseSink {
                 createFailCnt++;
                 fileMetricIncWithDetailStats(
                         StatConstants.EVENT_SINK_PULSAR_PRODUCER_BUILD_FAILURE, topic);
-                logger.error("Create topic {}'s producer failed!", topic, e);
+                logger.error("{} create topic {}'s producer failed!", cachedSinkName, topic, e);
             }
         }
         logger.info(
@@ -265,7 +265,8 @@ public class PulsarSink extends BaseSink {
 
         @Override
         public void run() {
-            logger.info("task {} start send message logic.", Thread.currentThread().getName());
+            logger.info("{} start send message logic: {}",
+                    cachedSinkName, Thread.currentThread().getName());
             EventProfile profile = null;
             while (canSend) {
                 try {
@@ -281,7 +282,8 @@ public class PulsarSink extends BaseSink {
                         offerDispatchRecord(profile);
                     }
                     if (logCounter.shouldPrint()) {
-                        logger.error("{} send message failure", Thread.currentThread().getName(), e1);
+                        logger.warn("{} send message logic {} throw exception: ",
+                                cachedSinkName, Thread.currentThread().getName(), e1);
                     }
                     // sleep some time
                     try {
@@ -291,7 +293,8 @@ public class PulsarSink extends BaseSink {
                     }
                 }
             }
-            logger.info("TubeMQSink task {} exits send message logic.", Thread.currentThread().getName());
+            logger.info("{} exits send message logic: {}",
+                    cachedSinkName, Thread.currentThread().getName());
         }
 
         private boolean sendMessage(EventProfile profile) {
@@ -328,7 +331,7 @@ public class PulsarSink extends BaseSink {
                 releaseAcquiredSizePermit(profile.getMsgSize());
                 fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_MESSAGE_DUPLICATE, topic);
                 if (logDupMsgPrinter.shouldPrint()) {
-                    logger.info("{} package {} existed,just discard.",
+                    logger.info("{} package {} existed, just discard.",
                             cachedSinkName, profile.getMsgSeqId());
                 }
                 profile.clear();
@@ -354,7 +357,8 @@ public class PulsarSink extends BaseSink {
                 fileMetricIncWithDetailStats(StatConstants.EVENT_SINK_SEND_EXCEPTION, topic);
                 processSendFail(profile, DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
                 if (logCounter.shouldPrint()) {
-                    logger.error("Send Message to Tube failure", ex);
+                    logger.error("{} send Message to Pulsar's topic {} failure",
+                            cachedSinkName, topic, ex);
                 }
                 return false;
             }
@@ -373,7 +377,7 @@ public class PulsarSink extends BaseSink {
         fileMetricAddExceptStats(profile, xfeTopic, "", xfeTopic);
         processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, ex.toString());
         if (logCounter.shouldPrint()) {
-            logger.error("Send message to {}, exception = {}", xfeTopic, ex);
+            logger.error("{} send message to {}, exception = {}", cachedSinkName, xfeTopic, ex);
         }
     }
 

@@ -70,10 +70,10 @@ public class ControllerSink extends AbstractSink implements Configurable {
 
     private static final Logger logger = LoggerFactory.getLogger(ControllerSink.class);
     // log print count
-    private static final LogCounter logAgentCounter = new LogCounter(10, 100000, 30 * 1000);
-    private static final LogCounter logSendMsgCounter = new LogCounter(10, 100000, 30 * 1000);
-    private static final LogCounter logPubTopicPrinter = new LogCounter(10, 100000, 30 * 1000);
-    private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 30 * 1000);
+    private static final LogCounter logAgentCounter = new LogCounter(10, 100000, 40 * 1000);
+    private static final LogCounter logSendMsgCounter = new LogCounter(10, 100000, 40 * 1000);
+    private static final LogCounter logPubTopicPrinter = new LogCounter(10, 100000, 40 * 1000);
+    private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 40 * 1000);
 
     private static final String SEND_REMOTE = "send-remote";
     private static final boolean VAL_DEF_SEND_REMOTE = true;
@@ -351,13 +351,13 @@ public class ControllerSink extends AbstractSink implements Configurable {
         } catch (Throwable t) {
             fileMetricIncSumStats(StatConstants.SINK_INDEX_EVENT_TAKE_FAILURE);
             if (logSendMsgCounter.shouldPrint()) {
-                logger.error("{} process event failed!", this.cachedSinkName, t);
+                logger.warn("{} process event failed!", this.cachedSinkName, t);
             }
             try {
                 tx.rollback();
             } catch (Throwable e) {
                 if (logSendMsgCounter.shouldPrint()) {
-                    logger.error("{} channel take transaction rollback exception", this.cachedSinkName, e);
+                    logger.warn("{} channel take transaction rollback exception", this.cachedSinkName, e);
                 }
             }
             return Status.BACKOFF;
@@ -478,7 +478,7 @@ public class ControllerSink extends AbstractSink implements Configurable {
                 destroyConnection();
                 fileMetricIncSumStats(StatConstants.SINK_STATUS_INDEX_SEND_EXCEPTION);
                 String s = (profile.getEventBody() != null ? new String(profile.getEventBody()) : "");
-                logger.error("{} send status event failure, header is {}, body is {}",
+                logger.warn("{} send status event failure, header is {}, body is {}",
                         cachedSinkName, profile.getProperties(), s, ex);
             }
         } else {
@@ -493,7 +493,7 @@ public class ControllerSink extends AbstractSink implements Configurable {
 
         @Override
         public void run() {
-            logger.info("{} task {} start send message logic.",
+            logger.info("{} start send message logic: {}",
                     cachedSinkName, Thread.currentThread().getName());
             EventProfile profile = null;
             while (canSend) {
@@ -510,14 +510,14 @@ public class ControllerSink extends AbstractSink implements Configurable {
                         offerDispatchRecord(profile);
                     }
                     if (logSendMsgCounter.shouldPrint()) {
-                        logger.error("{} - {} send message failure", cachedSinkName,
-                                Thread.currentThread().getName(), e1);
+                        logger.warn("{} send message logic {} throw exception: ",
+                                cachedSinkName, Thread.currentThread().getName(), e1);
                     }
                     // sleep some time
                     sleepSomeTime(maxSendFailureWaitDurMs);
                 }
             }
-            logger.info("{} task {} exits send message logic.",
+            logger.info("{} exits send message logic: {}",
                     cachedSinkName, Thread.currentThread().getName());
         }
 
@@ -590,7 +590,8 @@ public class ControllerSink extends AbstractSink implements Configurable {
                         : StatConstants.SINK_MEASURE_INDEX_SEND_EXCEPTION), agentIndexTopic);
                 processSendFail(profile, DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
                 if (logSendMsgCounter.shouldPrint()) {
-                    logger.error("{} send remote message throw exception!", cachedSinkName, ex);
+                    logger.error("{} send remote message to {} throw exception!",
+                            cachedSinkName, agentIndexTopic, ex);
                 }
             }
         }
@@ -620,7 +621,8 @@ public class ControllerSink extends AbstractSink implements Configurable {
                         result.getPartition().getHost(), topic + "." + result.getErrCode());
                 processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
                 if (logSendMsgCounter.shouldPrint()) {
-                    logger.warn("{} remote message send failed: {}", cachedSinkName, result.getErrMsg());
+                    logger.warn("{} remote message send to {} failed: {}",
+                            cachedSinkName, topic, result.getErrMsg());
                 }
             }
         }
@@ -630,7 +632,8 @@ public class ControllerSink extends AbstractSink implements Configurable {
             fileMetricAddExceptStats(profile, topic, "", topic);
             processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
             if (logSendMsgCounter.shouldPrint()) {
-                logger.error("{} remote message send to {} tube exception", cachedSinkName, topic, ex);
+                logger.warn("{} remote message send to {} tube exception",
+                        cachedSinkName, topic, ex);
             }
         }
     }

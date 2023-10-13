@@ -251,13 +251,13 @@ public abstract class BaseSink extends AbstractSink implements Configurable, Con
         } catch (Throwable t) {
             fileMetricIncSumStats(StatConstants.EVENT_SINK_EVENT_TAKE_FAILURE);
             if (logCounter.shouldPrint()) {
-                logger.error("{} process event failed!", this.cachedSinkName, t);
+                logger.warn("{} process event failed!", this.cachedSinkName, t);
             }
             try {
                 tx.rollback();
             } catch (Throwable e) {
                 if (logCounter.shouldPrint()) {
-                    logger.error("{} channel take transaction rollback exception", this.cachedSinkName, e);
+                    logger.warn("{} channel take transaction rollback exception", this.cachedSinkName, e);
                 }
             }
             return Status.BACKOFF;

@@ -55,7 +55,7 @@ public class FailoverChannelProcessor
             ChannelProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(FailoverChannelProcessor.class);
-    private static final LogCounter logPrinter = new LogCounter(10, 100000, 60 * 1000);
+    private static final LogCounter logPrinter = new LogCounter(10, 150000, 60 * 1000);
 
     private final BaseSource baseSource;
     private final boolean enablePulsarXfe;
@@ -194,7 +194,10 @@ public class FailoverChannelProcessor
                 success = false;
                 tx.rollback();
                 if (!(t instanceof ChannelException)) {
-                    LOG.error("Unable to put batch on required " + "channel: " + reqChannel, t);
+                    if (logPrinter.shouldPrint()) {
+                        LOG.warn("Unable to put batch on required channel, errMsg = {}",
+                                t.getMessage());
+                    }
                     if (t instanceof Error) {
                         throw (Error) t;
                     }
@@ -224,11 +227,13 @@ public class FailoverChannelProcessor
                 } catch (Throwable t) {
                     tx.rollback();
                     if (t instanceof Error) {
-                        LOG.error("Error while writing to optChannel channel: " + optChannel, t);
+                        if (logPrinter.shouldPrint()) {
+                            LOG.warn("Error while writing to optChannel channel, errMsg = {}",
+                                    t.getMessage());
+                        }
                         throw (Error) t;
                     } else {
-                        throw new ChannelException(
-                                "Unable to put batch on optChannel " + "channel: " + optChannel, t);
+                        throw new ChannelException("Unable to put batch on optChannel " + t.getMessage());
                     }
                 } finally {
                     tx.close();
@@ -292,13 +297,15 @@ public class FailoverChannelProcessor
             } catch (Throwable t) {
                 errMsg = "Unable to put event on required channel, error message is " + t.getMessage();
                 if (logPrinter.shouldPrint()) {
-                    LOG.error("FailoverChannelProcessor Unable to put event on required channel", t);
+                    LOG.warn("FailoverChannelProcessor Unable to put event on required channel {}",
+                            t.getMessage());
                 }
                 try {
                     tx.rollback();
                 } catch (Throwable e) {
                     if (logPrinter.shouldPrint()) {
-                        LOG.error("FailoverChannelProcessor Transaction rollback exception", e);
+                        LOG.warn("FailoverChannelProcessor rollback transaction failure, errMsg = {}",
+                                e.getMessage());
                     }
                 }
                 break;
@@ -351,14 +358,16 @@ public class FailoverChannelProcessor
                     }
                 } catch (Throwable t) {
                     if (logPrinter.shouldPrint()) {
-                        LOG.error("FailoverChannelProcessor Unable to put event on optionalChannel:", t);
+                        LOG.warn("FailoverChannelProcessor Unable to put event on optionalChannel {}",
+                                t.getMessage());
                     }
                     if (tx != null) {
                         try {
                             tx.rollback();
                         } catch (Throwable e) {
                             if (logPrinter.shouldPrint()) {
-                                LOG.error("FailoverChannelProcessor Transaction rollback exception", e);
+                                LOG.warn("FailoverChannelProcessor rollback transaction failure, {}",
+                                        e.getMessage());
                             }
                         }
                     }
@@ -369,16 +378,15 @@ public class FailoverChannelProcessor
                     } else {
                         if (t instanceof Error) {
                             if (logPrinter.shouldPrint()) {
-                                LOG.error(
-                                        "FailoverChannelProcessor Error while writing event to optionalChannels: "
-                                                + optChannel,
-                                        t);
+                                LOG.warn(
+                                        "FailoverChannelProcessor writing event to optional failure, errMsg={}",
+                                        t.getMessage());
                             }
                             throw (Error) t;
                         } else {
                             throw new ChannelException(
-                                    "FailoverChannelProcessor Unable to put event on optionalChannels: " + optChannel,
-                                    t);
+                                    "FailoverChannelProcessor Unable to put event on optional failure: "
+                                            + t.getMessage());
                         }
                     }
                 } finally {

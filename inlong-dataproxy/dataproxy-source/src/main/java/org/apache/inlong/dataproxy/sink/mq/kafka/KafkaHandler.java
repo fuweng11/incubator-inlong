@@ -81,6 +81,7 @@ public class KafkaHandler implements MessageQueueHandler {
      */
     @Override
     public void start() {
+        logger.info("{}'s Kafka handler starting....", sinkContext.getSinkName());
         // create kafka producer
         try {
             // prepare configuration
@@ -88,11 +89,11 @@ public class KafkaHandler implements MessageQueueHandler {
             Context context = this.sinkContext.getProducerContext();
             props.putAll(context.getParameters());
             props.putAll(config.getParams());
-            logger.info("try to create kafka client:{}", props);
+            logger.info("{} try to create kafka client, properties={}", props);
             producer = new KafkaProducer<>(props, new StringSerializer(), new ByteArraySerializer());
-            logger.info("create new producer success:{}", producer);
+            logger.info("{}'s Kafka handler started", sinkContext.getSinkName());
         } catch (Throwable e) {
-            logger.error(e.getMessage(), e);
+            logger.error("{} start Kafka handler exception", sinkContext.getSinkName(), e);
         }
     }
 
@@ -106,9 +107,10 @@ public class KafkaHandler implements MessageQueueHandler {
      */
     @Override
     public void stop() {
+        logger.info("{} Kafka handler stopping....", sinkContext.getSinkName());
         // kafka producer
         this.producer.close();
-        logger.info("kafka handler stopped");
+        logger.info("{} Kafka handler stopped", sinkContext.getSinkName());
     }
 
     /**
@@ -166,7 +168,8 @@ public class KafkaHandler implements MessageQueueHandler {
             sinkContext.processSendFail(profile, clusterName, profile.getUid(), 0,
                     DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
             if (logCounter.shouldPrint()) {
-                logger.error("Send Message to Kafka failure", ex);
+                logger.error("{} send Message to Kafka's {} failure",
+                        sinkContext.getSinkName(), topic, ex);
             }
             return false;
         }
@@ -209,7 +212,8 @@ public class KafkaHandler implements MessageQueueHandler {
                     sinkContext.processSendFail(batchProfile, clusterName, topic, sendTime,
                             DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
                     if (logCounter.shouldPrint()) {
-                        logger.error("Send BatchPackProfile to Kafka failure", ex);
+                        logger.warn("{} send BatchPackProfile to Kafka's {} failure",
+                                sinkContext.getSinkName(), topic, ex);
                     }
                 } else {
                     sinkContext.fileMetricIncSumStats(StatConstants.EVENT_SINK_SUCCESS);
@@ -252,7 +256,8 @@ public class KafkaHandler implements MessageQueueHandler {
                     sinkContext.processSendFail(simpleProfile, clusterName, topic, sendTime,
                             DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
                     if (logCounter.shouldPrint()) {
-                        logger.error("Send SimplePackProfile to Kafka failure", ex);
+                        logger.warn("{} send SimplePackProfile to Kafka's {} failure",
+                                sinkContext.getSinkName(), topic, ex);
                     }
                 } else {
                     sinkContext.fileMetricAddSuccStats(simpleProfile, topic,

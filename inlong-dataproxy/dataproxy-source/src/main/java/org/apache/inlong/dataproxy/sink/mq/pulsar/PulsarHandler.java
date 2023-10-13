@@ -124,6 +124,7 @@ public class PulsarHandler implements MessageQueueHandler {
      */
     @Override
     public void start() {
+        logger.info("{}'s Pulsar handler starting....", sinkContext.getSinkName());
         // create pulsar client
         try {
             String serviceUrl = config.getParams().get(KEY_SERVICE_URL);
@@ -167,10 +168,10 @@ public class PulsarHandler implements MessageQueueHandler {
                             context.getInteger(KEY_ROUNDROBINROUTERBATCHINGPARTITIONSWITCHFREQUENCY, 60))
                     .enableBatching(context.getBoolean(KEY_ENABLEBATCHING, true))
                     .compressionType(this.getPulsarCompressionType());
+            logger.info("{}'s Pulsar handler started", sinkContext.getSinkName());
         } catch (Throwable e) {
-            logger.error(e.getMessage(), e);
+            logger.error("{} start Pulsar handler exception", sinkContext.getSinkName(), e);
         }
-        logger.info("pulsar handler started");
     }
 
     /**
@@ -178,19 +179,22 @@ public class PulsarHandler implements MessageQueueHandler {
      */
     @Override
     public void stop() {
+        logger.info("{}'s Pulsar handler stopping....", sinkContext.getSinkName());
         for (Entry<String, Producer<byte[]>> entry : this.producerMap.entrySet()) {
             try {
                 entry.getValue().close();
             } catch (PulsarClientException e) {
-                logger.error(e.getMessage(), e);
+                logger.error("{}'s Pulsar handler close producer exception",
+                        sinkContext.getSinkName(), e);
             }
         }
         try {
             this.client.close();
         } catch (PulsarClientException e) {
-            logger.error(e.getMessage(), e);
+            logger.error("{}'s Pulsar handler close client exception",
+                    sinkContext.getSinkName(), e);
         }
-        logger.info("pulsar handler stopped");
+        logger.info("{}'s Pulsar handler stopped", sinkContext.getSinkName());
     }
 
     @Override
@@ -239,22 +243,25 @@ public class PulsarHandler implements MessageQueueHandler {
             Producer<byte[]> producer = this.producerMap.get(producerTopic);
             if (producer == null) {
                 try {
-                    logger.info("try to new a object for topic " + producerTopic);
+                    logger.info("{} try to new a object for topic {}",
+                            sinkContext.getSinkName(), producerTopic);
                     SecureRandom secureRandom = new SecureRandom(
                             (producerTopic + System.currentTimeMillis()).getBytes());
                     String producerName = producerTopic + "-" + secureRandom.nextLong();
                     producer = baseBuilder.clone().topic(producerTopic)
                             .producerName(producerName)
                             .create();
-                    logger.info("create new producer success:{}", producer.getProducerName());
+                    logger.info("{} create new producer success: {}",
+                            sinkContext.getSinkName(), producer.getProducerName());
                     Producer<byte[]> oldProducer = this.producerMap.putIfAbsent(producerTopic, producer);
                     if (oldProducer != null) {
+                        logger.info("{} found existed another producer, close {}",
+                                sinkContext.getSinkName(), producer.getProducerName());
                         producer.close();
-                        logger.info("close producer success:{}", producer.getProducerName());
                         producer = oldProducer;
                     }
                 } catch (Throwable ex) {
-                    logger.error("create new producer failed", ex);
+                    logger.warn("{} create new producer failed", sinkContext.getSinkName(), ex);
                 }
                 // create producer failed
                 if (producer == null) {
@@ -279,7 +286,8 @@ public class PulsarHandler implements MessageQueueHandler {
             sinkContext.processSendFail(profile, clusterName, profile.getUid(), 0,
                     DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
             if (logCounter.shouldPrint()) {
-                logger.error("Send Message to Pulsar failure", ex);
+                logger.error("{} send Message to Pulsar's {} failure",
+                        sinkContext.getSinkName(), producerTopic, ex);
             }
             return false;
         }
@@ -336,7 +344,8 @@ public class PulsarHandler implements MessageQueueHandler {
                 sinkContext.processSendFail(batchProfile, clusterName, producerTopic, sendTime,
                         DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
                 if (logCounter.shouldPrint()) {
-                    logger.error("Send ProfileV1 to Pulsar failure", ex);
+                    logger.warn("{} send ProfileV1 to Pulsar's {} failure",
+                            sinkContext.getSinkName(), producerTopic, ex);
                 }
             } else {
                 sinkContext.fileMetricIncSumStats(StatConstants.EVENT_SINK_SUCCESS);
@@ -367,7 +376,8 @@ public class PulsarHandler implements MessageQueueHandler {
                 sinkContext.processSendFail(simpleProfile, clusterName, producerTopic, sendTime,
                         DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
                 if (logCounter.shouldPrint()) {
-                    logger.error("Send SimpleProfileV0 to Pulsar failure", ex);
+                    logger.warn("{} send SimpleProfileV0 to Pulsar's {} failure",
+                            sinkContext.getSinkName(), producerTopic, ex);
                 }
             } else {
                 sinkContext.fileMetricAddSuccStats(simpleProfile, producerTopic, "");

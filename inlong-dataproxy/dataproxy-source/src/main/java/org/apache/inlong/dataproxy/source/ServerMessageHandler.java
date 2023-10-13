@@ -80,6 +80,10 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
     // log print count
     private static final LogCounter channelLogCounter = new LogCounter(20, 100000, 30 * 1000);
     // log print count
+    private static final LogCounter linkCounter = new LogCounter(10, 100000, 60 * 1000);
+    // log print count
+    private static final LogCounter illegalIPCounter = new LogCounter(10, 100000, 60 * 1000);
+    // log print count
     private static final LogCounter unWritableFullLogCounter = new LogCounter(10, 100000, 30 * 1000);
     // except log print count
     private static final LogCounter exceptLogCounter = new LogCounter(10, 50000, 20 * 1000);
@@ -212,7 +216,9 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                 source.fileMetricIncSumStats(StatConstants.EVENT_VISIT_ILLEGAL);
                 ctx.channel().disconnect();
                 ctx.channel().close();
-                logger.error(strRemoteIp + " is Illegal IP, so refuse it !");
+                if (illegalIPCounter.shouldPrint()) {
+                    logger.warn(strRemoteIp + " is Illegal IP, so refuse it !");
+                }
                 return;
             }
         }
@@ -221,9 +227,11 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
             source.fileMetricIncSumStats(StatConstants.EVENT_VISIT_OVERMAX);
             ctx.channel().disconnect();
             ctx.channel().close();
-            logger.warn("{} refuse to connect = {} , connections = {}, maxConnections = {}",
-                    source.getCachedSrcName(), ctx.channel(), source.getAllChannels().size(),
-                    source.getMaxConnections());
+            if (linkCounter.shouldPrint()) {
+                logger.warn("{} refuse to connect = {} , connections = {}, maxConnections = {}",
+                        source.getCachedSrcName(), ctx.channel(), source.getAllChannels().size(),
+                        source.getMaxConnections());
+            }
             return;
         }
         // add legal channel
@@ -339,7 +347,7 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                     responseV0Msg(channel, msgCodec, strBuff);
                 }
                 if (channelLogCounter.shouldPrint()) {
-                    logger.error("Error writing msg event to channel failure, attrs={}",
+                    logger.warn("Error writing msg event to channel failure, attrs={}",
                             msgCodec.getAttr(), ex);
                 }
             }
@@ -432,7 +440,9 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                 }
             }
         } catch (Throwable ex) {
-            logger.error("Process Controller Event error can't write event to channel.", ex);
+            if (channelLogCounter.shouldPrint()) {
+                logger.warn("Process Controller Event error can't write event to channel.", ex);
+            }
             events.forEach(event -> {
                 source.addMetric(false, event.getBody().length, event);
                 source.fileMetricIncSumStats(StatConstants.EVENT_MSG_V1_POST_DROPPED);
@@ -470,7 +480,9 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                 source.addMetric(true, event.getBody().length, event);
                 source.fileMetricIncSumStats(StatConstants.EVENT_MSG_V1_POST_SUCCESS);
             } catch (Throwable ex) {
-                logger.error("Process Controller Event error can't write event to channel.", ex);
+                if (channelLogCounter.shouldPrint()) {
+                    logger.warn("Process Controller Event error can't write event to channel.", ex);
+                }
                 source.addMetric(false, event.getBody().length, event);
                 this.responsePackage(ctx, ProxySdk.ResultCode.ERR_REJECT, packObject);
                 source.fileMetricIncSumStats(StatConstants.EVENT_MSG_V1_POST_DROPPED);
@@ -506,10 +518,10 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
                         StringUtils.isEmpty(msgObj.getErrMsg()) ? msgObj.getErrCode().getErrMsg() : msgObj.getErrMsg();
                 if (tdbankLogCounter.shouldPrint()) {
                     if (msgObj.isIndexMsg()) {
-                        logger.error("Error process index event, attrs={}, errMsg= {}",
+                        logger.warn("Error process index event, attrs={}, errMsg= {}",
                                 msgObj.getAttr(), errMsg);
                     } else {
-                        logger.error("Error process msg event, attrs={}, errMsg= {}",
+                        logger.warn("Error process msg event, attrs={}, errMsg= {}",
                                 msgObj.getAttr(), errMsg);
                     }
                 }

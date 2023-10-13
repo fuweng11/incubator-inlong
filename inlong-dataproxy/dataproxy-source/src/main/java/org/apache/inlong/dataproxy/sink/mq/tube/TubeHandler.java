@@ -97,16 +97,20 @@ public class TubeHandler implements MessageQueueHandler {
      */
     @Override
     public void start() {
+        logger.info("{}'s TubeMQ handler starting....", sinkContext.getSinkName());
         // create tube producer
         try {
             // prepare configuration
             TubeClientConfig conf = initTubeConfig();
-            logger.info("try to create producer:{}", conf.toJsonString());
+            logger.info("{} try to create {}'s producer:{}",
+                    sinkContext.getSinkName(), this.clusterName, conf.toJsonString());
             this.sessionFactory = new TubeMultiSessionFactory(conf);
             this.producer = sessionFactory.createProducer();
-            logger.info("create new producer success:{}", producer);
+            logger.info("{} created {}'s new producer success",
+                    sinkContext.getSinkName(), this.clusterName);
+            logger.info("{}'s TubeMQ handler started", sinkContext.getSinkName());
         } catch (Throwable e) {
-            logger.error(e.getMessage(), e);
+            logger.error("{} start TubeMQ handler exception", sinkContext.getSinkName(), e);
         }
     }
 
@@ -119,10 +123,11 @@ public class TubeHandler implements MessageQueueHandler {
         try {
             published = producer.publish(newTopicSet);
             this.topicSet.addAll(newTopicSet);
-            logger.info("Publish topics to {}, need publish are {}, published are {}",
-                    this.clusterName, newTopicSet, published);
+            logger.info("{} published topics to {}, need publish are {}, published are {}",
+                    sinkContext.getSinkName(), this.clusterName, newTopicSet, published);
         } catch (Throwable e) {
-            logger.warn("Publish topics to {} failure", this.clusterName, e);
+            logger.warn("{} publish topics to {} throw failure",
+                    sinkContext.getSinkName(), this.clusterName, e);
         }
     }
 
@@ -192,22 +197,24 @@ public class TubeHandler implements MessageQueueHandler {
      */
     @Override
     public void stop() {
+        logger.info("{}'s TubeMQ handler stopping.....", sinkContext.getSinkName());
         // producer
         if (this.producer != null) {
             try {
                 this.producer.shutdown();
             } catch (Throwable e) {
-                logger.error(e.getMessage(), e);
+                logger.error("{}'s TubeMQ handler shutdown producer failure",
+                        sinkContext.getSinkName(), e);
             }
         }
         if (this.sessionFactory != null) {
             try {
                 this.sessionFactory.shutdown();
             } catch (TubeClientException e) {
-                logger.error(e.getMessage(), e);
+                logger.error("{}'s TubeMQ handler shutdown sessionFactory failure", sinkContext.getSinkName(), e);
             }
         }
-        logger.info("tube handler stopped");
+        logger.info("{}'s TubeMQ handler stopped", sinkContext.getSinkName());
     }
 
     /**
@@ -268,7 +275,7 @@ public class TubeHandler implements MessageQueueHandler {
             sinkContext.processSendFail(profile, clusterName, profile.getUid(), 0,
                     DataProxyErrCode.SEND_REQUEST_TO_MQ_FAILURE, ex.getMessage());
             if (logCounter.shouldPrint()) {
-                logger.error("Send Message to Tube failure", ex);
+                logger.error("{} send message to TubeMQ failure", sinkContext.getSinkName(), ex);
             }
             return false;
         }
@@ -313,7 +320,8 @@ public class TubeHandler implements MessageQueueHandler {
                     sinkContext.processSendFail(batchProfile, clusterName, topic, sendTime,
                             DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
                     if (logCounter.shouldPrint()) {
-                        logger.error("Send ProfileV1 to tube failure {}", result.getErrMsg());
+                        logger.warn("{} send ProfileV1 to TubeMQ's {} failure {}",
+                                sinkContext.getSinkName(), topic, result.getErrMsg());
                     }
                 }
             }
@@ -324,7 +332,8 @@ public class TubeHandler implements MessageQueueHandler {
                 sinkContext.processSendFail(batchProfile, clusterName, topic, sendTime,
                         DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
                 if (logCounter.shouldPrint()) {
-                    logger.error("Send ProfileV1 to tube exception", ex);
+                    logger.warn("{} send ProfileV1 to TubeMQ's {} exception",
+                            sinkContext.getSinkName(), topic, ex);
                 }
             }
         };
@@ -363,7 +372,8 @@ public class TubeHandler implements MessageQueueHandler {
                     sinkContext.processSendFail(simpleProfile, clusterName, topic, sendTime,
                             DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
                     if (logCounter.shouldPrint()) {
-                        logger.error("Send SimpleProfileV0 to tube failure: {}", result.getErrMsg());
+                        logger.warn("{} send SimpleProfileV0 to TubeMQ's {} failure: {}",
+                                sinkContext.getSinkName(), topic, result.getErrMsg());
                     }
                 }
             }
@@ -374,7 +384,8 @@ public class TubeHandler implements MessageQueueHandler {
                 sinkContext.processSendFail(simpleProfile, clusterName, topic, sendTime,
                         DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
                 if (logCounter.shouldPrint()) {
-                    logger.error("Send Message to {} tube exception", topic, ex);
+                    logger.warn("{} send Message to TubeMQ's {} exception",
+                            sinkContext.getSinkName(), topic, ex);
                 }
             }
         };

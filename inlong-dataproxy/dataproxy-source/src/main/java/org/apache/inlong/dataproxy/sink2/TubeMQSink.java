@@ -52,9 +52,9 @@ public class TubeMQSink extends BaseSink {
 
     private static final Logger logger = LoggerFactory.getLogger(TubeMQSink.class);
     // log print count
-    private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
-    private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 30 * 1000);
-    private static final LogCounter logMsgOverSizePrinter = new LogCounter(10, 100000, 30 * 1000);
+    private static final LogCounter logCounter = new LogCounter(10, 150000, 60 * 1000);
+    private static final LogCounter logDupMsgPrinter = new LogCounter(10, 100000, 40 * 1000);
+    private static final LogCounter logMsgOverSizePrinter = new LogCounter(10, 100000, 40 * 1000);
 
     private static final String MAX_TOPICS_EACH_PRODUCER_HOLD_NAME = "max-topic-each-producer-hold";
     private static final int VAL_DEF_TOPICS_EACH_PRODUCER_HOLD_NAME = 200;
@@ -325,7 +325,8 @@ public class TubeMQSink extends BaseSink {
 
         @Override
         public void run() {
-            logger.info("task {} start send message logic.", Thread.currentThread().getName());
+            logger.info("{} start send message logic: {}",
+                    cachedSinkName, Thread.currentThread().getName());
             long sentCnt = 0;
             EventProfile profile = null;
             while (canSend) {
@@ -342,7 +343,8 @@ public class TubeMQSink extends BaseSink {
                         offerDispatchRecord(profile);
                     }
                     if (logCounter.shouldPrint()) {
-                        logger.error("{} send message failure", Thread.currentThread().getName(), e1);
+                        logger.warn("{} send message logic {} throw exception: ",
+                                cachedSinkName, Thread.currentThread().getName(), e1);
                     }
                     // sleep some time
                     try {
@@ -363,7 +365,8 @@ public class TubeMQSink extends BaseSink {
                     }
                 }
             }
-            logger.info("TubeMQSink task {} exits send message logic.", Thread.currentThread().getName());
+            logger.info("{} exits send message logic: {}",
+                    cachedSinkName, Thread.currentThread().getName());
         }
 
         private boolean sendMessage(EventProfile profile) {
@@ -449,7 +452,8 @@ public class TubeMQSink extends BaseSink {
                     }
                 }
                 if (logCounter.shouldPrint()) {
-                    logger.error("Send Message to Tube failure", ex);
+                    logger.error("{} send Message to TubeMQ's topic {} failure",
+                            cachedSinkName, topic, ex);
                 }
                 return false;
             }
@@ -486,11 +490,13 @@ public class TubeMQSink extends BaseSink {
                 if (result.getErrCode() == TErrCodeConstants.PARAMETER_MSG_OVER_MAX_LENGTH) {
                     this.cumFailureCnt.incrementAndGet();
                     if (logMsgOverSizePrinter.shouldPrint()) {
-                        logger.error("Message over max-length {}", topic, result.getErrMsg());
+                        logger.error("OVER-MAX-ERROR: Topic ({}) over max-length",
+                                topic, result.getErrMsg());
                     }
                 } else {
                     if (logCounter.shouldPrint()) {
-                        logger.error("Send message to tube failure: {}", result.getErrMsg());
+                        logger.warn("{} send message to tube {} failure: {}",
+                                cachedSinkName, topic, result.getErrMsg());
                     }
                 }
             }
@@ -501,7 +507,7 @@ public class TubeMQSink extends BaseSink {
             fileMetricAddExceptStats(profile, topic, "", topic);
             processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, ex.getMessage());
             if (logCounter.shouldPrint()) {
-                logger.error("Send message to {} tube exception", topic, ex);
+                logger.warn("{} send message to {} tube exception", cachedSinkName, topic, ex);
             }
         }
     }
