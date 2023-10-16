@@ -367,14 +367,18 @@ public class TubeHandler implements MessageQueueHandler {
                     sinkContext.getMqZoneSink().releaseAcquiredSizePermit(simpleProfile);
                     simpleProfile.ack();
                 } else {
-                    sinkContext.fileMetricAddFailStats(simpleProfile, topic,
-                            result.getPartition().getHost(), topic + "." + result.getErrCode());
-                    sinkContext.processSendFail(simpleProfile, clusterName, topic, sendTime,
-                            DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
                     if (logCounter.shouldPrint()) {
                         logger.warn("{} send SimpleProfileV0 to TubeMQ's {} failure: {}",
                                 sinkContext.getSinkName(), topic, result.getErrMsg());
                     }
+                    String brokerIP = "";
+                    if (result.getPartition() != null) {
+                        brokerIP = result.getPartition().getHost();
+                    }
+                    sinkContext.fileMetricAddFailStats(simpleProfile, topic,
+                            brokerIP, topic + "." + result.getErrCode());
+                    sinkContext.processSendFail(simpleProfile, clusterName, topic, sendTime,
+                            DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
                 }
             }
 

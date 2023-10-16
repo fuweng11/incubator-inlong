@@ -484,8 +484,12 @@ public class TubeMQSink extends BaseSink {
                 profile.ack();
                 profile.clear();
             } else {
+                String brokerIP = "";
+                if (result.getPartition() != null) {
+                    brokerIP = result.getPartition().getHost();
+                }
                 fileMetricAddFailStats(profile, topic,
-                        result.getPartition().getHost(), topic + "." + result.getErrCode());
+                        brokerIP, topic + "." + result.getErrCode());
                 processSendFail(profile, DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
                 if (result.getErrCode() == TErrCodeConstants.PARAMETER_MSG_OVER_MAX_LENGTH) {
                     this.cumFailureCnt.incrementAndGet();
