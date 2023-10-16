@@ -17,7 +17,16 @@
 
 package org.apache.inlong.manager.service.resource.sc.impl;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.inlong.manager.common.consts.SinkType;
+import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
@@ -34,13 +43,6 @@ import org.apache.inlong.manager.pojo.tencent.sc.Staff;
 import org.apache.inlong.manager.service.group.InlongGroupService;
 import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.resource.sc.ScService;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -60,15 +62,18 @@ import java.util.Objects;
 @Service
 public class ScServiceImpl implements ScService {
 
-    // private static final String LIST_USER_BY_NAME_API = "/openapi/sc/authz/staff/findStaff";
-    private static final String LIST_USER_BY_NAME_API = "/api/authz/common/listStaffs";
+    // private static final String LIST_USER_BY_NAME_API = "/api/authz/common/listStaffs";
+    private static final String LIST_USER_BY_NAME_API = "/openapi/sc/authz/staff/findStaff";
+
     // private static final String GET_DETAIL_PRODUCT_API = "/openapi/sc/authz/product/";
     // private static final String LIST_PRODUCT_BY_USER_API = "/openapi/sc/authz/product/listByUser";
     private static final String GET_DETAIL_PRODUCT_API = "/api/authz/product/detail/";
     private static final String LIST_ALL_PRODUCT_API = "/api/authz/product/listAllProducts";
+    private static final String LIST_PRODUCT_API = "/openapi/sc/authz/product";
     // private static final String GET_DETAIL_GROUP_API = "/openapi/sc/authz/group/";
-    // private static final String LIST_USER_GROUP_API = "/openapi/sc/authz/group/list/";
+    private static final String LIST_USER_GROUP_API = "/openapi/sc/authz/group/list/";
     private static final String GET_DETAIL_GROUP_API = "/api/authz/group/detail";
+    private static final String GET_GROUP_API = "/openapi/sc/authz/group/";
     private static final String LIST_ALL_GROUP_API = "/api/authz/group/listAllGroupsPage";
     private static final String CHECK_PERMISSIONS_API = "/openapi/sc/authz/ranger/checkPermissions";
     private static final String GRANT_AUTH = "/openapi/sc/authz/management/grant/AUTH_HIVE_RS";
@@ -126,13 +131,30 @@ public class ScServiceImpl implements ScService {
         Map<String, Object> params = Maps.newHashMap();
         params.put("pageNum", 1);
         params.put("pageSize", 20);
-        params.put("name", username);
-        List<Staff> list = scApiRequestService
-                .getCall(LIST_USER_BY_NAME_API, params, new ParameterizedTypeReference<Response<List<Staff>>>() {
-                });
+        params.put("enName", username);
+        try {
+            String rsp = HttpUtils.getRequest(restTemplate, scOpenApiUrl + LIST_USER_BY_NAME_API,
+                    params,
+                    scApiRequestService.getHeader(), new ParameterizedTypeReference<String>() {
+                    });
 
-        list = list.size() > 20 ? list.subList(0, 20) : list;
-        return list;
+            JsonObject jsonObject = GSON.fromJson(rsp, JsonObject.class);
+            List<Staff> list = new ArrayList<>();
+            if (Objects.equals(jsonObject.get("success").getAsString(), "true")) {
+                JsonObject scPage = jsonObject.get("data").getAsJsonObject();
+                JsonArray staffList = scPage.get("data").getAsJsonArray();
+                for (JsonElement staffInfo : staffList) {
+                    Staff staff = GSON.fromJson(staffInfo.getAsJsonObject().toString(), Staff.class);
+                    list.add(staff);
+                }
+            }
+            list = list.size() > 20 ? list.subList(0, 20) : list;
+            return list;
+        } catch (Exception e) {
+            log.error("list staff error ", e);
+            throw new BusinessException("list staff error");
+        }
+
     }
 
     @Override
@@ -156,16 +178,20 @@ public class ScServiceImpl implements ScService {
          * return scApiRequestService.getCall(LIST_PRODUCT_BY_USER_API, params, new
          * ParameterizedTypeReference<Response<List<Product>>>() { });
          */
-        Map<String, Object> params = new HashMap<>();
-        params.put("name", productName);
-        params.put("pageNum", 1);
-        params.put("pageSize", 20);
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("nameLike", productName);
+            params.put("pageNum", 1);
+            params.put("pageSize", 20);
 
-        ScPage<Product> result = scApiRequestService.getCall(LIST_ALL_PRODUCT_API, params,
-                new ParameterizedTypeReference<Response<ScPage<Product>>>() {
-                });
-
-        return result.getData();
+            Response<ScPage<Product>> rsp = HttpUtils.getRequest(restTemplate, scOpenApiUrl + LIST_PRODUCT_API, params,
+                    scApiRequestService.getHeader(), new ParameterizedTypeReference<Response<ScPage<Product>>>() {
+                    });
+            return scApiRequestService.checkAndGetResponseBody(rsp).getData();
+        } catch (Exception e) {
+            log.error("list product error ", e);
+            throw new BusinessException("list product error");
+        }
     }
 
     @Override
@@ -184,12 +210,11 @@ public class ScServiceImpl implements ScService {
          * scApiRequestService.getCall(GET_GROUP_DETAIL_API + groupName, param, new
          * ParameterizedTypeReference<Response<AppGroup>>() { });
          */
-        Map<String, Object> param = Maps.newHashMap();
-        param.put("clusterId", clusterId);
-        param.put("name", groupName);
-        return scApiRequestService.getCall(GET_DETAIL_GROUP_API, param,
-                new ParameterizedTypeReference<Response<AppGroup>>() {
-                });
+        Response<AppGroup> rsp =
+                HttpUtils.getRequest(restTemplate, scOpenApiUrl + GET_GROUP_API + groupName, null,
+                        scApiRequestService.getHeader(), new ParameterizedTypeReference<Response<AppGroup>>() {
+                        });
+        return scApiRequestService.checkAndGetResponseBody(rsp);
     }
 
     @Override
@@ -210,21 +235,30 @@ public class ScServiceImpl implements ScService {
         if (productId != null) {
             params = Maps.newHashMap();
             params.put("productId", productId);
-            params.put("userName", userName);
             params.put("pageNum", 1);
             params.put("pageSize", 100);
-            params.put("includeDetail", false);
         }
-        ScPage<AppGroup> resultPage = scApiRequestService.getCall(LIST_ALL_GROUP_API, params,
-                new ParameterizedTypeReference<Response<ScPage<AppGroup>>>() {
-                });
+        try {
+            String url = scOpenApiUrl + LIST_USER_GROUP_API + userName;
+            String rsp = HttpUtils.getRequest(restTemplate, url, params,
+                    scApiRequestService.getHeader(),
+                    new ParameterizedTypeReference<String>() {
+                    });
+            JsonObject jsonObject = GSON.fromJson(rsp, JsonObject.class);
+            List<String> result = new ArrayList<>();
+            if (Objects.equals(jsonObject.get("success").getAsString(), "true")) {
+                JsonArray appGroupList = jsonObject.get("data").getAsJsonArray();
+                for (JsonElement appGroup : appGroupList) {
+                    String appGroupStr = appGroup.getAsString();
+                    result.add(appGroupStr);
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("list app group by user error for username = {}", userName, e);
+            throw new BusinessException(String.format("list app group by user error for username = %s", userName));
+        }
 
-        List<AppGroup> groupList = resultPage.getData();
-        List<String> result = new ArrayList<>(groupList.size());
-        for (AppGroup appGroup : groupList) {
-            result.add(appGroup.getName());
-        }
-        return result;
     }
 
     @Override
