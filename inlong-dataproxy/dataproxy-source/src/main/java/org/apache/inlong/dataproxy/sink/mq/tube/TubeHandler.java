@@ -42,6 +42,7 @@ import com.tencent.tubemq.client.producer.MessageProducer;
 import com.tencent.tubemq.client.producer.MessageSentCallback;
 import com.tencent.tubemq.client.producer.MessageSentResult;
 import com.tencent.tubemq.corebase.Message;
+import com.tencent.tubemq.corebase.TErrCodeConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Context;
 import org.slf4j.Logger;
@@ -58,7 +59,8 @@ public class TubeHandler implements MessageQueueHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(TubeHandler.class);
     // log print count
-    private static final LogCounter logCounter = new LogCounter(10, 100000, 30 * 1000);
+    private static final LogCounter logCounter = new LogCounter(10, 150000, 60 * 1000);
+    private static final LogCounter logMsgOverSizePrinter = new LogCounter(10, 100000, 40 * 1000);
 
     private static String MASTER_HOST_PORT_LIST = "master-host-port-list";
 
@@ -319,9 +321,16 @@ public class TubeHandler implements MessageQueueHandler {
                             topic + "." + result.getErrCode());
                     sinkContext.processSendFail(batchProfile, clusterName, topic, sendTime,
                             DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
-                    if (logCounter.shouldPrint()) {
-                        logger.warn("{} send ProfileV1 to TubeMQ's {} failure {}",
-                                sinkContext.getSinkName(), topic, result.getErrMsg());
+                    if (result.getErrCode() == TErrCodeConstants.PARAMETER_MSG_OVER_MAX_LENGTH) {
+                        if (logMsgOverSizePrinter.shouldPrint()) {
+                            logger.error("OVER-MAX-ERROR: Topic ({}) over max-length",
+                                    topic, result.getErrMsg());
+                        }
+                    } else {
+                        if (logCounter.shouldPrint()) {
+                            logger.warn("{} send message to tube {} failure: {}",
+                                    sinkContext.getSinkName(), topic, result.getErrMsg());
+                        }
                     }
                 }
             }
@@ -367,10 +376,6 @@ public class TubeHandler implements MessageQueueHandler {
                     sinkContext.getMqZoneSink().releaseAcquiredSizePermit(simpleProfile);
                     simpleProfile.ack();
                 } else {
-                    if (logCounter.shouldPrint()) {
-                        logger.warn("{} send SimpleProfileV0 to TubeMQ's {} failure: {}",
-                                sinkContext.getSinkName(), topic, result.getErrMsg());
-                    }
                     String brokerIP = "";
                     if (result.getPartition() != null) {
                         brokerIP = result.getPartition().getHost();
@@ -379,6 +384,17 @@ public class TubeHandler implements MessageQueueHandler {
                             brokerIP, topic + "." + result.getErrCode());
                     sinkContext.processSendFail(simpleProfile, clusterName, topic, sendTime,
                             DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
+                    if (result.getErrCode() == TErrCodeConstants.PARAMETER_MSG_OVER_MAX_LENGTH) {
+                        if (logMsgOverSizePrinter.shouldPrint()) {
+                            logger.error("OVER-MAX-ERROR: Topic ({}) over max-length",
+                                    topic, result.getErrMsg());
+                        }
+                    } else {
+                        if (logCounter.shouldPrint()) {
+                            logger.warn("{} send message to tube {} failure: {}",
+                                    sinkContext.getSinkName(), topic, result.getErrMsg());
+                        }
+                    }
                 }
             }
 

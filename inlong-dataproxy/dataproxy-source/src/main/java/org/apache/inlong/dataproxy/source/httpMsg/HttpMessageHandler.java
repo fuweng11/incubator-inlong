@@ -338,11 +338,12 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
             }
             return;
         }
-        if (body.length() > source.getMaxMsgLength()) {
+        byte[] bytesBody = body.getBytes(HttpAttrConst.VAL_DEF_CHARSET);
+        if (bytesBody.length > source.getMaxMsgLength()) {
             source.fileMetricIncWithDetailStats(StatConstants.EVENT_MSG_BODY_OVERMAX, groupId);
             sendResponse(ctx, DataProxyErrCode.BODY_EXCEED_MAX_LEN.getErrCode(),
                     strBuff.append("Error msg, the ").append(HttpAttrConst.KEY_BODY)
-                            .append(" length(").append(body.length())
+                            .append(" length(").append(bytesBody.length)
                             .append(") is bigger than allowed length(")
                             .append(source.getMaxMsgLength()).append(")").toString(),
                     isCloseCon, callback);
@@ -371,7 +372,7 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
         if (StringUtils.isNotEmpty(mxValue)) {
             strBuff.append(AttributeConstants.SEPARATOR).append(mxValue);
         }
-        inLongMsg.addMsg(strBuff.toString(), body.getBytes(HttpAttrConst.VAL_DEF_CHARSET));
+        inLongMsg.addMsg(strBuff.toString(), bytesBody);
         byte[] inlongMsgData = inLongMsg.buildArray();
         long pkgTime = inLongMsg.getCreatetime();
         inLongMsg.reset();
