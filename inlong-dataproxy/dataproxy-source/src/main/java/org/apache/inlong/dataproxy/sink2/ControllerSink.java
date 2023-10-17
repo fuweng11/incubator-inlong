@@ -567,9 +567,8 @@ public class ControllerSink extends AbstractSink implements Configurable {
                     message.setAttrKeyVal(AttributeConstants.RCV_TIME,
                             profile.getProperties().get(AttributeConstants.RCV_TIME));
                     message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, msgEncodeTypeId);
-                    message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION, msgEncodeTypeId);
                     message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY, profile.getClientIp());
-                    message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY, profile.getDataProxyIp());
+                    message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_CMPT_BUS_KEY, profile.getDataProxyIp());
                     sendTime = System.currentTimeMillis();
                     message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(sendTime));
                     EventProfile newProfile = new EventProfile(profile, message);

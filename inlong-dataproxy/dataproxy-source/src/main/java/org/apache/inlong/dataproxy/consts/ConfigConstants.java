@@ -104,6 +104,7 @@ public class ConfigConstants {
     public static final String TOPIC_KEY = "topic";
     public static final String REMOTE_IP_KEY = "srcIp";
     public static final String DATAPROXY_IP_KEY = "dpIp";
+    public static final String DATAPROXY_IP_CMPT_BUS_KEY = "tdbusip";
     public static final String MSG_ENCODE_VER = "msgEnType";
     public static final String MSG_SEND_TIME = "st";
     public static final String MSG_SEND_RETRY_CNT = "retries";

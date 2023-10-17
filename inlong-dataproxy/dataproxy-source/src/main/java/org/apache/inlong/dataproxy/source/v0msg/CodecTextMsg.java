@@ -238,7 +238,6 @@ public class CodecTextMsg extends AbsV0MsgCodec {
         }
         InLongMsg inLongMsg = InLongMsg.newInLongMsg(source.isCompressed(), inLongMsgVer);
         if (MsgType.MSG_MULTI_BODY.equals(MsgType.valueOf(msgType))) {
-            int calcCnt = 0;
             int singleMsgLen;
             ByteBuffer bodyBuffer = ByteBuffer.wrap(bodyData);
             attrMap.put(AttributeConstants.MESSAGE_COUNT, String.valueOf(1));
@@ -250,10 +249,8 @@ public class CodecTextMsg extends AbsV0MsgCodec {
                 byte[] record = new byte[singleMsgLen];
                 bodyBuffer.get(record);
                 inLongMsg.addMsg(mapJoiner.join(attrMap), record);
-                calcCnt++;
             }
-            attrMap.put(AttributeConstants.MESSAGE_COUNT, String.valueOf(calcCnt));
-            this.msgCount = calcCnt;
+            attrMap.put(AttributeConstants.MESSAGE_COUNT, String.valueOf(this.msgCount));
         } else if (MsgType.MSG_MULTI_BODY_ATTR.equals(MsgType.valueOf(msgType))) {
             attrMap.put(AttributeConstants.MESSAGE_COUNT, String.valueOf(1));
             inLongMsg.addMsg(mapJoiner.join(attrMap), bodyData);

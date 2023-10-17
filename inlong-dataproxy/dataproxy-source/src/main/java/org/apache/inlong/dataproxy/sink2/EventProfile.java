@@ -210,10 +210,8 @@ public class EventProfile {
         message.putSystemHeader(getStreamId(), DateTimeUtils.ms2yyyyMMddHHmm(dataTimeL));
         message.setAttrKeyVal(AttributeConstants.RCV_TIME, event.getHeaders().get(AttributeConstants.RCV_TIME));
         message.setAttrKeyVal(ConfigConstants.MSG_ENCODE_VER, event.getHeaders().get(ConfigConstants.MSG_ENCODE_VER));
-        message.setAttrKeyVal(EventConstants.HEADER_KEY_VERSION,
-                event.getHeaders().get(EventConstants.HEADER_KEY_VERSION));
         message.setAttrKeyVal(ConfigConstants.REMOTE_IP_KEY, this.getClientIp());
-        message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_KEY,
+        message.setAttrKeyVal(ConfigConstants.DATAPROXY_IP_CMPT_BUS_KEY,
                 event.getHeaders().get(ConfigConstants.DATAPROXY_IP_KEY));
         dataTimeL = System.currentTimeMillis();
         message.setAttrKeyVal(ConfigConstants.MSG_SEND_TIME, String.valueOf(dataTimeL));
@@ -346,9 +344,8 @@ public class EventProfile {
         result.put(AttributeConstants.RCV_TIME, event.getHeaders().get(AttributeConstants.RCV_TIME));
         result.put(ConfigConstants.MSG_SEND_TIME, String.valueOf(sendTime));
         result.put(ConfigConstants.MSG_ENCODE_VER, event.getHeaders().get(ConfigConstants.MSG_ENCODE_VER));
-        result.put(EventConstants.HEADER_KEY_VERSION, event.getHeaders().get(EventConstants.HEADER_KEY_VERSION));
         result.put(ConfigConstants.REMOTE_IP_KEY, this.clientIp);
-        result.put(ConfigConstants.DATAPROXY_IP_KEY, this.dataProxyIp);
+        result.put(ConfigConstants.DATAPROXY_IP_CMPT_BUS_KEY, this.dataProxyIp);
         if (this.retries > 0) {
             result.put(ConfigConstants.MSG_SEND_RETRY_CNT, String.valueOf(this.retries));
         }
