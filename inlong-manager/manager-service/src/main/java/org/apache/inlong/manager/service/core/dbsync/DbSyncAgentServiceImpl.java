@@ -17,6 +17,11 @@
 
 package org.apache.inlong.manager.service.core.dbsync;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.common.constant.MQType;
 import org.apache.inlong.common.pojo.agent.dbsync.DBServerInfo;
 import org.apache.inlong.common.pojo.agent.dbsync.DbSyncClusterInfo;
@@ -72,6 +77,7 @@ import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
 import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSource;
 import org.apache.inlong.manager.pojo.source.tencent.ha.HaBinlogSourceDTO;
+import org.apache.inlong.manager.pojo.stream.StreamField;
 import org.apache.inlong.manager.pojo.user.LoginUserUtils;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.cluster.InlongClusterService;
@@ -80,12 +86,6 @@ import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.source.SourceOperatorFactory;
 import org.apache.inlong.manager.service.source.StreamSourceOperator;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
-
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,7 +94,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -977,6 +976,14 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             fieldChangeLogEntity.setInlongStreamId(streamEntity.getInlongStreamId());
             fieldChangeLogEntity.setRawSql(fieldsRequest.getRawSql());
             try {
+                List<StreamField> tobeAddFields = fieldsRequest.getFields();
+                for (StreamField field : tobeAddFields) {
+                    String fieldName = field.getFieldName();
+                    if (StringUtils.isNotBlank(fieldName) && fieldName.startsWith("`")) {
+                        fieldName = fieldName.replaceAll("`", "");
+                        field.setFieldName(fieldName);
+                    }
+                }
                 streamService.addFieldForStream(fieldsRequest, groupEntity, streamEntity);
                 sinkService.addFieldForSink(fieldsRequest, groupEntity, streamEntity);
                 LOGGER.info("success to add fields for dbsync, groupId={} streamId={}", groupId, streamId);
