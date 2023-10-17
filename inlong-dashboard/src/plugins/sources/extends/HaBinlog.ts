@@ -42,7 +42,7 @@ export default class PulsarSource
       options: {
         requestTrigger: ['onOpen', 'onSearch'],
         requestService: keyword => ({
-          url: '/cluster/list',
+          url: '/cluster/listByTenantRole',
           method: 'POST',
           data: {
             keyword,
