@@ -26,7 +26,6 @@ import org.apache.inlong.dataproxy.consts.ConfigConstants;
 import org.apache.inlong.dataproxy.sink.mq.SimplePackProfile;
 import org.apache.inlong.dataproxy.source.ServerMessageHandler;
 import org.apache.inlong.dataproxy.utils.DateTimeUtils;
-import org.apache.inlong.sdk.commons.protocol.EventConstants;
 
 import com.tencent.tubemq.corebase.Message;
 import io.netty.buffer.ByteBuf;

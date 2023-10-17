@@ -33,7 +33,6 @@ import org.apache.inlong.dataproxy.metrics.stats.MonitorStats;
 import org.apache.inlong.dataproxy.metrics.stats.MonitorSumIndex;
 import org.apache.inlong.dataproxy.utils.BufferQueue;
 import org.apache.inlong.dataproxy.utils.DateTimeUtils;
-import org.apache.inlong.sdk.commons.protocol.EventConstants;
 
 import com.google.common.base.Preconditions;
 import com.tencent.tdbank.ac.controller.ControllerException;
