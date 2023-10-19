@@ -120,7 +120,6 @@ public class TofAuthenticationToken implements ProxyUserAuthenticationToken {
         return taiIdentity;
     }
 
-
     @Override
     public String toString() {
         return "TofAuthenticationToken: userId = " + userId

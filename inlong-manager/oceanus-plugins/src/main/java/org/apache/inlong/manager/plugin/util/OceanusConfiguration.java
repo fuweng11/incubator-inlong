@@ -28,7 +28,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
-
 /**
  * Configuration file for Flink, only one instance in the process.
  * Basically it used properties file to store.

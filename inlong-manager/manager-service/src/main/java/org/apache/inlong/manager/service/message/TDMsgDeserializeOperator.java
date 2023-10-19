@@ -18,42 +18,24 @@
 package org.apache.inlong.manager.service.message;
 
 import org.apache.inlong.common.enums.MessageWrapType;
-import org.apache.inlong.common.msg.AttributeConstants;
 import org.apache.inlong.manager.common.consts.TencentConstants;
-import org.apache.inlong.manager.pojo.consume.BriefMQMessage;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 
-import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgBinlogDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgSeaCubeDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
+import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 @Slf4j
 @Service
-public class RawMsgDeserializeOperator implements DeserializeOperator {
+public class TDMsgDeserializeOperator implements DeserializeOperator {
 
     @Override
     public boolean accept(MessageWrapType type) {
-        return MessageWrapType.RAW.equals(type);
-    }
-
-    @Override
-    public List<BriefMQMessage> decodeMsg(InlongStreamInfo streamInfo,
-            byte[] msgBytes, Map<String, String> headers, int index) {
-        String groupId = headers.get(AttributeConstants.GROUP_ID);
-        String streamId = headers.get(AttributeConstants.STREAM_ID);
-        long msgTime = Long.parseLong(headers.getOrDefault(MSG_TIME_KEY, "0"));
-        return Collections.singletonList(new BriefMQMessage(index, groupId, streamId, msgTime,
-                headers.get(CLIENT_IP), new String(msgBytes, Charset.forName(streamInfo.getDataEncoding()))));
+        return MessageWrapType.TDMSG1.equals(type);
     }
 
     @Override
@@ -76,21 +58,29 @@ public class RawMsgDeserializeOperator implements DeserializeOperator {
                 deserializationInfo = new InlongMsgBinlogDeserializationInfo(streamId);
                 break;
             case TencentConstants.DATA_TYPE_CSV:
-                // need to delete the first separator? default is false
-                deserializationInfo = new CsvDeserializationInfo(separator, escape);
+                deserializationInfo = new TDMsgCsvDeserializationInfo(streamId, separator, escape, false);
                 break;
             case TencentConstants.DATA_TYPE_KV:
-                deserializationInfo = new KvDeserializationInfo(separator, escape);
-                break;
-            case TencentConstants.DATA_TYPE_SEA_CUBE:
-                deserializationInfo = new InlongMsgSeaCubeDeserializationInfo(streamId);
+                // KV pair separator, which must be the field separator in the data flow
+                // TODO should get from the user defined
+                char kvSeparator = '&';
+                if (StringUtils.isNotBlank(streamInfo.getKvSeparator())) {
+                    kvSeparator = (char) Integer.parseInt(streamInfo.getKvSeparator());
+                }
+                // row separator, which must be a field separator in the data flow
+                Character lineSeparator = null;
+                if (StringUtils.isNotBlank(streamInfo.getLineSeparator())) {
+                    lineSeparator = (char) Integer.parseInt(streamInfo.getLineSeparator());
+                }
+                // TODO The Sort module need to support
+                deserializationInfo = new TDMsgKvDeserializationInfo(streamId, separator, kvSeparator,
+                        escape, lineSeparator);
                 break;
             default:
                 throw new IllegalArgumentException(
-                        String.format("current type unsupported data type for warpType=%s, dataType=%s ", wrapType,
-                                dataType));
+                        String.format("current type unsupported data type for warpType=%s, dataType=%s ",
+                                wrapType, dataType));
         }
         return deserializationInfo;
     }
-
 }

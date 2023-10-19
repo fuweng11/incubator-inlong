@@ -48,28 +48,21 @@ import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
 import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.cluster.InlongClusterOperatorFactory;
+import org.apache.inlong.manager.service.message.DeserializeOperator;
+import org.apache.inlong.manager.service.message.DeserializeOperatorFactory;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 
 import com.tencent.flink.formats.common.FormatInfo;
 import com.tencent.flink.formats.common.StringFormatInfo;
 import com.tencent.flink.formats.common.TimestampFormatInfo;
 import com.tencent.oceanus.etl.ZkTools;
-import com.tencent.oceanus.etl.configuration.Constants;
 import com.tencent.oceanus.etl.configuration.Constants.CompressionType;
 import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo;
 import com.tencent.oceanus.etl.protocol.BuiltInFieldInfo.BuiltInField;
 import com.tencent.oceanus.etl.protocol.FieldInfo;
 import com.tencent.oceanus.etl.protocol.KafkaClusterInfo;
 import com.tencent.oceanus.etl.protocol.PulsarClusterInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.CsvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgBinlogDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgCsvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgPbV1DeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.InlongMsgSeaCubeDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.KvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgCsvDeserializationInfo;
-import com.tencent.oceanus.etl.protocol.deserialization.TDMsgKvDeserializationInfo;
 import com.tencent.oceanus.etl.protocol.source.KafkaSourceInfo;
 import com.tencent.oceanus.etl.protocol.source.PulsarSourceInfo;
 import com.tencent.oceanus.etl.protocol.source.SourceInfo;
@@ -145,6 +138,8 @@ public class AbstractInnerSortConfigService {
     private InlongStreamEntityMapper streamEntityMapper;
     @Autowired
     private InlongClusterOperatorFactory clusterOperatorFactory;
+    @Autowired
+    public DeserializeOperatorFactory deserializeOperatorFactory;
 
     public String getZkRoot(String mqType, ZkClusterDTO zkClusterDTO) {
         Preconditions.expectNotNull(mqType, "mq type cannot be null");
@@ -228,77 +223,9 @@ public class AbstractInnerSortConfigService {
         InlongStreamInfo streamInfo = CommonBeanUtils.copyProperties(streamEntity, InlongStreamInfo::new);
         // Processing extParams
         unpackExtParams(streamEntity.getExtParams(), streamInfo);
-
-        String dataType = streamInfo.getDataType();
-        Character escape = null;
-        DeserializationInfo deserializationInfo;
-        if (streamInfo.getDataEscapeChar() != null) {
-            escape = streamInfo.getDataEscapeChar().charAt(0);
-        }
-
-        String streamId = streamInfo.getInlongStreamId();
-        char separator = 0;
-        if (StringUtils.isNotBlank(streamInfo.getDataSeparator())) {
-            separator = (char) Integer.parseInt(streamInfo.getDataSeparator());
-        }
-        String wrapType = streamInfo.getWrapType();
-        switch (dataType) {
-            case TencentConstants.DATA_TYPE_BINLOG:
-                deserializationInfo = new InlongMsgBinlogDeserializationInfo(streamId);
-                break;
-            case TencentConstants.DATA_TYPE_CSV:
-                // need to delete the first separator? default is false
-                if (Objects.equals(wrapType, MessageWrapType.RAW.getName())) {
-                    deserializationInfo = new CsvDeserializationInfo(separator, escape);
-                } else {
-                    deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
-                }
-                break;
-            case TencentConstants.DATA_TYPE_TDMSG_CSV:
-                deserializationInfo = new TDMsgCsvDeserializationInfo(streamId, separator, escape, false);
-                break;
-            case TencentConstants.DATA_TYPE_RAW_CSV:
-                if (Objects.equals(wrapType, MessageWrapType.RAW.getName())) {
-                    deserializationInfo = new CsvDeserializationInfo(separator, escape);
-                } else {
-                    deserializationInfo = new InlongMsgCsvDeserializationInfo(streamId, separator, escape, false);
-                }
-                break;
-            case TencentConstants.DATA_TYPE_KV:
-                // KV pair separator, which must be the field separator in the data flow
-                // TODO should get from the user defined
-                char kvSeparator = '&';
-                if (StringUtils.isNotBlank(streamInfo.getKvSeparator())) {
-                    kvSeparator = (char) Integer.parseInt(streamInfo.getKvSeparator());
-                }
-                // row separator, which must be a field separator in the data flow
-                Character lineSeparator = null;
-                if (StringUtils.isNotBlank(streamInfo.getLineSeparator())) {
-                    lineSeparator = (char) Integer.parseInt(streamInfo.getLineSeparator());
-                }
-                // TODO The Sort module need to support
-                deserializationInfo = new TDMsgKvDeserializationInfo(streamId, separator, kvSeparator,
-                        escape, lineSeparator);
-                break;
-            case TencentConstants.DATA_TYPE_RAW_KV:
-                deserializationInfo = new KvDeserializationInfo(separator, escape);
-                break;
-            case TencentConstants.DATA_TYPE_INLONG_MSG_V1:
-                DeserializationInfo inner = new CsvDeserializationInfo(separator, escape);
-                deserializationInfo = new InlongMsgPbV1DeserializationInfo(Constants.CompressionType.GZIP, inner);
-                break;
-            case TencentConstants.DATA_TYPE_INLONG_MSG_V1_KV:
-                DeserializationInfo innerKv = new KvDeserializationInfo(separator, '=', escape);
-                deserializationInfo = new InlongMsgPbV1DeserializationInfo(Constants.CompressionType.GZIP, innerKv);
-                break;
-            case TencentConstants.DATA_TYPE_SEA_CUBE:
-                deserializationInfo = new InlongMsgSeaCubeDeserializationInfo(streamId);
-                break;
-            default:
-                throw new IllegalArgumentException("unsupported data type: " + dataType);
-        }
-
-        return deserializationInfo;
+        DeserializeOperator deserializeOperator = deserializeOperatorFactory.getInstance(
+                MessageWrapType.forType(streamInfo.getWrapType()));
+        return deserializeOperator.getDeserializationInfo(streamInfo);
     }
 
     public void deleteSortConfig(StreamSinkEntity sink) throws Exception {

@@ -18,8 +18,11 @@
 package org.apache.inlong.manager.service.message;
 
 import org.apache.inlong.common.enums.MessageWrapType;
+import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.pojo.consume.BriefMQMessage;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
+
+import com.tencent.oceanus.etl.protocol.deserialization.DeserializationInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -56,6 +59,10 @@ public interface DeserializeOperator {
     default List<BriefMQMessage> decodeMsg(InlongStreamInfo streamInfo,
             byte[] msgBytes, Map<String, String> headers, int index) throws Exception {
         return null;
+    }
+
+    default DeserializationInfo getDeserializationInfo(InlongStreamInfo streamInfo) {
+        throw new BusinessException("current type not support DeserializationInfo for " + streamInfo.getDataType());
     }
 
 }

@@ -17,14 +17,15 @@
 
 package org.apache.inlong.manager.plugin.auth.web;
 
+import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
+import org.apache.inlong.manager.service.tencentauth.SmartGateService;
+import org.apache.inlong.manager.service.user.UserService;
+
 import com.google.common.hash.Hashing;
 import com.nimbusds.jose.JWEDecrypter;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.DirectDecrypter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.inlong.manager.plugin.common.enums.AuthenticationType;
-import org.apache.inlong.manager.service.tencentauth.SmartGateService;
-import org.apache.inlong.manager.service.user.UserService;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 
@@ -47,7 +48,8 @@ public class TofAuthenticator extends BaseProxyAuthenticator {
 
     private final boolean identitySafeMode;
 
-    public TofAuthenticator(UserService userService, SmartGateService smartGateService, String appToken, boolean identitySafeMode) {
+    public TofAuthenticator(UserService userService, SmartGateService smartGateService, String appToken,
+            boolean identitySafeMode) {
         super(userService, smartGateService);
         this.appToken = appToken;
         this.identitySafeMode = identitySafeMode;
@@ -106,8 +108,8 @@ public class TofAuthenticator extends BaseProxyAuthenticator {
             throw new AuthenticationException("Tof token expired.");
         }
 
-        String computedSignature = identitySafeMode ?
-                computeSignatureForSafeMode(token.getTimestamp(), token.getRioSeq(),
+        String computedSignature = identitySafeMode
+                ? computeSignatureForSafeMode(token.getTimestamp(), token.getRioSeq(),
                         "", "", "")
                 : computeSignature(token.getTimestamp(), token.getRioSeq(),
                         token.getUserId(), token.getUsername(), token.getExtData());

@@ -58,7 +58,7 @@ public class PluginRestTemplateConfig {
      */
     private int defaultMaxPerRoute = 2000;
 
-    private int validateAfterInactivity =5000;
+    private int validateAfterInactivity = 5000;
 
     /**
      * Time to connect to the server (successful handshake), timeout throws connect timeout

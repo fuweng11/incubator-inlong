@@ -138,8 +138,8 @@ public class SortFieldFormatUtils {
                 formatInfo = StringUtils.isNotBlank(format) ? new TimeFormatInfo(format) : new TimeFormatInfo();
                 break;
             case "timestamp":
-                formatInfo = StringUtils.isNotBlank(format) ?
-                        new TimestampFormatInfo(format) : new TimestampFormatInfo();
+                formatInfo =
+                        StringUtils.isNotBlank(format) ? new TimestampFormatInfo(format) : new TimestampFormatInfo();
                 break;
             case "binary":
             case "fixed":

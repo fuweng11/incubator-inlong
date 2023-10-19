@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.plugin.oceanus;
 
-
 import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.plugin.config.PluginRestTemplateConfig;
 import org.apache.inlong.manager.plugin.oceanus.dto.JobBaseInfo;
@@ -56,7 +55,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-
 @Slf4j
 @Service
 public class OceanusService {
@@ -67,15 +65,16 @@ public class OceanusService {
     private static final String CREATE_JOB_BASE_API = "/api/v2/projects/%s/jobs";
     private static final String QUERY_JOB_INFO_API = "/api/v2/projects/%s/jobs/%s/manifest";
     private static final String QUERY_JOB_STATUS_API = "/api/v2/projects/%s/jobs/%s/execution";
-    private static final String CONFIG_JOB_JAR_API = "/api/v2/projects/%s/jobs/%s/program?newVersion=false&forceUpdate=false";
-    private static final String CONFIG_JOB_JAR_VERSION_API = "/api/v2/projects/%s/jobs/%s/manifest?apply=true&newVersion=%s";
+    private static final String CONFIG_JOB_JAR_API =
+            "/api/v2/projects/%s/jobs/%s/program?newVersion=false&forceUpdate=false";
+    private static final String CONFIG_JOB_JAR_VERSION_API =
+            "/api/v2/projects/%s/jobs/%s/manifest?apply=true&newVersion=%s";
     private static final String CONFIG_JOB_RESOURCE_API = "/api/v2/projects/%s/jobs/%s/resource";
     private static final String CONFIG_JOB_ALARM_API = "/api/v2/projects/%s/jobs/%s/alarmConfig";
 
     private static final String START_JOB_API = "/api/v2/projects/%s/jobs/%s/start";
     private static final String STOP_JOB_API = "/api/v2/projects/%s/jobs/%s/stop";
     private static final String DELETE_JOB_API = " /api/v2/projects/%s/jobs/%s";
-
 
     private static final String UPLOAD_FILE_API = "/api/v2/projects/%s/files";
     private static final String ADD_FILE_VERSION_API = "/api/v2/projects/%s/files/%s/versions";
@@ -120,7 +119,8 @@ public class OceanusService {
         PluginRestTemplateConfig restTemplateConfig = new PluginRestTemplateConfig();
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         try {
-            String createJobUrl = oceanusConfig.getOpenApi() + String.format(CREATE_JOB_BASE_API, jobInfo.getProjectId());
+            String createJobUrl =
+                    oceanusConfig.getOpenApi() + String.format(CREATE_JOB_BASE_API, jobInfo.getProjectId());
             Map<String, Object> params = new HashMap<>();
             params.put("name", jobInfo.getName());
             params.put("type", "JAR");
@@ -144,7 +144,8 @@ public class OceanusService {
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         try {
             String configJobUrl =
-                    oceanusConfig.getOpenApi() + String.format(CONFIG_JOB_JAR_VERSION_API, jobInfo.getProjectId(), jobInfo.getJobId(), true);
+                    oceanusConfig.getOpenApi() + String.format(CONFIG_JOB_JAR_VERSION_API, jobInfo.getProjectId(),
+                            jobInfo.getJobId(), true);
             Map<String, Object> params = new HashMap<>();
 
             // program
@@ -233,7 +234,8 @@ public class OceanusService {
         PluginRestTemplateConfig restTemplateConfig = new PluginRestTemplateConfig();
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         try {
-            String configResourceUrl = oceanusConfig.getOpenApi() + String.format(START_JOB_API, jobInfo.getProjectId(), jobInfo.getJobId());
+            String configResourceUrl = oceanusConfig.getOpenApi()
+                    + String.format(START_JOB_API, jobInfo.getProjectId(), jobInfo.getJobId());
 
             String rsp = HttpUtils.putRequest(restTemplate, configResourceUrl, new HashMap<>(),
                     getHeader(jobInfo.getOperator()), new ParameterizedTypeReference<String>() {
@@ -249,7 +251,8 @@ public class OceanusService {
         PluginRestTemplateConfig restTemplateConfig = new PluginRestTemplateConfig();
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         try {
-            String stopJobUrl = oceanusConfig.getOpenApi() + String.format(STOP_JOB_API, jobInfo.getProjectId(), jobInfo.getJobId());
+            String stopJobUrl = oceanusConfig.getOpenApi()
+                    + String.format(STOP_JOB_API, jobInfo.getProjectId(), jobInfo.getJobId());
 
             String rsp = HttpUtils.putRequest(restTemplate, stopJobUrl, new HashMap<>(),
                     getHeader(jobInfo.getOperator()), new ParameterizedTypeReference<String>() {
@@ -267,7 +270,8 @@ public class OceanusService {
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         try {
             String deleteJobUrl =
-                    oceanusConfig.getOpenApi() + String.format(DELETE_JOB_API, jobInfo.getProjectId(), jobInfo.getJobId());
+                    oceanusConfig.getOpenApi()
+                            + String.format(DELETE_JOB_API, jobInfo.getProjectId(), jobInfo.getJobId());
 
             String rsp = HttpUtils.request(restTemplate, deleteJobUrl, HttpMethod.DELETE, new HashMap<>(),
                     getHeader(jobInfo.getOperator()),
@@ -285,7 +289,8 @@ public class OceanusService {
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         try {
             String createJobUrl =
-                    oceanusConfig.getOpenApi() + String.format(QUERY_JOB_INFO_API, jobInfo.getProjectId(), jobInfo.getJobId());
+                    oceanusConfig.getOpenApi()
+                            + String.format(QUERY_JOB_INFO_API, jobInfo.getProjectId(), jobInfo.getJobId());
             Map<String, Object> params = new HashMap<>();
             params.put("name", jobInfo.getName());
             params.put("type", "JAR");
@@ -308,7 +313,8 @@ public class OceanusService {
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         JobDetailInfo rsp = new JobDetailInfo();
         try {
-            String createJobUrl = oceanusConfig.getOpenApi() + String.format(QUERY_JOB_STATUS_API, jobInfo.getProjectId(), jobInfo.getJobId());
+            String createJobUrl = oceanusConfig.getOpenApi()
+                    + String.format(QUERY_JOB_STATUS_API, jobInfo.getProjectId(), jobInfo.getJobId());
             rsp = HttpUtils.getRequest(restTemplate, createJobUrl, new HashMap<>(),
                     getHeader(jobInfo.getOperator()), new ParameterizedTypeReference<JobDetailInfo>() {
                     });
@@ -371,7 +377,8 @@ public class OceanusService {
         PluginRestTemplateConfig restTemplateConfig = new PluginRestTemplateConfig();
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         try {
-            String updateFileUrl = oceanusConfig.getOpenApi() + String.format(ADD_FILE_VERSION_API, jobInfo.getProjectId(), jobInfo.getFileId());
+            String updateFileUrl = oceanusConfig.getOpenApi()
+                    + String.format(ADD_FILE_VERSION_API, jobInfo.getProjectId(), jobInfo.getFileId());
             HashMap<String, Object> params = new HashMap<>();
             String path = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
             path = path.substring(0, path.lastIndexOf(File.separator));
@@ -389,7 +396,7 @@ public class OceanusService {
             URI uri = URI.create(updateFileUrl);
             ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.POST, entity,
                     String.class);
-            String  rsp = response.getBody();
+            String rsp = response.getBody();
             log.info("update file rsp=：{}", rsp);
             return 1L;
         } catch (Exception e) {
@@ -402,7 +409,8 @@ public class OceanusService {
         PluginRestTemplateConfig restTemplateConfig = new PluginRestTemplateConfig();
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         try {
-            String queryFileUrl = oceanusConfig.getOpenApi() + String.format(QUERY_FILE_API, jobInfo.getProjectId(), fileId);
+            String queryFileUrl =
+                    oceanusConfig.getOpenApi() + String.format(QUERY_FILE_API, jobInfo.getProjectId(), fileId);
             log.info("query file params ={}", queryFileUrl);
             OceanusFile rsp = HttpUtils.getRequest(restTemplate, queryFileUrl, new HashMap<>(),
                     getHeader(jobInfo.getOperator()), new ParameterizedTypeReference<OceanusFile>() {
@@ -445,7 +453,7 @@ public class OceanusService {
             for (JsonElement datum : fileList) {
                 JsonObject record = datum.getAsJsonObject();
                 file = GSON.fromJson(record.toString(), OceanusFile.class);
-                if (Objects.equals(file.getName(), fileName)){
+                if (Objects.equals(file.getName(), fileName)) {
                     break;
                 }
             }
@@ -461,7 +469,8 @@ public class OceanusService {
         PluginRestTemplateConfig restTemplateConfig = new PluginRestTemplateConfig();
         RestTemplate restTemplate = restTemplateConfig.restTemplate();
         try {
-            String queryFileUrl = oceanusConfig.getOpenApi() + String.format(UPDATE_FILE_VERSION_API, jobInfo.getProjectId(), fileId);
+            String queryFileUrl =
+                    oceanusConfig.getOpenApi() + String.format(UPDATE_FILE_VERSION_API, jobInfo.getProjectId(), fileId);
             HashMap<String, String> params = new HashMap<>();
             params.put("version", String.valueOf(version));
             log.info("update file version params={}", params);

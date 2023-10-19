@@ -27,7 +27,6 @@ import org.apache.inlong.manager.workflow.event.task.SortOperateListener;
 
 import lombok.extern.slf4j.Slf4j;
 
-
 /**
  * Listener of delete Sort task or config.
  */

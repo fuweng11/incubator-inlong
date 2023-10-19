@@ -30,8 +30,8 @@ import org.apache.inlong.manager.pojo.node.pulsar.PulsarDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.pulsar.PulsarSinkDTO;
 import org.apache.inlong.manager.service.node.DataNodeOperateHelper;
-
 import org.apache.inlong.manager.service.sink.StreamSinkService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +107,7 @@ public class InnerPulsarOperator {
         PulsarSinkDTO pulsarSinkDTO = JsonUtils.parseObject(sinkInfo.getExtParams(), PulsarSinkDTO.class);
         Map<String, Object> params = buildRequestBaseParams(pulsarDataNodeDTO, pulsarSinkDTO);
         String pulsarManagerUrl = innerPulsarResourceConfig.getPulsarManagerUrl();
-        postRequest(sinkInfo, params, pulsarManagerUrl+CREATE_TENANT_PATH);
+        postRequest(sinkInfo, params, pulsarManagerUrl + CREATE_TENANT_PATH);
     }
 
     private void createPulsarNameSpace(SinkInfo sinkInfo, PulsarDataNodeDTO pulsarDataNodeDTO) {
@@ -126,7 +126,8 @@ public class InnerPulsarOperator {
         int otherErrorCode = 2;
         LOGGER.debug("request pulsar manager result {}", pulsarManagerResult);
         if (!pulsarManagerResult.isSuccess() && pulsarManagerResult.getData() == otherErrorCode) {
-            String errorMsg = "create topic by pulsar manager error for groupId = %s, streamId = %s, sinkId = %s, errorMsg = %s";
+            String errorMsg =
+                    "create topic by pulsar manager error for groupId = %s, streamId = %s, sinkId = %s, errorMsg = %s";
             String errorInfo = String.format(errorMsg, sinkInfo.getInlongGroupId(), sinkInfo.getInlongStreamId(),
                     sinkInfo.getId(),
                     pulsarManagerResult.getErrorMessage());

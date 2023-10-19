@@ -42,41 +42,41 @@ public class OceanusUtils {
 
     public static JobBaseInfo initParamForOceanus(Map<String, String> kvConf) {
         JobBaseInfo jobBaseInfo = new JobBaseInfo();
-        if (StringUtils.isNotBlank(kvConf.get(InlongConstants.SORT_JOB_ID))){
+        if (StringUtils.isNotBlank(kvConf.get(InlongConstants.SORT_JOB_ID))) {
             jobBaseInfo.setJobId(Long.valueOf(kvConf.get(InlongConstants.SORT_JOB_ID)));
         }
-        if (StringUtils.isNotBlank(kvConf.get(FILE_ID))){
+        if (StringUtils.isNotBlank(kvConf.get(FILE_ID))) {
             jobBaseInfo.setFileId(Long.valueOf(kvConf.get(FILE_ID)));
         }
         String projectId = kvConf.getOrDefault(PROJECT_ID, "11523");
         Preconditions.expectNotBlank(projectId, "oceanus projectId is is blank");
         jobBaseInfo.setProjectId(Long.valueOf(projectId));
 
-        String sortDistJarId =  kvConf.get(SORT_DIST_JAR_ID);
+        String sortDistJarId = kvConf.get(SORT_DIST_JAR_ID);
         jobBaseInfo.setSortDistJarId(sortDistJarId);
-        String sortSourceConnectId =  kvConf.get(SORT_SOURCE_CONNECT_ID);
+        String sortSourceConnectId = kvConf.get(SORT_SOURCE_CONNECT_ID);
         jobBaseInfo.setSortSourceConnectId(sortSourceConnectId);
-        String sortSinkConnectId =  kvConf.get(SORT_SINK_CONNECT_ID);
+        String sortSinkConnectId = kvConf.get(SORT_SINK_CONNECT_ID);
         jobBaseInfo.setSortSinkConnectId(sortSinkConnectId);
-        String stateType =  kvConf.get(STATE_TYPE);
-        if (StringUtils.isNotBlank(stateType)){
+        String stateType = kvConf.get(STATE_TYPE);
+        if (StringUtils.isNotBlank(stateType)) {
             jobBaseInfo.setStateType(stateType);
         }
 
-        String checkPointMode =  kvConf.get(CHECK_POINT_MODE);
-        if (StringUtils.isNotBlank(checkPointMode)){
+        String checkPointMode = kvConf.get(CHECK_POINT_MODE);
+        if (StringUtils.isNotBlank(checkPointMode)) {
             jobBaseInfo.setCheckpointMode(checkPointMode);
         }
-        String checkPointTimeout =  kvConf.get(CHECK_POINT_TIMEOUT);
-        if (StringUtils.isNotBlank(checkPointTimeout)){
+        String checkPointTimeout = kvConf.get(CHECK_POINT_TIMEOUT);
+        if (StringUtils.isNotBlank(checkPointTimeout)) {
             jobBaseInfo.setCheckpointTimeout(Integer.valueOf(checkPointTimeout));
         }
-        String enableCheckPointing =  kvConf.get(ENABLE_CHECK_POINTING);
-        if (StringUtils.isNotBlank(enableCheckPointing)){
+        String enableCheckPointing = kvConf.get(ENABLE_CHECK_POINTING);
+        if (StringUtils.isNotBlank(enableCheckPointing)) {
             jobBaseInfo.setEnableCheckpointing(Boolean.valueOf(enableCheckPointing));
         }
-        String checkPointInterval =  kvConf.get(CHECK_POINT_INTERVAL);
-        if (StringUtils.isNotBlank(checkPointInterval)){
+        String checkPointInterval = kvConf.get(CHECK_POINT_INTERVAL);
+        if (StringUtils.isNotBlank(checkPointInterval)) {
             jobBaseInfo.setCheckpointInterval(Integer.valueOf(checkPointInterval));
         }
         return jobBaseInfo;

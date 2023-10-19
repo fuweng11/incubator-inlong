@@ -17,10 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent.iceberg;
 
-import com.tencent.tdw.security.authentication.v2.TauthClient;
-import com.tencent.tdw.security.exceptions.SecureException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowException;
 import org.apache.inlong.manager.common.util.HttpUtils;
@@ -35,6 +31,11 @@ import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.QueryIcebergTableResponse;
 import org.apache.inlong.manager.service.resource.sc.ScService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
+
+import com.tencent.tdw.security.authentication.v2.TauthClient;
+import com.tencent.tdw.security.exceptions.SecureException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -92,7 +93,8 @@ public class IcebergBaseOptService {
 
     public QueryIcebergTableResponse getTableDetail(InnerIcebergSink icebergSink) {
         try {
-            String clusterTag = StringUtils.isNotBlank(icebergSink.getClusterTag()) ? icebergSink.getClusterTag() : "tl";
+            String clusterTag =
+                    StringUtils.isNotBlank(icebergSink.getClusterTag()) ? icebergSink.getClusterTag() : "tl";
             return HttpUtils.request(restTemplate,
                     dlaApiMap.getOrDefault(clusterTag, "tl")
                             + "/formation/v2/metadata/getTableDetail?dbName=" + icebergSink.getDbName() + "&table="

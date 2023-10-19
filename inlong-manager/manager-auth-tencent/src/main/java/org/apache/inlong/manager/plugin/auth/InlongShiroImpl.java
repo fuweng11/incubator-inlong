@@ -19,9 +19,9 @@ package org.apache.inlong.manager.plugin.auth;
 
 import org.apache.inlong.manager.common.auth.InlongShiro;
 import org.apache.inlong.manager.dao.mapper.TenantUserRoleEntityMapper;
+import org.apache.inlong.manager.plugin.auth.openapi.InlongServiceAPIFilter;
 import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthenticationFilter;
 import org.apache.inlong.manager.plugin.auth.openapi.OpenAPIAuthorizingRealm;
-import org.apache.inlong.manager.plugin.auth.openapi.InlongServiceAPIFilter;
 import org.apache.inlong.manager.plugin.auth.tenant.TenantAuthenticatingFilter;
 import org.apache.inlong.manager.plugin.auth.tenant.TenantAuthenticatingRealm;
 import org.apache.inlong.manager.plugin.auth.web.WebAuthenticationFilter;
@@ -105,7 +105,8 @@ public class InlongShiroImpl implements InlongShiro {
         webRealm.setCredentialsMatcher(getCredentialsMatcher());
 
         // openAPI realm
-        AuthorizingRealm openAPIRealm = new OpenAPIAuthorizingRealm(userService, tenantUserRoleEntityMapper, authConfig);
+        AuthorizingRealm openAPIRealm =
+                new OpenAPIAuthorizingRealm(userService, tenantUserRoleEntityMapper, authConfig);
         openAPIRealm.setCredentialsMatcher(getCredentialsMatcher());
 
         Realm tenantRealm = new TenantAuthenticatingRealm(tenantUserRoleEntityMapper, inlongRoleService,
@@ -155,7 +156,8 @@ public class InlongShiroImpl implements InlongShiro {
                 genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT, FILTER_INLONG_SERVICE));
 
         // openapi
-        filters.put(FILTER_NAME_API, new OpenAPIAuthenticationFilter(allowMock, userService, tenantUserRoleEntityMapper));
+        filters.put(FILTER_NAME_API,
+                new OpenAPIAuthenticationFilter(allowMock, userService, tenantUserRoleEntityMapper));
         pathDefinitions.put("/openapi/**/*", genFiltersInOrder(FILTER_NAME_API, FILTER_NAME_TENANT));
 
         // other web

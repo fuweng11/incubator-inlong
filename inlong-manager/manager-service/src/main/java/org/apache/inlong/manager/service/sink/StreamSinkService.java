@@ -272,7 +272,6 @@ public interface StreamSinkService {
      */
     List<SinkField> parseFields(ParseFieldRequest parseFieldRequest);
 
-
     /**
      * Stop the stream sink by the given id and sink type.
      *

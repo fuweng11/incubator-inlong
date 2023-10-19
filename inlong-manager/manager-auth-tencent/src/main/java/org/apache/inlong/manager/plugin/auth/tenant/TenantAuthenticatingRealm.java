@@ -77,7 +77,8 @@ public class TenantAuthenticatingRealm extends AuthenticatingRealm {
             }
 
             InlongRoleInfo inlongRoleInfo = inlongRoleService.getByUsername(username);
-            TenantUserRoleEntity tenantRoleInfo = tenantUserRoleEntityMapper.selectByUsernameAndTenant(username, tenant);
+            TenantUserRoleEntity tenantRoleInfo =
+                    tenantUserRoleEntityMapper.selectByUsernameAndTenant(username, tenant);
 
             if (inlongRoleInfo == null && tenantRoleInfo == null) {
                 String errMsg = String.format("user=[%s] has no privilege for tenant=[%s]", username, tenant);

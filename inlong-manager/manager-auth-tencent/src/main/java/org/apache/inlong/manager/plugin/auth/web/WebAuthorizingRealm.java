@@ -42,7 +42,8 @@ public class WebAuthorizingRealm extends AuthorizingRealm {
     private final MockAuthenticator mockAuthenticator;
 
     public WebAuthorizingRealm(UserService userService, SmartGateService smartGateService, AuthConfig authConfig) {
-        this.tofAuthenticator = new TofAuthenticator(userService, smartGateService, authConfig.getAppToken(), authConfig.getIdentitySafeMode());
+        this.tofAuthenticator = new TofAuthenticator(userService, smartGateService, authConfig.getAppToken(),
+                authConfig.getIdentitySafeMode());
         this.mockAuthenticator = new MockAuthenticator(userService, smartGateService);
     }
 

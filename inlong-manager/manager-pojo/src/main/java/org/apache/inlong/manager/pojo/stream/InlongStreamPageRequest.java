@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.pojo.stream;
 
-import java.util.Date;
 import org.apache.inlong.manager.pojo.common.PageRequest;
 
 import io.swagger.annotations.ApiModel;
@@ -28,6 +27,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 /**

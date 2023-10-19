@@ -27,13 +27,11 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 /**
  * Flink task operation, such restart or stop flink job.
  */
 @Slf4j
 public class OceanusOperation {
-
 
     private static final int MAX_RETRY_TIMES = 20;
     private final OceanusService oceanusService;
@@ -68,7 +66,8 @@ public class OceanusOperation {
         try {
             // stop a new task without savepoint
             oceanusService.stopJob(jobInfo);
-            Preconditions.expectTrue(checkJobStatus(jobInfo, OceanusJobStatus.CANCELLED.getStatus()), "Stop job failed");
+            Preconditions.expectTrue(checkJobStatus(jobInfo, OceanusJobStatus.CANCELLED.getStatus()),
+                    "Stop job failed");
         } catch (Exception e) {
             log.warn("stop oceanus job failed for {}", jobInfo, e);
             throw new Exception("stop oceanus job failed: " + e.getMessage());
@@ -107,6 +106,5 @@ public class OceanusOperation {
             throw new Exception("check job status failed: " + e.getMessage());
         }
     }
-
 
 }

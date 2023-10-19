@@ -36,7 +36,6 @@ public enum OceanusJobStatus {
     FAILED("FAILED", "failed"),
     CANCELLED("CANCELLED", "cancelled");
 
-
     public static final Set<String> STARING_STATUS = Sets.newHashSet(SUBMITTING.getStatus(), LAUNCHING.getStatus());
 
     /**
@@ -45,7 +44,8 @@ public enum OceanusJobStatus {
     public static final Set<String> RUNNING_STATUS = Sets.newHashSet(RUNNING.getStatus(), RESTARTING.getStatus(),
             RECOVERING.getStatus(), FAILING.getStatus(), CANCELLING.getStatus());
 
-    public static final Set<String> END_STATUS = Sets.newHashSet(FINISHED.getStatus(), FAILED.getStatus(), CANCELLED.getStatus());
+    public static final Set<String> END_STATUS =
+            Sets.newHashSet(FINISHED.getStatus(), FAILED.getStatus(), CANCELLED.getStatus());
 
     private String status;
     private String description;

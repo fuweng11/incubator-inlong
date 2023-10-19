@@ -24,18 +24,15 @@ import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.entity.InlongStreamFieldEntity;
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
-import org.apache.inlong.manager.pojo.sink.iceberg.IcebergColumnInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.QueryIcebergTableResponse;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.QueryIcebergTableResponse.TableStructure.FieldsBean;
-import org.apache.inlong.manager.pojo.sort.util.FieldInfoUtils;
 import org.apache.inlong.manager.pojo.source.SourceRequest;
 import org.apache.inlong.manager.pojo.source.StreamSource;
 import org.apache.inlong.manager.pojo.source.iceberg.IcebergSource;
 import org.apache.inlong.manager.pojo.source.iceberg.IcebergSourceDTO;
 import org.apache.inlong.manager.pojo.source.iceberg.IcebergSourceRequest;
 import org.apache.inlong.manager.pojo.stream.StreamField;
-import org.apache.inlong.manager.service.resource.sink.iceberg.IcebergCatalogUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.iceberg.IcebergBaseOptService;
 import org.apache.inlong.manager.service.source.AbstractSourceOperator;
 
