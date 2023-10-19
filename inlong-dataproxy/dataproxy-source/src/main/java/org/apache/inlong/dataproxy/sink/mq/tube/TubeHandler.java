@@ -61,6 +61,7 @@ public class TubeHandler implements MessageQueueHandler {
     // log print count
     private static final LogCounter logCounter = new LogCounter(10, 150000, 60 * 1000);
     private static final LogCounter logMsgOverSizePrinter = new LogCounter(10, 100000, 40 * 1000);
+    private static final LogCounter logMsgMD5FailPrinter = new LogCounter(10, 100000, 40 * 1000);
 
     private static String MASTER_HOST_PORT_LIST = "master-host-port-list";
 
@@ -323,8 +324,17 @@ public class TubeHandler implements MessageQueueHandler {
                             DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
                     if (result.getErrCode() == TErrCodeConstants.PARAMETER_MSG_OVER_MAX_LENGTH) {
                         if (logMsgOverSizePrinter.shouldPrint()) {
-                            logger.error("OVER-MAX-ERROR: Topic ({}) over max-length",
+                            logger.error("OVER-MAX-ERROR: Topic ({}) encounter over-max-length {}",
                                     topic, result.getErrMsg());
+                        }
+                    } else if (result.getErrCode() == TErrCodeConstants.PARAMETER_MSG_MD5SUM_NOT_EQUAL) {
+                        if (logMsgMD5FailPrinter.shouldPrint()) {
+                            String attrInfo = "";
+                            if (result.getMessage() != null) {
+                                attrInfo = result.getMessage().getAttribute();
+                            }
+                            logger.error("MD5-ERROR: Topic ({}) encounter md5 not equal, attr = {}, errMsg = {}",
+                                    topic, attrInfo, result.getErrMsg());
                         }
                     } else {
                         if (logCounter.shouldPrint()) {
@@ -386,8 +396,17 @@ public class TubeHandler implements MessageQueueHandler {
                             DataProxyErrCode.MQ_RETURN_ERROR, result.getErrMsg());
                     if (result.getErrCode() == TErrCodeConstants.PARAMETER_MSG_OVER_MAX_LENGTH) {
                         if (logMsgOverSizePrinter.shouldPrint()) {
-                            logger.error("OVER-MAX-ERROR: Topic ({}) over max-length",
+                            logger.error("OVER-MAX-ERROR: Topic ({}) encounter over-max-length {}",
                                     topic, result.getErrMsg());
+                        }
+                    } else if (result.getErrCode() == TErrCodeConstants.PARAMETER_MSG_MD5SUM_NOT_EQUAL) {
+                        if (logMsgMD5FailPrinter.shouldPrint()) {
+                            String attrInfo = "";
+                            if (result.getMessage() != null) {
+                                attrInfo = result.getMessage().getAttribute();
+                            }
+                            logger.error("MD5-ERROR: Topic ({}) encounter md5 not equal, attr = {}, errMsg = {}",
+                                    topic, attrInfo, result.getErrMsg());
                         }
                     } else {
                         if (logCounter.shouldPrint()) {
