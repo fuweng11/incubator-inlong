@@ -18,6 +18,7 @@
 package org.apache.inlong.dataproxy.config.holder;
 
 import org.apache.inlong.dataproxy.config.ConfigManager;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,18 +29,17 @@ public class TestDiscardListConfigHolder {
 
     @Test
     public void testCase() {
-        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("aaa","222"));
-        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("aaa",""));
-        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("bbb",""));
-        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("bbb","111"));
-        Assert.assertFalse(ConfigManager.getInstance().isDiscardInLongID("CCC",""));
-        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("CCC","111"));
-        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("CCC","333"));
-        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("CCC","222"));
-        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("DDD","222"));
-        Assert.assertFalse(ConfigManager.getInstance().isDiscardInLongID("ddd","222"));
-        Assert.assertFalse(ConfigManager.getInstance().isDiscardInLongID("mmm","222"));
-
+        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("aaa", "222"));
+        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("aaa", ""));
+        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("bbb", ""));
+        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("bbb", "111"));
+        Assert.assertFalse(ConfigManager.getInstance().isDiscardInLongID("CCC", ""));
+        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("CCC", "111"));
+        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("CCC", "333"));
+        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("CCC", "222"));
+        Assert.assertTrue(ConfigManager.getInstance().isDiscardInLongID("DDD", "222"));
+        Assert.assertFalse(ConfigManager.getInstance().isDiscardInLongID("ddd", "222"));
+        Assert.assertFalse(ConfigManager.getInstance().isDiscardInLongID("mmm", "222"));
 
     }
 }
