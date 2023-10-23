@@ -53,6 +53,7 @@ public class StatConstants {
     public static final java.lang.String EVENT_MSG_READABLE_EMPTY = "msg.readable.empty";
     public static final java.lang.String EVENT_MSG_READABLE_OVERMAX = "msg.readable.overmax";
     public static final java.lang.String EVENT_MSG_READABLE_UNFILLED = "msg.readable.unfilled";
+    public static final java.lang.String EVENT_MSG_DISCARD_ID = "msg.inlongid.discard";
     public static final java.lang.String EVENT_MSG_MSGTYPE_V0_INVALID = "msg.msgtype.v0.invalid";
     public static final java.lang.String EVENT_MSG_MSGTYPE_V1_INVALID = "msg.msgtype.v1.invalid";
     public static final java.lang.String EVENT_MSG_MSGTYPE_TDBANK_INVALID = "msg.msgtype.tdbank.invalid";

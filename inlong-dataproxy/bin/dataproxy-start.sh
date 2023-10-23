@@ -38,7 +38,7 @@ error() {
   fi
 }
 
-for i in {metadata.json,weight.properties,common.properties,blacklist.properties,whitelist.properties,groupid_mapping.properties,pulsar_transfer.properties,tdbank_metadata.json}
+for i in {metadata.json,weight.properties,common.properties,blacklist.properties,whitelist.properties,groupid_mapping.properties,pulsar_transfer.properties,tdbank_metadata.json,discardlist.properties}
 do
   if [ ! -f "$i" ]; then
     touch "$i"

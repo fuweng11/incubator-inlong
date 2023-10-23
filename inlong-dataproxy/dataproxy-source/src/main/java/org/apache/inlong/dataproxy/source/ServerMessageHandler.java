@@ -308,6 +308,13 @@ public class ServerMessageHandler extends ChannelInboundHandlerAdapter {
             responseV0Msg(channel, msgCodec, strBuff);
             return;
         }
+        // valid illegal InLong id
+        if (ConfigManager.getInstance().isDiscardInLongID(msgCodec.getGroupId(), msgCodec.getStreamId())) {
+            source.fileMetricIncWithDetailStats(StatConstants.EVENT_MSG_DISCARD_ID, msgCodec.getGroupId());
+            msgCodec.setSuccessInfo();
+            responseV0Msg(channel, msgCodec, strBuff);
+            return;
+        }
         // build InLong event.
         Event event = msgCodec.encEventPackage(source, channel);
         // send event to channel

@@ -22,6 +22,7 @@ import org.apache.inlong.common.pojo.dataproxy.DataProxyConfigRequest;
 import org.apache.inlong.common.pojo.dataproxy.DataProxyConfigResponse;
 import org.apache.inlong.dataproxy.config.holder.BlackListConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.ConfigUpdateCallback;
+import org.apache.inlong.dataproxy.config.holder.DiscardListConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.GroupIdNumConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.MetaConfigHolder;
 import org.apache.inlong.dataproxy.config.holder.PulsarXfeConfigHolder;
@@ -89,6 +90,8 @@ public class ConfigManager {
     private final PulsarXfeConfigHolder pulsarTransferHolder = new PulsarXfeConfigHolder();
     // source report configure holder
     private final SourceReportConfigHolder sourceReportConfigHolder = new SourceReportConfigHolder();
+    // discard list configure
+    private final DiscardListConfigHolder discardListConfigHolder = new DiscardListConfigHolder();
     // mq clusters ready
     private volatile boolean mqClusterReady = false;
 
@@ -276,6 +279,10 @@ public class ConfigManager {
         return strRemoteIP == null
                 || blacklistConfigHolder.isIllegalIP(strRemoteIP)
                 || whitelistConfigHolder.isIllegalIP(strRemoteIP);
+    }
+
+    public boolean isDiscardInLongID(String groupId, String streamId) {
+        return discardListConfigHolder.isDiscardInLongID(groupId, streamId);
     }
 
     // register pulsar transfer configure change callback

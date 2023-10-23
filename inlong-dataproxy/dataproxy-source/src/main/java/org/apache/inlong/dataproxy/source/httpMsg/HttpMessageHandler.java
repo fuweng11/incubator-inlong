@@ -298,6 +298,15 @@ public class HttpMessageHandler extends SimpleChannelInboundHandler<FullHttpRequ
                     isCloseCon, callback);
             return;
         }
+        // valid illegal InLong id
+        if (ConfigManager.getInstance().isDiscardInLongID(groupId, streamId)) {
+            source.fileMetricIncWithDetailStats(StatConstants.EVENT_MSG_DISCARD_ID, groupId);
+            sendResponse(ctx, DataProxyErrCode.SUCCESS.getErrCode(),
+                    strBuff.append("InLong Id (").append(groupId).append(".").append(streamId)
+                            .append(" in discard list and message is discarded!").toString(),
+                    isCloseCon, callback);
+            return;
+        }
         // get and check topicName
         String topicName = ConfigManager.getInstance().getTopicName(source, groupId, streamId);
         if (StringUtils.isEmpty(topicName)) {
