@@ -40,9 +40,6 @@ public class FieldTypeUtils {
             case "short":
             case "int":
             case "integer":
-                resultType = "int";
-                break;
-
             // bigint,float,double,dec,decimal,
             case "bigint":
             case "long":
@@ -93,19 +90,11 @@ public class FieldTypeUtils {
             case "bit":
             case "byte":
             case "tinyint":
-                resultType = "tinyint";
-                break;
             case "smallint":
-                resultType = "smallint";
-                break;
             case "mediumint":
             case "short":
             case "int":
             case "integer":
-                resultType = "int";
-                break;
-
-            // bigint,float,double,dec,decimal,
             case "bigint":
             case "long":
                 resultType = "bigint";
@@ -115,15 +104,12 @@ public class FieldTypeUtils {
             case "dec":
             case "decimal":
             case "boolean":
-                resultType = type;
+                resultType = "double";
                 break;
 
             // char,varchar,binary,varbinary,blob,text
             case "binary":
             case "varbinary":
-                resultType = "binary";
-                break;
-
             // date,time,datetime,timestamp,year,
             case "date":
             case "time":
