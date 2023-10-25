@@ -210,7 +210,7 @@ public class InnerBaseHiveSinkDTO {
                 .productId(groupInfo.getProductId())
                 .productName(groupInfo.getProductName())
                 .appGroupName(groupInfo.getAppGroupName())
-                .bgId(innerHiveDTO.getBgId())
+                .bgId(groupInfo.getBgId())
                 .inlongGroupId(sinkInfo.getInlongGroupId())
                 .inlongStreamId(sinkInfo.getInlongStreamId())
                 .isThive(isThive)

@@ -39,6 +39,9 @@ public class BaseInlongGroup {
     @ApiModelProperty("product name")
     private String productName;
 
+    @ApiModelProperty("bg id")
+    private Integer bgId;
+
     @ApiModelProperty("app group name")
     private String appGroupName;
 

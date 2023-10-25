@@ -196,8 +196,10 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             InlongGroupInfo groupInfo = groupService.get(groupId);
             InlongStreamInfo streamInfo = streamService.get(groupId, streamId);
             Integer clusterId = scService.getClusterIdByIdentifier(dataNodeInfo.getClusterTag());
-            AppGroup appGroup = scService.getAppGroup(clusterId, groupInfo.getAppGroupName());
-            hiveInfo.setBgId(appGroup.getBgId());
+            if (groupInfo.getBgId() == null) {
+                AppGroup appGroup = scService.getAppGroup(clusterId, groupInfo.getAppGroupName());
+                hiveInfo.setBgId(appGroup.getBgId());
+            }
 
             InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo, streamInfo, hiveInfo, sinkInfo,
                     dataNodeInfo);
