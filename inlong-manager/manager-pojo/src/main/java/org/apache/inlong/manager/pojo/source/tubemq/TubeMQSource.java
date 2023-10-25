@@ -57,8 +57,11 @@ public class TubeMQSource extends StreamSource {
     @ApiModelProperty("Session key of the TubeMQ")
     private String sessionKey;
 
-    @ApiModelProperty("inlong-msg.inner.format")
-    private String innerFormat;
+    @ApiModelProperty(value = "Data separator")
+    private String dataSeparator;
+
+    @ApiModelProperty(value = "The message body wrap  wrap type, including: RAW, INLONG_MSG_V0, INLONG_MSG_V1, etc")
+    private String wrapType;
 
     /**
      * The TubeMQ consumers use this streamId set to filter records reading from server.

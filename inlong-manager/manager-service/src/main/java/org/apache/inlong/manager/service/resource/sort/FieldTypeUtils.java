@@ -40,7 +40,7 @@ public class FieldTypeUtils {
             case "short":
             case "int":
             case "integer":
-            // bigint,float,double,dec,decimal,
+                // bigint,float,double,dec,decimal,
             case "bigint":
             case "long":
                 resultType = "long";
@@ -110,7 +110,7 @@ public class FieldTypeUtils {
             // char,varchar,binary,varbinary,blob,text
             case "binary":
             case "varbinary":
-            // date,time,datetime,timestamp,year,
+                // date,time,datetime,timestamp,year,
             case "date":
             case "time":
             case "datetime":

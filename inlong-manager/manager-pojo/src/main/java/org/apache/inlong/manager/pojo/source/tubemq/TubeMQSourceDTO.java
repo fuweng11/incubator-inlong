@@ -53,7 +53,13 @@ public class TubeMQSourceDTO {
     private String format;
 
     @ApiModelProperty("Group of the TubeMQ")
-    private String groupId;
+    private String consumeGroup;
+
+    @ApiModelProperty(value = "Data separator")
+    private String dataSeparator;
+
+    @ApiModelProperty(value = "The message body wrap  wrap type, including: RAW, INLONG_MSG_V0, INLONG_MSG_V1, etc")
+    private String wrapType;
 
     @ApiModelProperty("Session key of the TubeMQ")
     private String sessionKey;
@@ -62,7 +68,7 @@ public class TubeMQSourceDTO {
      * The tubemq consumers use this tid set to filter records reading from server.
      */
     @ApiModelProperty("Tid of the TubeMQ")
-    private TreeSet<String> tid;
+    private TreeSet<String> streamId;
 
     @ApiModelProperty("Properties for TubeMQ")
     private Map<String, Object> properties;

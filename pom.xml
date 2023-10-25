@@ -1712,4 +1712,18 @@
         </profile>
     </profiles>
 
+    <distributionManagement>
+        <repository>
+            <id>tencent_public</id>
+            <name>tencent public maven respository</name>
+            <url>https://mirrors.tencent.com/repository/maven/tencent_public/</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>tencent_public_snapshots</id>
+            <name>tencent public snapshots maven respository</name>
+            <url>https://mirrors.tencent.com/repository/maven/tencent_public_snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 </project>

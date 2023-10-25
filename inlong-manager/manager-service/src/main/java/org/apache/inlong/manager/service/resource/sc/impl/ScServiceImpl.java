@@ -211,10 +211,12 @@ public class ScServiceImpl implements ScService {
          * scApiRequestService.getCall(GET_GROUP_DETAIL_API + groupName, param, new
          * ParameterizedTypeReference<Response<AppGroup>>() { });
          */
+        log.info("test cluster_id {}, groupName={}", clusterId, groupName);
         Response<AppGroup> rsp =
                 HttpUtils.getRequest(restTemplate, scOpenApiUrl + GET_GROUP_API + groupName, null,
                         scApiRequestService.getHeader(), new ParameterizedTypeReference<Response<AppGroup>>() {
                         });
+        log.info("test {}", rsp);
         return scApiRequestService.checkAndGetResponseBody(rsp);
     }
 

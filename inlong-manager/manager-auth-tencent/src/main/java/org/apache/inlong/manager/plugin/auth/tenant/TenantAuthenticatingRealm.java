@@ -99,6 +99,13 @@ public class TenantAuthenticatingRealm extends AuthenticatingRealm {
             }
 
             userInfo.setTenant(tenant);
+            if (inlongRoleInfo == null && tenantRoleInfo == null
+                    && !Objects.equals(InlongConstants.DEFAULT_PULSAR_TENANT, tenant)) {
+                String errMsg = String.format("user=[%s] has no privilege for tenant=[%s]", username, tenant);
+                log.error(errMsg);
+                throw new AuthenticationException(errMsg);
+            }
+
             return new SimpleAuthenticationInfo(userInfo, tenant, getName());
         } catch (Throwable t) {
             log.error("failed to do tenant authentication", t);

@@ -59,9 +59,16 @@ public class InlongServiceAPIFilter implements Filter {
             return;
         }
 
-        // add inlong service role
-        UserInfo loginUserInfo = (UserInfo) subject.getPrincipal();
-        loginUserInfo.getRoles().add(UserRoleCode.INLONG_SERVICE);
+        if (subject.getPrincipal() instanceof String) {
+            String username = (String) subject.getPrincipal();
+            // add inlong service role
+            UserInfo loginUserInfo = (UserInfo) subject.getPrincipal();
+            loginUserInfo.getRoles().add(UserRoleCode.INLONG_SERVICE);
+        } else {
+            // add inlong service role
+            UserInfo loginUserInfo = (UserInfo) subject.getPrincipal();
+            loginUserInfo.getRoles().add(UserRoleCode.INLONG_SERVICE);
+        }
 
         // next filter
         chain.doFilter(request, response);

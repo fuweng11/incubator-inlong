@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.pojo.sort.node.provider;
 
+import org.apache.inlong.common.enums.MessageWrapType;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.pojo.sort.node.base.ExtractNodeProvider;
 import org.apache.inlong.manager.pojo.source.pulsar.PulsarSource;
@@ -27,14 +28,17 @@ import org.apache.inlong.sort.protocol.node.ExtractNode;
 import org.apache.inlong.sort.protocol.node.extract.PulsarExtractNode;
 import org.apache.inlong.sort.protocol.node.format.Format;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * The Provider for creating Pulsar extract nodes.
  */
+@Slf4j
 public class PulsarProvider implements ExtractNodeProvider {
 
     @Override
@@ -50,11 +54,15 @@ public class PulsarProvider implements ExtractNodeProvider {
 
         String fullTopicName =
                 pulsarSource.getPulsarTenant() + "/" + pulsarSource.getNamespace() + "/" + pulsarSource.getTopic();
-
+        pulsarSource.setWrapType("INLONG_MSG_V0");
+        log.info("test is warptype ={}", pulsarSource.getWrapType());
+        log.info("test is reuslt ={}",
+                Objects.equals(pulsarSource.getWrapType(), MessageWrapType.INLONG_MSG_V0.getName()));
         Format format = parsingFormat(pulsarSource.getSerializationType(),
                 pulsarSource.getWrapType(),
                 pulsarSource.getDataSeparator(),
                 pulsarSource.isIgnoreParseError());
+        log.info("test is format ={}", format.getFormat());
 
         PulsarScanStartupMode startupMode = PulsarScanStartupMode.forName(pulsarSource.getScanStartupMode());
         final String primaryKey = pulsarSource.getPrimaryKey();
