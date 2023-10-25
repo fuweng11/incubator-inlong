@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.plugin.auth.tenant;
 
+import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.TenantUserRoleEntity;
 import org.apache.inlong.manager.dao.mapper.TenantUserRoleEntityMapper;
@@ -37,6 +38,7 @@ import org.apache.shiro.realm.AuthenticatingRealm;
 import org.springframework.util.CollectionUtils;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -80,12 +82,6 @@ public class TenantAuthenticatingRealm extends AuthenticatingRealm {
             TenantUserRoleEntity tenantRoleInfo =
                     tenantUserRoleEntityMapper.selectByUsernameAndTenant(username, tenant);
 
-            if (inlongRoleInfo == null && tenantRoleInfo == null) {
-                String errMsg = String.format("user=[%s] has no privilege for tenant=[%s]", username, tenant);
-                log.error(errMsg);
-                throw new AuthenticationException(errMsg);
-            }
-
             UserInfo userInfo = getUserInfo(username);
             if (inlongRoleInfo != null) {
                 addRole(userInfo, inlongRoleInfo.getRoleCode());
@@ -93,6 +89,13 @@ public class TenantAuthenticatingRealm extends AuthenticatingRealm {
 
             if (tenantRoleInfo != null) {
                 addRole(userInfo, tenantRoleInfo.getRoleCode());
+            }
+
+            if (inlongRoleInfo == null && tenantRoleInfo == null
+                    && !Objects.equals(InlongConstants.DEFAULT_PULSAR_TENANT, tenant)) {
+                String errMsg = String.format("user=[%s] has no privilege for tenant=[%s]", username, tenant);
+                log.error(errMsg);
+                throw new AuthenticationException(errMsg);
             }
 
             userInfo.setTenant(tenant);
