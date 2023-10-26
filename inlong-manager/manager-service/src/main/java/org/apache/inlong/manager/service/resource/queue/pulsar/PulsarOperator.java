@@ -118,7 +118,7 @@ public class PulsarOperator {
 
             List<String> clusters = PulsarUtils.getPulsarClusters(pulsarAdmin);
             Namespaces namespaces = pulsarAdmin.namespaces();
-            namespaces.createNamespace(namespaceName, Sets.newHashSet(clusters));
+            namespaces.createNamespace(namespaceName);
             // Configure message TTL
             Integer ttl = pulsarInfo.getTtl();
             if (ttl > 0) {
