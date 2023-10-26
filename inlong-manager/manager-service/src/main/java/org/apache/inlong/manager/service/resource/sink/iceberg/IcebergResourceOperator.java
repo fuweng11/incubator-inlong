@@ -29,10 +29,12 @@ import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.node.iceberg.IcebergDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.iceberg.IcebergColumnInfo;
+import org.apache.inlong.manager.pojo.sink.iceberg.IcebergSink;
 import org.apache.inlong.manager.pojo.sink.iceberg.IcebergSinkDTO;
 import org.apache.inlong.manager.pojo.sink.iceberg.IcebergTableInfo;
 import org.apache.inlong.manager.service.node.DataNodeOperateHelper;
 import org.apache.inlong.manager.service.resource.sink.SinkResourceOperator;
+import org.apache.inlong.manager.service.resource.sort.tencent.iceberg.IcebergBaseOptService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -63,6 +65,8 @@ public class IcebergResourceOperator implements SinkResourceOperator {
     private StreamSinkFieldEntityMapper sinkFieldMapper;
     @Autowired
     private DataNodeOperateHelper dataNodeHelper;
+    @Autowired
+    private IcebergBaseOptService icebergBaseOptService;
 
     @Override
     public Boolean accept(String sinkType) {
@@ -86,7 +90,15 @@ public class IcebergResourceOperator implements SinkResourceOperator {
             return;
         }
 
-        this.createTable(sinkInfo);
+        IcebergSink icebergSink = (IcebergSink) sinkService.get(sinkInfo.getId());
+        try {
+            icebergBaseOptService.createTableForIceberg(icebergSink);
+        } catch (Exception e) {
+            String errMsg = "create inner iceberg table failed: " + e.getMessage();
+            LOGGER.error(errMsg, e);
+            sinkService.updateStatus(sinkInfo.getId(), SinkStatus.CONFIG_FAILED.getCode(), errMsg);
+            throw new WorkflowException(errMsg);
+        }
     }
 
     private IcebergSinkDTO getIcebergInfo(SinkInfo sinkInfo) {

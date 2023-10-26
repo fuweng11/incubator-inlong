@@ -23,6 +23,8 @@ import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
+import org.apache.inlong.manager.pojo.sink.iceberg.IcebergColumnInfo;
+import org.apache.inlong.manager.pojo.sink.iceberg.IcebergSink;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest.FieldsBean;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest.PartitionsBean;
@@ -91,18 +93,18 @@ public class IcebergBaseOptService {
     @Autowired
     private ScService scService;
 
-    public QueryIcebergTableResponse getTableDetail(InnerIcebergSink icebergSink) {
+    public QueryIcebergTableResponse getTableDetail(String clusterTag, String dbName, String tableName,
+            String creator) {
         try {
-            String clusterTag =
-                    StringUtils.isNotBlank(icebergSink.getClusterTag()) ? icebergSink.getClusterTag() : "tl";
+            clusterTag = StringUtils.isNotBlank(clusterTag) ? clusterTag : "tl";
             return HttpUtils.request(restTemplate,
                     dlaApiMap.getOrDefault(clusterTag, "tl")
-                            + "/formation/v2/metadata/getTableDetail?dbName=" + icebergSink.getDbName() + "&table="
-                            + icebergSink.getTableName(),
-                    HttpMethod.GET, null, getTauthHeader(icebergSink.getCreator()), QueryIcebergTableResponse.class);
+                            + "/formation/v2/metadata/getTableDetail?dbName=" + dbName + "&table="
+                            + tableName,
+                    HttpMethod.GET, null, getTauthHeader(creator), QueryIcebergTableResponse.class);
         } catch (Exception e) {
             String errMsg = String.format("query iceberg table error for database=%s, table=%s",
-                    icebergSink.getDbName(), icebergSink.getTableName());
+                    dbName, tableName);
             log.error(errMsg, e);
             throw new WorkflowException(errMsg);
         }
@@ -121,7 +123,8 @@ public class IcebergBaseOptService {
             if (dlaGrantUser.contains(icebergSink.getCreator())) {
                 grantPrivilegeBySc(icebergSink, icebergSink.getCreator(), "all", true, false);
             }
-            QueryIcebergTableResponse queryRsp = this.getTableDetail(icebergSink);
+            QueryIcebergTableResponse queryRsp = this.getTableDetail(icebergSink.getClusterTag(),
+                    icebergSink.getDbName(), icebergSink.getTableName(), icebergSink.getCreator());
             log.info("get iceberg table detail result={}", queryRsp);
             // the table exists, and the flow direction status is modified to [Configuration Succeeded].
             // return directly
@@ -177,7 +180,8 @@ public class IcebergBaseOptService {
                 InnerIcebergFieldInfo innerIcebergFieldInfo = InnerIcebergFieldInfo.getFromJson(f.getExtParams());
                 PartitionsBean partitionsBean = new PartitionsBean();
                 String partitionStartegy = innerIcebergFieldInfo.getPartitionStrategy();
-                if (!PARTITION_STARTEGY_NONE.equalsIgnoreCase(partitionStartegy)) {
+                if (StringUtils.isNotBlank(partitionStartegy) && !PARTITION_STARTEGY_NONE.equalsIgnoreCase(
+                        partitionStartegy)) {
                     partitionsBean.setField(f.getFieldName());
                     partitionsBean.setTransform(partitionStartegy.toLowerCase(Locale.ROOT));
                     partitionsBean.setWidth(String.valueOf(innerIcebergFieldInfo.getFieldLength()));
@@ -261,5 +265,99 @@ public class IcebergBaseOptService {
                     isAppGroup);
         }
         return hasPermissions;
+    }
+
+    public void createTableForIceberg(IcebergSink icebergSink) throws Exception {
+        if (icebergSink == null) {
+            log.error("iceberg config is null");
+            return;
+        }
+
+        IcebergTableCreateRequest request = this.buildRequestForIceberg(icebergSink);
+        log.info("try to create new iceberg table, request: {}", OBJECT_MAPPER.writeValueAsString(request));
+
+        try {
+            QueryIcebergTableResponse queryRsp = this.getTableDetail(icebergSink.getClusterTag(),
+                    icebergSink.getDbName(), icebergSink.getTableName(), icebergSink.getCreator());
+            log.info("get iceberg table detail result={}", queryRsp);
+            // the table exists, and the flow direction status is modified to [Configuration Succeeded].
+            // return directly
+            String url =
+                    dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl") + "/formation/v2/metadata/createTable";
+            if (queryRsp != null && queryRsp.getCode() != 20005) {
+                log.warn("iceberg table [{}.{}] already exists", request.getDb(), request.getTable());
+                url = dlaApiMap.getOrDefault(icebergSink.getClusterTag(), "tl")
+                        + "/formation/v2/metadata/updateTableSchema";
+            }
+            // the table does not exist. Create a new table
+            String rsp = HttpUtils.postRequest(restTemplate, url,
+                    request, getTauthHeader(icebergSink.getCreator()), new ParameterizedTypeReference<String>() {
+                    });
+            log.info("create iceberg result rsp={}", rsp);
+            QueryIcebergTableResponse response = JsonUtils.parseObject(rsp, QueryIcebergTableResponse.class);
+            if (!Objects.isNull(response) && response.getCode() == 0) {
+                log.info("create iceberg table [{}.{}] success, rsp {}", request.getDb(), request.getTable(), rsp);
+                sinkService.updateStatus(icebergSink.getId(), SinkStatus.CONFIG_SUCCESSFUL.getCode(),
+                        response.getMessage());
+            } else {
+                String errMsg = String.format(
+                        "create iceberg table failed in dla, please contact administrator, err=%s", response);
+                log.error(errMsg);
+                sinkService.updateStatus(icebergSink.getId(), SinkStatus.CONFIG_FAILED.getCode(),
+                        errMsg);
+                throw new WorkflowException("failed to create iceberg table for " + errMsg);
+            }
+        } catch (Exception e) {
+            String errMsg = String.format("create iceberg table failed for database=%s, table=%s", request.getDb(),
+                    request.getTable());
+            log.error(errMsg, e);
+            // modify the flow direction status to [Configuration Failed]
+            sinkService.updateStatus(icebergSink.getId(), SinkStatus.CONFIG_FAILED.getCode(),
+                    errMsg);
+            throw new WorkflowException(errMsg);
+        }
+    }
+
+    private IcebergTableCreateRequest buildRequestForIceberg(IcebergSink icebergSink) {
+        IcebergTableCreateRequest createRequest = new IcebergTableCreateRequest();
+        createRequest.setDb(icebergSink.getDbName());
+        createRequest.setDescription(icebergSink.getDescription());
+        createRequest.setTable(icebergSink.getTableName());
+        List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(icebergSink.getId());
+        List<PartitionsBean> partitionsBeanList = new ArrayList<>();
+        List<FieldsBean> fields = fieldList.stream().map(f -> {
+            FieldsBean field = new FieldsBean();
+            field.setName(f.getFieldName());
+            field.setType(f.getFieldType());
+            field.setDesc(f.getFieldComment());
+            if (StringUtils.isNotBlank(f.getExtParams())) {
+                IcebergColumnInfo icebergColumnInfo = IcebergColumnInfo.getFromJson(f.getExtParams());
+                PartitionsBean partitionsBean = new PartitionsBean();
+                String partitionStartegy = icebergColumnInfo.getPartitionStrategy();
+                if (StringUtils.isNotBlank(partitionStartegy) && !PARTITION_STARTEGY_NONE.equalsIgnoreCase(
+                        partitionStartegy)) {
+                    partitionsBean.setField(f.getFieldName());
+                    partitionsBean.setTransform(partitionStartegy.toLowerCase(Locale.ROOT));
+                    partitionsBean.setWidth(String.valueOf(icebergColumnInfo.getLength()));
+                    partitionsBeanList.add(partitionsBean);
+                }
+            }
+            return field;
+        }).collect(Collectors.toList());
+        createRequest.setFields(fields);
+        createRequest.setPartitions(partitionsBeanList);
+        HashMap<String, Object> map = new HashMap<>();
+        if (Objects.equals("APPEND", icebergSink.getAppendMode())) {
+            map.put("write.upsert.enabled", false);
+        } else {
+            map.put("write.upsert.enabled", true);
+        }
+        map.put("format-version", 2);
+        String primaryKey = icebergSink.getPrimaryKey();
+        if (StringUtils.isNotBlank(primaryKey)) {
+            map.put("primary-key", primaryKey);
+        }
+        createRequest.setProperties(map);
+        return createRequest;
     }
 }

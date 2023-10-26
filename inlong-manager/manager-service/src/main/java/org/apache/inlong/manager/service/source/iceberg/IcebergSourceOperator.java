@@ -122,7 +122,8 @@ public class IcebergSourceOperator extends AbstractSourceOperator {
         icebergSink.setTableName(tableName);
         icebergSink.setClusterTag(sourceRequest.getServerTag());
         icebergSink.setCreator(operator);
-        QueryIcebergTableResponse tableDetail = icebergBaseOptService.getTableDetail(icebergSink);
+        QueryIcebergTableResponse tableDetail = icebergBaseOptService.getTableDetail(icebergSink.getClusterTag(),
+                icebergSink.getDbName(), icebergSink.getTableName(), icebergSink.getCreator());
         LOGGER.info("sync field info rsp={}", tableDetail);
         if (tableDetail != null && tableDetail.getCode() != 20005) {
             List<StreamField> streamFields = new ArrayList<>();

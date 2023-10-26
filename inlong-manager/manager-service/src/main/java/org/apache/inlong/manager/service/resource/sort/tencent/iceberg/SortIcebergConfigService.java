@@ -85,7 +85,8 @@ public class SortIcebergConfigService extends AbstractInnerSortConfigService {
         String zkUrl = zkCluster.getUrl();
         String zkRoot = getZkRoot(groupInfo.getMqType(), zkClusterDTO);
         for (InnerIcebergSink icebergSink : icebergSinkList) {
-            QueryIcebergTableResponse tableDetail = icebergBaseOptService.getTableDetail(icebergSink);
+            QueryIcebergTableResponse tableDetail = icebergBaseOptService.getTableDetail(icebergSink.getClusterTag(),
+                    icebergSink.getDbName(), icebergSink.getTableName(), icebergSink.getCreator());
             log.info("iceberg table info: {}", OBJECT_MAPPER.writeValueAsString(tableDetail));
 
             Integer icebergId = icebergSink.getId();

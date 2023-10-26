@@ -71,6 +71,12 @@ public class IcebergSinkDTO {
     @ApiModelProperty("Primary key")
     private String primaryKey;
 
+    @ApiModelProperty("append mode, UPSERT or APPEND")
+    private String appendMode;
+
+    @ApiModelProperty("cluster tag")
+    private String clusterTag;
+
     @ApiModelProperty("Properties for iceberg")
     private Map<String, Object> properties;
 
