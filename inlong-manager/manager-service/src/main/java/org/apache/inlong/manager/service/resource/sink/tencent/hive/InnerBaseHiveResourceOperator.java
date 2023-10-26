@@ -243,7 +243,9 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             // after the table is created successfully, need to set the table alter and select permission for the super
             // user
             String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
-            grantPrivilegeBySc(hiveFullInfo, groupInfo.getAppGroupName(), "select", false, true);
+            if (groupInfo.getBgId() == null) {
+                grantPrivilegeBySc(hiveFullInfo, groupInfo.getAppGroupName(), "select", false, true);
+            }
             grantPrivilegeBySc(hiveFullInfo, sink.getCreator(), "select", false, false);
             scService.grant(superUser, dbName, tbName, "alter", hiveType, hiveFullInfo.getClusterTag(), false);
 
