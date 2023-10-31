@@ -17,14 +17,19 @@
 
 package org.apache.inlong.manager.service.resource.sort.tencent.iceberg;
 
+import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowException;
+import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.common.util.HttpUtils;
 import org.apache.inlong.manager.common.util.JsonUtils;
+import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
+import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.sink.iceberg.IcebergColumnInfo;
 import org.apache.inlong.manager.pojo.sink.iceberg.IcebergSink;
+import org.apache.inlong.manager.pojo.sink.iceberg.IcebergSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest.FieldsBean;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.IcebergTableCreateRequest.PartitionsBean;
@@ -34,6 +39,7 @@ import org.apache.inlong.manager.pojo.sink.tencent.iceberg.QueryIcebergTableResp
 import org.apache.inlong.manager.service.resource.sc.ScService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.tdw.security.authentication.v2.TauthClient;
 import com.tencent.tdw.security.exceptions.SecureException;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +77,12 @@ public class IcebergBaseOptService {
     private RestTemplate restTemplate;
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private StreamSinkFieldEntityMapper sinkFieldMapper;
+    @Autowired
+    private StreamSinkEntityMapper sinkEntityMapper;
 
     @Value("${dla.api.url}")
     private String dlaApiUrl;
@@ -297,6 +308,23 @@ public class IcebergBaseOptService {
             QueryIcebergTableResponse response = JsonUtils.parseObject(rsp, QueryIcebergTableResponse.class);
             if (!Objects.isNull(response) && response.getCode() == 0) {
                 log.info("create iceberg table [{}.{}] success, rsp {}", request.getDb(), request.getTable(), rsp);
+                // write task ID to database
+                QueryIcebergTableResponse tableDetail = this.getTableDetail(icebergSink.getClusterTag(),
+                        icebergSink.getDbName(), icebergSink.getTableName(), icebergSink.getCreator());
+                log.info("get iceberg table detail result={}", queryRsp);
+                if (StringUtils.isBlank(icebergSink.getWarehouse()) && queryRsp != null
+                        && queryRsp.getCode() != 20005) {
+                    StreamSinkEntity sinkEntity = sinkEntityMapper.selectByPrimaryKey(icebergSink.getId());
+                    try {
+                        IcebergSinkDTO dto = IcebergSinkDTO.getFromJson(sinkEntity.getExtParams());
+                        dto.setWarehouse(queryRsp.getData().getLocation());
+                        sinkEntity.setExtParams(objectMapper.writeValueAsString(dto));
+                        sinkEntityMapper.updateByIdSelective(sinkEntity);
+                    } catch (Exception e) {
+                        log.error("parsing json string to sink info failed", e);
+                        throw new WorkflowListenerException(ErrorCodeEnum.SINK_SAVE_FAILED.getMessage());
+                    }
+                }
                 sinkService.updateStatus(icebergSink.getId(), SinkStatus.CONFIG_SUCCESSFUL.getCode(),
                         response.getMessage());
             } else {
