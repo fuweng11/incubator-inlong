@@ -311,13 +311,13 @@ public class IcebergBaseOptService {
                 // write task ID to database
                 QueryIcebergTableResponse tableDetail = this.getTableDetail(icebergSink.getClusterTag(),
                         icebergSink.getDbName(), icebergSink.getTableName(), icebergSink.getCreator());
-                log.info("get iceberg table detail result={}", queryRsp);
-                if (StringUtils.isBlank(icebergSink.getWarehouse()) && queryRsp != null
-                        && queryRsp.getCode() != 20005) {
+                log.info("get iceberg table detail result={}", tableDetail);
+                if (StringUtils.isBlank(icebergSink.getWarehouse()) && tableDetail != null
+                        && tableDetail.getCode() != 20005) {
                     StreamSinkEntity sinkEntity = sinkEntityMapper.selectByPrimaryKey(icebergSink.getId());
                     try {
                         IcebergSinkDTO dto = IcebergSinkDTO.getFromJson(sinkEntity.getExtParams());
-                        dto.setWarehouse(queryRsp.getData().getLocation());
+                        dto.setWarehouse(tableDetail.getData().getLocation());
                         sinkEntity.setExtParams(objectMapper.writeValueAsString(dto));
                         sinkEntityMapper.updateByIdSelective(sinkEntity);
                     } catch (Exception e) {

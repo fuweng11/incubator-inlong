@@ -284,8 +284,8 @@ public class DefaultSortConfigOperator implements SortConfigOperator {
     private void addAuditId(Map<String, Object> properties, String type, boolean isSent) {
         try {
             String auditId = auditService.getAuditId(type, isSent);
-            // properties.putIfAbsent("metrics.audit.key", auditId);
-            // properties.putIfAbsent("metrics.audit.proxy.hosts", auditHost);
+            properties.putIfAbsent("metrics.audit.key", auditId);
+            properties.putIfAbsent("metrics.audit.proxy.hosts", auditHost);
         } catch (Exception e) {
             LOGGER.error("Current type ={} is not set auditId", type);
         }

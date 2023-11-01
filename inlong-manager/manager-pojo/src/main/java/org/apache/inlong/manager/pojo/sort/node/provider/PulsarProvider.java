@@ -86,4 +86,22 @@ public class PulsarProvider implements ExtractNodeProvider {
                 pulsarSource.getSubscription(),
                 scanStartupSubStartOffset);
     }
+
+    // @Override
+    // public List<StreamField> addStreamMetaFields(List<StreamField> streamFields) {
+    // List<String> fieldNames = streamFields.stream().map(StreamField::getFieldName).collect(Collectors.toList());
+    // if (!fieldNames.contains(MetaField.AUDIT_DATA_TIME.name())) {
+    // streamFields.add(0,
+    // new StreamField(0, "long", MetaField.AUDIT_DATA_TIME.name(), "data_time", null, 1,
+    // MetaField.AUDIT_DATA_TIME.name()));
+    // }
+    // return streamFields;
+    // }
+
+    // @Override
+    // public List<FieldInfo> getMetaFields() {
+    // List<FieldInfo> fieldInfos = new ArrayList<>();
+    // fieldInfos.add(0, new FieldInfo(MetaField.AUDIT_DATA_TIME.name(), new LongFormatInfo()));
+    // return fieldInfos;
+    // }
 }

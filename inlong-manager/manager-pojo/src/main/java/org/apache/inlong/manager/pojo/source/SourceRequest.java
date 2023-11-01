@@ -107,6 +107,9 @@ public class SourceRequest {
     @ApiModelProperty(value = "Whether to sync schema from source after saving or updating. Default is false")
     private Boolean enableSyncSchema = false;
 
+    @ApiModelProperty(value = "Whether to ignore the parse errors of field value, true as default")
+    private boolean ignoreParseError;
+
     @ApiModelProperty("Version")
     @NotNull(groups = UpdateValidation.class, message = "version cannot be null")
     private Integer version;

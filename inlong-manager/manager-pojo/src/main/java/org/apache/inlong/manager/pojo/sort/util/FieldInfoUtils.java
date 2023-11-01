@@ -409,6 +409,7 @@ public class FieldInfoUtils {
         }
         for (int i = 0; i < sourceFields.size(); i++) {
             if (!Objects.equals(sourceFields.get(i).getName(), targetFields.get(i).getName())) {
+                log.info("test node false={} ,{}", sourceFields.get(i).getName(), targetFields.get(i).getName());
                 return false;
             }
         }

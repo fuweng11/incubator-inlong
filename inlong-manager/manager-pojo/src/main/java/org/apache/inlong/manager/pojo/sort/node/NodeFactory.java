@@ -104,6 +104,8 @@ public class NodeFactory {
         LoadNodeProvider loadNodeProvider = LoadNodeProviderFactory.getLoadNodeProvider(sinkInfo.getSinkType());
 
         if (FieldInfoUtils.compareFields(extractNodeProvider.getMetaFields(), loadNodeProvider.getMetaFields())) {
+            log.info("test pulsar node ={}", extractNodeProvider.getMetaFields().size());
+            log.info("test iceberg node ={}", loadNodeProvider.getMetaFields().size());
             extractNodeProvider.addStreamMetaFields(sourceInfo.getFieldList());
             if (CollectionUtils.isNotEmpty(transformResponses)) {
                 transformResponses.forEach(v -> extractNodeProvider.addStreamMetaFields(v.getFieldList()));

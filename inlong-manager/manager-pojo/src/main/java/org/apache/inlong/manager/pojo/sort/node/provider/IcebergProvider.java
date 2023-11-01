@@ -110,6 +110,16 @@ public class IcebergProvider implements ExtractNodeProvider, LoadNodeProvider {
         return streamFields;
     }
 
+    // @Override
+    // public List<SinkField> addSinkMetaFields(List<SinkField> sinkFields) {
+    // List<String> fieldNames = sinkFields.stream().map(SinkField::getFieldName).collect(Collectors.toList());
+    // if (!fieldNames.contains(MetaField.AUDIT_DATA_TIME.name())) {
+    // sinkFields.add(0, new SinkField(0, "long", MetaField.AUDIT_DATA_TIME.name(), "long",
+    // MetaField.AUDIT_DATA_TIME.name()));
+    // }
+    // return sinkFields;
+    // }
+
     @Override
     public List<FieldInfo> getMetaFields() {
         List<FieldInfo> fieldInfos = new ArrayList<>();
