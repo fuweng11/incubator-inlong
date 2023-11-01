@@ -19,6 +19,7 @@ package org.apache.inlong.manager.service.resource.sort;
 
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
+import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
@@ -102,6 +103,10 @@ public class InnerSortConfigOperator implements SortConfigOperator {
         List<InnerIcebergSink> icebergSinkList = new ArrayList<>();
         List<ElasticsearchSink> elasticsearchSinkList = new ArrayList<>();
         for (SinkInfo sinkInfo : configList) {
+            if (SinkStatus.SUSPEND.getCode().equals(sinkInfo.getStatus())) {
+                LOGGER.warn("sink config [" + sinkInfo.getId() + "] already suspend, skip to push");
+                continue;
+            }
             switch (sinkInfo.getSinkType()) {
                 case SinkType.INNER_HIVE:
                 case SinkType.INNER_THIVE:
