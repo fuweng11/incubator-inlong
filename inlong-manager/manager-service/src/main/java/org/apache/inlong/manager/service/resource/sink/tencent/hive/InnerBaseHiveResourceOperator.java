@@ -17,10 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sink.tencent.hive;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
@@ -56,6 +52,11 @@ import org.apache.inlong.manager.service.resource.sink.tencent.us.UPSOperator;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.sink.tencent.us.UsTaskService;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;

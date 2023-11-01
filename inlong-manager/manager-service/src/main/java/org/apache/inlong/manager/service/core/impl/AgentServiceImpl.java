@@ -163,7 +163,7 @@ public class AgentServiceImpl implements AgentService {
         // because the eviction handler needs to query cluster info cache
         long expireTime = 10 * 5;
         taskCache = Caffeine.newBuilder()
-                .expireAfterAccess(expireTime * 2L, TimeUnit.SECONDS)
+                .expireAfterWrite(expireTime * 2L, TimeUnit.SECONDS)
                 .build(this::fetchTask);
 
         if (updateTaskTimeoutEnabled) {
