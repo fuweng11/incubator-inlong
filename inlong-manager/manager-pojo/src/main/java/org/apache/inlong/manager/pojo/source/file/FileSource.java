@@ -80,6 +80,9 @@ public class FileSource extends StreamSource {
     @ApiModelProperty("Cycle unit")
     private String cycleUnit;
 
+    @ApiModelProperty("Max file count")
+    private String maxFileCount;
+
     @ApiModelProperty("Whether retry")
     private Boolean retry;
 

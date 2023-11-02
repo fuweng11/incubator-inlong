@@ -83,6 +83,9 @@ public class FileSourceDTO {
     @ApiModelProperty("Cycle unit")
     private String cycleUnit = "D";
 
+    @ApiModelProperty("Max file count")
+    private String maxFileCount;
+
     @ApiModelProperty("Whether retry")
     private Boolean retry = false;
 
