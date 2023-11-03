@@ -18,10 +18,13 @@
 package org.apache.inlong.manager.pojo.sort.node.provider;
 
 import org.apache.inlong.common.enums.MessageWrapType;
+import org.apache.inlong.common.enums.MetaField;
 import org.apache.inlong.manager.common.consts.SourceType;
 import org.apache.inlong.manager.pojo.sort.node.base.ExtractNodeProvider;
 import org.apache.inlong.manager.pojo.source.pulsar.PulsarSource;
+import org.apache.inlong.manager.pojo.stream.StreamField;
 import org.apache.inlong.manager.pojo.stream.StreamNode;
+import org.apache.inlong.sort.formats.common.LongFormatInfo;
 import org.apache.inlong.sort.protocol.FieldInfo;
 import org.apache.inlong.sort.protocol.enums.PulsarScanStartupMode;
 import org.apache.inlong.sort.protocol.node.ExtractNode;
@@ -31,9 +34,11 @@ import org.apache.inlong.sort.protocol.node.format.Format;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * The Provider for creating Pulsar extract nodes.
@@ -87,21 +92,21 @@ public class PulsarProvider implements ExtractNodeProvider {
                 scanStartupSubStartOffset);
     }
 
-    // @Override
-    // public List<StreamField> addStreamMetaFields(List<StreamField> streamFields) {
-    // List<String> fieldNames = streamFields.stream().map(StreamField::getFieldName).collect(Collectors.toList());
-    // if (!fieldNames.contains(MetaField.AUDIT_DATA_TIME.name())) {
-    // streamFields.add(0,
-    // new StreamField(0, "long", MetaField.AUDIT_DATA_TIME.name(), "data_time", null, 1,
-    // MetaField.AUDIT_DATA_TIME.name()));
-    // }
-    // return streamFields;
-    // }
+    @Override
+    public List<StreamField> addStreamMetaFields(List<StreamField> streamFields) {
+        List<String> fieldNames = streamFields.stream().map(StreamField::getFieldName).collect(Collectors.toList());
+        if (!fieldNames.contains(MetaField.AUDIT_DATA_TIME.name())) {
+            streamFields.add(0,
+                    new StreamField(0, "long", MetaField.AUDIT_DATA_TIME.name(), "data_time", null, 1,
+                            MetaField.AUDIT_DATA_TIME.name()));
+        }
+        return streamFields;
+    }
 
-    // @Override
-    // public List<FieldInfo> getMetaFields() {
-    // List<FieldInfo> fieldInfos = new ArrayList<>();
-    // fieldInfos.add(0, new FieldInfo(MetaField.AUDIT_DATA_TIME.name(), new LongFormatInfo()));
-    // return fieldInfos;
-    // }
+    @Override
+    public List<FieldInfo> getMetaFields() {
+        List<FieldInfo> fieldInfos = new ArrayList<>();
+        fieldInfos.add(0, new FieldInfo(MetaField.AUDIT_DATA_TIME.name(), new LongFormatInfo()));
+        return fieldInfos;
+    }
 }
