@@ -35,6 +35,7 @@ import org.apache.inlong.manager.pojo.stream.StreamField;
 import org.apache.inlong.manager.pojo.user.LoginUserUtils;
 import org.apache.inlong.manager.pojo.user.UserRoleCode;
 import org.apache.inlong.manager.service.operationlog.OperationLog;
+import org.apache.inlong.manager.service.resource.sc.ScService;
 import org.apache.inlong.manager.service.stream.InlongStreamProcessService;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
 
@@ -76,6 +77,8 @@ public class InlongStreamController {
     private InlongStreamService streamService;
     @Autowired
     private InlongStreamProcessService streamProcessOperation;
+    @Autowired
+    private ScService scService;
 
     @RequestMapping(value = "/stream/save", method = RequestMethod.POST)
     @OperationLog(operation = OperationType.CREATE)
@@ -261,6 +264,12 @@ public class InlongStreamController {
         request.setCurrentUser(LoginUserUtils.getLoginUser().getName());
         request.setIsAdminRole(LoginUserUtils.getLoginUser().getRoles().contains(UserRoleCode.TENANT_ADMIN));
         return Response.success(streamService.listBriefByTenant(request));
+    }
+
+    @RequestMapping(value = "/stream/grant", method = RequestMethod.POST)
+    public Response<Boolean> grant(@RequestParam String dbName, @RequestParam String tableName) {
+        scService.grant("inlong_online", dbName, tableName, "alter", "THIVE", "tk", false);
+        return Response.success(true);
     }
 
 }

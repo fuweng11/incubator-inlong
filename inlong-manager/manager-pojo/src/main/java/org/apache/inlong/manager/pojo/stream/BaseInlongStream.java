@@ -34,5 +34,6 @@ public class BaseInlongStream {
     // you can add extend parameters in this class
     private String kvSeparator;
     private String lineSeparator;
+    private String predefinedFields;
 
 }

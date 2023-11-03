@@ -52,6 +52,9 @@ public class InlongStreamExtParam implements Serializable {
     @ApiModelProperty(value = "Line separator")
     private String lineSeparator;
 
+    @ApiModelProperty(value = "Predefined fields")
+    private String predefinedFields;
+
     @ApiModelProperty(value = "If use extended fields")
     private Boolean useExtendedFields = false;
 
