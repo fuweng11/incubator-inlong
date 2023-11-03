@@ -127,10 +127,6 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                     InnerIcebergSink icebergSink = (InnerIcebergSink) sinkService.get(sinkInfo.getId());
                     icebergSinkList.add(icebergSink);
                     break;
-                case SinkType.ELASTICSEARCH:
-                    ElasticsearchSink esSink = (ElasticsearchSink) sinkService.get(sinkInfo.getId());
-                    elasticsearchSinkList.add(esSink);
-                    break;
                 default:
                     LOGGER.warn("skip to push sort config for sink id={}, as no sort config info", sinkInfo.getId());
             }
@@ -138,7 +134,6 @@ public class InnerSortConfigOperator implements SortConfigOperator {
         hiveConfigService.buildHiveConfig(groupInfo, hiveInfos);
         ckConfigService.buildCkConfig(groupInfo, clickHouseSinkList);
         icebergConfigService.buildIcebergConfig(groupInfo, icebergSinkList);
-        esConfigService.buildEsConfig(groupInfo, elasticsearchSinkList);
     }
 
 }

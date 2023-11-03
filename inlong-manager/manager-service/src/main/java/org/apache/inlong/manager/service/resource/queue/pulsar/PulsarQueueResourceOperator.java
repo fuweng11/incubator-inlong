@@ -363,9 +363,6 @@ public class PulsarQueueResourceOperator implements QueueResourceOperator {
             case SinkType.INNER_ICEBERG:
                 sortTaskType = ClusterType.SORT_ICEBERG;
                 break;
-            case SinkType.ELASTICSEARCH:
-                sortTaskType = ClusterType.SORT_ES;
-                break;
             default:
                 return String.format(PULSAR_SUBSCRIPTION, clusterTag, groupInfo.getMqResource(), topicName,
                         sink.getId());

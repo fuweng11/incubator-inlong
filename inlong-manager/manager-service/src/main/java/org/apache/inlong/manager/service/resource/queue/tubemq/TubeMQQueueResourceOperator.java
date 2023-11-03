@@ -167,9 +167,6 @@ public class TubeMQQueueResourceOperator implements QueueResourceOperator {
             case SinkType.INNER_ICEBERG:
                 sortTaskType = ClusterType.SORT_ICEBERG;
                 break;
-            case SinkType.ELASTICSEARCH:
-                sortTaskType = ClusterType.SORT_ES;
-                break;
             default:
                 return String.format(TUBE_CONSUME_GROUP, clusterTag, groupInfo.getMqResource(), topicName);
         }

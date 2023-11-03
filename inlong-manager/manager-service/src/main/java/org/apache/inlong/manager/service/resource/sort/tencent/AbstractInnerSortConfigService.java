@@ -251,9 +251,6 @@ public class AbstractInnerSortConfigService {
             case SinkType.INNER_ICEBERG:
                 topoType = ClusterType.SORT_ICEBERG;
                 break;
-            case SinkType.ELASTICSEARCH:
-                topoType = ClusterType.SORT_ES;
-                break;
             default:
                 throw new BusinessException(ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT);
         }
