@@ -67,6 +67,7 @@ import org.apache.inlong.manager.pojo.common.OrderTypeEnum;
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarDTO;
 import org.apache.inlong.manager.pojo.node.mysql.MySQLDataNodeInfo;
+import org.apache.inlong.manager.pojo.sink.SinkField;
 import org.apache.inlong.manager.pojo.source.SourcePageRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.AddFieldsRequest;
 import org.apache.inlong.manager.pojo.source.dbsync.DbSyncTaskStatus;
@@ -986,8 +987,13 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                         field.setFieldName(fieldName);
                     }
                 }
-                streamService.addFieldForStream(fieldsRequest, groupEntity, streamEntity);
-                sinkService.addFieldForSink(fieldsRequest, groupEntity, streamEntity);
+                List<StreamField> actualAddStreamFields =
+                        streamService.addFieldForStream(fieldsRequest, groupEntity, streamEntity);
+                for (StreamField streamField : actualAddStreamFields) {
+
+                }
+                List<SinkField> actualAddSinkFields =
+                        sinkService.addFieldForSink(fieldsRequest, groupEntity, streamEntity);
                 LOGGER.info("success to add fields for dbsync, groupId={} streamId={}", groupId, streamId);
                 fieldChangeLogEntity.setIsSuccess(1);
                 fieldChangeLogEntityMapper.insert(fieldChangeLogEntity);

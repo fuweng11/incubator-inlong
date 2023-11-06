@@ -1030,7 +1030,7 @@ public class InlongStreamServiceImpl implements InlongStreamService {
         return entity;
     }
 
-    public void addFieldForStream(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
+    public List<StreamField> addFieldForStream(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
             InlongStreamEntity streamEntity) {
         String groupId = groupEntity.getInlongGroupId();
         String streamId = streamEntity.getInlongStreamId();
@@ -1045,12 +1045,14 @@ public class InlongStreamServiceImpl implements InlongStreamService {
                 .map(field -> field.getFieldName().toLowerCase(Locale.ROOT))
                 .collect(Collectors.toSet());
         List<StreamField> tobeAddFields = fieldsRequest.getFields();
+        List<StreamField> actualAddFields = new ArrayList<>();
         for (StreamField fieldInfo : tobeAddFields) {
             String tobeAddFieldName = fieldInfo.getFieldName().toLowerCase(Locale.ROOT);
             fieldInfo.setFieldType(FieldTypeUtils.toStreamFieldType(fieldInfo.getFieldType()));
             if (existsNames.contains(tobeAddFieldName)) {
                 LOGGER.error("field {} already exist for streamId {}", fieldInfo.getFieldName(), streamId);
             } else {
+                actualAddFields.add(fieldInfo);
                 streamFields.add(fieldInfo);
             }
         }
@@ -1061,9 +1063,10 @@ public class InlongStreamServiceImpl implements InlongStreamService {
         request.setFieldList(streamFields);
         if (streamFields.size() == fieldEntityList.size()) {
             LOGGER.warn("not need add field for streamId {}", streamId);
-            return;
+            return actualAddFields;
         }
         this.update(request, defaultOperator);
+        return actualAddFields;
     }
 
     @Override

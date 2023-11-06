@@ -15,27 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.dao.entity.tencent;
+package org.apache.inlong.manager.pojo.source.dbsync;
 
+import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
+/**
+ * Request of get fields change log
+ */
 @Data
-public class FieldChangeLogEntity {
+@NoArgsConstructor
+@AllArgsConstructor
+public class FieldChangLogRequest {
 
-    private static final long serialVersionUID = 1L;
-    private Integer id;
+    @ApiModelProperty("Inlong group id")
     private String inlongGroupId;
+
+    @ApiModelProperty("Inlong stream id")
     private String inlongStreamId;
+
+    @ApiModelProperty("Stream source id")
     private Integer sourceId;
-    private String rawSql;
-    private String streamFieldChange;
-    private String sinkFieldChange;
-    private String errMsg;
-    private Integer isSuccess;
-    private Integer isDeleted;
-    private Date createTime;
-    private Date modifyTime;
+
+    @ApiModelProperty(value = "query start date, format by 'yyyy-MM-dd'", required = true, example = "2022-01-01")
+    private String startDate;
+
+    @ApiModelProperty(value = "query end date, format by 'yyyy-MM-dd'", required = true, example = "2022-01-01")
+    private String endDate;
 
 }

@@ -943,7 +943,7 @@ public class StreamSinkServiceImpl implements StreamSinkService {
         request.setInlongStreamId(curEntity.getInlongStreamId());
     }
 
-    public void addFieldForSink(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
+    public List<SinkField> addFieldForSink(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
             InlongStreamEntity streamEntity) {
         AtomicBoolean isNeedAddField = new AtomicBoolean(false);
         String groupId = groupEntity.getInlongGroupId();
@@ -963,6 +963,7 @@ public class StreamSinkServiceImpl implements StreamSinkService {
             return sinkField;
         }).collect(Collectors.toList());
 
+        List<SinkField> actualAddFields = new ArrayList<>();
         sinkEntityList.forEach(sink -> {
             List<StreamSinkFieldEntity> existsFieldList = sinkFieldMapper.selectBySinkId(sink.getId());
             List<SinkField> sinkFields = new ArrayList<>();
@@ -977,6 +978,7 @@ public class StreamSinkServiceImpl implements StreamSinkService {
                 if (existsNames.contains(tobeAddFieldName)) {
                     LOGGER.error("sink field {} already exist for sinkId {}", fieldInfo.getFieldName(), sink.getId());
                 } else {
+                    actualAddFields.add(fieldInfo);
                     sinkFields.add(fieldInfo);
                 }
             }
@@ -996,6 +998,7 @@ public class StreamSinkServiceImpl implements StreamSinkService {
         if (streamSuccess && isNeedAddField.get()) {
             startProcessForSink(groupId, streamId, defaultOperator);
         }
+        return actualAddFields;
     }
 
     @Override

@@ -261,7 +261,7 @@ public interface StreamSinkService {
      */
     boolean addFields(StreamSinkEntity sinkEntity, List<SinkField> sinkFieldList);
 
-    void addFieldForSink(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
+    List<SinkField> addFieldForSink(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
             InlongStreamEntity streamEntity);
 
     /**

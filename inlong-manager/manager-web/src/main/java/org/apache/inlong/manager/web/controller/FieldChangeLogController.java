@@ -20,16 +20,15 @@ package org.apache.inlong.manager.web.controller;
 import org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity;
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.Response;
+import org.apache.inlong.manager.pojo.source.dbsync.FieldChangLogRequest;
 import org.apache.inlong.manager.service.core.dbsync.FieldChangeLogService;
 
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -44,13 +43,8 @@ public class FieldChangeLogController {
     private FieldChangeLogService fieldChangeLogService;
 
     @RequestMapping(value = "/fieldChangeLog/list", method = RequestMethod.POST)
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "inlongGroupId", dataTypeClass = String.class, required = true),
-            @ApiImplicitParam(name = "inlongStreamId", dataTypeClass = String.class, required = true)
-    })
     @ApiOperation(value = "List field change log by paginating")
-    public Response<PageResult<FieldChangeLogEntity>> listByCondition(@RequestParam String inlongGroupId,
-            @RequestParam String inlongStreamId) {
-        return Response.success(fieldChangeLogService.list(inlongGroupId, inlongStreamId));
+    public Response<PageResult<FieldChangeLogEntity>> listByCondition(@RequestBody FieldChangLogRequest request) {
+        return Response.success(fieldChangeLogService.list(request));
     }
 }

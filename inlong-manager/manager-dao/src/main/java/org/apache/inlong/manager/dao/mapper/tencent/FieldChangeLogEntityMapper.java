@@ -18,6 +18,7 @@
 package org.apache.inlong.manager.dao.mapper.tencent;
 
 import org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity;
+import org.apache.inlong.manager.pojo.source.dbsync.FieldChangLogRequest;
 
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -30,6 +31,8 @@ public interface FieldChangeLogEntityMapper {
     int insert(FieldChangeLogEntity record);
 
     int insertSelective(FieldChangeLogEntity record);
+
+    List<FieldChangeLogEntity> selectByCondition(FieldChangLogRequest fieldChangLogRequest);
 
     List<FieldChangeLogEntity> selectByKey(@Param("groupId") String groupId, @Param("streamId") String streamId,
             @Param("sourceId") Integer sourceId);

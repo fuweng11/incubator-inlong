@@ -20,6 +20,7 @@ package org.apache.inlong.manager.service.core.dbsync;
 import org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity;
 import org.apache.inlong.manager.dao.mapper.tencent.FieldChangeLogEntityMapper;
 import org.apache.inlong.manager.pojo.common.PageResult;
+import org.apache.inlong.manager.pojo.source.dbsync.FieldChangLogRequest;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -33,10 +34,12 @@ public class FieldChangeLogServiceImpl implements FieldChangeLogService {
     private FieldChangeLogEntityMapper fieldChangeLogEntityMapper;
 
     @Override
-    public PageResult<FieldChangeLogEntity> list(String inlongGroupId, String inlongStreamId) {
+    public PageResult<FieldChangeLogEntity> list(FieldChangLogRequest request) {
         PageHelper.startPage(0, 10);
-        Page<FieldChangeLogEntity> entityPage = (Page<FieldChangeLogEntity>) fieldChangeLogEntityMapper.selectByKey(
-                inlongGroupId, inlongStreamId, null);
+        // Support min agg at now
+        Page<FieldChangeLogEntity> entityPage =
+                (Page<FieldChangeLogEntity>) fieldChangeLogEntityMapper.selectByCondition(
+                        request);
         PageResult<FieldChangeLogEntity> pageResult = new PageResult<>(entityPage, entityPage.getTotal(),
                 entityPage.getPageNum(), entityPage.getPageSize());
         return pageResult;

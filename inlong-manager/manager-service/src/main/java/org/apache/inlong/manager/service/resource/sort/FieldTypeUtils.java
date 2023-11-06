@@ -30,6 +30,9 @@ public class FieldTypeUtils {
             throw new BusinessException("type cannot be blank");
         }
         String resultType;
+        if (StringUtils.isNotBlank(type) && type.contains("(")) {
+            type = type.substring(0, type.indexOf("("));
+        }
         type = type.toLowerCase(Locale.ROOT);
         switch (type) {
             // bit,tinyint,smallint,mediumint,int,integer,
@@ -84,6 +87,9 @@ public class FieldTypeUtils {
             throw new BusinessException("type cannot be blank");
         }
         String resultType;
+        if (StringUtils.isNotBlank(type) && type.contains("(")) {
+            type = type.substring(0, type.indexOf("("));
+        }
         type = type.toLowerCase(Locale.ROOT);
         switch (type) {
             // bit,tinyint,smallint,mediumint,int,integer,

@@ -257,7 +257,7 @@ public interface InlongStreamService {
      */
     void logicDeleteDlqOrRlq(String bid, String topicName, String operator);
 
-    void addFieldForStream(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
+    List<StreamField> addFieldForStream(AddFieldsRequest fieldsRequest, InlongGroupEntity groupEntity,
             InlongStreamEntity streamEntity);
 
     /**

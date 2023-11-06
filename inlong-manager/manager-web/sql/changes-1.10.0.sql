@@ -28,5 +28,11 @@ ALTER TABLE `inlong_stream`
 
 UPDATE inlong_group SET status = 130 where status = 150;
 
+ALTER TABLE `field_change_log`
+    ADD COLUMN `stream_field_change` text DEFAULT NULL COMMENT 'The value of the stream field change';
+
+ALTER TABLE `field_change_log`
+    ADD COLUMN `sink_field_change` text DEFAULT NULL COMMENT 'The value of the sink field change';
+
 
 

@@ -26,6 +26,8 @@
         <result column="inlong_stream_id" jdbcType="VARCHAR" property="inlongStreamId"/>
         <result column="source_id" jdbcType="INTEGER" property="sourceId"/>
         <result column="raw_sql" jdbcType="LONGVARCHAR" property="rawSql"/>
+        <result column="stream_field_change" jdbcType="LONGVARCHAR" property="streamFieldChange"/>
+        <result column="sink_field_change" jdbcType="LONGVARCHAR" property="sinkFieldChange"/>
         <result column="err_msg" jdbcType="LONGVARCHAR" property="errMsg"/>
         <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
         <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
@@ -33,14 +35,17 @@
         <result column="is_deleted" jdbcType="INTEGER" property="isDeleted"/>
     </resultMap>
     <sql id="Base_Column_List">
-        id, inlong_group_id, inlong_stream_id, raw_sql, err_msg, create_time, modify_time, is_success, is_deleted
+        id, inlong_group_id, inlong_stream_id, raw_sql, streamFieldChange, sinkFieldChange, err_msg, create_time, modify_time, is_success, is_deleted
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id"
             parameterType="org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity">
-        insert into field_change_log (id, inlong_group_id, inlong_stream_id, source_id, raw_sql, err_msg, is_success)
+        insert into field_change_log (id, inlong_group_id, inlong_stream_id, source_id, raw_sql, stream_field_change,
+                                      sink_field_change, err_msg, is_success)
         values (#{id,jdbcType=INTEGER}, #{inlongGroupId,jdbcType=VARCHAR}, #{inlongStreamId,jdbcType=VARCHAR},
-                #{sourceId,jdbcType=INTEGER}, #{rawSql,jdbcType=LONGNVARCHAR}, #{errMsg,jdbcType=LONGNVARCHAR}, #{isSuccess,jdbcType=INTEGER})
+                #{sourceId,jdbcType=INTEGER}, #{rawSql,jdbcType=LONGNVARCHAR},
+                #{streamFieldChange,jdbcType=LONGNVARCHAR}, #{sinkFieldChange,jdbcType=LONGNVARCHAR},
+                #{errMsg,jdbcType=LONGNVARCHAR}, #{isSuccess,jdbcType=INTEGER})
     </insert>
     <insert id="insertSelective" useGeneratedKeys="true" keyProperty="id"
             parameterType="org.apache.inlong.manager.dao.entity.InlongStreamEntity">
@@ -60,6 +65,12 @@
             </if>
             <if test="rawSql != null">
                 raw_sql,
+            </if>
+            <if test="streamFieldChange != null">
+                stream_field_change,
+            </if>
+            <if test="sinkFieldChange != null">
+                sink_field_change,
             </if>
             <if test="errMsg != null">
                 err_msg,
@@ -87,6 +98,12 @@
             <if test="rawSql != null">
                 #{rawSql,jdbcType=LONGNVARCHAR},
             </if>
+            <if test="streamFieldChange != null">
+                #{streamFieldChange,jdbcType=LONGNVARCHAR},
+            </if>
+            <if test="sinkFieldChange != null">
+                #{sinkFieldChange,jdbcType=LONGNVARCHAR},
+            </if>
             <if test="errMsg != null">
                 #{errMsg,jdbcType=LONGNVARCHAR},
             </if>
@@ -112,5 +129,29 @@
             </if>
         </where>
         order by modify_time desc
+    </select>
+    <select id="selectByCondition"
+            parameterType="org.apache.inlong.manager.pojo.source.dbsync.FieldChangLogRequest"
+            resultType="org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from field_change_log
+        <where>
+            is_deleted = 0
+            <if test="request.inlongGroupId != null and request.inlongGroupId != ''">
+                and inlong_group_id = #{request.inlongGroupId, jdbcType=VARCHAR}
+            </if>
+            <if test="request.inlongStreamId != null and request.inlongStreamId != ''">
+                and inlong_stream_id = #{request.inlongStreamId, jdbcType=VARCHAR}
+            </if>
+            <if test="request.sourceId != null and request.sourceId != ''">
+                and source_id = #{request.sourceId, jdbcType=INTERGER}
+            </if>
+            <if test="request.startDate != null and request.startDate != '' and request.endDate != null and request.endDate != ''">
+                and create_time &gt;= #{request.startDate, jdbcType=VARCHAR}
+                and create_time &lt; #{request.endDate, jdbcType=VARCHAR}
+            </if>
+        </where>
+        order by create_time desc
     </select>
 </mapper>

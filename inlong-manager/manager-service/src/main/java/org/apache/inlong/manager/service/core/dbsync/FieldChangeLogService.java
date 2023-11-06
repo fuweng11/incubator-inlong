@@ -19,9 +19,10 @@ package org.apache.inlong.manager.service.core.dbsync;
 
 import org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity;
 import org.apache.inlong.manager.pojo.common.PageResult;
+import org.apache.inlong.manager.pojo.source.dbsync.FieldChangLogRequest;
 
 public interface FieldChangeLogService {
 
-    PageResult<FieldChangeLogEntity> list(String inlongGroupId, String inlongStreamId);
+    PageResult<FieldChangeLogEntity> list(FieldChangLogRequest request);
 
 }
