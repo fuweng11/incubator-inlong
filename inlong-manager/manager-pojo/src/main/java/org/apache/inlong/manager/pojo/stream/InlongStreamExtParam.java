@@ -55,6 +55,9 @@ public class InlongStreamExtParam implements Serializable {
     @ApiModelProperty(value = "Predefined fields")
     private String predefinedFields;
 
+    @ApiModelProperty(value = "Delay offset")
+    private String delayOffset;
+
     @ApiModelProperty(value = "If use extended fields")
     private Boolean useExtendedFields = false;
 

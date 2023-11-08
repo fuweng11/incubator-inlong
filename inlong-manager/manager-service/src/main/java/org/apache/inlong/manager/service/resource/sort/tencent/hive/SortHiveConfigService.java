@@ -183,6 +183,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         unpackExtParams(stream.getExtParams(), streamInfo);
         if (StringUtils.isNotBlank(streamInfo.getPredefinedFields())) {
             Set<String> fieldNames = Sets.newHashSet(streamInfo.getPredefinedFields().split(InlongConstants.AMPERSAND));
+            int i = 0;
             for (String fielName : fieldNames) {
                 fielName = fielName.substring(0, fielName.indexOf(InlongConstants.EQUAL));
                 StreamSinkFieldEntity field = new StreamSinkFieldEntity();
@@ -193,7 +194,7 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
                 field.setFieldName(fielName);
                 field.setFieldType("string");
                 field.setFieldComment("predefined field");
-                fieldList.add(0, field);
+                fieldList.add(i++, field);
             }
         }
 
@@ -209,6 +210,9 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
         properties.put("source.tdbank.tid", hiveFullInfo.getInlongStreamId());
         properties.put("source.inlongGroupId", groupInfo.getInlongGroupId());
         properties.put("source.inlongStreamId", hiveFullInfo.getInlongStreamId());
+        if (StringUtils.isNotBlank(streamInfo.getDelayOffset())) {
+            properties.put("delay.offset", streamInfo.getDelayOffset());
+        }
         String flowId = hiveFullInfo.getSinkId().toString();
         DataFlowInfo flowInfo = new DataFlowInfo(flowId, sourceInfo, sinkInfo, properties);
         LOGGER.info("hive data flow info: " + OBJECT_MAPPER.writeValueAsString(flowInfo));

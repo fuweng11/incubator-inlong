@@ -189,6 +189,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         if (StringUtils.isNotBlank(inlongStreamInfo.getPredefinedFields())) {
             Set<String> fieldNames =
                     Sets.newHashSet(inlongStreamInfo.getPredefinedFields().split(InlongConstants.AMPERSAND));
+            int i = 0;
             for (String fielName : fieldNames) {
                 fielName = fielName.substring(0, fielName.indexOf(InlongConstants.EQUAL));
                 StreamSinkFieldEntity field = new StreamSinkFieldEntity();
@@ -199,7 +200,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                 field.setFieldName(fielName);
                 field.setFieldType("string");
                 field.setFieldComment("predefined field");
-                fieldList.add(0, field);
+                fieldList.add(i++, field);
             }
         }
         if (CollectionUtils.isEmpty(fieldList)) {
@@ -523,6 +524,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         if (StringUtils.isNotBlank(inlongStreamInfo.getPredefinedFields())) {
             Set<String> fieldNames =
                     Sets.newHashSet(inlongStreamInfo.getPredefinedFields().split(InlongConstants.AMPERSAND));
+            int i = 0;
             for (String fielName : fieldNames) {
                 fielName = fielName.substring(0, fielName.indexOf(InlongConstants.EQUAL));
                 StreamSinkFieldEntity field = new StreamSinkFieldEntity();
@@ -533,7 +535,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
                 field.setFieldName(fielName);
                 field.setFieldType("string");
                 field.setFieldComment("predefined field");
-                fieldList.add(0, field);
+                fieldList.add(i++, field);
             }
         }
         if (CollectionUtils.isEmpty(fieldList)) {

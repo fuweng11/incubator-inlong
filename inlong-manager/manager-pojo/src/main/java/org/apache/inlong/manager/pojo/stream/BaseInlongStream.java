@@ -35,5 +35,6 @@ public class BaseInlongStream {
     private String kvSeparator;
     private String lineSeparator;
     private String predefinedFields;
+    private String delayOffset;
 
 }
