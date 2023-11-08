@@ -22,9 +22,12 @@ import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.common.exceptions.WorkflowException;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
+import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
@@ -53,6 +56,7 @@ import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.sink.tencent.us.UsTaskService;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
 
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.collections.CollectionUtils;
@@ -72,7 +76,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.apache.inlong.manager.pojo.stream.InlongStreamExtParam.unpackExtParams;
 
 @Service
 public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
@@ -102,6 +109,8 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
     private StreamSinkEntityMapper sinkMapper;
     @Autowired
     private StreamSinkFieldEntityMapper sinkFieldMapper;
+    @Autowired
+    private InlongStreamEntityMapper streamEntityMapper;
 
     public static String zeroFormat(String num, int len, boolean prev) {
         int l = num.length();
@@ -172,6 +181,27 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
         LOGGER.info("begin to create hive table for sinkId={}", sinkInfo.getId());
 
         List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(sinkInfo.getId());
+        InlongStreamEntity stream =
+                streamEntityMapper.selectByIdentifier(sinkInfo.getInlongGroupId(), sinkInfo.getInlongStreamId());
+        InlongStreamInfo inlongStreamInfo = CommonBeanUtils.copyProperties(stream, InlongStreamInfo::new);
+        // Processing extParams
+        unpackExtParams(stream.getExtParams(), inlongStreamInfo);
+        if (StringUtils.isNotBlank(inlongStreamInfo.getPredefinedFields())) {
+            Set<String> fieldNames =
+                    Sets.newHashSet(inlongStreamInfo.getPredefinedFields().split(InlongConstants.AMPERSAND));
+            for (String fielName : fieldNames) {
+                fielName = fielName.substring(0, fielName.indexOf(InlongConstants.EQUAL));
+                StreamSinkFieldEntity field = new StreamSinkFieldEntity();
+                field.setInlongGroupId(sinkInfo.getInlongGroupId());
+                field.setInlongStreamId(sinkInfo.getInlongStreamId());
+                field.setSourceFieldName(fielName);
+                field.setSourceFieldType("string");
+                field.setFieldName(fielName);
+                field.setFieldType("string");
+                field.setFieldComment("predefined field");
+                fieldList.add(0, field);
+            }
+        }
         if (CollectionUtils.isEmpty(fieldList)) {
             LOGGER.warn("no hive fields found, skip to create table for sinkId={}", sinkInfo.getId());
         }
@@ -485,6 +515,27 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
      */
     private List<HiveColumnInfo> getNewFields(InnerHiveFullInfo hiveInfo) {
         List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(hiveInfo.getSinkId());
+        InlongStreamEntity stream =
+                streamEntityMapper.selectByIdentifier(hiveInfo.getInlongGroupId(), hiveInfo.getInlongStreamId());
+        InlongStreamInfo inlongStreamInfo = CommonBeanUtils.copyProperties(stream, InlongStreamInfo::new);
+        // Processing extParams
+        unpackExtParams(stream.getExtParams(), inlongStreamInfo);
+        if (StringUtils.isNotBlank(inlongStreamInfo.getPredefinedFields())) {
+            Set<String> fieldNames =
+                    Sets.newHashSet(inlongStreamInfo.getPredefinedFields().split(InlongConstants.AMPERSAND));
+            for (String fielName : fieldNames) {
+                fielName = fielName.substring(0, fielName.indexOf(InlongConstants.EQUAL));
+                StreamSinkFieldEntity field = new StreamSinkFieldEntity();
+                field.setInlongGroupId(hiveInfo.getInlongGroupId());
+                field.setInlongStreamId(hiveInfo.getInlongStreamId());
+                field.setSourceFieldName(fielName);
+                field.setSourceFieldType("string");
+                field.setFieldName(fielName);
+                field.setFieldType("string");
+                field.setFieldComment("predefined field");
+                fieldList.add(0, field);
+            }
+        }
         if (CollectionUtils.isEmpty(fieldList)) {
             LOGGER.warn("no hive fields found, skip to create table for sinkId={}", hiveInfo.getSinkId());
         }

@@ -35,7 +35,7 @@
         <result column="is_deleted" jdbcType="INTEGER" property="isDeleted"/>
     </resultMap>
     <sql id="Base_Column_List">
-        id, inlong_group_id, inlong_stream_id, raw_sql, streamFieldChange, sinkFieldChange, err_msg, create_time, modify_time, is_success, is_deleted
+        id, inlong_group_id, inlong_stream_id, raw_sql, stream_field_change, sink_field_change, err_msg, create_time, modify_time, is_success, is_deleted
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id"

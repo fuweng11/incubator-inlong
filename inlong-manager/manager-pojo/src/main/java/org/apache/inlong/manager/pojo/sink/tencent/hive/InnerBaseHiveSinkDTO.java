@@ -17,13 +17,6 @@
 
 package org.apache.inlong.manager.pojo.sink.tencent.hive;
 
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.util.AESUtils;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
@@ -34,7 +27,16 @@ import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.InnerBaseHiveSinkRequest;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 
+import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
+
 import javax.validation.constraints.NotNull;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 

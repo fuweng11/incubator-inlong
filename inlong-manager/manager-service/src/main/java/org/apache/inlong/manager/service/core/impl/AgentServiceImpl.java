@@ -607,7 +607,18 @@ public class AgentServiceImpl implements AgentService {
             InlongStreamInfo streamInfo = CommonBeanUtils.copyProperties(streamEntity, InlongStreamInfo::new);
             // Processing extParams
             unpackExtParams(streamEntity.getExtParams(), streamInfo);
-            dataConfig.setPredefinedFields(streamInfo.getPredefinedFields());
+            Set<String> fieldNames =
+                    com.google.common.collect.Sets
+                            .newHashSet(streamInfo.getPredefinedFields().split(InlongConstants.AMPERSAND));
+            int i = 1;
+            List<String> list = new ArrayList<>();
+            for (String fieldname : fieldNames) {
+                fieldname = "__addcol" + i++ + "__" + fieldname;
+                list.add(fieldname);
+            }
+
+            LOGGER.info("test predefind={}", Joiner.on("&").join(list));
+            dataConfig.setPredefinedFields(Joiner.on("&").join(list));
 
             int dataReportType = groupEntity.getDataReportType();
             dataConfig.setDataReportType(dataReportType);

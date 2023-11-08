@@ -24,6 +24,7 @@ import org.apache.inlong.manager.common.consts.TencentConstants;
 import org.apache.inlong.manager.common.enums.ClusterType;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongClusterEntity;
 import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
@@ -39,11 +40,13 @@ import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.group.pulsar.InlongPulsarInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
+import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.resource.sink.tencent.us.UPSOperator;
 import org.apache.inlong.manager.service.resource.sort.SortFieldFormatUtils;
 import org.apache.inlong.manager.service.resource.sort.tencent.AbstractInnerSortConfigService;
 import org.apache.inlong.manager.service.sink.tencent.sort.SortExtConfig;
 
+import com.google.common.collect.Sets;
 import com.tencent.flink.formats.common.FormatInfo;
 import com.tencent.flink.formats.common.StringFormatInfo;
 import com.tencent.flink.formats.common.TimestampFormatInfo;
@@ -81,9 +84,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static org.apache.inlong.manager.common.consts.TencentConstants.PART_ARRIVED;
 import static org.apache.inlong.manager.common.consts.TencentConstants.PART_COUNT_VERIFIED;
+import static org.apache.inlong.manager.pojo.stream.InlongStreamExtParam.unpackExtParams;
 
 /**
  * Inner Sort config operator, used to create a Sort config for the InlongGroup with ZK enabled.
@@ -171,6 +176,25 @@ public class SortHiveConfigService extends AbstractInnerSortConfigService {
 
         if (fieldList == null || fieldList.size() == 0) {
             throw new WorkflowListenerException("fields is null for group id=" + groupId + ", stream id=" + streamId);
+        }
+        InlongStreamEntity stream = streamEntityMapper.selectByIdentifier(groupInfo.getInlongGroupId(), streamId);
+        InlongStreamInfo streamInfo = CommonBeanUtils.copyProperties(stream, InlongStreamInfo::new);
+        // Processing extParams
+        unpackExtParams(stream.getExtParams(), streamInfo);
+        if (StringUtils.isNotBlank(streamInfo.getPredefinedFields())) {
+            Set<String> fieldNames = Sets.newHashSet(streamInfo.getPredefinedFields().split(InlongConstants.AMPERSAND));
+            for (String fielName : fieldNames) {
+                fielName = fielName.substring(0, fielName.indexOf(InlongConstants.EQUAL));
+                StreamSinkFieldEntity field = new StreamSinkFieldEntity();
+                field.setInlongGroupId(groupId);
+                field.setInlongStreamId(streamId);
+                field.setSourceFieldName(fielName);
+                field.setSourceFieldType("string");
+                field.setFieldName(fielName);
+                field.setFieldType("string");
+                field.setFieldComment("predefined field");
+                fieldList.add(0, field);
+            }
         }
 
         SourceInfo sourceInfo = this.getSourceInfo(groupInfo, hiveFullInfo, fieldList, sortClusterName);

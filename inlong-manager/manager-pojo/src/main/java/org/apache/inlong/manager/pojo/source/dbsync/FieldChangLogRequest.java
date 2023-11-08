@@ -39,10 +39,10 @@ public class FieldChangLogRequest {
     @ApiModelProperty("Stream source id")
     private Integer sourceId;
 
-    @ApiModelProperty(value = "query start date, format by 'yyyy-MM-dd'", required = true, example = "2022-01-01")
+    @ApiModelProperty(value = "query start date, format by 'yyyy-MM-dd'", required = false, example = "2022-01-01")
     private String startDate;
 
-    @ApiModelProperty(value = "query end date, format by 'yyyy-MM-dd'", required = true, example = "2022-01-01")
+    @ApiModelProperty(value = "query end date, format by 'yyyy-MM-dd'", required = false, example = "2022-01-01")
     private String endDate;
 
 }

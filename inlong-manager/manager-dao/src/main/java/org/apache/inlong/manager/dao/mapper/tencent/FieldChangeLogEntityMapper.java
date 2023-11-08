@@ -32,7 +32,7 @@ public interface FieldChangeLogEntityMapper {
 
     int insertSelective(FieldChangeLogEntity record);
 
-    List<FieldChangeLogEntity> selectByCondition(FieldChangLogRequest fieldChangLogRequest);
+    List<FieldChangeLogEntity> selectByCondition(@Param("request") FieldChangLogRequest fieldChangLogRequest);
 
     List<FieldChangeLogEntity> selectByKey(@Param("groupId") String groupId, @Param("streamId") String streamId,
             @Param("sourceId") Integer sourceId);

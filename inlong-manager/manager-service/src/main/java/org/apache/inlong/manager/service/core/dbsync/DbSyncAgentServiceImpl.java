@@ -946,6 +946,7 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
             if (addFieldQueue.isEmpty()) {
                 return;
             }
+            LOGGER.info("test get field");
             LoginUserUtils.getLoginUser();
             if (LoginUserUtils.getLoginUser() == null) {
                 UserInfo userInfo = new UserInfo();
@@ -989,11 +990,20 @@ public class DbSyncAgentServiceImpl implements DbSyncAgentService {
                 }
                 List<StreamField> actualAddStreamFields =
                         streamService.addFieldForStream(fieldsRequest, groupEntity, streamEntity);
+                StringBuilder streamFieldChanges = new StringBuilder();
                 for (StreamField streamField : actualAddStreamFields) {
-
+                    streamFieldChanges.append(streamField.getFieldName()).append(":").append(streamField.getFieldType())
+                            .append(";");
                 }
+                fieldChangeLogEntity.setStreamFieldChange(streamFieldChanges.toString());
                 List<SinkField> actualAddSinkFields =
                         sinkService.addFieldForSink(fieldsRequest, groupEntity, streamEntity);
+                StringBuilder sinkFieldChanges = new StringBuilder();
+                for (SinkField sinkField : actualAddSinkFields) {
+                    sinkFieldChanges.append(sinkField.getFieldName()).append(":").append(sinkField.getFieldType())
+                            .append(";");
+                }
+                fieldChangeLogEntity.setSinkFieldChange(sinkFieldChanges.toString());
                 LOGGER.info("success to add fields for dbsync, groupId={} streamId={}", groupId, streamId);
                 fieldChangeLogEntity.setIsSuccess(1);
                 fieldChangeLogEntityMapper.insert(fieldChangeLogEntity);
