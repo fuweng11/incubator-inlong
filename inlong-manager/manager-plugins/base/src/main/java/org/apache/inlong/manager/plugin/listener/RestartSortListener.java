@@ -17,7 +17,9 @@
 
 package org.apache.inlong.manager.plugin.listener;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.manager.common.consts.InlongConstants;
+import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.GroupOperateType;
 import org.apache.inlong.manager.common.enums.TaskEvent;
 import org.apache.inlong.manager.common.util.JsonUtils;
@@ -27,6 +29,9 @@ import org.apache.inlong.manager.plugin.flink.dto.FlinkInfo;
 import org.apache.inlong.manager.plugin.flink.enums.Constants;
 import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.sink.SinkExtInfo;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
+import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.pojo.workflow.form.process.GroupResourceProcessForm;
 import org.apache.inlong.manager.pojo.workflow.form.process.ProcessForm;
 import org.apache.inlong.manager.workflow.WorkflowContext;
@@ -85,66 +90,80 @@ public class RestartSortListener implements SortOperateListener {
         }
 
         GroupResourceProcessForm groupResourceProcessForm = (GroupResourceProcessForm) processForm;
-        InlongGroupInfo inlongGroupInfo = groupResourceProcessForm.getGroupInfo();
-        List<InlongGroupExtInfo> extList = inlongGroupInfo.getExtList();
-        log.info("inlong group ext info: {}", extList);
 
-        Map<String, String> kvConf = new HashMap<>();
-        extList.forEach(groupExtInfo -> kvConf.put(groupExtInfo.getKeyName(), groupExtInfo.getKeyValue()));
-        String sortExt = kvConf.get(InlongConstants.SORT_PROPERTIES);
-        if (StringUtils.isNotEmpty(sortExt)) {
-            Map<String, String> result = JsonUtils.OBJECT_MAPPER.convertValue(
-                    JsonUtils.OBJECT_MAPPER.readTree(sortExt), new TypeReference<Map<String, String>>() {
-                    });
-            kvConf.putAll(result);
+        List<InlongStreamInfo> streamInfos = groupResourceProcessForm.getStreamInfos();
+        for (InlongStreamInfo streamInfo : streamInfos){
+            List<StreamSink> sinkList = streamInfo.getSinkList();
+            if (CollectionUtils.isEmpty(sinkList)) {
+                continue;
+            }
+            for (StreamSink sink : sinkList){
+                if (!SinkType.SORT_FLINK_SINK.contains(sink.getSinkType())){
+                    continue;
+                }
+                List<SinkExtInfo> sinkExtInfoList = sink.getExtList();
+                log.info("stream sink ext info: {}", sinkExtInfoList);
+
+                Map<String, String> kvConf = new HashMap<>();
+                sinkExtInfoList.forEach(v -> kvConf.put(v.getKeyName(), v.getKeyValue()));
+                String sortExt = kvConf.get(InlongConstants.SORT_PROPERTIES);
+                if (StringUtils.isNotEmpty(sortExt)) {
+                    Map<String, String> result = JsonUtils.OBJECT_MAPPER.convertValue(
+                            JsonUtils.OBJECT_MAPPER.readTree(sortExt), new TypeReference<Map<String, String>>() {
+                            });
+                    kvConf.putAll(result);
+                }
+
+                String jobId = kvConf.get(InlongConstants.SORT_JOB_ID);
+                if (StringUtils.isBlank(jobId)) {
+                    String message = String.format("sort job id is empty for sinkId [%s]", sink.getId());
+                    return ListenerResult.fail(message);
+                }
+                String dataflow = kvConf.get(InlongConstants.DATAFLOW);
+                if (StringUtils.isEmpty(dataflow)) {
+                    String message = String.format("dataflow is empty for sinkId [%s]", sink.getId());
+                    log.error(message);
+                    return ListenerResult.fail(message);
+                }
+
+                FlinkInfo flinkInfo = new FlinkInfo();
+                String jobName = Constants.SORT_JOB_NAME_GENERATOR.apply(processForm) + sink.getId();
+                flinkInfo.setJobName(jobName);
+                String sortUrl = kvConf.get(InlongConstants.SORT_URL);
+                flinkInfo.setEndpoint(sortUrl);
+
+                FlinkService flinkService = new FlinkService(flinkInfo.getEndpoint());
+                FlinkOperation flinkOperation = new FlinkOperation(flinkService);
+                try {
+                    flinkOperation.genPath(flinkInfo, dataflow);
+                    // todo Currently, savepoint is not being used to restart, but will be improved in the future
+                    flinkOperation.start(flinkInfo);
+                    log.info("job restart success for sinkId = {}, jobId = {}", sink.getId(), jobId);
+                } catch (Exception e) {
+                    flinkInfo.setException(true);
+                    flinkInfo.setExceptionMsg(getExceptionStackMsg(e));
+                    flinkOperation.pollJobStatus(flinkInfo, JobStatus.RUNNING);
+
+                    String message = String.format("restart sort failed for sinkId [%s] ", sink.getId());
+                    log.error(message, e);
+                    return ListenerResult.fail(message + e.getMessage());
+                }
+                sinkExtInfoList.forEach(groupExtInfo -> kvConf.remove(InlongConstants.SORT_JOB_ID));
+                saveInfo(sink, InlongConstants.SORT_JOB_ID, flinkInfo.getJobId(), sinkExtInfoList);
+                flinkOperation.pollJobStatus(flinkInfo, JobStatus.RUNNING);
+            }
         }
-
-        String jobId = kvConf.get(InlongConstants.SORT_JOB_ID);
-        if (StringUtils.isBlank(jobId)) {
-            String message = String.format("sort job id is empty for groupId [%s]", groupId);
-            return ListenerResult.fail(message);
-        }
-        String dataflow = kvConf.get(InlongConstants.DATAFLOW);
-        if (StringUtils.isEmpty(dataflow)) {
-            String message = String.format("dataflow is empty for groupId [%s]", groupId);
-            log.error(message);
-            return ListenerResult.fail(message);
-        }
-
-        FlinkInfo flinkInfo = new FlinkInfo();
-        String jobName = Constants.SORT_JOB_NAME_GENERATOR.apply(processForm);
-        flinkInfo.setJobName(jobName);
-        String sortUrl = kvConf.get(InlongConstants.SORT_URL);
-        flinkInfo.setEndpoint(sortUrl);
-
-        FlinkService flinkService = new FlinkService(flinkInfo.getEndpoint());
-        FlinkOperation flinkOperation = new FlinkOperation(flinkService);
-        try {
-            flinkOperation.genPath(flinkInfo, dataflow);
-            // todo Currently, savepoint is not being used to restart, but will be improved in the future
-            flinkOperation.start(flinkInfo);
-            log.info("job restart success for [{}]", jobId);
-        } catch (Exception e) {
-            flinkInfo.setException(true);
-            flinkInfo.setExceptionMsg(getExceptionStackMsg(e));
-            flinkOperation.pollJobStatus(flinkInfo, JobStatus.RUNNING);
-
-            String message = String.format("restart sort failed for groupId [%s] ", groupId);
-            log.error(message, e);
-            return ListenerResult.fail(message + e.getMessage());
-        }
-        extList.forEach(groupExtInfo -> kvConf.remove(InlongConstants.SORT_JOB_ID));
-        saveInfo(groupId, InlongConstants.SORT_JOB_ID, flinkInfo.getJobId(), extList);
-        flinkOperation.pollJobStatus(flinkInfo, JobStatus.RUNNING);
         return ListenerResult.success();
     }
 
     /**
-     * Save ext info into list.
+     * Save sink ext info into list.
      */
-    private void saveInfo(String inlongGroupId, String keyName, String keyValue, List<InlongGroupExtInfo> extInfoList) {
-        InlongGroupExtInfo extInfo = new InlongGroupExtInfo();
-        extInfo.setInlongGroupId(inlongGroupId);
+    private void saveInfo(StreamSink streamSink, String keyName, String keyValue, List<SinkExtInfo> extInfoList) {
+        SinkExtInfo extInfo = new SinkExtInfo();
+        extInfo.setInlongGroupId(streamSink.getInlongGroupId());
+        extInfo.setInlongStreamId(streamSink.getInlongStreamId());
+        extInfo.setSinkId(streamSink.getId());
         extInfo.setKeyName(keyName);
         extInfo.setKeyValue(keyValue);
         extInfoList.add(extInfo);

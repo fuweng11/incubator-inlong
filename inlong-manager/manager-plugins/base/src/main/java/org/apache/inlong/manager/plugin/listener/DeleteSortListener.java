@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.plugin.listener;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.enums.GroupOperateType;
 import org.apache.inlong.manager.common.enums.TaskEvent;
@@ -26,6 +27,9 @@ import org.apache.inlong.manager.plugin.flink.FlinkService;
 import org.apache.inlong.manager.plugin.flink.dto.FlinkInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.sink.SinkExtInfo;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
+import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.pojo.workflow.form.process.GroupResourceProcessForm;
 import org.apache.inlong.manager.pojo.workflow.form.process.ProcessForm;
 import org.apache.inlong.manager.workflow.WorkflowContext;
@@ -84,46 +88,54 @@ public class DeleteSortListener implements SortOperateListener {
         }
 
         GroupResourceProcessForm groupResourceProcessForm = (GroupResourceProcessForm) processForm;
-        InlongGroupInfo inlongGroupInfo = groupResourceProcessForm.getGroupInfo();
-        List<InlongGroupExtInfo> extList = inlongGroupInfo.getExtList();
-        log.info("inlong group ext info: {}", extList);
+        List<InlongStreamInfo> streamInfos = groupResourceProcessForm.getStreamInfos();
+        for (InlongStreamInfo streamInfo : streamInfos) {
+            List<StreamSink> sinkList = streamInfo.getSinkList();
+            if (CollectionUtils.isEmpty(sinkList)) {
+                continue;
+            }
+            for (StreamSink sink : sinkList) {
+                List<SinkExtInfo> sinkExtInfoList = sink.getExtList();
+                log.info("stream sink ext info: {}", sinkExtInfoList);
 
-        Map<String, String> kvConf = new HashMap<>();
-        extList.forEach(groupExtInfo -> kvConf.put(groupExtInfo.getKeyName(), groupExtInfo.getKeyValue()));
-        String sortExt = kvConf.get(InlongConstants.SORT_PROPERTIES);
-        if (StringUtils.isNotEmpty(sortExt)) {
-            Map<String, String> result = JsonUtils.OBJECT_MAPPER.convertValue(
-                    JsonUtils.OBJECT_MAPPER.readTree(sortExt), new TypeReference<Map<String, String>>() {
-                    });
-            kvConf.putAll(result);
+                Map<String, String> kvConf = new HashMap<>();
+                sinkExtInfoList.forEach(v -> kvConf.put(v.getKeyName(), v.getKeyValue()));
+                String sortExt = kvConf.get(InlongConstants.SORT_PROPERTIES);
+                if (StringUtils.isNotEmpty(sortExt)) {
+                    Map<String, String> result = JsonUtils.OBJECT_MAPPER.convertValue(
+                            JsonUtils.OBJECT_MAPPER.readTree(sortExt), new TypeReference<Map<String, String>>() {
+                            });
+                    kvConf.putAll(result);
+                }
+
+                String jobId = kvConf.get(InlongConstants.SORT_JOB_ID);
+                if (StringUtils.isBlank(jobId)) {
+                    String message = String.format("sort job id is empty for sinkId=%s", sink.getId());
+                    return ListenerResult.fail(message);
+                }
+
+                FlinkInfo flinkInfo = new FlinkInfo();
+                flinkInfo.setJobId(jobId);
+                String sortUrl = kvConf.get(InlongConstants.SORT_URL);
+                flinkInfo.setEndpoint(sortUrl);
+
+                FlinkService flinkService = new FlinkService(flinkInfo.getEndpoint());
+                FlinkOperation flinkOperation = new FlinkOperation(flinkService);
+                try {
+                    flinkOperation.delete(flinkInfo);
+                    log.info("job delete success for jobId={}", jobId);
+                } catch (Exception e) {
+                    flinkInfo.setException(true);
+                    flinkInfo.setExceptionMsg(getExceptionStackMsg(e));
+                    flinkOperation.pollJobStatus(flinkInfo, JobStatus.CANCELED);
+
+                    String message = String.format("delete sort failed for sinkId=%s", sink.getId());
+                    log.error(message, e);
+                    return ListenerResult.fail(message + ": " + e.getMessage());
+                }
+                flinkOperation.pollJobStatus(flinkInfo, JobStatus.CANCELED);
+            }
         }
-
-        String jobId = kvConf.get(InlongConstants.SORT_JOB_ID);
-        if (StringUtils.isBlank(jobId)) {
-            String message = String.format("sort job id is empty for groupId=%s", groupId);
-            return ListenerResult.fail(message);
-        }
-
-        FlinkInfo flinkInfo = new FlinkInfo();
-        flinkInfo.setJobId(jobId);
-        String sortUrl = kvConf.get(InlongConstants.SORT_URL);
-        flinkInfo.setEndpoint(sortUrl);
-
-        FlinkService flinkService = new FlinkService(flinkInfo.getEndpoint());
-        FlinkOperation flinkOperation = new FlinkOperation(flinkService);
-        try {
-            flinkOperation.delete(flinkInfo);
-            log.info("job delete success for jobId={}", jobId);
-        } catch (Exception e) {
-            flinkInfo.setException(true);
-            flinkInfo.setExceptionMsg(getExceptionStackMsg(e));
-            flinkOperation.pollJobStatus(flinkInfo, JobStatus.CANCELED);
-
-            String message = String.format("delete sort failed for groupId=%s", groupId);
-            log.error(message, e);
-            return ListenerResult.fail(message + ": " + e.getMessage());
-        }
-        flinkOperation.pollJobStatus(flinkInfo, JobStatus.CANCELED);
         return ListenerResult.success();
     }
 

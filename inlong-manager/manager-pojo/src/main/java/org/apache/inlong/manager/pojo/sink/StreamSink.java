@@ -112,6 +112,9 @@ public abstract class StreamSink extends StreamNode {
     @ApiModelProperty("Sink field list")
     private List<SinkField> sinkFieldList = Lists.newArrayList();
 
+    @ApiModelProperty(value = "Stream sink  Extension properties")
+    private List<SinkExtInfo> extList;
+
     @Builder.Default
     @ApiModelProperty("Properties for sink")
     private Map<String, Object> properties = Maps.newHashMap();

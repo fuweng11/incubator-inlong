@@ -107,13 +107,15 @@ public class StreamSortConfigListener implements SortOperateListener {
         form.setGroupInfo(groupInfo);
         form.setStreamInfo(streamService.get(groupId, streamId));
 
-        List<InlongStreamInfo> streamInfos = Collections.singletonList(streamInfo);
         try {
-            SortConfigOperator operator = operatorFactory.getInstance(groupInfo.getEnableZookeeper());
-            operator.buildConfig(groupInfo, streamInfos, true);
+            for (StreamSink sink : streamSinks){
+                SortConfigOperator operator = operatorFactory.getInstance(sink.getSinkType());
+                operator.buildConfig(groupInfo, streamInfo, sink, true);
+            }
+
         } catch (Exception e) {
             String msg = String.format("failed to build sort config for groupId=%s, streamId=%s, ", groupId, streamId);
-            LOGGER.error(msg + "streamInfos=" + streamInfos, e);
+            LOGGER.error(msg + "streamInfo=" + streamInfo, e);
             throw new WorkflowListenerException(msg + e.getMessage());
         }
 

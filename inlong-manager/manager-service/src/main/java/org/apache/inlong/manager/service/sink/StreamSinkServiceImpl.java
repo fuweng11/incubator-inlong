@@ -27,21 +27,26 @@ import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
+import org.apache.inlong.manager.dao.entity.InlongGroupExtEntity;
 import org.apache.inlong.manager.dao.entity.InlongStreamEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
+import org.apache.inlong.manager.dao.entity.StreamSinkExtEntity;
 import org.apache.inlong.manager.dao.entity.StreamSinkFieldEntity;
 import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSinkExtEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.pojo.common.OrderFieldEnum;
 import org.apache.inlong.manager.pojo.common.OrderTypeEnum;
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.UpdateResult;
+import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.ParseFieldRequest;
 import org.apache.inlong.manager.pojo.sink.SinkApproveDTO;
 import org.apache.inlong.manager.pojo.sink.SinkBriefInfo;
+import org.apache.inlong.manager.pojo.sink.SinkExtInfo;
 import org.apache.inlong.manager.pojo.sink.SinkField;
 import org.apache.inlong.manager.pojo.sink.SinkPageRequest;
 import org.apache.inlong.manager.pojo.sink.SinkRequest;
@@ -117,6 +122,8 @@ public class StreamSinkServiceImpl implements StreamSinkService {
     @Autowired
     private StreamSinkFieldEntityMapper sinkFieldMapper;
     @Autowired
+    private StreamSinkExtEntityMapper sinkExtMapper;
+    @Autowired
     private AutowireCapableBeanFactory autowireCapableBeanFactory;
     @Autowired
     private ObjectMapper objectMapper;
@@ -155,6 +162,9 @@ public class StreamSinkServiceImpl implements StreamSinkService {
         if (CollectionUtils.isNotEmpty(fields)) {
             fields.forEach(sinkField -> sinkField.setId(null));
         }
+        // save ext info
+        this.saveOrUpdateExt(request);
+
         int id = sinkOperator.saveOpt(request, operator);
         boolean streamSuccess = StreamStatus.CONFIG_SUCCESSFUL.getCode().equals(streamEntity.getStatus());
         if (streamSuccess || StreamStatus.CONFIG_FAILED.getCode().equals(streamEntity.getStatus())) {
@@ -934,5 +944,21 @@ public class StreamSinkServiceImpl implements StreamSinkService {
         }
         request.setInlongGroupId(curEntity.getInlongGroupId());
         request.setInlongStreamId(curEntity.getInlongStreamId());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    public void saveOrUpdateExt(SinkRequest request) {
+        List<SinkExtInfo> exts = request.getExtList();
+        if (CollectionUtils.isEmpty(exts)) {
+            return;
+        }
+        List<StreamSinkExtEntity> entityList =
+                CommonBeanUtils.copyListProperties(exts, StreamSinkExtEntity::new);
+        for (StreamSinkExtEntity entity : entityList) {
+            entity.setInlongGroupId(request.getInlongGroupId());
+            entity.setInlongStreamId(request.getInlongStreamId());
+        }
+        sinkExtMapper.insertOnDuplicateKeyUpdate(entityList);
     }
 }

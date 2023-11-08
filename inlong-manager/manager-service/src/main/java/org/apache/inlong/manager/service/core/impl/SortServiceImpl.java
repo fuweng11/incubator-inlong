@@ -17,6 +17,7 @@
 
 package org.apache.inlong.manager.service.core.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.inlong.common.pojo.sdk.SortSourceConfigResponse;
 import org.apache.inlong.common.pojo.sortstandalone.SortClusterResponse;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
@@ -24,20 +25,21 @@ import org.apache.inlong.manager.common.plugin.Plugin;
 import org.apache.inlong.manager.common.plugin.PluginBinder;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.pojo.sort.SortStatusInfo;
 import org.apache.inlong.manager.pojo.sort.SortStatusRequest;
 import org.apache.inlong.manager.service.core.SortClusterService;
 import org.apache.inlong.manager.service.core.SortService;
 import org.apache.inlong.manager.service.core.SortSourceService;
 import org.apache.inlong.manager.service.group.InlongGroupService;
+import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.workflow.plugin.sort.PollerPlugin;
 import org.apache.inlong.manager.workflow.plugin.sort.SortPoller;
-
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -58,6 +60,8 @@ public class SortServiceImpl implements SortService, PluginBinder {
     private SortClusterService sortClusterService;
     @Autowired
     private InlongGroupService groupService;
+    @Autowired
+    private StreamSinkService sinkService;
 
     /**
      * The plugin poller will be initialed after the application starts.
@@ -92,8 +96,11 @@ public class SortServiceImpl implements SortService, PluginBinder {
                     })
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-
-            List<SortStatusInfo> statusInfos = sortPoller.pollSortStatus(groupInfoList, request.getCredentials());
+            List<StreamSink> sinkList = new ArrayList<>();
+            groupInfoList.forEach(groupInfo -> {
+                sinkList.addAll(sinkService.listSink(groupInfo.getInlongGroupId(), null));
+            });
+            List<SortStatusInfo> statusInfos = sortPoller.pollSortStatus(sinkList, request.getCredentials());
             log.debug("success to list sort status for request={}, result={}", request, statusInfos);
             return statusInfos;
         } catch (Exception e) {

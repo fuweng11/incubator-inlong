@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.sort;
-
-import org.apache.inlong.manager.common.enums.SortStatus;
+package org.apache.inlong.manager.pojo.sink;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -25,31 +23,38 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
-import java.util.Map;
+import javax.validation.constraints.Pattern;
 
 /**
- * Sort status info
+ * Stream sink extension information
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ApiModel("Sort status info")
-public class SortStatusInfo {
+@ApiModel("Stream sink extension information")
+public class SinkExtInfo {
 
-    @ApiModelProperty(value = "Inlong group id")
+    @ApiModelProperty(value = "id")
+    private Integer id;
+
+    @ApiModelProperty(value = "inlong group id")
     private String inlongGroupId;
 
-    @ApiModelProperty(value = "Inlong stream id")
+    @ApiModelProperty(value = "inlong stream id")
     private String inlongStreamId;
 
-    @ApiModelProperty(value = "Sink id")
+    @ApiModelProperty(value = "sink id")
     private Integer sinkId;
 
-    @ApiModelProperty(value = "Sort status info")
-    private SortStatus sortStatus;
+    @ApiModelProperty(value = "property name")
+    @Length(max = 256, message = "length must be less than or equal to 256")
+    private String keyName;
 
-    @ApiModelProperty("Extended properties of sort")
-    private Map<String, Object> properties;
+    @ApiModelProperty(value = "property value")
+    @Length(min = 1, max = 163840, message = "length must be between 1 and 163840")
+    private String keyValue;
+
 }

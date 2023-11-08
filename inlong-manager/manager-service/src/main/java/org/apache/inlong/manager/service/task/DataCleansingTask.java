@@ -23,6 +23,7 @@ import org.apache.inlong.manager.dao.mapper.InlongStreamEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongStreamExtEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongStreamFieldEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSinkExtEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSinkFieldEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSourceEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSourceFieldEntityMapper;
@@ -83,6 +84,8 @@ public class DataCleansingTask extends TimerTask implements InitializingBean {
     @Autowired
     private StreamSinkFieldEntityMapper streamSinkFieldMapper;
     @Autowired
+    private StreamSinkExtEntityMapper streamSinkExtEntityMapper;
+    @Autowired
     private StreamSourceEntityMapper streamSourceMapper;
     @Autowired
     private StreamSourceFieldEntityMapper streamSourceFieldMapper;
@@ -135,6 +138,7 @@ public class DataCleansingTask extends TimerTask implements InitializingBean {
 
             streamSinkMapper.deleteByInlongGroupIds(groupIds);
             streamSinkFieldMapper.deleteByInlongGroupIds(groupIds);
+            streamSinkExtEntityMapper.deleteByInlongGroupIds(groupIds);
             streamSourceMapper.deleteByInlongGroupIds(groupIds);
             streamSourceFieldMapper.deleteByInlongGroupIds(groupIds);
             streamTransformMapper.deleteByInlongGroupIds(groupIds);

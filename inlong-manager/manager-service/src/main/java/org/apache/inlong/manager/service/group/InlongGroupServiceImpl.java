@@ -17,6 +17,13 @@
 
 package org.apache.inlong.manager.service.group;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.inlong.manager.common.auth.Authentication.AuthType;
 import org.apache.inlong.manager.common.auth.SecretTokenAuthentication;
 import org.apache.inlong.manager.common.consts.InlongConstants;
@@ -29,9 +36,11 @@ import org.apache.inlong.manager.common.util.JsonUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
 import org.apache.inlong.manager.dao.entity.InlongGroupEntity;
 import org.apache.inlong.manager.dao.entity.InlongGroupExtEntity;
+import org.apache.inlong.manager.dao.entity.StreamSinkExtEntity;
 import org.apache.inlong.manager.dao.entity.StreamSourceEntity;
 import org.apache.inlong.manager.dao.mapper.InlongGroupEntityMapper;
 import org.apache.inlong.manager.dao.mapper.InlongGroupExtEntityMapper;
+import org.apache.inlong.manager.dao.mapper.StreamSinkExtEntityMapper;
 import org.apache.inlong.manager.dao.mapper.StreamSourceEntityMapper;
 import org.apache.inlong.manager.pojo.cluster.ClusterInfo;
 import org.apache.inlong.manager.pojo.common.OrderFieldEnum;
@@ -46,6 +55,7 @@ import org.apache.inlong.manager.pojo.group.InlongGroupPageRequest;
 import org.apache.inlong.manager.pojo.group.InlongGroupRequest;
 import org.apache.inlong.manager.pojo.group.InlongGroupTopicInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupTopicRequest;
+import org.apache.inlong.manager.pojo.sink.SinkExtInfo;
 import org.apache.inlong.manager.pojo.sort.BaseSortConf;
 import org.apache.inlong.manager.pojo.sort.BaseSortConf.SortType;
 import org.apache.inlong.manager.pojo.sort.FlinkSortConf;
@@ -56,14 +66,6 @@ import org.apache.inlong.manager.service.cluster.InlongClusterService;
 import org.apache.inlong.manager.service.source.SourceOperatorFactory;
 import org.apache.inlong.manager.service.source.StreamSourceOperator;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +108,8 @@ public class InlongGroupServiceImpl implements InlongGroupService {
     private InlongStreamService streamService;
     @Autowired
     private StreamSourceEntityMapper streamSourceMapper;
+    @Autowired
+    private StreamSinkExtEntityMapper sinkExtMapper;
     @Autowired
     private InlongClusterService clusterService;
 
@@ -211,7 +215,8 @@ public class InlongGroupServiceImpl implements InlongGroupService {
         List<InlongGroupExtEntity> extEntityList = groupExtMapper.selectByGroupId(groupId);
         List<InlongGroupExtInfo> extList = CommonBeanUtils.copyListProperties(extEntityList, InlongGroupExtInfo::new);
         groupInfo.setExtList(extList);
-        BaseSortConf sortConf = buildSortConfig(extList);
+        List<StreamSinkExtEntity> sinkExtEntities = sinkExtMapper.selectByGroupId(groupId);
+        BaseSortConf sortConf = buildSortConfig(sinkExtEntities);
         groupInfo.setSortConf(sortConf);
 
         LOGGER.debug("success to get inlong group for groupId={}", groupId);
@@ -232,7 +237,8 @@ public class InlongGroupServiceImpl implements InlongGroupService {
         List<InlongGroupExtEntity> extEntityList = groupExtMapper.selectByGroupId(groupId);
         List<InlongGroupExtInfo> extList = CommonBeanUtils.copyListProperties(extEntityList, InlongGroupExtInfo::new);
         groupInfo.setExtList(extList);
-        BaseSortConf sortConf = buildSortConfig(extList);
+        List<StreamSinkExtEntity> sinkExtEntities = sinkExtMapper.selectByGroupId(groupId);
+        BaseSortConf sortConf = buildSortConfig(sinkExtEntities);
         groupInfo.setSortConf(sortConf);
         return groupInfo;
     }
@@ -595,7 +601,7 @@ public class InlongGroupServiceImpl implements InlongGroupService {
         return true;
     }
 
-    private BaseSortConf buildSortConfig(List<InlongGroupExtInfo> extInfos) {
+    private BaseSortConf buildSortConfig(List<StreamSinkExtEntity> extInfos) {
         Map<String, String> extMap = new HashMap<>();
         extInfos.forEach(extInfo -> extMap.put(extInfo.getKeyName(), extInfo.getKeyValue()));
         String type = extMap.get(InlongConstants.SORT_TYPE);

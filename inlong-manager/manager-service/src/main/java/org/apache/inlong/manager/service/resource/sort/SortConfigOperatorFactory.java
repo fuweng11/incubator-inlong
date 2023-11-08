@@ -36,14 +36,14 @@ public class SortConfigOperatorFactory {
     /**
      * Get a Sort config operator instance.
      *
-     * @param enableZk is the inlong group enable the ZooKeeper, 1: enable, 0: disable
+     * @param sinkType sink type
      */
-    public SortConfigOperator getInstance(Integer enableZk) {
+    public SortConfigOperator getInstance(String sinkType) {
         return operatorList.stream()
-                .filter(inst -> inst.accept(enableZk))
+                .filter(inst -> inst.accept(sinkType))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException("not found any instance of SortConfigOperator when enableZk="
-                        + enableZk));
+                .orElseThrow(() -> new BusinessException("not found any instance of SortConfigOperator when sinkType="
+                        + sinkType));
     }
 
 }

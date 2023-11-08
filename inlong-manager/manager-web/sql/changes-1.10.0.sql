@@ -28,5 +28,23 @@ ALTER TABLE `inlong_stream`
 
 UPDATE inlong_group SET status = 130 where status = 150;
 
+-- ----------------------------
+-- Table structure for stream_sink_ext
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `stream_sink_ext`
+(
+    `id`               int(11)      NOT NULL AUTO_INCREMENT COMMENT 'Incremental primary key',
+    `inlong_group_id`  varchar(256) NOT NULL COMMENT 'Inlong group id',
+    `inlong_stream_id` varchar(256) NOT NULL COMMENT 'Inlong stream id',
+    `sink_id`          int(11)      NOT NULL COMMENT 'Sink id',
+    `key_name`         varchar(256) NOT NULL COMMENT 'Configuration item name',
+    `key_value`        text COMMENT 'The value of the configuration item',
+    `is_deleted`       int(11)           DEFAULT '0' COMMENT 'Whether to delete, 0: not deleted, > 0: deleted',
+    `modify_time`      timestamp    NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Modify time',
+    PRIMARY KEY (`id`),
+    INDEX `sink_id_index` (`sink_id`),
+    INDEX `sink_group_stream_index` (`inlong_group_id`, `inlong_stream_id`)
+);
+
 
 

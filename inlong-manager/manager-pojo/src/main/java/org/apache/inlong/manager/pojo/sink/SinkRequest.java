@@ -26,6 +26,7 @@ import com.google.common.collect.Maps;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.Range;
 
@@ -102,6 +103,9 @@ public abstract class SinkRequest {
 
     @ApiModelProperty("Sink field list")
     private List<SinkField> sinkFieldList;
+
+    @ApiModelProperty(value = "Stream sink  Extension properties")
+    private List<SinkExtInfo> extList;
 
     @ApiModelProperty("Other properties if needed")
     private Map<String, Object> properties = Maps.newHashMap();

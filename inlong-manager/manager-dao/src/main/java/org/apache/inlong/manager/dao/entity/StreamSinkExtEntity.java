@@ -15,41 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.pojo.sort;
+package org.apache.inlong.manager.dao.entity;
 
-import org.apache.inlong.manager.common.enums.SortStatus;
-
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.util.Map;
+import java.io.Serializable;
+import java.util.Date;
 
 /**
- * Sort status info
+ * StreamSinkExtEntity, including key name, key value, etc.
  */
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@ApiModel("Sort status info")
-public class SortStatusInfo {
+public class StreamSinkExtEntity implements Serializable {
 
-    @ApiModelProperty(value = "Inlong group id")
+    private static final long serialVersionUID = 1L;
+
+    private Integer id;
+
     private String inlongGroupId;
 
-    @ApiModelProperty(value = "Inlong stream id")
     private String inlongStreamId;
 
-    @ApiModelProperty(value = "Sink id")
     private Integer sinkId;
 
-    @ApiModelProperty(value = "Sort status info")
-    private SortStatus sortStatus;
+    private String keyName;
 
-    @ApiModelProperty("Extended properties of sort")
-    private Map<String, Object> properties;
+    private String keyValue;
+
+    private Integer isDeleted;
+
+    private Date modifyTime;
 }

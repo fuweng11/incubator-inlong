@@ -22,6 +22,8 @@ import org.apache.inlong.manager.common.enums.GroupStatus;
 import org.apache.inlong.manager.common.enums.TaskEvent;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.sink.SinkExtInfo;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.pojo.workflow.form.process.GroupResourceProcessForm;
 import org.apache.inlong.manager.pojo.workflow.form.process.ProcessForm;
@@ -121,8 +123,16 @@ public class SortConfigListener implements SortOperateListener {
         }
 
         try {
-            SortConfigOperator operator = operatorFactory.getInstance(groupInfo.getEnableZookeeper());
-            operator.buildConfig(groupInfo, streamInfos, false);
+            for (InlongStreamInfo streamInfo : streamInfos) {
+                List<StreamSink> sinkList = streamInfo.getSinkList();
+                if (CollectionUtils.isEmpty(sinkList)) {
+                    continue;
+                }
+                for (StreamSink sink : streamInfo.getSinkList()) {
+                    SortConfigOperator operator = operatorFactory.getInstance(sink.getSinkType());
+                    operator.buildConfig(groupInfo, streamInfo, sink, false);
+                }
+            }
         } catch (Exception e) {
             String msg = String.format("failed to build sort config for groupId=%s, ", groupId);
             LOGGER.error(msg + "streamInfos=" + streamInfos, e);

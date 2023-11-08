@@ -18,6 +18,7 @@
 package org.apache.inlong.manager.workflow.plugin.sort;
 
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
 import org.apache.inlong.manager.pojo.sort.SortStatusInfo;
 
 import java.util.List;
@@ -30,11 +31,11 @@ public interface SortPoller {
     /**
      * Poll the Sort status infos by the given inlong groups
      *
-     * @param groupInfos inlong group infos
+     * @param streamSinkList stream sink infos
      * @param credentials credential info
      * @return list of Sort status infos
      * @throws Exception any exception if occurred
      */
-    List<SortStatusInfo> pollSortStatus(List<InlongGroupInfo> groupInfos, String credentials) throws Exception;
+    List<SortStatusInfo> pollSortStatus(List<StreamSink> streamSinkList, String credentials) throws Exception;
 
 }

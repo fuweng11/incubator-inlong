@@ -17,13 +17,16 @@
 
 package org.apache.inlong.manager.service.sink;
 
+import okio.Sink;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.UpdateResult;
+import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.sink.ParseFieldRequest;
 import org.apache.inlong.manager.pojo.sink.SinkApproveDTO;
 import org.apache.inlong.manager.pojo.sink.SinkBriefInfo;
+import org.apache.inlong.manager.pojo.sink.SinkExtInfo;
 import org.apache.inlong.manager.pojo.sink.SinkField;
 import org.apache.inlong.manager.pojo.sink.SinkPageRequest;
 import org.apache.inlong.manager.pojo.sink.SinkRequest;
@@ -265,4 +268,12 @@ public interface StreamSinkService {
      * @return list of sink field
      */
     List<SinkField> parseFields(ParseFieldRequest parseFieldRequest);
+
+    /**
+     * Save or update extended information
+     * <p/>First physically delete the existing extended information, and then add this batch of extended information
+     *
+     * @param request stream sink request
+     */
+    void saveOrUpdateExt(SinkRequest request);
 }
