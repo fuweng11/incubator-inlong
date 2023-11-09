@@ -182,13 +182,18 @@ public class IcebergBaseOptService {
         createRequest.setTable(icebergSink.getTableName());
         List<StreamSinkFieldEntity> fieldList = sinkFieldMapper.selectBySinkId(icebergSink.getId());
         List<PartitionsBean> partitionsBeanList = new ArrayList<>();
+        String primaryKey = icebergSink.getPrimaryKey();
         List<FieldsBean> fields = fieldList.stream().map(f -> {
             FieldsBean field = new FieldsBean();
             field.setName(f.getFieldName());
             field.setType(f.getFieldType());
             field.setDesc(f.getFieldComment());
+            if (Objects.equals(primaryKey, f.getFieldName())) {
+                field.setOptional(false);
+            }
             if (StringUtils.isNotBlank(f.getExtParams())) {
                 InnerIcebergFieldInfo innerIcebergFieldInfo = InnerIcebergFieldInfo.getFromJson(f.getExtParams());
+                // field.setOptional(innerIcebergFieldInfo.getOptional());
                 PartitionsBean partitionsBean = new PartitionsBean();
                 String partitionStartegy = innerIcebergFieldInfo.getPartitionStrategy();
                 if (StringUtils.isNotBlank(partitionStartegy) && !PARTITION_STARTEGY_NONE.equalsIgnoreCase(
@@ -210,7 +215,6 @@ public class IcebergBaseOptService {
             map.put("write.upsert.enabled", true);
         }
         map.put("format-version", 2);
-        String primaryKey = icebergSink.getPrimaryKey();
         if (StringUtils.isNotBlank(primaryKey)) {
             map.put("primary-key", primaryKey);
         }

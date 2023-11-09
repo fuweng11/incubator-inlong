@@ -57,6 +57,7 @@ public class IcebergTableCreateRequest {
         private String name;
         private String type;
         private String desc;
+        private boolean optional = true;
         private Map<String, String> parameters;
 
     }

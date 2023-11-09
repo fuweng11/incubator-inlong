@@ -51,6 +51,9 @@ public class InnerIcebergFieldInfo extends SinkField {
     @ApiModelProperty("Iceberg field scale")
     private Integer fieldScale;
 
+    @ApiModelProperty("Required")
+    private Boolean optional = true;
+
     /**
      * Get the dto instance from the request
      */
