@@ -78,6 +78,9 @@ public class FileSourceRequest extends SourceRequest {
     @ApiModelProperty("Max file count")
     private String maxFileCount;
 
+    @ApiModelProperty("Time zone")
+    private String timeZone;
+
     @ApiModelProperty("Whether retry")
     private Boolean retry;
 

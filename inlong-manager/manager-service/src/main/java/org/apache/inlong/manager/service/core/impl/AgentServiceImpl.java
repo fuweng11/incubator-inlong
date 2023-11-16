@@ -600,7 +600,7 @@ public class AgentServiceImpl implements AgentService {
             dataConfig.setState(
                     SourceStatus.NORMAL_STATUS_SET.contains(SourceStatus.forCode(entity.getStatus())) ? 1 : 0);
             dataConfig.setSyncSend(streamEntity.getSyncSend());
-            if (SourceType.FILE.equalsIgnoreCase(streamEntity.getDataType())) {
+            if (SourceType.FILE.equalsIgnoreCase(entity.getSourceType())) {
                 String dataSeparator = streamEntity.getDataSeparator();
                 extParams = (null != dataSeparator ? getExtParams(extParams, dataSeparator) : extParams);
             }
