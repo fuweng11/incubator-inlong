@@ -122,7 +122,8 @@ public class RestartSortListener implements SortOperateListener {
         jobBaseInfo.setFileId(oceanusService.uploadFile(jobBaseInfo, dataflow));
         OceanusOperation oceanusOperation = new OceanusOperation(oceanusService);
         try {
-            oceanusOperation.start(jobBaseInfo);
+            oceanusOperation.start(jobBaseInfo,
+                    InlongConstants.DATASYNC_MODE.equals(inlongGroupInfo.getInlongGroupMode()));
             log.info("job restart success for [{}]", jobId);
         } catch (Exception e) {
             String message = String.format("restart sort failed for groupId [%s] ", groupId);

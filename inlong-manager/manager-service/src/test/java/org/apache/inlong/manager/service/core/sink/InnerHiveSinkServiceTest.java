@@ -32,7 +32,6 @@ import org.apache.inlong.manager.service.core.impl.InlongStreamServiceTest;
 import org.apache.inlong.manager.service.group.InlongGroupService;
 import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.resource.sink.SinkResourceOperatorFactory;
-import org.apache.inlong.manager.service.resource.sort.SortConfigOperatorFactory;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 import org.apache.inlong.manager.service.stream.InlongStreamService;
 
@@ -67,8 +66,6 @@ public class InnerHiveSinkServiceTest extends ServiceBaseTest {
 
     @Autowired
     private SinkResourceOperatorFactory resourceOperatorFactory;
-    @Autowired
-    private SortConfigOperatorFactory operatorFactory;
     @Autowired
     private InlongGroupService inlongGroupService;
     @Autowired

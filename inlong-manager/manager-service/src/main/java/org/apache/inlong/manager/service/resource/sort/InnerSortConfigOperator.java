@@ -17,7 +17,6 @@
 
 package org.apache.inlong.manager.service.resource.sort;
 
-import org.apache.inlong.manager.common.consts.InlongConstants;
 import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.SinkStatus;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
@@ -26,28 +25,24 @@ import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
 import org.apache.inlong.manager.pojo.node.tencent.InnerBaseHiveDataNodeInfo;
 import org.apache.inlong.manager.pojo.sink.SinkInfo;
 import org.apache.inlong.manager.pojo.sink.ck.ClickHouseSink;
-import org.apache.inlong.manager.pojo.sink.es.ElasticsearchSink;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerBaseHiveSinkDTO;
 import org.apache.inlong.manager.pojo.sink.tencent.hive.InnerHiveFullInfo;
 import org.apache.inlong.manager.pojo.sink.tencent.iceberg.InnerIcebergSink;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.service.node.DataNodeService;
 import org.apache.inlong.manager.service.resource.sort.tencent.ck.SortCkConfigService;
-import org.apache.inlong.manager.service.resource.sort.tencent.es.SortEsConfigService;
 import org.apache.inlong.manager.service.resource.sort.tencent.hive.SortHiveConfigService;
 import org.apache.inlong.manager.service.resource.sort.tencent.iceberg.SortIcebergConfigService;
 import org.apache.inlong.manager.service.sink.StreamSinkService;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Inner Sort config operator, used to create a Sort config for the InlongGroup with ZK enabled.
@@ -70,38 +65,36 @@ public class InnerSortConfigOperator implements SortConfigOperator {
     private SortHiveConfigService hiveConfigService;
     @Autowired
     private SortIcebergConfigService icebergConfigService;
-    @Autowired
-    private SortEsConfigService esConfigService;
 
     @Override
-    public Boolean accept(Integer enableZk) {
-        return InlongConstants.ENABLE_ZK.equals(enableZk);
+    public Boolean accept(List<String> sinkTypeList) {
+        for (String sinkType : sinkTypeList) {
+            if (SinkType.SORT_ETL_SINK.contains(sinkType)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
-    public void buildConfig(InlongGroupInfo groupInfo, List<InlongStreamInfo> streamInfos, boolean isStream)
-            throws Exception {
-        if (groupInfo == null || CollectionUtils.isEmpty(streamInfos)) {
+    public void buildConfig(InlongGroupInfo groupInfo, InlongStreamInfo streamInfo, boolean isStream) throws Exception {
+        if (groupInfo == null || streamInfo == null) {
             LOGGER.warn("group info is null or stream infos is empty, no need to build sort config for disable zk");
             return;
         }
 
-        if (!isStream) {
+        if (isStream) {
             LOGGER.info("no need to build all sort config since the workflow is not stream level, groupId={}",
                     groupInfo.getInlongGroupId());
             return;
         }
 
         String groupId = groupInfo.getInlongGroupId();
-        List<String> streamIds = streamInfos.stream()
-                .map(InlongStreamInfo::getInlongStreamId).collect(Collectors.toList());
-        Map<String, InlongStreamInfo> streamInfoSet = streamInfos.stream()
-                .collect(Collectors.toMap(InlongStreamInfo::getInlongStreamId, v -> v));
+        List<String> streamIds = Collections.singletonList(streamInfo.getInlongStreamId());
         List<SinkInfo> configList = sinkMapper.selectAllConfig(groupId, streamIds);
         List<InnerHiveFullInfo> hiveInfos = new ArrayList<>();
         List<ClickHouseSink> clickHouseSinkList = new ArrayList<>();
         List<InnerIcebergSink> icebergSinkList = new ArrayList<>();
-        List<ElasticsearchSink> elasticsearchSinkList = new ArrayList<>();
         for (SinkInfo sinkInfo : configList) {
             if (SinkStatus.SUSPEND.getCode().equals(sinkInfo.getStatus())) {
                 LOGGER.warn("sink config [" + sinkInfo.getId() + "] already suspend, skip to push");
@@ -114,8 +107,7 @@ public class InnerSortConfigOperator implements SortConfigOperator {
                     StreamSinkEntity sink = sinkMapper.selectByPrimaryKey(sinkInfo.getId());
                     InnerBaseHiveDataNodeInfo dataNodeInfo = (InnerBaseHiveDataNodeInfo) dataNodeService.get(
                             sink.getDataNodeName(), sink.getSinkType());
-                    InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo,
-                            streamInfoSet.get(sinkInfo.getInlongStreamId()), hiveInfo,
+                    InnerHiveFullInfo hiveFullInfo = InnerBaseHiveSinkDTO.getFullInfo(groupInfo, streamInfo, hiveInfo,
                             sinkInfo, dataNodeInfo);
                     hiveInfos.add(hiveFullInfo);
                     break;

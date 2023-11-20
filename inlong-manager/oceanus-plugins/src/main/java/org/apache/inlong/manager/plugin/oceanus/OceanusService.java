@@ -484,6 +484,36 @@ public class OceanusService {
         }
     }
 
+    public String configResource(JobBaseInfo jobInfo) throws Exception {
+        PluginRestTemplateConfig restTemplateConfig = new PluginRestTemplateConfig();
+        RestTemplate restTemplate = restTemplateConfig.restTemplate();
+        try {
+            String configResourceUrl =
+                    oceanusConfig.getOpenApi() + String.format(CONFIG_JOB_RESOURCE_API, jobInfo.getProjectId(),
+                            jobInfo.getJobId());
+            Map<String, Object> params = new HashMap<>();
+            params.put("clusterId", jobInfo.getClusterId());
+            params.put("cpuCores", jobInfo.getCpuCores());
+            params.put("cpuCoresPerTaskmanager", jobInfo.getCpuCoresPerTaskmanager());
+            params.put("description", jobInfo.getResourceDescription());
+            params.put("jobmanagerCpuCores", jobInfo.getJobmanagerCpuCores());
+            params.put("jobmanagerMemoryBytes", jobInfo.getJobmanagerMemoryBytes());
+            params.put("maxParallelism", jobInfo.getMaxParallelism());
+            params.put("memoryBytes", jobInfo.getMemoryBytes());
+            params.put("memoryBytesPerTaskmanager", jobInfo.getMemoryBytesPerTaskmanager());
+            params.put("parallelismPerCore", jobInfo.getParallelismPerCore());
+
+            String rsp = HttpUtils.putRequest(restTemplate, configResourceUrl, params,
+                    getHeader(jobInfo.getOperator()), new ParameterizedTypeReference<String>() {
+                    });
+            log.info("config resource rsp={}", rsp);
+        } catch (Exception e) {
+            log.error("config resource {} failed: ", jobInfo, e);
+            throw new Exception("config resource failed: " + e.getMessage());
+        }
+        return null;
+    }
+
     public HttpHeaders getHeader(String operator) throws Exception {
         HttpHeaders header = new HttpHeaders();
         try {

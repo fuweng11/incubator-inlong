@@ -44,4 +44,16 @@ public class JobBaseInfo {
 
     private String operator;
 
+    // resource info
+    private Long clusterId;
+    private Integer cpuCores;
+    private Integer cpuCoresPerTaskmanager;
+    private String resourceDescription;
+    private Integer jobmanagerCpuCores;
+    private Long jobmanagerMemoryBytes;
+    private Long maxParallelism;
+    private Long memoryBytes;
+    private Long memoryBytesPerTaskmanager;
+    private Integer parallelismPerCore;
+
 }

@@ -17,6 +17,11 @@
 
 package org.apache.inlong.manager.common.consts;
 
+import com.google.common.collect.Sets;
+
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Constants of sink type.
  */
@@ -48,4 +53,16 @@ public class SinkType extends StreamType {
     public static final String INNER_CK = "INNER_CK";
     public static final String INNER_ICEBERG = "INNER_ICEBERG";
     public static final String CUSTOM = "CUSTOM";
+
+    public static final Set<String> SORT_FLINK_SINK = new HashSet<>();
+    public static final Set<String> SORT_STANDALONE_SINK = new HashSet<>();
+    public static final Set<String> SORT_ETL_SINK = new HashSet<>();
+
+    static {
+        SORT_FLINK_SINK.addAll(
+                Sets.newHashSet(HIVE, CLICKHOUSE, HBASE, HDFS, GREENPLUM, MYSQL, TDSQLPOSTGRESQL, DORIS,
+                        STARROCKS, KUDU, REDIS, KAFKA, HUDI, POSTGRESQL, SQLSERVER, ORACLE, ICEBERG));
+        SORT_STANDALONE_SINK.addAll(Sets.newHashSet(CLS, ELASTICSEARCH, PULSAR));
+        SORT_ETL_SINK.addAll(Sets.newHashSet(INNER_HIVE, INNER_THIVE, INNER_ICEBERG));
+    }
 }

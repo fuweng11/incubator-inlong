@@ -33,6 +33,7 @@ import javax.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * File source information data transfer object
@@ -105,6 +106,9 @@ public class FileSourceDTO {
         FileSourceDTO dto = StringUtils.isNotBlank(extParams)
                 ? FileSourceDTO.getFromJson(extParams)
                 : new FileSourceDTO();
+        if (StringUtils.isBlank(fileSourceRequest.getTimeZone())) {
+            fileSourceRequest.setTimeZone(TimeZone.getDefault().getID());
+        }
         return CommonBeanUtils.copyProperties(fileSourceRequest, dto, true);
     }
 

@@ -25,8 +25,9 @@ import org.apache.inlong.manager.plugin.oceanus.OceanusOperation;
 import org.apache.inlong.manager.plugin.oceanus.OceanusService;
 import org.apache.inlong.manager.plugin.oceanus.dto.JobBaseInfo;
 import org.apache.inlong.manager.plugin.util.OceanusUtils;
-import org.apache.inlong.manager.pojo.group.InlongGroupExtInfo;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
+import org.apache.inlong.manager.pojo.stream.InlongStreamExtInfo;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.pojo.workflow.form.process.GroupResourceProcessForm;
 import org.apache.inlong.manager.pojo.workflow.form.process.ProcessForm;
@@ -36,6 +37,7 @@ import org.apache.inlong.manager.workflow.event.task.SortOperateListener;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -68,7 +70,7 @@ public class StartupSortListener implements SortOperateListener {
         }
 
         log.info("add startup group listener for groupId [{}]", groupId);
-        return true;
+        return InlongConstants.DATASYNC_MODE.equals(groupProcessForm.getGroupInfo().getInlongGroupMode());
     }
 
     @Override
@@ -92,63 +94,75 @@ public class StartupSortListener implements SortOperateListener {
         }
 
         InlongGroupInfo inlongGroupInfo = groupResourceForm.getGroupInfo();
-        if (InlongConstants.ENABLE_ZK.equals(inlongGroupInfo.getEnableZookeeper())
-                || InlongConstants.STANDARD_MODE.equals(inlongGroupInfo.getInlongGroupMode())) {
-            log.warn("not need with group for enable zookeeper={} or group mode = {}",
-                    inlongGroupInfo.getEnableZookeeper(), inlongGroupInfo.getInlongGroupMode());
+        if (!InlongConstants.DATASYNC_MODE.equals(inlongGroupInfo.getInlongGroupMode())) {
+            log.warn("not need start up sink for groupId ={}, when mode = {}, skip launching sort job",
+                    inlongGroupInfo.getInlongGroupId(), inlongGroupInfo.getInlongGroupMode());
             return ListenerResult.success();
         }
-        List<InlongGroupExtInfo> extList = inlongGroupInfo.getExtList();
-        log.info("inlong group ext info: {}", extList);
+        for (InlongStreamInfo streamInfo : streamInfos) {
+            List<StreamSink> sinkList = streamInfo.getSinkList();
+            if (CollectionUtils.isEmpty(sinkList)) {
+                continue;
+            }
+            List<InlongStreamExtInfo> extList = streamInfo.getExtList();
+            log.info("stream ext info: {}", extList);
 
-        Map<String, String> kvConf = extList.stream().filter(v -> StringUtils.isNotEmpty(v.getKeyName())
-                && StringUtils.isNotEmpty(v.getKeyValue())).collect(Collectors.toMap(
-                        InlongGroupExtInfo::getKeyName,
-                        InlongGroupExtInfo::getKeyValue));
-        String sortExt = kvConf.get(InlongConstants.SORT_PROPERTIES);
-        if (StringUtils.isNotEmpty(sortExt)) {
-            Map<String, String> result = JsonUtils.OBJECT_MAPPER.convertValue(
-                    JsonUtils.OBJECT_MAPPER.readTree(sortExt), new TypeReference<Map<String, String>>() {
-                    });
-            kvConf.putAll(result);
+            Map<String, String> kvConf = extList.stream().filter(v -> StringUtils.isNotEmpty(v.getKeyName())
+                    && StringUtils.isNotEmpty(v.getKeyValue())).collect(Collectors.toMap(
+                            InlongStreamExtInfo::getKeyName,
+                            InlongStreamExtInfo::getKeyValue));
+            String sortExt = kvConf.get(InlongConstants.SORT_PROPERTIES);
+            if (StringUtils.isNotEmpty(sortExt)) {
+                Map<String, String> result = JsonUtils.OBJECT_MAPPER.convertValue(
+                        JsonUtils.OBJECT_MAPPER.readTree(sortExt), new TypeReference<Map<String, String>>() {
+                        });
+                kvConf.putAll(result);
+            }
+
+            String dataflow = kvConf.get(InlongConstants.DATAFLOW);
+            if (StringUtils.isEmpty(dataflow)) {
+                String message = String.format("dataflow is empty for groupId [%s], streamId [%s]", groupId,
+                        streamInfo.getInlongStreamId());
+                log.error(message);
+                return ListenerResult.fail(message);
+            }
+
+            // todo
+            String jobName = groupId + "_" + streamInfo.getInlongStreamId();
+            JobBaseInfo jobBaseInfo = OceanusUtils.initParamForOceanus(kvConf);
+            if (InlongConstants.STANDARD_MODE.equals(inlongGroupInfo.getInlongGroupMode())) {
+                jobBaseInfo = OceanusUtils.initParamsForStandardMode(jobBaseInfo, kvConf);
+            }
+            jobBaseInfo.setName(jobName);
+            jobBaseInfo.setOperator(inlongGroupInfo.getCreator());
+            OceanusService oceanusService = new OceanusService();
+            jobBaseInfo.setFileId(oceanusService.uploadFile(jobBaseInfo, dataflow));
+            saveInfo(streamInfo, "sort.job.fileId", jobBaseInfo.getFileId().toString(), extList);
+
+            OceanusOperation oceanusOperation = new OceanusOperation(oceanusService);
+
+            try {
+                oceanusOperation.start(jobBaseInfo,
+                        InlongConstants.DATASYNC_MODE.equals(inlongGroupInfo.getInlongGroupMode()));
+                log.info("job submit success, jobId is [{}]", jobBaseInfo.getJobId());
+            } catch (Exception e) {
+                String message = String.format("startup sort failed for groupId [%s] ", groupId);
+                log.error(message, e);
+                return ListenerResult.fail(message + e.getMessage());
+            }
+            saveInfo(streamInfo, InlongConstants.SORT_JOB_ID, jobBaseInfo.getJobId().toString(), extList);
         }
-
-        String dataflow = kvConf.get(InlongConstants.DATAFLOW);
-        if (StringUtils.isEmpty(dataflow)) {
-            String message = String.format("dataflow is empty for groupId [%s]", groupId);
-            log.error(message);
-            return ListenerResult.fail(message);
-        }
-
-        // todo
-        String jobName = groupId;
-        JobBaseInfo jobBaseInfo = OceanusUtils.initParamForOceanus(kvConf);
-        jobBaseInfo.setName(jobName);
-        jobBaseInfo.setOperator(inlongGroupInfo.getCreator());
-        OceanusService oceanusService = new OceanusService();
-        jobBaseInfo.setFileId(oceanusService.uploadFile(jobBaseInfo, dataflow));
-        saveInfo(groupId, "sort.job.fileId", jobBaseInfo.getFileId().toString(), extList);
-
-        OceanusOperation oceanusOperation = new OceanusOperation(oceanusService);
-
-        try {
-            oceanusOperation.start(jobBaseInfo);
-            log.info("job submit success, jobId is [{}]", jobBaseInfo.getJobId());
-        } catch (Exception e) {
-            String message = String.format("startup sort failed for groupId [%s] ", groupId);
-            log.error(message, e);
-            return ListenerResult.fail(message + e.getMessage());
-        }
-        saveInfo(groupId, InlongConstants.SORT_JOB_ID, jobBaseInfo.getJobId().toString(), extList);
         return ListenerResult.success();
     }
 
     /**
-     * Save ext info into list.
+     * Save stream ext info into list.
      */
-    private void saveInfo(String inlongGroupId, String keyName, String keyValue, List<InlongGroupExtInfo> extInfoList) {
-        InlongGroupExtInfo extInfo = new InlongGroupExtInfo();
-        extInfo.setInlongGroupId(inlongGroupId);
+    private void saveInfo(InlongStreamInfo streamInfo, String keyName, String keyValue,
+            List<InlongStreamExtInfo> extInfoList) {
+        InlongStreamExtInfo extInfo = new InlongStreamExtInfo();
+        extInfo.setInlongGroupId(streamInfo.getInlongGroupId());
+        extInfo.setInlongStreamId(streamInfo.getInlongStreamId());
         extInfo.setKeyName(keyName);
         extInfo.setKeyValue(keyValue);
         extInfoList.add(extInfo);

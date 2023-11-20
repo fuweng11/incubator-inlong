@@ -40,6 +40,16 @@ public class OceanusUtils {
     public static final String ENABLE_CHECK_POINTING = "oceanus.job.enableCheckpointing";
     public static final String CHECK_POINT_INTERVAL = "oceanus.job.checkpointInterval";
 
+    public static final String CLUSTER_ID = "oceanus.job.clusterId";
+    public static final String CPU_CORES = "oceanus.job.cpuCores";
+    public static final String CPU_CORES_PER_TASK_MANAGER = "oceanus.job.cpuCoresPerTaskManager";
+    public static final String JOB_MANAGER_CPU_CORES = "oceanus.job.jobManagerCpuCores";
+    public static final String JOB_MANAGER_MEMORY_BYTES = "oceanus.job.jobmanagerMemoryBytes";
+    public static final String MAX_PARALLELISM = "oceanus.job.maxParallelism";
+    public static final String MEMORY_BYTES = "oceanus.job.memoryBytes";
+    public static final String MEMORY_BYTES_PER_TASK_MANAGER = "oceanus.job.memoryBytesPerTaskmanager";
+    public static final String PARALLELISM_PER_CORE = "oceanus.job.parallelismPerCore";
+
     public static JobBaseInfo initParamForOceanus(Map<String, String> kvConf) {
         JobBaseInfo jobBaseInfo = new JobBaseInfo();
         if (StringUtils.isNotBlank(kvConf.get(InlongConstants.SORT_JOB_ID))) {
@@ -48,7 +58,7 @@ public class OceanusUtils {
         if (StringUtils.isNotBlank(kvConf.get(FILE_ID))) {
             jobBaseInfo.setFileId(Long.valueOf(kvConf.get(FILE_ID)));
         }
-        String projectId = kvConf.getOrDefault(PROJECT_ID, "11523");
+        String projectId = kvConf.getOrDefault(PROJECT_ID, "14727");
         Preconditions.expectNotBlank(projectId, "oceanus projectId is is blank");
         jobBaseInfo.setProjectId(Long.valueOf(projectId));
 
@@ -79,6 +89,25 @@ public class OceanusUtils {
         if (StringUtils.isNotBlank(checkPointInterval)) {
             jobBaseInfo.setCheckpointInterval(Integer.valueOf(checkPointInterval));
         }
+        return jobBaseInfo;
+    }
+
+    public static JobBaseInfo initParamsForStandardMode(JobBaseInfo jobBaseInfo, Map<String, String> kvConf) {
+
+        String clusterId = kvConf.getOrDefault(CLUSTER_ID, "20010");
+        Preconditions.expectNotBlank(clusterId, "oceanus clusterId is is blank");
+        jobBaseInfo.setClusterId(Long.valueOf(clusterId));
+
+        jobBaseInfo.setCpuCores(Integer.valueOf(kvConf.getOrDefault(CPU_CORES, "2")));
+        jobBaseInfo.setCpuCoresPerTaskmanager(Integer.valueOf(kvConf.getOrDefault(CPU_CORES_PER_TASK_MANAGER, "1")));
+        jobBaseInfo.setResourceDescription("standard mode ressource");
+        jobBaseInfo.setJobmanagerCpuCores(Integer.valueOf(kvConf.getOrDefault(JOB_MANAGER_CPU_CORES, "1")));
+        jobBaseInfo.setJobmanagerMemoryBytes(Long.valueOf(kvConf.getOrDefault(JOB_MANAGER_MEMORY_BYTES, "2147483648")));
+        jobBaseInfo.setMaxParallelism(Long.valueOf(kvConf.getOrDefault(MAX_PARALLELISM, "2048")));
+        jobBaseInfo.setMemoryBytes(Long.valueOf(kvConf.getOrDefault(MEMORY_BYTES, "3221225472")));
+        jobBaseInfo.setMemoryBytesPerTaskmanager(
+                Long.valueOf(kvConf.getOrDefault(MEMORY_BYTES_PER_TASK_MANAGER, "1073741824")));
+        jobBaseInfo.setParallelismPerCore(Integer.valueOf(kvConf.getOrDefault(PARALLELISM_PER_CORE, "1")));
         return jobBaseInfo;
     }
 }

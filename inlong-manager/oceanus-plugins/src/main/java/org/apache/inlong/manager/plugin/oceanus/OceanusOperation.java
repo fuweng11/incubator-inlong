@@ -43,7 +43,7 @@ public class OceanusOperation {
     /**
      * Start the Oceanus job, if the job id was not empty, restore it.
      */
-    public void start(JobBaseInfo jobInfo) throws Exception {
+    public void start(JobBaseInfo jobInfo, boolean isSync) throws Exception {
         Long jobId = jobInfo.getJobId();
         try {
 
@@ -53,6 +53,10 @@ public class OceanusOperation {
             }
             log.info("Start job {} success in backend", jobId);
             oceanusService.configJob(jobInfo);
+            if (!isSync) {
+                oceanusService.configResource(jobInfo);
+                oceanusService.starJob(jobInfo);
+            }
         } catch (Exception e) {
             log.warn("submit flink job failed for {}", jobInfo, e);
             throw new Exception("submit flink job failed: " + e.getMessage());
