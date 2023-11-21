@@ -35,6 +35,9 @@ public class IcebergConstant {
     public static final String START_SNAPSHOT_ID = "start-snapshot-id";
     public static final String STREAMING = "streaming";
     public static final String STARTING_STRATEGY_KEY = "starting-strategy";
+    public static final String APPEND_MODE_KEY = "appendMode";
+    public static final String WATERMARK_FIELD = "write.watermark.field";
+    public static final String WATERMARK_FORMAT = "write.watermark.date-format";
 
     /**
      * Iceberg supported catalog type

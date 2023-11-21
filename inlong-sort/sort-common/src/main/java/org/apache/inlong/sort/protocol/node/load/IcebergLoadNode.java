@@ -73,6 +73,15 @@ public class IcebergLoadNode extends LoadNode implements InlongMetric, Metadata,
     @JsonProperty("warehouse")
     private String warehouse;
 
+    @JsonProperty("appendMode")
+    private String appendMode;
+
+    @JsonProperty("watermarkField")
+    private String watermarkField;
+
+    @JsonProperty("watermarkFormat")
+    private String watermarkFormat;
+
     @JsonCreator
     public IcebergLoadNode(@JsonProperty("id") String id,
             @JsonProperty("name") String name,
@@ -87,7 +96,10 @@ public class IcebergLoadNode extends LoadNode implements InlongMetric, Metadata,
             @JsonProperty("primaryKey") String primaryKey,
             @JsonProperty("catalogType") IcebergConstant.CatalogType catalogType,
             @JsonProperty("uri") String uri,
-            @JsonProperty("warehouse") String warehouse) {
+            @JsonProperty("warehouse") String warehouse,
+            @JsonProperty("appendMode") String appendMode,
+            @JsonProperty("watermarkField") String watermarkField,
+            @JsonProperty("watermarkFormat") String watermarkFormat) {
         super(id, name, fields, fieldRelations, filters, filterStrategy, sinkParallelism, properties);
         this.tableName = Preconditions.checkNotNull(tableName, "table name is null");
         this.dbName = Preconditions.checkNotNull(dbName, "db name is null");
@@ -95,6 +107,9 @@ public class IcebergLoadNode extends LoadNode implements InlongMetric, Metadata,
         this.catalogType = catalogType == null ? CatalogType.HIVE : catalogType;
         this.uri = uri;
         this.warehouse = warehouse;
+        this.appendMode = appendMode;
+        this.watermarkField = watermarkField;
+        this.watermarkFormat = watermarkFormat;
     }
 
     @Override
@@ -108,11 +123,18 @@ public class IcebergLoadNode extends LoadNode implements InlongMetric, Metadata,
         options.put(IcebergConstant.DEFAULT_DATABASE_KEY, dbName);
         options.put(IcebergConstant.CATALOG_TYPE_KEY, catalogType.name());
         options.put(IcebergConstant.CATALOG_NAME_KEY, catalogType.name());
+        options.put(IcebergConstant.APPEND_MODE_KEY, appendMode);
         if (null != uri) {
-            options.put("uri", uri);
+            options.put(IcebergConstant.URI_KEY, uri);
         }
         if (null != warehouse) {
-            options.put("warehouse", warehouse);
+            options.put(IcebergConstant.WAREHOUSE_KEY, warehouse);
+        }
+        if (null != watermarkField) {
+            options.put(IcebergConstant.WATERMARK_FIELD, watermarkField);
+        }
+        if (null != watermarkFormat) {
+            options.put(IcebergConstant.WATERMARK_FORMAT, watermarkFormat);
         }
         return options;
     }
@@ -133,8 +155,22 @@ public class IcebergLoadNode extends LoadNode implements InlongMetric, Metadata,
     }
 
     @Override
+    public String getMetadataKey(MetaField metaField) {
+        String metadataKey;
+        switch (metaField) {
+            case AUDIT_DATA_TIME:
+                metadataKey = "audit_data_time";
+                break;
+            default:
+                throw new UnsupportedOperationException(String.format("Unsupport meta field for %s: %s",
+                        this.getClass().getSimpleName(), metaField));
+        }
+        return metadataKey;
+    }
+
+    @Override
     public boolean isVirtual(MetaField metaField) {
-        return true;
+        return false;
     }
 
     @Override

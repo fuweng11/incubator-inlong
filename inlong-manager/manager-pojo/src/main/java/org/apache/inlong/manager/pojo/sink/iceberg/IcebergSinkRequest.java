@@ -67,6 +67,12 @@ public class IcebergSinkRequest extends SinkRequest {
     @ApiModelProperty("append mode, UPSERT or APPEND")
     private String appendMode;
 
+    @ApiModelProperty("watermark field")
+    private String watermarkField;
+
+    @ApiModelProperty("watermark format")
+    private String watermarkFormat;
+
     @ApiModelProperty("cluster tag")
     private String clusterTag;
 

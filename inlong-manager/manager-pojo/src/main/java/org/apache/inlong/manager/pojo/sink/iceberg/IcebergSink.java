@@ -17,12 +17,6 @@
 
 package org.apache.inlong.manager.pojo.sink.iceberg;
 
-import org.apache.inlong.manager.common.consts.SinkType;
-import org.apache.inlong.manager.common.util.CommonBeanUtils;
-import org.apache.inlong.manager.common.util.JsonTypeDefine;
-import org.apache.inlong.manager.pojo.sink.SinkRequest;
-import org.apache.inlong.manager.pojo.sink.StreamSink;
-
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -31,6 +25,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.apache.inlong.manager.common.consts.SinkType;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
+import org.apache.inlong.manager.common.util.JsonTypeDefine;
+import org.apache.inlong.manager.pojo.sink.SinkRequest;
+import org.apache.inlong.manager.pojo.sink.StreamSink;
 
 /**
  * Iceberg sink info
@@ -73,7 +72,14 @@ public class IcebergSink extends StreamSink {
     private String primaryKey;
 
     @ApiModelProperty("append mode, UPSERT or APPEND")
-    private String appendMode;
+    @Builder.Default
+    private String appendMode = "APPEND";
+
+    @ApiModelProperty("watermark field")
+    private String watermarkField;
+
+    @ApiModelProperty("watermark format")
+    private String watermarkFormat;
 
     @ApiModelProperty("cluster tag")
     private String clusterTag;
