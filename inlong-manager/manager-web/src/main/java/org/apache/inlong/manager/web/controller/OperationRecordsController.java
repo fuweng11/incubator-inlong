@@ -17,10 +17,10 @@
 
 package org.apache.inlong.manager.web.controller;
 
-import org.apache.inlong.manager.dao.entity.tencent.FieldChangeLogEntity;
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.Response;
-import org.apache.inlong.manager.pojo.source.dbsync.FieldChangLogRequest;
+import org.apache.inlong.manager.pojo.tencent.OperationRecordsRequest;
+import org.apache.inlong.manager.pojo.tencent.OperationRecordsResponse;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,11 +35,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @Api(tags = "Operation record-API")
-public class OperationRecordController {
+public class OperationRecordsController {
 
-    @RequestMapping(value = "/operationRecord/list", method = RequestMethod.POST)
+    @RequestMapping(value = "/operationRecords/list", method = RequestMethod.POST)
     @ApiOperation(value = "List operation record by paginating")
-    public Response<PageResult<FieldChangeLogEntity>> listByCondition(@RequestBody FieldChangLogRequest request) {
+    public Response<PageResult<OperationRecordsResponse>> listByCondition(
+            @RequestBody OperationRecordsRequest request) {
         return Response.success();
     }
 
