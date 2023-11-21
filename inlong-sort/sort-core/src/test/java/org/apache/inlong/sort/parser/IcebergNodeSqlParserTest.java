@@ -100,7 +100,10 @@ public class IcebergNodeSqlParserTest extends AbstractTestBase {
                 null,
                 CatalogType.HADOOP,
                 null,
-                "hdfs://localhost:9000/iceberg/warehouse");
+                "hdfs://localhost:9000/iceberg/warehouse",
+                null,
+                null,
+                null);
     }
 
     private IcebergLoadNode buildIcebergLoadNodeWithHiveCatalog() {
@@ -139,7 +142,10 @@ public class IcebergNodeSqlParserTest extends AbstractTestBase {
                 null,
                 CatalogType.HIVE,
                 "thrift://localhost:9083",
-                "/hive/warehouse");
+                "/hive/warehouse",
+                null,
+                null,
+                null);
     }
 
     /**
