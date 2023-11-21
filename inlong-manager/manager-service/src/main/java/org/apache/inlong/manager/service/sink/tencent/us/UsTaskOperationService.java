@@ -78,6 +78,7 @@ public class UsTaskOperationService {
         String cycleUnit = "";
         String datePattern = "";
         String appGroupName = "";
+        String gaiaId = "";
         Integer bgId = null;
         switch (sinkEntity.getSinkType()) {
             case SinkType.INNER_ICEBERG:
@@ -90,6 +91,7 @@ public class UsTaskOperationService {
                 datePattern = innerIcebergSinkDTO.getDatePattern();
                 appGroupName = innerIcebergSinkDTO.getResourceGroup();
                 bgId = innerIcebergSinkDTO.getBgId();
+                gaiaId = innerIcebergSinkDTO.getGaiaId();
                 break;
             case SinkType.ICEBERG:
                 IcebergSinkDTO icebergSinkDTO = IcebergSinkDTO.getFromJson(sinkEntity.getExtParams());
@@ -101,6 +103,7 @@ public class UsTaskOperationService {
                 datePattern = icebergSinkDTO.getDatePattern();
                 appGroupName = icebergSinkDTO.getResourceGroup();
                 bgId = icebergSinkDTO.getBgId();
+                gaiaId = icebergSinkDTO.getGaiaId();
                 break;
             default:
                 throw new BusinessException(ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT);
@@ -119,6 +122,7 @@ public class UsTaskOperationService {
         extList.add(new TaskExt("datePattern", datePattern));
         extList.add(new TaskExt("interval", cycleNum));
         extList.add(new TaskExt("tableName", tableName));
+        extList.add(new TaskExt("gaia_id", gaiaId));
         String inCharges;
         if (StringUtils.isNotEmpty(groupInfo.getInCharges())) {
             inCharges = groupInfo.getInCharges().replace(",", ";");
