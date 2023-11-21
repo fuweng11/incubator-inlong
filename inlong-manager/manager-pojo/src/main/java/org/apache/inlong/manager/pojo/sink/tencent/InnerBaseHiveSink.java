@@ -130,7 +130,7 @@ public abstract class InnerBaseHiveSink extends StreamSink {
     private String reconciliationType;
 
     @ApiModelProperty("resource group")
-    private String resourceGroup;  // use for wedata
+    private String resourceGroup; // use for wedata
 
     @ApiModelProperty("bg id")
     private Integer bgId; // use for wedata

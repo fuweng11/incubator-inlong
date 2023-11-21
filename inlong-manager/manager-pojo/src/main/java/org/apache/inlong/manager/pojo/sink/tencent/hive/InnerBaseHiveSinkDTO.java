@@ -174,7 +174,7 @@ public class InnerBaseHiveSinkDTO {
     private String reconciliationType = "InlongCft";
 
     @ApiModelProperty("resource group")
-    private String resourceGroup;  // use for wedata
+    private String resourceGroup; // use for wedata
 
     @ApiModelProperty("bg id")
     private Integer bgId; // use for wedata
@@ -209,7 +209,7 @@ public class InnerBaseHiveSinkDTO {
         String password = encryptPassword(hiveDataNode.getToken(), innerHiveDTO.getTableName(),
                 hiveDataNode.getOmsAddress());
         boolean enableResourceGroup = StringUtils.isNotBlank(innerHiveDTO.getResourceGroup());
-        String groupName = enableResourceGroup? innerHiveDTO.getResourceGroup(): groupInfo.getAppGroupName();
+        String groupName = enableResourceGroup ? innerHiveDTO.getResourceGroup() : groupInfo.getAppGroupName();
         return InnerHiveFullInfo.builder()
                 .sinkId(sinkInfo.getId())
                 .productId(groupInfo.getProductId())

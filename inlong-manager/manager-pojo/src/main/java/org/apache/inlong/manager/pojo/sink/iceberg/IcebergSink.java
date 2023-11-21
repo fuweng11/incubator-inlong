@@ -90,8 +90,11 @@ public class IcebergSink extends StreamSink {
     @ApiModelProperty("cycle unit")
     private String cycleUnit;
 
+    @ApiModelProperty("gaia id")
+    private String gaiaId;
+
     @ApiModelProperty("resource group")
-    private String resourceGroup;  // use for wedata
+    private String resourceGroup; // use for wedata
 
     @ApiModelProperty("bg id")
     private Integer bgId; // use for wedata
