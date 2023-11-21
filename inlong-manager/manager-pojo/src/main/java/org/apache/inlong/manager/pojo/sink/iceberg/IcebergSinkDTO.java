@@ -77,6 +77,18 @@ public class IcebergSinkDTO {
     @ApiModelProperty("cluster tag")
     private String clusterTag;
 
+    @ApiModelProperty("iceberg checker task id")
+    private String icebergCheckerTaskId;
+
+    @ApiModelProperty("data pattern")
+    private String datePattern;
+
+    @ApiModelProperty("cycle num")
+    private String cycleNum;
+
+    @ApiModelProperty("cycle unit")
+    private String cycleUnit;
+
     @ApiModelProperty("Properties for iceberg")
     private Map<String, Object> properties;
 

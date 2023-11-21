@@ -78,6 +78,18 @@ public class IcebergSink extends StreamSink {
     @ApiModelProperty("cluster tag")
     private String clusterTag;
 
+    @ApiModelProperty("iceberg checker task id")
+    private String icebergCheckerTaskId;
+
+    @ApiModelProperty("data pattern")
+    private String datePattern;
+
+    @ApiModelProperty("cycle num")
+    private String cycleNum;
+
+    @ApiModelProperty("cycle unit")
+    private String cycleUnit;
+
     public IcebergSink() {
         this.setSinkType(SinkType.ICEBERG);
     }

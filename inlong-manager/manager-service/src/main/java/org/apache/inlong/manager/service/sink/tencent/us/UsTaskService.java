@@ -406,6 +406,29 @@ public class UsTaskService {
         return usTaskId;
     }
 
+    public UpdateUsTaskRequest getUpdateTaskRequestForIceberg(String taskId, InlongGroupInfo inlongGroupInfo,
+            String inCharges, List<TaskExt> taskExtList) {
+        Integer bgId = inlongGroupInfo.getBgId();
+        Integer productId = inlongGroupInfo.getProductId();
+        if (bgId == null || productId == null) {
+            String errMsg = "bgId or productId for inlong group can not null when create us task";
+            throw new WorkflowListenerException(errMsg);
+        }
+        return UpdateUsTaskRequest.builder()
+                .taskId(taskId)
+                .tryLimit(taskTryLimit)
+                .startMin(taskDelayMinute)
+                // It must be the creator of the business,
+                // otherwise it may not have the permission of the application group
+                .modifier(inlongGroupInfo.getCreator())
+                .bgId(bgInfoService.get(bgId).getUsBgId())
+                .inCharge(inCharges)
+                .productId(String.valueOf(productId))
+                .tdwAppGroup(inlongGroupInfo.getAppGroupName())
+                .taskExt(GSON.toJson(taskExtList))
+                .build();
+    }
+
     private UpdateUsTaskRequest getUpdateTaskRequest(String taskId, InlongGroupInfo inlongGroupInfo,
             InnerHiveFullInfo tableInfo, String inCharges, List<TaskExt> taskExtList) {
         Integer bgId = tableInfo.getBgId();
@@ -454,6 +477,33 @@ public class UsTaskService {
                 .bgId(bgInfoService.get(bgId).getUsBgId())
                 .productId(String.valueOf(productId))
                 .tdwAppGroup(tableInfo.getAppGroupName())
+                .taskExt(GSON.toJson(taskExtList))
+                .build();
+    }
+
+    public CreateUsTaskRequest getCreateTaskRequestForIceberg(InlongGroupInfo inlongGroupInfo,
+            String cycleNum, String cycleUnit, String inCharges, List<TaskExt> taskExtList) {
+        String startDate = getStartDate(new Date(), cycleUnit);
+
+        Integer bgId = inlongGroupInfo.getBgId();
+        Integer productId = inlongGroupInfo.getProductId();
+        if (bgId == null || productId == null) {
+            String errMsg = "bgId or productId for inlong group can not null when create us task";
+            throw new WorkflowListenerException(errMsg);
+        }
+        return CreateUsTaskRequest.builder()
+                .cycleNum(cycleNum)
+                .cycleUnit(cycleUnit)
+                .startDate(startDate)
+                .tryLimit(taskTryLimit)
+                .startMin(taskDelayMinute)
+                // It must be the creator of the business,
+                // otherwise it may not have the permission of the application group
+                .creater(inlongGroupInfo.getCreator())
+                .inCharge(inCharges)
+                .bgId(bgInfoService.get(bgId).getUsBgId())
+                .productId(String.valueOf(productId))
+                .tdwAppGroup(inlongGroupInfo.getAppGroupName())
                 .taskExt(GSON.toJson(taskExtList))
                 .build();
     }
