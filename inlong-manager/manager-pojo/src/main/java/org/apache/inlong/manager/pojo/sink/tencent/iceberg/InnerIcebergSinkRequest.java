@@ -64,4 +64,10 @@ public class InnerIcebergSinkRequest extends SinkRequest {
     @ApiModelProperty("cycle unit")
     private String cycleUnit;
 
+    @ApiModelProperty("resource group")
+    private String resourceGroup;  // use for wedata
+
+    @ApiModelProperty("bg id")
+    private Integer bgId; // use for wedata
+
 }

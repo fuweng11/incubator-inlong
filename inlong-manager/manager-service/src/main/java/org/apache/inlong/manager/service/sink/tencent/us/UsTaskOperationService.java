@@ -77,6 +77,8 @@ public class UsTaskOperationService {
         String cycleNum = "";
         String cycleUnit = "";
         String datePattern = "";
+        String appGroupName = "";
+        Integer bgId = null;
         switch (sinkEntity.getSinkType()) {
             case SinkType.INNER_ICEBERG:
                 InnerIcebergSinkDTO innerIcebergSinkDTO = InnerIcebergSinkDTO.getFromJson(sinkEntity.getExtParams());
@@ -86,6 +88,8 @@ public class UsTaskOperationService {
                 cycleNum = innerIcebergSinkDTO.getCycleNum();
                 cycleUnit = innerIcebergSinkDTO.getCycleUnit();
                 datePattern = innerIcebergSinkDTO.getDatePattern();
+                appGroupName = innerIcebergSinkDTO.getResourceGroup();
+                bgId = innerIcebergSinkDTO.getBgId();
                 break;
             case SinkType.ICEBERG:
                 IcebergSinkDTO icebergSinkDTO = IcebergSinkDTO.getFromJson(sinkEntity.getExtParams());
@@ -95,14 +99,19 @@ public class UsTaskOperationService {
                 cycleNum = icebergSinkDTO.getCycleNum();
                 cycleUnit = icebergSinkDTO.getCycleUnit();
                 datePattern = icebergSinkDTO.getDatePattern();
+                appGroupName = icebergSinkDTO.getResourceGroup();
+                bgId = icebergSinkDTO.getBgId();
                 break;
             default:
                 throw new BusinessException(ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT);
         }
-        if (groupInfo.getBgId() == null) {
+        if (StringUtils.isBlank(appGroupName)) {
             Integer clusterId = scService.getClusterIdByIdentifier(clusterTag);
             AppGroup appGroup = scService.getAppGroup(clusterId, groupInfo.getAppGroupName());
             groupInfo.setBgId(appGroup.getBgId());
+        } else {
+            groupInfo.setAppGroupName(appGroupName);
+            groupInfo.setBgId(bgId);
         }
         // extended parameters of task
         List<TaskExt> extList = new ArrayList<>();

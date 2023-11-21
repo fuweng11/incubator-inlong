@@ -65,6 +65,12 @@ public class InnerIcebergSinkDTO {
     @ApiModelProperty("cycle unit")
     private String cycleUnit;
 
+    @ApiModelProperty("resource group")
+    private String resourceGroup;  // use for wedata
+
+    @ApiModelProperty("bg id")
+    private Integer bgId; // use for wedata
+
     /**
      * Get the dto instance from the request
      */

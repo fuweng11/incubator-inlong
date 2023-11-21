@@ -49,9 +49,6 @@ import java.util.Objects;
 @AllArgsConstructor
 public class InnerBaseHiveSinkDTO {
 
-    @ApiModelProperty("bg id")
-    private Integer bgId;
-
     @ApiModelProperty("us task id")
     private String usTaskId;
 
@@ -176,6 +173,12 @@ public class InnerBaseHiveSinkDTO {
     @ApiModelProperty("Inlong reconciliation type")
     private String reconciliationType = "InlongCft";
 
+    @ApiModelProperty("resource group")
+    private String resourceGroup;  // use for wedata
+
+    @ApiModelProperty("bg id")
+    private Integer bgId; // use for wedata
+
     /**
      * Get the dto instance from the request
      */
@@ -205,12 +208,14 @@ public class InnerBaseHiveSinkDTO {
         Integer isThive = Objects.equals(sinkInfo.getSinkType(), SinkType.INNER_THIVE) ? 1 : 0;
         String password = encryptPassword(hiveDataNode.getToken(), innerHiveDTO.getTableName(),
                 hiveDataNode.getOmsAddress());
+        boolean enableResourceGroup = StringUtils.isNotBlank(innerHiveDTO.getResourceGroup());
+        String groupName = enableResourceGroup? innerHiveDTO.getResourceGroup(): groupInfo.getAppGroupName();
         return InnerHiveFullInfo.builder()
                 .sinkId(sinkInfo.getId())
                 .productId(groupInfo.getProductId())
                 .productName(groupInfo.getProductName())
-                .appGroupName(groupInfo.getAppGroupName())
-                .bgId(groupInfo.getBgId() == null ? innerHiveDTO.getBgId() : groupInfo.getBgId())
+                .appGroupName(groupName)
+                .bgId(innerHiveDTO.getBgId())
                 .inlongGroupId(sinkInfo.getInlongGroupId())
                 .inlongStreamId(sinkInfo.getInlongStreamId())
                 .isThive(isThive)

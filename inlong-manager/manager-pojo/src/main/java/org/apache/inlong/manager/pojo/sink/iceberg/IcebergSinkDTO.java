@@ -89,6 +89,12 @@ public class IcebergSinkDTO {
     @ApiModelProperty("cycle unit")
     private String cycleUnit;
 
+    @ApiModelProperty("resource group")
+    private String resourceGroup;  // use for wedata
+
+    @ApiModelProperty("bg id")
+    private Integer bgId; // use for wedata
+
     @ApiModelProperty("Properties for iceberg")
     private Map<String, Object> properties;
 

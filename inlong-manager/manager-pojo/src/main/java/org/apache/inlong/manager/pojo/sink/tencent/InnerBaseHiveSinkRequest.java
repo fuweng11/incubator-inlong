@@ -126,4 +126,10 @@ public abstract class InnerBaseHiveSinkRequest extends SinkRequest {
     @ApiModelProperty("Inlong reconciliation type")
     private String reconciliationType = "InlongCft";
 
+    @ApiModelProperty("resource group")
+    private String resourceGroup;  // use for wedata
+
+    @ApiModelProperty("bg id")
+    private Integer bgId; // use for wedata
+
 }

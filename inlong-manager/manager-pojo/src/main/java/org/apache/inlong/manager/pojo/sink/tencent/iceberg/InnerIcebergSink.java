@@ -72,6 +72,12 @@ public class InnerIcebergSink extends StreamSink {
     @ApiModelProperty("cycle unit")
     private String cycleUnit;
 
+    @ApiModelProperty("resource group")
+    private String resourceGroup;  // use for wedata
+
+    @ApiModelProperty("bg id")
+    private Integer bgId; // use for wedata
+
     @Override
     public SinkRequest genSinkRequest() {
         return CommonBeanUtils.copyProperties(this, InnerIcebergSinkRequest::new);
