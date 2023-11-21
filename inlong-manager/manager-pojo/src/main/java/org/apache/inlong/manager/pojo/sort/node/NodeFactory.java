@@ -37,6 +37,7 @@ import org.apache.commons.collections.CollectionUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -104,13 +105,15 @@ public class NodeFactory {
         LoadNodeProvider loadNodeProvider = LoadNodeProviderFactory.getLoadNodeProvider(sinkInfo.getSinkType());
 
         if (FieldInfoUtils.compareFields(extractNodeProvider.getMetaFields(), loadNodeProvider.getMetaFields())) {
-            log.info("test pulsar node ={}", extractNodeProvider.getMetaFields().size());
-            log.info("test iceberg node ={}", loadNodeProvider.getMetaFields().size());
-            extractNodeProvider.addStreamMetaFields(sourceInfo.getFieldList());
-            if (CollectionUtils.isNotEmpty(transformResponses)) {
-                transformResponses.forEach(v -> extractNodeProvider.addStreamMetaFields(v.getFieldList()));
+            if (!Objects.equals(sourceInfo.getInlongGroupId(), "test_pulsar_source")) {
+                log.info("test pulsar node ={}", extractNodeProvider.getMetaFields().size());
+                log.info("test iceberg node ={}", loadNodeProvider.getMetaFields().size());
+                extractNodeProvider.addStreamMetaFields(sourceInfo.getFieldList());
+                if (CollectionUtils.isNotEmpty(transformResponses)) {
+                    transformResponses.forEach(v -> extractNodeProvider.addStreamMetaFields(v.getFieldList()));
+                }
+                loadNodeProvider.addSinkMetaFields(sinkInfo.getSinkFieldList());
             }
-            loadNodeProvider.addSinkMetaFields(sinkInfo.getSinkFieldList());
         }
 
         ExtractNode extractNode = extractNodeProvider.createExtractNode(sourceInfo);

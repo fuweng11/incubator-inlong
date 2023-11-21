@@ -59,7 +59,9 @@ public class PulsarProvider implements ExtractNodeProvider {
 
         String fullTopicName =
                 pulsarSource.getPulsarTenant() + "/" + pulsarSource.getNamespace() + "/" + pulsarSource.getTopic();
-        pulsarSource.setWrapType("INLONG_MSG_V0");
+        if (StringUtils.isBlank(pulsarSource.getWrapType())) {
+            pulsarSource.setWrapType("INLONG_MSG_V0");
+        }
         log.info("test is warptype ={}", pulsarSource.getWrapType());
         log.info("test is reuslt ={}",
                 Objects.equals(pulsarSource.getWrapType(), MessageWrapType.INLONG_MSG_V0.getName()));

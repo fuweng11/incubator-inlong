@@ -24,9 +24,8 @@ import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
-import org.apache.inlong.manager.pojo.node.cls.ClsDataNodeDTO;
-import org.apache.inlong.manager.pojo.node.cls.ClsDataNodeInfo;
 import org.apache.inlong.manager.pojo.node.tube.TubeMQDataNodeDTO;
+import org.apache.inlong.manager.pojo.node.tube.TubeMQDataNodeInfo;
 import org.apache.inlong.manager.pojo.node.tube.TubeMQDataNodeRequest;
 import org.apache.inlong.manager.service.node.AbstractDataNodeOperator;
 
@@ -74,10 +73,10 @@ public class TubeMQDataNodeOperator extends AbstractDataNodeOperator {
         if (entity == null) {
             throw new BusinessException(ErrorCodeEnum.DATA_NODE_NOT_FOUND);
         }
-        ClsDataNodeInfo info = new ClsDataNodeInfo();
+        TubeMQDataNodeInfo info = new TubeMQDataNodeInfo();
         CommonBeanUtils.copyProperties(entity, info);
         if (StringUtils.isNotBlank(entity.getExtParams())) {
-            ClsDataNodeDTO dto = ClsDataNodeDTO.getFromJson(entity.getExtParams());
+            TubeMQDataNodeDTO dto = TubeMQDataNodeDTO.getFromJson(entity.getExtParams());
             CommonBeanUtils.copyProperties(dto, info);
         }
         return info;
