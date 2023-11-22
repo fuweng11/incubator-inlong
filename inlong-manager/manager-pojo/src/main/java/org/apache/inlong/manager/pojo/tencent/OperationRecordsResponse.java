@@ -43,6 +43,9 @@ public class OperationRecordsResponse {
     @ApiModelProperty("Operation")
     private String operation;
 
+    @ApiModelProperty(value = "Name of operator")
+    private String operator;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 

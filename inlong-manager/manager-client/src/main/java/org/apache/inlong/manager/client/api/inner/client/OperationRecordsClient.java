@@ -25,8 +25,6 @@ import org.apache.inlong.manager.pojo.common.Response;
 import org.apache.inlong.manager.pojo.tencent.OperationRecordsRequest;
 import org.apache.inlong.manager.pojo.tencent.OperationRecordsResponse;
 
-import java.util.List;
-
 public class OperationRecordsClient {
 
     private final OperationRecordsApi operationRecordsApi;
@@ -40,11 +38,14 @@ public class OperationRecordsClient {
      *
      * @return task id
      */
-    public List<OperationRecordsResponse> list(OperationRecordsRequest request) {
+    public PageResult<OperationRecordsResponse> list(OperationRecordsRequest request) {
         Response<PageResult<OperationRecordsResponse>> response =
                 ClientUtils.executeHttpCall(operationRecordsApi.list(request));
         ClientUtils.assertRespSuccess(response);
-        return response.getData().getList();
+        if (response.isSuccess()) {
+            return response.getData();
+        }
+        throw new RuntimeException(response.getErrMsg());
     }
 
 }

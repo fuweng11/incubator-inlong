@@ -17,6 +17,8 @@
 
 package org.apache.inlong.manager.pojo.tencent;
 
+import org.apache.inlong.manager.pojo.common.PageRequest;
+
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,7 +30,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OperationRecordsRequest {
+public class OperationRecordsRequest extends PageRequest {
 
     @ApiModelProperty("Inlong group id")
     private String inlongGroupId;

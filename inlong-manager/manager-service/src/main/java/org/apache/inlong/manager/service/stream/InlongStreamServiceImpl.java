@@ -529,8 +529,8 @@ public class InlongStreamServiceImpl implements InlongStreamService {
             throw new BusinessException(ErrorCodeEnum.CONFIG_EXPIRED);
         }
         // Processing extended attributes
-        String extParams = packExtParams(request);
-        request.setExtParams(extParams);
+        // String extParams = packExtParams(request);
+        // request.setExtParams(extParams);
         CommonBeanUtils.copyProperties(request, streamEntity, true);
         streamEntity.setModifier(operator);
         int rowCount = streamMapper.updateByIdentifierSelective(streamEntity);

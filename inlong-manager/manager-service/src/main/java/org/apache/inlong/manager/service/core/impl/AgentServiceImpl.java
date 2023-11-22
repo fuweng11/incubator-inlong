@@ -600,9 +600,10 @@ public class AgentServiceImpl implements AgentService {
             dataConfig.setState(
                     SourceStatus.NORMAL_STATUS_SET.contains(SourceStatus.forCode(entity.getStatus())) ? 1 : 0);
             dataConfig.setSyncSend(streamEntity.getSyncSend());
-            if (SourceType.FILE.equalsIgnoreCase(entity.getSourceType())) {
-                String dataSeparator = streamEntity.getDataSeparator();
-                extParams = (null != dataSeparator ? getExtParams(extParams, dataSeparator) : extParams);
+            if (SourceType.FILE.equalsIgnoreCase(entity.getSourceType()) && StringUtils.isNotBlank(
+                    streamEntity.getDataSeparator())) {
+                String dataSeparator = String.valueOf((char) Integer.parseInt(streamEntity.getDataSeparator()));
+                extParams = getExtParams(extParams, dataSeparator);
             }
             InlongStreamInfo streamInfo = CommonBeanUtils.copyProperties(streamEntity, InlongStreamInfo::new);
             // Processing extParams
