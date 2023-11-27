@@ -49,6 +49,12 @@ public class OperationLogResponse {
     @ApiModelProperty("Operation target")
     private String operationTarget;
 
+    @ApiModelProperty("request body")
+    private String body;
+
+    @ApiModelProperty("is success")
+    private Boolean status;
+
     @ApiModelProperty(value = "Name of operator")
     private String operator;
 
