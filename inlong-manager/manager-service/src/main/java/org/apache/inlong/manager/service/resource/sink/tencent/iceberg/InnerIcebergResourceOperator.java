@@ -63,6 +63,7 @@ public class InnerIcebergResourceOperator implements SinkResourceOperator {
             return;
         } else if (SinkStatus.SUSPEND.getCode().equals(sinkInfo.getStatus())) {
             LOGGER.warn("sink resource [" + sinkInfo.getId() + "] already suspend, skip to create");
+            return;
         }
         InnerIcebergSink icebergSink = (InnerIcebergSink) sinkService.get(sinkInfo.getId());
         try {

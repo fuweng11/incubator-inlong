@@ -54,7 +54,7 @@ import java.util.List;
 @Service
 public class TubeMQQueueResourceOperator implements QueueResourceOperator {
 
-    public static final String TUBE_CONSUME_GROUP = "%s_%s_%s_consumer_group";
+    public static final String TUBE_CONSUME_GROUP = "%s_%s_%s_%s_consumer_group";
 
     @Autowired
     private InlongClusterService clusterService;
@@ -168,7 +168,8 @@ public class TubeMQQueueResourceOperator implements QueueResourceOperator {
                 sortTaskType = ClusterType.SORT_ICEBERG;
                 break;
             default:
-                return String.format(TUBE_CONSUME_GROUP, clusterTag, groupInfo.getMqResource(), topicName);
+                return String.format(TUBE_CONSUME_GROUP, clusterTag, groupInfo.getMqResource(),
+                        sink.getInlongStreamId(), topicName);
         }
         // get sort task name for sink
         String sortClusterName = sortConfigService.getSortTaskName(groupInfo.getInlongGroupId(),
@@ -180,6 +181,6 @@ public class TubeMQQueueResourceOperator implements QueueResourceOperator {
         if (exist != null) {
             return oldConsumption;
         }
-        return String.format(TUBE_CONSUME_GROUP, sortClusterName, clusterTag, topicName);
+        return String.format(TUBE_CONSUME_GROUP, sortClusterName, clusterTag, sink.getInlongStreamId(), topicName);
     }
 }

@@ -90,7 +90,7 @@
     </insert>
     <insert id="insertBatch">
         insert into operation_log (id, inlong_group_id, inlong_stream_id,
-                                   authentication_type, operation_type, operation_,
+                                   authentication_type, operation_type, operation_target,
                                    http_method, invoke_method, operator,
                                    proxy, request_url, remote_address,
                                    cost_time, status, request_time,

@@ -200,7 +200,7 @@ public class AbstractInnerSortConfigService {
             InlongConsumeEntity exists = inlongConsumeMapper.selectExists(consumerGroup, topic, groupId);
             if (exists == null) {
                 consumerGroup = String.format(TencentConstants.SORT_TUBE_GROUP, taskName,
-                        groupInfo.getInlongClusterTag(), topic);
+                        groupInfo.getInlongClusterTag(), streamId, topic);
             }
         } else {
             consumerGroup = getOldConsumption(taskName, groupId, streamId, topic);

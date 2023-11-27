@@ -31,6 +31,7 @@ import org.apache.inlong.manager.pojo.tencent.us.CreateUsTaskRequest.TaskExt;
 import org.apache.inlong.manager.pojo.tencent.us.USConfiguration;
 import org.apache.inlong.manager.pojo.tencent.us.UpdateUsTaskRequest;
 import org.apache.inlong.manager.pojo.tencent.us.UsLinkRequest;
+import org.apache.inlong.manager.pojo.tencent.us.UsTaskInfo;
 import org.apache.inlong.manager.service.core.BgInfoService;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -482,18 +483,18 @@ public class UsTaskService {
     }
 
     public CreateUsTaskRequest getCreateTaskRequestForIceberg(InlongGroupInfo inlongGroupInfo,
-            String cycleNum, String cycleUnit, String inCharges, List<TaskExt> taskExtList) {
-        String startDate = getStartDate(new Date(), cycleUnit);
+            UsTaskInfo usTaskInfo, String inCharges, List<TaskExt> taskExtList) {
+        String startDate = getStartDate(new Date(), usTaskInfo.getCycleUnit());
 
-        Integer bgId = inlongGroupInfo.getBgId();
-        Integer productId = inlongGroupInfo.getProductId();
+        Integer bgId = usTaskInfo.getBgId();
+        Integer productId = usTaskInfo.getProductId();
         if (bgId == null || productId == null) {
             String errMsg = "bgId or productId for inlong group can not null when create us task";
             throw new WorkflowListenerException(errMsg);
         }
         return CreateUsTaskRequest.builder()
-                .cycleNum(cycleNum)
-                .cycleUnit(cycleUnit)
+                .cycleNum(usTaskInfo.getCycleNum())
+                .cycleUnit(usTaskInfo.getCycleUnit())
                 .startDate(startDate)
                 .tryLimit(taskTryLimit)
                 .startMin(taskDelayMinute)

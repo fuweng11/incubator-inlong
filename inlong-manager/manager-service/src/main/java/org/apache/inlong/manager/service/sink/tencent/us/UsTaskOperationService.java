@@ -21,6 +21,7 @@ import org.apache.inlong.manager.common.consts.SinkType;
 import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.exceptions.WorkflowListenerException;
+import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.dao.entity.StreamSinkEntity;
 import org.apache.inlong.manager.dao.mapper.StreamSinkEntityMapper;
 import org.apache.inlong.manager.pojo.group.InlongGroupInfo;
@@ -30,6 +31,7 @@ import org.apache.inlong.manager.pojo.tencent.sc.AppGroup;
 import org.apache.inlong.manager.pojo.tencent.us.CreateUsTaskRequest;
 import org.apache.inlong.manager.pojo.tencent.us.CreateUsTaskRequest.TaskExt;
 import org.apache.inlong.manager.pojo.tencent.us.UpdateUsTaskRequest;
+import org.apache.inlong.manager.pojo.tencent.us.UsTaskInfo;
 import org.apache.inlong.manager.service.group.InlongGroupService;
 import org.apache.inlong.manager.service.resource.sc.ScService;
 
@@ -71,67 +73,49 @@ public class UsTaskOperationService {
         if (groupInfo == null) {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND);
         }
-        String taskId = "";
-        String clusterTag = "";
-        String tableName = "";
-        String cycleNum = "";
-        String cycleUnit = "";
-        String datePattern = "";
-        String appGroupName = "";
-        String gaiaId = "";
-        Integer bgId = null;
+        UsTaskInfo usTaskInfo = new UsTaskInfo();
         switch (sinkEntity.getSinkType()) {
             case SinkType.INNER_ICEBERG:
                 InnerIcebergSinkDTO innerIcebergSinkDTO = InnerIcebergSinkDTO.getFromJson(sinkEntity.getExtParams());
-                taskId = innerIcebergSinkDTO.getIcebergCheckerTaskId();
-                clusterTag = innerIcebergSinkDTO.getClusterTag();
-                tableName = innerIcebergSinkDTO.getTableName();
-                cycleNum = innerIcebergSinkDTO.getCycleNum();
-                cycleUnit = innerIcebergSinkDTO.getCycleUnit();
-                datePattern = innerIcebergSinkDTO.getDatePattern();
-                appGroupName = innerIcebergSinkDTO.getResourceGroup();
-                bgId = innerIcebergSinkDTO.getBgId();
-                gaiaId = innerIcebergSinkDTO.getGaiaId();
+                CommonBeanUtils.copyProperties(innerIcebergSinkDTO, usTaskInfo, true);
+                usTaskInfo.setTaskId(innerIcebergSinkDTO.getIcebergCheckerTaskId());
+                usTaskInfo.setAppGroupName(innerIcebergSinkDTO.getResourceGroup());
                 break;
             case SinkType.ICEBERG:
                 IcebergSinkDTO icebergSinkDTO = IcebergSinkDTO.getFromJson(sinkEntity.getExtParams());
-                taskId = icebergSinkDTO.getIcebergCheckerTaskId();
-                clusterTag = icebergSinkDTO.getClusterTag();
-                tableName = icebergSinkDTO.getTableName();
-                cycleNum = icebergSinkDTO.getCycleNum();
-                cycleUnit = icebergSinkDTO.getCycleUnit();
-                datePattern = icebergSinkDTO.getDatePattern();
-                appGroupName = icebergSinkDTO.getResourceGroup();
-                bgId = icebergSinkDTO.getBgId();
-                gaiaId = icebergSinkDTO.getGaiaId();
+                CommonBeanUtils.copyProperties(icebergSinkDTO, usTaskInfo, true);
+                usTaskInfo.setTaskId(icebergSinkDTO.getIcebergCheckerTaskId());
+                usTaskInfo.setAppGroupName(icebergSinkDTO.getResourceGroup());
                 break;
             default:
                 throw new BusinessException(ErrorCodeEnum.SINK_TYPE_NOT_SUPPORT);
         }
-        if (StringUtils.isBlank(appGroupName)) {
-            Integer clusterId = scService.getClusterIdByIdentifier(clusterTag);
+        log.info("test bgid ={}", usTaskInfo.getBgId());
+        if (StringUtils.isBlank(usTaskInfo.getAppGroupName())) {
+            Integer clusterId = scService.getClusterIdByIdentifier(usTaskInfo.getClusterTag());
             AppGroup appGroup = scService.getAppGroup(clusterId, groupInfo.getAppGroupName());
             groupInfo.setBgId(appGroup.getBgId());
         } else {
-            groupInfo.setAppGroupName(appGroupName);
-            groupInfo.setBgId(bgId);
+            groupInfo.setAppGroupName(usTaskInfo.getAppGroupName());
+            groupInfo.setBgId(usTaskInfo.getBgId());
         }
         // extended parameters of task
         List<TaskExt> extList = new ArrayList<>();
         extList.add(new TaskExt("spark_version", "spark3.3-gaia2.8"));
-        extList.add(new TaskExt("datePattern", datePattern));
-        extList.add(new TaskExt("interval", cycleNum));
-        extList.add(new TaskExt("tableName", tableName));
-        extList.add(new TaskExt("gaia_id", gaiaId));
+        extList.add(new TaskExt("datePattern", usTaskInfo.getDatePattern()));
+        extList.add(new TaskExt("interval", usTaskInfo.getCycleNum()));
+        extList.add(new TaskExt("tableName", usTaskInfo.getTableName()));
+        extList.add(new TaskExt("gaia_id", usTaskInfo.getGaiaId()));
         String inCharges;
         if (StringUtils.isNotEmpty(groupInfo.getInCharges())) {
             inCharges = groupInfo.getInCharges().replace(",", ";");
         } else {
             inCharges = groupInfo.getCreator();
         }
-        if (StringUtils.isBlank(taskId)) {
+        if (StringUtils.isBlank(usTaskInfo.getTaskId())) {
+            log.info("test groupinfo ={}", usTaskInfo);
             CreateUsTaskRequest createRequest = usTaskService.getCreateTaskRequestForIceberg(groupInfo,
-                    cycleNum, cycleUnit,
+                    usTaskInfo,
                     inCharges,
                     extList);
             createRequest.setTaskType(ICEBERG_CHECK_TYPE);
@@ -142,21 +126,21 @@ public class UsTaskOperationService {
             // empty JSON string, otherwise US parsing error
             createRequest.setParentTaskId("{}");
             createRequest.setSelfDepend(2);
-            taskId = usTaskService.createUsTask(createRequest);
+            usTaskInfo.setTaskId(usTaskService.createUsTask(createRequest));
 
             // write task ID to database
-            if (StringUtils.isNotBlank(taskId)) {
+            if (StringUtils.isNotBlank(usTaskInfo.getTaskId())) {
                 try {
                     switch (sinkEntity.getSinkType()) {
                         case SinkType.INNER_ICEBERG:
                             InnerIcebergSinkDTO innerIcebergSinkDTO = InnerIcebergSinkDTO.getFromJson(
                                     sinkEntity.getExtParams());
-                            innerIcebergSinkDTO.setIcebergCheckerTaskId(taskId);
+                            innerIcebergSinkDTO.setIcebergCheckerTaskId(usTaskInfo.getTaskId());
                             sinkEntity.setExtParams(objectMapper.writeValueAsString(innerIcebergSinkDTO));
                             break;
                         case SinkType.ICEBERG:
                             IcebergSinkDTO icebergSinkDTO = IcebergSinkDTO.getFromJson(sinkEntity.getExtParams());
-                            icebergSinkDTO.setIcebergCheckerTaskId(taskId);
+                            icebergSinkDTO.setIcebergCheckerTaskId(usTaskInfo.getTaskId());
                             sinkEntity.setExtParams(objectMapper.writeValueAsString(icebergSinkDTO));
                             break;
                         default:
@@ -172,13 +156,13 @@ public class UsTaskOperationService {
             // If the task ID exists, update the existing task
             // the modifier must be in the [US person in charge before modification],
             // otherwise there is no permission to operate - if the task is frozen, unfreeze it first
-            usTaskService.unfreezeUsTask(taskId, inCharges.split(";")[0]);
+            usTaskService.unfreezeUsTask(usTaskInfo.getTaskId(), inCharges.split(";")[0]);
             UpdateUsTaskRequest updateRequest =
-                    usTaskService.getUpdateTaskRequestForIceberg(taskId, groupInfo, inCharges,
+                    usTaskService.getUpdateTaskRequestForIceberg(usTaskInfo.getTaskId(), groupInfo, inCharges,
                             extList);
             usTaskService.updateUsTask(updateRequest);
         }
-        return taskId;
+        return usTaskInfo.getTaskId();
     }
 
     public void freezeUsTaskBySink(Integer sinkId) {

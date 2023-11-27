@@ -152,6 +152,7 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             return;
         } else if (SinkStatus.SUSPEND.getCode().equals(sinkInfo.getStatus())) {
             LOGGER.warn("sink resource [" + sinkInfo.getId() + "] already suspend, skip to create");
+            return;
         }
 
         this.createTable(sinkInfo);
@@ -276,7 +277,8 @@ public class InnerBaseHiveResourceOperator implements SinkResourceOperator {
             // after the table is created successfully, need to set the table alter and select permission for the super
             // user
             String hiveType = hiveFullInfo.getIsThive() == TencentConstants.THIVE_TYPE ? "THIVE" : "HIVE";
-            if (groupInfo.getBgId() == null) {
+            if (StringUtils.isNotBlank(groupInfo.getAppGroupName())
+                    && StringUtils.isBlank(hiveInfo.getResourceGroup())) {
                 grantPrivilegeBySc(hiveFullInfo, groupInfo.getAppGroupName(), "select", false, true);
             }
             grantPrivilegeBySc(hiveFullInfo, sink.getCreator(), "select", false, false);

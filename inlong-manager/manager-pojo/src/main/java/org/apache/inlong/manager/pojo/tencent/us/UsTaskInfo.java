@@ -15,20 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.inlong.manager.client.api.service;
+package org.apache.inlong.manager.pojo.tencent.us;
 
-import org.apache.inlong.manager.pojo.common.Response;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import retrofit2.Call;
-import retrofit2.http.GET;
-import retrofit2.http.Path;
+/**
+ * request to modify US task
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UsTaskInfo {
 
-public interface UsTaskApi {
-
-    @GET("usTask/create/{id}")
-    Call<Response<String>> create(@Path("id") Integer id);
-
-    @GET("usTask/freeze/{id}")
-    Call<Response<Boolean>> freeze(@Path("id") Integer id);
-
+    private String taskId;
+    private String clusterTag;
+    private String tableName;
+    private String cycleNum;
+    private String cycleUnit;
+    private String datePattern;
+    private String appGroupName;
+    private String gaiaId;
+    private Integer productId;
+    private Integer bgId;
 }

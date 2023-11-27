@@ -22,8 +22,11 @@ import org.apache.inlong.manager.common.enums.TaskStatus;
 import org.apache.inlong.manager.common.exceptions.JsonException;
 import org.apache.inlong.manager.common.exceptions.WorkflowException;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.dao.entity.InlongUserRoleEntity;
 import org.apache.inlong.manager.dao.entity.WorkflowProcessEntity;
 import org.apache.inlong.manager.dao.entity.WorkflowTaskEntity;
+import org.apache.inlong.manager.dao.mapper.InlongUserRoleEntityMapper;
+import org.apache.inlong.manager.pojo.user.UserRoleCode;
 import org.apache.inlong.manager.pojo.workflow.form.task.TaskForm;
 import org.apache.inlong.manager.workflow.WorkflowAction;
 import org.apache.inlong.manager.workflow.WorkflowContext;
@@ -49,6 +52,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -69,6 +73,8 @@ public class UserTaskProcessor extends AbstractTaskProcessor<UserTask> {
     private ObjectMapper objectMapper;
     @Autowired
     private TaskEventNotifier taskEventNotifier;
+    @Autowired
+    private InlongUserRoleEntityMapper inlongUserRoleEntityMapper;
 
     @Override
     public Class<UserTask> watch() {
@@ -164,6 +170,11 @@ public class UserTaskProcessor extends AbstractTaskProcessor<UserTask> {
     private void checkOperator(WorkflowContext.ActionContext actionContext) {
         WorkflowTaskEntity workflowTaskEntity = actionContext.getTaskEntity();
         if (!SHOULD_CHECK_OPERATOR_ACTIONS.contains(actionContext.getAction())) {
+            return;
+        }
+        InlongUserRoleEntity inlongUserRoleEntity = inlongUserRoleEntityMapper.selectByUsername(
+                actionContext.getOperator());
+        if (Objects.equals(inlongUserRoleEntity.getRoleCode(), UserRoleCode.INLONG_ADMIN)) {
             return;
         }
 

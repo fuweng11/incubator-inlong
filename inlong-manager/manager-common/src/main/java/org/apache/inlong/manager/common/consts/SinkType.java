@@ -17,7 +17,8 @@
 
 package org.apache.inlong.manager.common.consts;
 
-import com.google.common.collect.Sets;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,6 +26,7 @@ import java.util.Set;
 /**
  * Constants of sink type.
  */
+@Component
 public class SinkType extends StreamType {
 
     public static final String HIVE = "HIVE";
@@ -56,15 +58,35 @@ public class SinkType extends StreamType {
     public static final String INNER_ICEBERG = "INNER_ICEBERG";
     public static final String CUSTOM = "CUSTOM";
 
+    // @Value("#{'${sort.flink.sinks:HIVE, CLICKHOUSE, HBASE, HDFS, GREENPLUM, MYSQL, TDSQLPOSTGRESQL, DORIS, STARROCKS,
+    // KUDU, REDIS, KAFKA, HUDI, POSTGRESQL, SQLSERVER, ORACLE, ICEBERG}'.split(',')}")
     public static final Set<String> SORT_FLINK_SINK = new HashSet<>();
+
     public static final Set<String> SORT_STANDALONE_SINK = new HashSet<>();
+
     public static final Set<String> SORT_ETL_SINK = new HashSet<>();
 
-    static {
-        SORT_FLINK_SINK.addAll(
-                Sets.newHashSet(HIVE, CLICKHOUSE, HBASE, HDFS, GREENPLUM, MYSQL, TDSQLPOSTGRESQL, DORIS,
-                        STARROCKS, KUDU, REDIS, KAFKA, HUDI, POSTGRESQL, SQLSERVER, ORACLE, ICEBERG));
-        SORT_STANDALONE_SINK.addAll(Sets.newHashSet(CLS, ELASTICSEARCH, PULSAR));
-        SORT_ETL_SINK.addAll(Sets.newHashSet(INNER_HIVE, INNER_THIVE, INNER_ICEBERG));
+    // @Value("#{'${sort.standalon.sinks:CLS,ELASTICSEARCH,PULSAR}'.split(',')}")
+    @Value("#{'${sort.flink.sinks:HIVE, CLICKHOUSE, HBASE, HDFS, GREENPLUM, MYSQL, TDSQLPOSTGRESQL, DORIS, STARROCKS, KUDU, REDIS, KAFKA, HUDI, POSTGRESQL, SQLSERVER, ORACLE, ICEBERG}'.split(',')}")
+    public void setSortFlinkSink(Set<String> set) {
+        SORT_FLINK_SINK.addAll(set);
     }
+
+    @Value("#{'${sort.standalone.sinks:CLS,ELASTICSEARCH,PULSAR}'.split(',')}")
+    public void setSortStandaloneSink(Set<String> set) {
+        SORT_STANDALONE_SINK.addAll(set);
+    }
+
+    @Value("#{'${sort.etl.sinks:INNER_HIVE, INNER_THIVE, INNER_ICEBERG}'.split(',')}")
+    public void setSortEtlSink(Set<String> set) {
+        SORT_ETL_SINK.addAll(set);
+    }
+
+    // static {
+    // SORT_FLINK_SINK.addAll(
+    // Sets.newHashSet(HIVE, CLICKHOUSE, HBASE, HDFS, GREENPLUM, MYSQL, TDSQLPOSTGRESQL, DORIS,
+    // STARROCKS, KUDU, REDIS, KAFKA, HUDI, POSTGRESQL, SQLSERVER, ORACLE, ICEBERG));
+    // SORT_STANDALONE_SINK.addAll(Sets.newHashSet(CLS, ELASTICSEARCH, PULSAR));
+    // SORT_ETL_SINK.addAll(Sets.newHashSet(INNER_HIVE, INNER_THIVE, INNER_ICEBERG));
+    // }
 }

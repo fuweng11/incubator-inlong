@@ -78,6 +78,9 @@ public class InnerIcebergSink extends StreamSink {
     @ApiModelProperty("resource group")
     private String resourceGroup; // use for wedata
 
+    @ApiModelProperty("product id")
+    private Integer productId;
+
     @ApiModelProperty("bg id")
     private Integer bgId; // use for wedata
 
