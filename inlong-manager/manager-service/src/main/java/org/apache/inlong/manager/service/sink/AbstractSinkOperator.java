@@ -166,13 +166,14 @@ public abstract class AbstractSinkOperator implements StreamSinkOperator {
         // First physically delete the existing fields
         sinkFieldMapper.deleteAll(sinkId);
         // Then batch save the sink fields
-        saveFieldOpt(request);
+        this.saveFieldOpt(request);
         LOGGER.info("success to update sink field");
     }
 
     @Override
     public void saveFieldOpt(SinkRequest request) {
         List<SinkField> fieldList = request.getSinkFieldList();
+        LOGGER.info("test begin to save sink fields=");
         LOGGER.debug("begin to save sink fields={}", fieldList);
         if (CollectionUtils.isEmpty(fieldList)) {
             return;

@@ -121,6 +121,7 @@ public class InnerIcebergSinkOperator extends AbstractSinkOperator {
     @Override
     public void saveFieldOpt(SinkRequest request) {
         List<SinkField> fieldList = request.getSinkFieldList();
+        LOGGER.info("test begin to save sink fields=");
         LOGGER.debug("begin to save es sink fields={}", fieldList);
         if (CollectionUtils.isEmpty(fieldList)) {
             return;

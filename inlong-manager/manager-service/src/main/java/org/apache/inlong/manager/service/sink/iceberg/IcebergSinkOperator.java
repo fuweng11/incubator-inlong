@@ -134,6 +134,7 @@ public class IcebergSinkOperator extends AbstractSinkOperator {
     @Override
     public void saveFieldOpt(SinkRequest request) {
         List<SinkField> fieldList = request.getSinkFieldList();
+        LOGGER.info("test begin to save sink fields=");
         LOGGER.info("begin to save es sink fields={}", fieldList);
         if (CollectionUtils.isEmpty(fieldList)) {
             return;
@@ -153,7 +154,11 @@ public class IcebergSinkOperator extends AbstractSinkOperator {
             }
             try {
                 IcebergColumnInfo dto = IcebergColumnInfo.getFromRequest(fieldInfo);
-                fieldEntity.setExtParams(objectMapper.writeValueAsString(dto));
+                LOGGER.info("tset to save es dto fields={}", dto);
+                String ext = objectMapper.writeValueAsString(dto);
+                LOGGER.info("tesr ext {}", ext);
+                fieldEntity.setExtParams(ext);
+                LOGGER.info("tset to save es dto ext={}", fieldEntity.getExtParams());
             } catch (Exception e) {
                 LOGGER.error("parsing json string to sink field info failed", e);
                 throw new BusinessException(ErrorCodeEnum.SINK_SAVE_FAILED.getMessage());
@@ -165,6 +170,7 @@ public class IcebergSinkOperator extends AbstractSinkOperator {
             fieldEntity.setIsDeleted(InlongConstants.UN_DELETED);
             entityList.add(fieldEntity);
         }
+        LOGGER.info("tset to save es sink fields={}", entityList);
 
         sinkFieldMapper.insertAll(entityList);
         LOGGER.info("success to save es sink fields");
