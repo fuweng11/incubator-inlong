@@ -39,6 +39,7 @@ public class LogAspect {
      */
     @Around(("execution(public * org.apache.inlong.manager.web.controller.*.*(..)) && @annotation(operationLog)"))
     public Object doAround(ProceedingJoinPoint joinPoint, OperationLog operationLog) throws Throwable {
+        log.info("Tseraeqweq");
         return OperationLogRecorder.doAround(joinPoint, operationLog);
     }
 }

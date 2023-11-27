@@ -18,19 +18,19 @@
 package org.apache.inlong.manager.client.api.inner.client;
 
 import org.apache.inlong.manager.client.api.ClientConfiguration;
-import org.apache.inlong.manager.client.api.service.OperationRecordsApi;
+import org.apache.inlong.manager.client.api.service.OperationLogApi;
 import org.apache.inlong.manager.client.api.util.ClientUtils;
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.Response;
-import org.apache.inlong.manager.pojo.tencent.OperationRecordsRequest;
-import org.apache.inlong.manager.pojo.tencent.OperationRecordsResponse;
+import org.apache.inlong.manager.pojo.tencent.OperationLogRequest;
+import org.apache.inlong.manager.pojo.tencent.OperationLogResponse;
 
-public class OperationRecordsClient {
+public class OperationLogClient {
 
-    private final OperationRecordsApi operationRecordsApi;
+    private final OperationLogApi operationLogApi;
 
-    public OperationRecordsClient(ClientConfiguration configuration) {
-        operationRecordsApi = ClientUtils.createRetrofit(configuration).create(OperationRecordsApi.class);
+    public OperationLogClient(ClientConfiguration configuration) {
+        operationLogApi = ClientUtils.createRetrofit(configuration).create(OperationLogApi.class);
     }
 
     /**
@@ -38,9 +38,9 @@ public class OperationRecordsClient {
      *
      * @return task id
      */
-    public PageResult<OperationRecordsResponse> list(OperationRecordsRequest request) {
-        Response<PageResult<OperationRecordsResponse>> response =
-                ClientUtils.executeHttpCall(operationRecordsApi.list(request));
+    public PageResult<OperationLogResponse> list(OperationLogRequest request) {
+        Response<PageResult<OperationLogResponse>> response =
+                ClientUtils.executeHttpCall(operationLogApi.list(request));
         ClientUtils.assertRespSuccess(response);
         if (response.isSuccess()) {
             return response.getData();

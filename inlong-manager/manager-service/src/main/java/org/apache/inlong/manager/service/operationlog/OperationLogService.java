@@ -17,33 +17,14 @@
 
 package org.apache.inlong.manager.service.operationlog;
 
-import org.apache.inlong.manager.common.enums.OperationTarget;
-import org.apache.inlong.manager.common.enums.OperationType;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.apache.inlong.manager.pojo.common.PageResult;
+import org.apache.inlong.manager.pojo.tencent.OperationLogRequest;
+import org.apache.inlong.manager.pojo.tencent.OperationLogResponse;
 
 /**
- * The interface of operation log
+ * Operation log service
  */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface OperationLog {
+public interface OperationLogService {
 
-    /**
-     * Operation type
-     */
-    OperationType operation();
-
-    /**
-     * Operation target
-     */
-    OperationTarget operationTarget();
-
-    /**
-     * Whether to store in the database
-     */
-    boolean db() default true;
+    PageResult<OperationLogResponse> listByCondition(OperationLogRequest request);
 }

@@ -17,20 +17,22 @@
 
 package org.apache.inlong.manager.pojo.tencent;
 
-import org.apache.inlong.manager.pojo.common.PageRequest;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Request of get operation records
- */
+import java.util.Date;
+
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OperationRecordsRequest extends PageRequest {
+@ApiModel("Operation records")
+public class OperationLogResponse {
 
     @ApiModelProperty("Inlong group id")
     private String inlongGroupId;
@@ -38,10 +40,19 @@ public class OperationRecordsRequest extends PageRequest {
     @ApiModelProperty("Inlong stream id")
     private String inlongStreamId;
 
-    @ApiModelProperty(value = "query start date, format by 'yyyy-MM-dd'", required = false, example = "2022-01-01")
-    private String startDate;
+    @ApiModelProperty("Http method")
+    private String httpMethod;
 
-    @ApiModelProperty(value = "query end date, format by 'yyyy-MM-dd'", required = false, example = "2022-01-01")
-    private String endDate;
+    @ApiModelProperty("Operation type")
+    private String operationType;
+
+    @ApiModelProperty("Operation target")
+    private String operationTarget;
+
+    @ApiModelProperty(value = "Name of operator")
+    private String operator;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date requestTime;
 
 }

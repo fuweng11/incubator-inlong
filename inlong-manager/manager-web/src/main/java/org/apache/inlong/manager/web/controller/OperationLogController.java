@@ -19,11 +19,13 @@ package org.apache.inlong.manager.web.controller;
 
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.Response;
-import org.apache.inlong.manager.pojo.tencent.OperationRecordsRequest;
-import org.apache.inlong.manager.pojo.tencent.OperationRecordsResponse;
+import org.apache.inlong.manager.pojo.tencent.OperationLogRequest;
+import org.apache.inlong.manager.pojo.tencent.OperationLogResponse;
+import org.apache.inlong.manager.service.operationlog.OperationLogService;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -34,14 +36,16 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api")
-@Api(tags = "Operation record-API")
-public class OperationRecordsController {
+@Api(tags = "Operation log-API")
+public class OperationLogController {
 
-    @RequestMapping(value = "/operationRecords/list", method = RequestMethod.POST)
-    @ApiOperation(value = "List operation record by paginating")
-    public Response<PageResult<OperationRecordsResponse>> listByCondition(
-            @RequestBody OperationRecordsRequest request) {
-        return Response.success();
+    @Autowired
+    private OperationLogService operationLogService;
+
+    @RequestMapping(value = "/operationLog/list", method = RequestMethod.POST)
+    @ApiOperation(value = "List operation log by paginating")
+    public Response<PageResult<OperationLogResponse>> listByCondition(@RequestBody OperationLogRequest request) {
+        return Response.success(operationLogService.listByCondition(request));
     }
 
 }

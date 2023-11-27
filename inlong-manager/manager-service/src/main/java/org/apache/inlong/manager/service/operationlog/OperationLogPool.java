@@ -67,6 +67,7 @@ public class OperationLogPool {
     private OperationLogEntityMapper operationLogMapper;
 
     public static void publish(OperationLogEntity operation) {
+        log.info("discard 123123 log:");
         if (!OPERATION_POOL.offer(operation)) {
             log.info("discard operation log: {}", operation);
         }
@@ -74,6 +75,7 @@ public class OperationLogPool {
 
     @PostConstruct
     public void init() {
+        log.info("discard wqeqweoperation log:");
         IntStream.range(0, THREAD_NUM).forEach(
                 i -> EXECUTOR_SERVICE.submit(this::saveOperationLog));
     }

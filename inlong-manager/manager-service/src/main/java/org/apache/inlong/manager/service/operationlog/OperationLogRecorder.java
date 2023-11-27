@@ -17,12 +17,15 @@
 
 package org.apache.inlong.manager.service.operationlog;
 
+import org.apache.inlong.manager.common.enums.OperationTarget;
 import org.apache.inlong.manager.common.enums.OperationType;
 import org.apache.inlong.manager.common.util.NetworkUtils;
 import org.apache.inlong.manager.dao.entity.OperationLogEntity;
 import org.apache.inlong.manager.pojo.user.LoginUserUtils;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +38,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -63,6 +67,27 @@ public class OperationLogRecorder {
         String requestUrl = request.getRequestURI();
         String httpMethod = request.getMethod();
         String remoteAddress = NetworkUtils.getClientIpAddress(request);
+        Object[] args = joinPoint.getArgs();
+        String groupId = "";
+        String streamId = "";
+        for (int i = 0; i < args.length; i++) {
+            try {
+                JSONObject obj = (JSONObject) JSON.toJSON(args[i]);
+                log.info("first" + (i + 1) + "个参数为:" + obj);
+                for (String key : obj.keySet()) {
+                    if (Objects.equals(key, "inlongGroupId")) {
+                        groupId = obj.getString(key);
+                    }
+                    if (Objects.equals(key, "inlongStreamId")) {
+                        streamId = obj.getString(key);
+                    }
+                    log.info("key ={}, groupId ={}, streamId= {}", key, groupId, streamId);
+                }
+            } catch (Exception e) {
+
+            }
+
+        }
         String param = GSON.toJson(request.getParameterMap());
         String body = GSON.toJson(joinPoint.getArgs());
 
@@ -78,7 +103,11 @@ public class OperationLogRecorder {
         } finally {
             long costTime = System.currentTimeMillis() - start;
             OperationType operationType = operationLog.operation();
+            OperationTarget operationTarget = operationLog.operationTarget();
             OperationLogEntity operationLogEntity = new OperationLogEntity();
+            operationLogEntity.setInlongGroupId(groupId);
+            operationLogEntity.setInlongStreamId(streamId);
+            operationLogEntity.setOperationTarget(operationTarget.name());
             operationLogEntity.setOperationType(operationType.name());
             operationLogEntity.setHttpMethod(httpMethod);
             operationLogEntity.setOperator(operator);

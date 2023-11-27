@@ -34,5 +34,14 @@ ALTER TABLE `field_change_log`
 ALTER TABLE `field_change_log`
     ADD COLUMN `sink_field_change` text DEFAULT NULL COMMENT 'The value of the sink field change';
 
+ALTER TABLE `operation_log`
+    ADD COLUMN  `inlong_group_id`  varchar(256) DEFAULT NULL COMMENT 'Inlong group id';
+
+ALTER TABLE `operation_log`
+    ADD COLUMN  `inlong_stream_id` varchar(256) DEFAULT NULL COMMENT 'Inlong stream id',
+
+ALTER TABLE `operation_log`
+    ADD COLUMN `operation_target`      varchar(256)       DEFAULT NULL COMMENT 'Operation target',
+
 
 

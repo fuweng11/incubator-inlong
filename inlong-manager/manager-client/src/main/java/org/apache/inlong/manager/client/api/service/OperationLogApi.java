@@ -19,16 +19,16 @@ package org.apache.inlong.manager.client.api.service;
 
 import org.apache.inlong.manager.pojo.common.PageResult;
 import org.apache.inlong.manager.pojo.common.Response;
-import org.apache.inlong.manager.pojo.tencent.OperationRecordsRequest;
-import org.apache.inlong.manager.pojo.tencent.OperationRecordsResponse;
+import org.apache.inlong.manager.pojo.tencent.OperationLogRequest;
+import org.apache.inlong.manager.pojo.tencent.OperationLogResponse;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.POST;
 
-public interface OperationRecordsApi {
+public interface OperationLogApi {
 
-    @POST("operationRecords/list")
-    Call<Response<PageResult<OperationRecordsResponse>>> list(@Body OperationRecordsRequest request);
+    @POST("operationLog/list")
+    Call<Response<PageResult<OperationLogResponse>>> list(@Body OperationLogRequest request);
 
 }
