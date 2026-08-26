@@ -22,6 +22,7 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.common.util.UrlVerificationUtils;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
@@ -90,6 +91,14 @@ public class IcebergDataNodeOperator extends AbstractDataNodeOperator {
         String metastoreUri = icebergDataNodeRequest.getUrl();
         String warehouse = icebergDataNodeRequest.getWarehouse();
         Preconditions.expectNotBlank(metastoreUri, ErrorCodeEnum.INVALID_PARAMETER, "connection url cannot be empty");
+        // SSRF protection: even though the service layer validates request.getUrl(), keep an
+        // operator-side check so the operator remains safe if invoked from other call sites.
+        try {
+            UrlVerificationUtils.validateUrlNotInternal(metastoreUri);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCodeEnum.INVALID_PARAMETER,
+                    "SSRF protection: " + e.getMessage());
+        }
         try {
             HiveCatalog catalog = IcebergCatalogUtils.getCatalog(metastoreUri, warehouse);
             catalog.listNamespaces();

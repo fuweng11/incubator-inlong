@@ -102,6 +102,25 @@ public class UrlVerificationUtils {
         validateHostNotInternal(host);
     }
 
+    public static void validateEndpointListNotInternal(String endpoints) throws Exception {
+        if (endpoints == null || endpoints.trim().isEmpty()) {
+            throw new Exception("endpoint list cannot be null or empty");
+        }
+        String[] parts = endpoints.split("[,;]");
+        boolean hasEntry = false;
+        for (String part : parts) {
+            String entry = part == null ? null : part.trim();
+            if (entry == null || entry.isEmpty()) {
+                continue;
+            }
+            hasEntry = true;
+            validateUrlNotInternal(entry);
+        }
+        if (!hasEntry) {
+            throw new Exception("endpoint list cannot be blank");
+        }
+    }
+
     /**
      * Validates that a hostname does not resolve to an internal/private IP address.
      *

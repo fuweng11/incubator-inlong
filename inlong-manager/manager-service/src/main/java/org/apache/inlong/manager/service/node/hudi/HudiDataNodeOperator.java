@@ -22,6 +22,7 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.common.util.UrlVerificationUtils;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
@@ -90,6 +91,13 @@ public class HudiDataNodeOperator extends AbstractDataNodeOperator {
         String metastoreUri = hudiRequest.getUrl();
         String warehouse = hudiRequest.getWarehouse();
         Preconditions.expectNotBlank(metastoreUri, ErrorCodeEnum.INVALID_PARAMETER, "connection url cannot be empty");
+        // SSRF protection: block requests to internal/loopback/cloud-metadata addresses.
+        try {
+            UrlVerificationUtils.validateUrlNotInternal(metastoreUri);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCodeEnum.INVALID_PARAMETER,
+                    "SSRF protection: " + e.getMessage());
+        }
         try (HudiCatalogClient client = new HudiCatalogClient(metastoreUri, warehouse)) {
             client.open();
             client.listAllDatabases();
