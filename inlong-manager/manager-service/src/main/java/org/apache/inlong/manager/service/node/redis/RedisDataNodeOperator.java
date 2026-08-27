@@ -22,6 +22,7 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.common.util.UrlVerificationUtils;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
@@ -117,6 +118,35 @@ public class RedisDataNodeOperator extends AbstractDataNodeOperator {
     @Override
     public Boolean testConnection(DataNodeRequest request) {
         RedisDataNodeRequest redisDataNodeRequest = (RedisDataNodeRequest) request;
+        // SSRF protection: reject requests targeting internal/loopback/cloud-metadata addresses.
+        // Redis operator uses different fields per cluster mode; validate all that apply.
+        try {
+            RedisClusterMode clusterMode = RedisClusterMode.of(redisDataNodeRequest.getClusterMode());
+            switch (clusterMode) {
+                case STANDALONE:
+                    if (StringUtils.isNotBlank(redisDataNodeRequest.getHost())) {
+                        UrlVerificationUtils.validateHostNotInternal(redisDataNodeRequest.getHost());
+                    }
+                    break;
+                case CLUSTER:
+                    if (StringUtils.isNotBlank(redisDataNodeRequest.getClusterNodes())) {
+                        UrlVerificationUtils
+                                .validateEndpointListNotInternal(redisDataNodeRequest.getClusterNodes());
+                    }
+                    break;
+                case SENTINEL:
+                    if (StringUtils.isNotBlank(redisDataNodeRequest.getSentinelsInfo())) {
+                        UrlVerificationUtils
+                                .validateEndpointListNotInternal(redisDataNodeRequest.getSentinelsInfo());
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCodeEnum.INVALID_PARAMETER,
+                    "SSRF protection: " + e.getMessage());
+        }
         try {
             return RedisResourceClient.testConnection(redisDataNodeRequest);
         } catch (Exception e) {

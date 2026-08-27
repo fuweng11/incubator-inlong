@@ -24,6 +24,7 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.common.util.UrlVerificationUtils;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.pojo.cluster.kafka.KafkaClusterInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
@@ -114,6 +115,13 @@ public class KafkaDataNodeOperator extends AbstractDataNodeOperator {
         String bootstrapServers = kafkaDataNodeRequest.getBootstrapServers();
         Preconditions.expectNotBlank(bootstrapServers, ErrorCodeEnum.INVALID_PARAMETER,
                 "connection bootstrapServers  cannot be empty");
+        // SSRF protection: every bootstrap server must resolve to a public/external address
+        try {
+            UrlVerificationUtils.validateEndpointListNotInternal(bootstrapServers);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCodeEnum.INVALID_PARAMETER,
+                    "SSRF protection: " + e.getMessage());
+        }
         if (getKafkaConnection(bootstrapServers)) {
             LOGGER.info("kafka connection success for bootstrapServers={}",
                     bootstrapServers);

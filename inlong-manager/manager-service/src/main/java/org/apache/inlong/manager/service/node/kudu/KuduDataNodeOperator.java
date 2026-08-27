@@ -23,6 +23,7 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.common.util.UrlVerificationUtils;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeRequest;
@@ -96,6 +97,13 @@ public class KuduDataNodeOperator extends AbstractDataNodeOperator {
         KuduDataNodeRequest kuduRequest = (KuduDataNodeRequest) request;
         String masters = kuduRequest.getMasters();
         Preconditions.expectNotBlank(masters, ErrorCodeEnum.INVALID_PARAMETER, "masters cannot be empty");
+        // SSRF protection: every master endpoint must resolve to a public/external address
+        try {
+            UrlVerificationUtils.validateEndpointListNotInternal(masters);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCodeEnum.INVALID_PARAMETER,
+                    "SSRF protection: " + e.getMessage());
+        }
 
         try (KuduResourceClient kuduClient = new KuduResourceClient(masters)) {
             kuduClient.getTablesList();

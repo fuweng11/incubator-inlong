@@ -24,6 +24,7 @@ import org.apache.inlong.manager.common.enums.ErrorCodeEnum;
 import org.apache.inlong.manager.common.exceptions.BusinessException;
 import org.apache.inlong.manager.common.util.CommonBeanUtils;
 import org.apache.inlong.manager.common.util.Preconditions;
+import org.apache.inlong.manager.common.util.UrlVerificationUtils;
 import org.apache.inlong.manager.dao.entity.DataNodeEntity;
 import org.apache.inlong.manager.pojo.cluster.pulsar.PulsarClusterInfo;
 import org.apache.inlong.manager.pojo.node.DataNodeInfo;
@@ -100,6 +101,13 @@ public class PulsarDataNodeOperator extends AbstractDataNodeOperator {
         String adminUrl = pulsarDataNodeRequest.getAdminUrl();
         String token = pulsarDataNodeRequest.getToken();
         Preconditions.expectNotBlank(adminUrl, ErrorCodeEnum.INVALID_PARAMETER, "connection admin urlcannot be empty");
+        // SSRF protection: block requests to internal/loopback/link-local/cloud-metadata addresses
+        try {
+            UrlVerificationUtils.validateUrlNotInternal(adminUrl);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCodeEnum.INVALID_PARAMETER,
+                    "SSRF protection: " + e.getMessage());
+        }
         if (getPulsarConnection(adminUrl, token)) {
             LOGGER.info("pulsar  connection success for adminUrl={}, token={}",
                     adminUrl, token);
