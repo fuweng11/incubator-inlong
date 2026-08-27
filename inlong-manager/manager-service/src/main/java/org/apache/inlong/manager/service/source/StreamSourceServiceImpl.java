@@ -165,6 +165,11 @@ public class StreamSourceServiceImpl implements StreamSourceService {
             throw new BusinessException(ErrorCodeEnum.SOURCE_INFO_NOT_FOUND,
                     String.format("source not found by id=%s", id));
         }
+        InlongGroupEntity groupEntity =
+                groupMapper.selectByGroupId(entity.getInlongGroupId());
+        if (groupEntity == null) {
+            throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND);
+        }
         StreamSourceOperator sourceOperator = operatorFactory.getInstance(entity.getSourceType());
         StreamSource streamSource = sourceOperator.getFromEntity(entity);
         LOGGER.debug("success to get source by id={}", id);
