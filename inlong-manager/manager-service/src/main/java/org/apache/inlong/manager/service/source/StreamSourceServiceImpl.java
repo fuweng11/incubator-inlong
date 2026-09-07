@@ -227,6 +227,11 @@ public class StreamSourceServiceImpl implements StreamSourceService {
         PageHelper.startPage(request.getPageNum(), request.getPageSize());
         OrderFieldEnum.checkOrderField(request);
         OrderTypeEnum.checkOrderType(request);
+        InlongGroupEntity groupEntity =
+                groupMapper.selectByGroupId(request.getInlongGroupId());
+        if (groupEntity == null) {
+            throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND);
+        }
         Page<StreamSourceEntity> entityPage = (Page<StreamSourceEntity>) sourceMapper.selectByCondition(request);
         // Encapsulate the paging query results into the PageInfo object to obtain related paging information
         Map<String, Page<StreamSourceEntity>> sourceMap = Maps.newHashMap();
