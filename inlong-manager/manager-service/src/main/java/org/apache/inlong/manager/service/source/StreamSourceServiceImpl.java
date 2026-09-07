@@ -44,6 +44,7 @@ import org.apache.inlong.manager.pojo.source.SourceRequest;
 import org.apache.inlong.manager.pojo.source.StreamSource;
 import org.apache.inlong.manager.pojo.stream.InlongStreamInfo;
 import org.apache.inlong.manager.pojo.stream.StreamField;
+import org.apache.inlong.manager.pojo.user.LoginUserUtils;
 import org.apache.inlong.manager.pojo.user.UserInfo;
 import org.apache.inlong.manager.service.group.GroupCheckService;
 import org.apache.inlong.manager.service.user.UserService;
@@ -223,7 +224,7 @@ public class StreamSourceServiceImpl implements StreamSourceService {
     }
 
     @Override
-    public PageResult<? extends StreamSource> listByCondition(SourcePageRequest request) {
+    public PageResult<? extends StreamSource> listByCondition(SourcePageRequest request, String operator) {
         PageHelper.startPage(request.getPageNum(), request.getPageSize());
         OrderFieldEnum.checkOrderField(request);
         OrderTypeEnum.checkOrderType(request);
@@ -232,6 +233,8 @@ public class StreamSourceServiceImpl implements StreamSourceService {
         if (groupEntity == null) {
             throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND);
         }
+        userService.checkUser(groupEntity.getInCharges(), operator,
+                "Current user does not have permission to list source info");
         Page<StreamSourceEntity> entityPage = (Page<StreamSourceEntity>) sourceMapper.selectByCondition(request);
         // Encapsulate the paging query results into the PageInfo object to obtain related paging information
         Map<String, Page<StreamSourceEntity>> sourceMap = Maps.newHashMap();
@@ -562,6 +565,12 @@ public class StreamSourceServiceImpl implements StreamSourceService {
     @Override
     public List<Integer> addDataAddTask(DataAddTaskRequest request, String operator) {
         LOGGER.info("begin to add data add task info: {}", request);
+        InlongGroupEntity groupEntity = groupMapper.selectByGroupId(request.getGroupId());
+        if (groupEntity == null) {
+            throw new BusinessException(ErrorCodeEnum.GROUP_NOT_FOUND,
+                    String.format("InlongGroup does not exist with InlongGroupId=%s", request.getGroupId()));
+        }
+        userService.checkUser(request.getGroupId(), operator, "current user not allowed to add data add task");
         String auditVersion = String.valueOf(sourceMapper.selectDataAddTaskCount(request.getGroupId(), null));
         request.setAuditVersion(auditVersion);
         List<String> agentIpList = request.getAgentIpList();
